@@ -24,6 +24,7 @@ QuickJS-ng scripts that AI agents write for vibecoder users.
 ```
 src/<module>/   engine code; one module per folder (core, ecs, render, physics, script, mcp)
 tests/<module>/ doctest tests mirroring src/
+alpha-sdk/      npm package: script API types + TS→single-JS compiler (alpha-build)
 tools/          harness levers (limits, crapper, dryer, mutator)
 docs/           GLOSSARY.md, LOG.md
 cmake/          dependency + warnings config

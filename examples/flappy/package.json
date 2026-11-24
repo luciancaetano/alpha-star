@@ -1,0 +1,10 @@
+{
+  "name": "flappy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "alpha-build src/main.ts -o dist/main.js",
+    "build:test": "alpha-build test/main.test.ts -o dist/main.test.js"
+  },
+  "devDependencies": { "@alpha-star/sdk": "file:../../alpha-sdk" }
+}

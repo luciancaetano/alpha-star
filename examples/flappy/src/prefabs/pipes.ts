@@ -1,0 +1,32 @@
+import type { Collider, EntitySpec, Random, Vec2 } from "alpha";
+import type { Flappy } from "../types";
+import { PIPE, WORLD } from "../tuning";
+
+type Spec = EntitySpec<Flappy["tags"]>;
+
+/** Top pipe, bottom pipe and a scoring sensor in the gap. */
+export function pipePair(random: Random): Spec[] {
+  const floor = WORLD.height - WORLD.groundHeight;
+  const half = PIPE.gap / 2;
+  const gapY = random.range(PIPE.margin + half, floor - PIPE.margin - half);
+  const x = WORLD.width + PIPE.width;
+  return [pipe(x, 0, gapY - half), pipe(x, gapY + half, floor), goal(x + PIPE.width / 2, gapY)];
+}
+
+function pipe(x: number, top: number, bottom: number): Spec {
+  const size: Vec2 = [PIPE.width, bottom - top];
+  return {
+    tags: ["solid", "scrolls"],
+    pos: [x, (top + bottom) / 2],
+    shape: { rect: size, color: "#73bf2e", outline: "#000" },
+    body: scrolling({ rect: size }),
+  };
+}
+
+function goal(x: number, y: number): Spec {
+  return { tags: ["goal", "scrolls"], pos: [x, y], body: scrolling({ rect: [4, PIPE.gap], sensor: true }) };
+}
+
+function scrolling(collider: Collider) {
+  return { type: "kinematic", velocity: [-PIPE.speed, 0], collider } as const satisfies Spec["body"];
+}
