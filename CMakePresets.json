@@ -1,0 +1,34 @@
+﻿{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "dev",
+      "binaryDir": "${sourceDir}/build/dev",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "harness",
+      "description": "Core + tests only, no runtime deps (fast gate)",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build/harness",
+      "cacheVariables": { "ALPHA_WITH_RUNTIME_DEPS": "OFF" }
+    },
+    {
+      "name": "release",
+      "description": "Production build, no tests",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "ALPHA_BUILD_TESTS": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "dev", "configurePreset": "dev", "configuration": "Debug" },
+    { "name": "harness", "configurePreset": "harness", "configuration": "Debug" },
+    { "name": "release", "configurePreset": "release", "configuration": "Release" }
+  ],
+  "testPresets": [
+    { "name": "dev", "configurePreset": "dev", "configuration": "Debug",
+      "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error" } },
+    { "name": "harness", "configurePreset": "harness", "configuration": "Debug",
+      "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error" } }
+  ]
+}

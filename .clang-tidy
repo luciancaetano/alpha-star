@@ -1,0 +1,14 @@
+Checks: >
+  -*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length
+WarningsAsErrors: '*'
+CheckOptions:
+  - { key: readability-function-size.LineThreshold,      value: 40 }
+  - { key: readability-function-size.ParameterThreshold, value: 5 }
+  - { key: readability-function-cognitive-complexity.Threshold, value: 10 }

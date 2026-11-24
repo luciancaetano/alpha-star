@@ -1,0 +1,21 @@
+# Build output and fetched deps
+build/
+out/
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.user
+CMakeUserPresets.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Coverage / logs
+*.coverage
+*.log
+
+# Claude Code local settings
+.claude/settings.local.json
