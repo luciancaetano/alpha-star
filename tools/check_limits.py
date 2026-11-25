@@ -29,13 +29,21 @@ def pairing_violations(path):
 
 
 def function_violations(path):
+    lines = path.read_text(encoding="utf-8").splitlines()
     info = lizard.analyze_file(str(path))
     for fn in info.function_list:
         where = f"{cfg.rel(path)}:{fn.start_line} {fn.name}"
-        yield from limit_checks(where, fn, path.suffix == ".hpp")
+        body_banned = path.suffix == ".hpp" and not is_template(lines, fn.start_line)
+        yield from limit_checks(where, fn, body_banned)
 
 
-def limit_checks(where, fn, in_header):
+def is_template(lines, start_line):
+    """lizard's names omit `template <...>`; look at the line(s) above the function."""
+    above = lines[max(0, start_line - 3):start_line]
+    return any(line.lstrip().startswith("template") for line in above)
+
+
+def limit_checks(where, fn, body_banned):
     body = fn.end_line - fn.start_line + 1
     if body > cfg.MAX_FUNCTION_LINES:
         yield f"{where}: {body} lines > {cfg.MAX_FUNCTION_LINES}"
@@ -43,7 +51,7 @@ def limit_checks(where, fn, in_header):
         yield f"{where}: CCN {fn.cyclomatic_complexity} > {cfg.MAX_CCN}"
     if len(fn.parameters) > cfg.MAX_PARAMS:
         yield f"{where}: {len(fn.parameters)} params > {cfg.MAX_PARAMS}"
-    if in_header and body > HEADER_BODY_ALLOWED_LINES and "template" not in fn.long_name:
+    if body_banned and body > HEADER_BODY_ALLOWED_LINES:
         yield f"{where}: implementation in header; move to .cpp"
 
 

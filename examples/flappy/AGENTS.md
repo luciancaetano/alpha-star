@@ -11,6 +11,8 @@ read that file when unsure, it is the source of truth.
 npm install          # once
 npm run build        # type-check + bundle src/main.ts -> dist/main.js
 npm run build:test   # same for test/main.test.ts
+alpha_star dist/main.js                                   # play
+alpha_star dist/main.js --frames 120 --screenshot s.bmp   # headless check
 ```
 
 A change is done only when `npm run build` prints `built dist/main.js`.
@@ -32,7 +34,12 @@ Errors are `file:line:col: error: ...`; nothing is written while any exist.
 ## How to add things
 
 - **New input:** add to `actions` in `types.ts`, then map devices in `main.ts` `config.actions`.
-- **New sound:** add to `sounds` in `types.ts`, then the file path in `main.ts` `assets.sounds`.
+- **New sound:** add to `sounds` in `types.ts`, then in `main.ts` `assets.sounds` either a WAV path
+  (relative to `dist/main.js`) or a synth spec `{ wave, freq, duration }` / list of notes.
+  Play with `ctx.audio.play("name", { volume, pitch, loop })`; one-off procedural sounds with
+  `ctx.audio.tone({ wave: "square", freq: [300, 600], duration: 0.1 })`.
+- **New image:** add to `images` in `types.ts`, the file (PNG/JPG/BMP) in `main.ts` `assets.images`,
+  then `shape: { image: "name", size: [w, h] }`. All assets preload before the first scene.
 - **New entity kind:** add its tag to `tags`, write a prefab in `src/prefabs/`, `ctx.spawn(prefab())`.
 - **New scene:** add `name: Params | undefined` to `scenes`, create `src/scenes/name.ts`,
   register it in `main.ts` `scenes`. The compiler lists what is missing.

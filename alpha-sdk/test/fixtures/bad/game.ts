@@ -3,6 +3,7 @@ import { define } from "alpha";
 interface T {
   actions: "jump";
   sounds: never;
+  images: never;
   tags: "hero";
   scenes: { play: undefined };
 }

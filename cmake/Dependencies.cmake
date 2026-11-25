@@ -38,4 +38,22 @@ FetchContent_Declare(EnTT
   GIT_TAG v3.15.0
   GIT_SHALLOW TRUE)
 
-FetchContent_MakeAvailable(SDL3 box2d quickjs EnTT)
+# Images: PNG/JPG/BMP via the vendored stb backend; no system image libraries.
+set(SDLIMAGE_VENDORED ON CACHE BOOL "" FORCE)
+set(SDLIMAGE_BACKEND_STB ON CACHE BOOL "" FORCE)
+set(SDLIMAGE_SAMPLES OFF CACHE BOOL "" FORCE)
+set(SDLIMAGE_TESTS OFF CACHE BOOL "" FORCE)
+set(SDLIMAGE_DEPS_SHARED OFF CACHE BOOL "" FORCE)
+foreach(fmt AVIF JXL TIF WEBP)
+  set(SDLIMAGE_${fmt} OFF CACHE BOOL "" FORCE)
+endforeach()
+FetchContent_Declare(SDL3_image
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
+  GIT_TAG release-3.2.4
+  GIT_SUBMODULES ""  # stb backend needs none of the external codecs
+  GIT_SHALLOW TRUE)
+
+FetchContent_MakeAvailable(SDL3 box2d quickjs EnTT SDL3_image)
+
+# Third-party headers are not ours to warn about; our code stays at /W4 /WX.
+set_target_properties(qjs PROPERTIES SYSTEM TRUE)

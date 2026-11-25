@@ -22,7 +22,7 @@ QuickJS-ng scripts that AI agents write for vibecoder users.
 ## Layout
 
 ```
-src/<module>/   engine code; one module per folder (core, ecs, render, physics, script, mcp)
+src/<module>/   engine code; one module per folder (core, ecs, physics, render, platform, script, mcp)
 tests/<module>/ doctest tests mirroring src/
 alpha-sdk/      npm package: script API types + TS→single-JS compiler (alpha-build)
 tools/          harness levers (limits, crapper, dryer, mutator)
@@ -33,7 +33,8 @@ cmake/          dependency + warnings config
 ## Commands
 
 ```
-make build-debug | build-prod | run-debug | debug   # debug = run under VS/lldb/gdb
+make build-debug | build-prod | run-debug | debug   # debug = run under VS/lldb/gdb (GAME=path/to/main.js)
+make flappy                                         # build engine + examples/flappy, then play
 ```
 
 ```
@@ -46,7 +47,7 @@ python tools/dryer.py              # duplication report
 python tools/mutator.py            # mutation testing over src/
 ```
 
-`python tools/gate.py` runs build + tests + all checks. A change is done only when it passes.
+`python tools/gate.py` (preset dev; `--preset harness` = fast core-only) runs build + tests + all checks. A change is done only when it passes.
 
 ## Workflow
 

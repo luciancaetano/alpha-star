@@ -4,6 +4,7 @@ import { SPEED, clamp } from "./helpers";
 interface T {
   actions: "jump";
   sounds: never;
+  images: never;
   tags: "hero";
   scenes: { play: undefined; over: { score: number } };
 }

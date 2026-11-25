@@ -30,3 +30,37 @@
 | 24 | API v2: game declares names once (`interface { actions; sounds; tags; scenes }`), `define<G>()` returns typed `scene`/`game`; scene params, tags, scene completeness and start scene now checked; typed `state()` per scene; `ctx.every/after` timers; `Entity.alive` | Explicit type-first declaration breaks the inference cycle from entry 22; data shape before logic |
 | 25 | `examples/flappy` rewritten in TS, multi-file (`types`, `alpha`, `tuning`, `prefabs/*`, `scenes/*`, `ui`, `main`) built by `alpha-build` to `dist/main.js`; planted 4 errors (wrong params, unknown tag, missing scene, start with params) → all rejected | Prove the types catch what agents get wrong |
 | 26 | `examples/flappy/AGENTS.md`: layout, commands, how-to-add recipes, determinism/state rules for agents | User request; agents need one page to edit the game correctly |
+| 27 | core: `Vec2`, `Color` (`#rgb/#rrggbb/#rrggbbaa`), `Random` (PCG32), `FixedStep`, `Timers` (every/after), `Actions` + input names, `TagRegistry`, `EntitySpec`/`DrawItem`/`TextItem` data | Pure, dependency-free pieces the script API maps 1:1 onto |
+| 28 | physics: Box2D v3 wrapper in px/deg (50 px/m), hits + sensor enters with owner ids | One place converts units; scripts never see meters |
+| 29 | Box2D 3.1 contact events are opt-in (`enableContactEvents` default false) → enabled per shape | Root cause of "no hits" test failure |
+| 30 | `b2MakeRot` is approximate (30° → 30.03°) → rotation tests use tolerance | Library property, not a bug to hide |
+| 31 | ecs: `World` on EnTT (deferred destroy, creation-order find, errors name the entity) | Deterministic queries despite id reuse |
+| 32 | render: pure tessellation + text layout; `Renderer` on SDL with letterboxed logical size, debug-font text, `save_bmp`; tested on SDL software renderer reading real pixels | Honest render tests without a window |
+| 33 | platform: SDL events → `InputSet`, taps shorter than a step still register | Input never lost between fixed steps |
+| 34 | demo: native Flappy on the layer + `main --frames/--screenshot/--flap-every`; screenshots checked (play + game over) | End-to-end proof; headless lever for agents |
+| 35 | dryer flagged `set_position`/`set_rotation` and two index lookups → `World::place`, `core::index_of` | Remove duplication, not raise threshold |
+| 36 | check_limits never recognized templates (lizard names omit `template`) → looks at lines above; negative test still flags non-template header bodies | Tool now matches the documented rule |
+| 37 | Harness preset failed CRAP on engine files it doesn't build → crapper `--only src/core` for harness; gate default preset → dev | Score only what the preset compiles; full gate sees everything |
+| 38 | Removed `src/demo` (native C++ Flappy) | User: end developers only download the binary and write JS; no game code belongs in the engine |
+| 39 | script: QuickJS-ng `Engine` (modules from embedded sources or files, promise/job handling, errors = message + stack) | One place owns the JS runtime lifecycle |
+| 40 | Runtime in JS (`runtime.js`, `alpha.js`, `alpha_test.js`) embedded via CMake `configure_file`; C++ exposes flat `__native` (26 natives) | Scene/ctx logic stays readable JS; C++ surface stays small and validated |
+| 41 | `spec_parser`: JS entity spec → `EntitySpec`, errors name the field (`spawn: shape.color must be a color like "#73bf2e"`) | Validate at the boundary, trust inside |
+| 42 | `native_guard`: every C++ exception → JS TypeError; `Host` turns any JS error into pause + on-screen overlay | A script error never crashes the engine |
+| 43 | `main`: `alpha_star <game.js> [--frames --screenshot --tap --tap-every]`; save file `<game.js>.save.json` | Binary runs any compiled game; headless lever for agents |
+| 44 | Host tests run real JS games (boot, input, timers, collisions→scene+params, save across runs, entity proxy, 7 agent-facing errors, 3 load failures) | Behavior tested as the script author uses it |
+| 45 | examples/flappy (TS → dist/main.js) runs in the binary: title, play, game over, save; screenshots checked | End-to-end proof on the real example |
+| 46 | dryer → `xy_args`, `new_array` template, merged `randomRange`/`randomInt` into one `random(min,max,integer)` | Remove duplication instead of raising threshold |
+| 47 | Removed `Body.type` from SDK types (runtime doesn't provide it); documented text width = size per char | Types must not promise more than the engine does |
+| 48 | Not done: audio output (play validates only), `alpha/test` simulate (throws), TS source maps for error lines | Recorded so the next unit starts from facts |
+| 49 | User: engine works like LÖVE — one executable that takes a built JS module and runs it | Confirms `alpha_star game.js`; assets resolve relative to the module |
+| 50 | core: `synthesize` (sine/square/triangle/saw/noise, freq slide, attack/release, note sequences, fixed-seed noise) + `Mixer` (volume, pitch, loop, stop, master, clamp) | Pure, testable audio; deterministic procedural sounds |
+| 51 | Audio pushed from the main thread into `SDL_AudioStream` (50 ms target), no callback | No state shared with the audio thread |
+| 52 | SDL_image release-3.2.4 (3.4 needs SDL 3.4), stb backend, no submodules | PNG/JPG/BMP without system libraries |
+| 53 | platform: `load_wav` (→ mono f32 48 kHz), `load_image` (→ RGBA8), `AudioOut`; tested with a hand-written WAV, PNG round-trip, dummy audio driver | Honest tests without real hardware |
+| 54 | render: sprites as cached textures; geometry batches split at images so z order holds | Images and shapes interleave correctly |
+| 55 | script: assets preloaded at boot (`loadSound`/`synthSound`/`loadImage`), `ctx.audio.play/tone/stopAll/volume`, voices, `shape.image`; errors name the asset and list what exists; script error stops all audio | Agent-facing API, validated at the boundary |
+| 56 | SDK types: `GameTypes.images`, `Synth`/`Note`/`SoundAsset`, `PlayOptions`, `Voice`, sprite shape; build test finds the error line instead of hardcoding it | Types match the engine exactly |
+| 57 | Flappy: WAV paths that never existed → procedural flap/point/crash sounds | Preload now really loads; missing files fail boot |
+| 58 | dryer → `load_file<Table, Decode, Kind>` native template | One body for every file asset kind |
+| 59 | Not done: OGG/MP3 (WAV only), streaming music (whole file in memory), audio not audible-verified (device opens; samples tested) | Recorded for the next unit |
+| 60 | Makefile: `make flappy` (build engine + compile example + play), `flappy-build`; `run-debug`/`debug` open `GAME` (default flappy); `tools/run.py` forwards game + engine args (also under the debugger) | User request; run targets were calling the binary without a game |

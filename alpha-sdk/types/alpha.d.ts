@@ -17,6 +17,8 @@ declare module "alpha" {
     actions: string;
     /** Sound asset names. */
     sounds: string;
+    /** Image asset names (use `never` if the game has none). */
+    images: string;
     /** Entity tags used by find / collisions. */
     tags: string;
     /** Scene name -> params its enter() receives (`undefined` = none). */
@@ -45,9 +47,11 @@ declare module "alpha" {
     | { circle: number; sensor?: boolean }
     | { rect: Vec2; sensor?: boolean };
 
-  export type Shape =
+  /** A filled shape, or an image (`size` defaults to the image's pixel size). */
+  export type Shape<I extends string = never> =
     | { circle: number; color: Color; outline?: Color }
-    | { rect: Vec2; color: Color; outline?: Color };
+    | { rect: Vec2; color: Color; outline?: Color }
+    | { image: I; size?: Vec2 };
 
   export interface BodySpec {
     type: "static" | "kinematic" | "dynamic";
@@ -56,17 +60,16 @@ declare module "alpha" {
   }
 
   /** Plain data describing an entity. Build it with functions, not classes. */
-  export interface EntitySpec<T extends string = string> {
+  export interface EntitySpec<T extends string = string, I extends string = never> {
     tags: T[];
     pos: Vec2;
-    shape?: Shape;
+    shape?: Shape<I>;
     body?: BodySpec;
     rotation?: number;
     z?: number;
   }
 
   export interface Body {
-    readonly type: BodySpec["type"];
     get velocity(): Vec2Ref;
     set velocity(v: Vec2);
   }
@@ -111,6 +114,7 @@ declare module "alpha" {
 
   export interface TextOptions {
     pos: Vec2;
+    /** Glyph height in px (default 16). The built-in font is square: each char is `size` px wide. */
     size?: number;
     color?: Color;
     align?: "left" | "center" | "right";
@@ -121,8 +125,46 @@ declare module "alpha" {
     text(content: string | (() => string), opts: TextOptions): void;
   }
 
+  /** One procedural note. `freq` is Hz, or [from, to] for a slide. Seconds for times. */
+  export interface Note {
+    wave: "sine" | "square" | "triangle" | "saw" | "noise";
+    freq: number | [from: number, to: number];
+    duration: number;
+    /** 0..1, default 0.5 */
+    volume?: number;
+    /** fade-in seconds, default 0.005 */
+    attack?: number;
+    /** fade-out seconds, default 0.05 */
+    release?: number;
+  }
+  /** A note, or notes played one after another. Same spec = same sound, always. */
+  export type Synth = Note | Note[];
+
+  /** A WAV file path (relative to the game .js), or a synthesized sound. */
+  export type SoundAsset = string | Synth;
+
+  export interface PlayOptions {
+    /** 0..1, default 1 */
+    volume?: number;
+    /** playback speed, default 1 (2 = octave up) */
+    pitch?: number;
+    loop?: boolean;
+  }
+
+  /** A playing sound. Stopping twice is a no-op. */
+  export interface Voice {
+    readonly playing: boolean;
+    stop(): void;
+  }
+
   export interface Audio<S extends string> {
-    play(sound: S): void;
+    /** Plays a preloaded sound from assets.sounds. */
+    play(sound: S, opts?: PlayOptions): Voice;
+    /** Synthesizes and plays a sound on the fly. */
+    tone(synth: Synth, opts?: PlayOptions): Voice;
+    stopAll(): void;
+    /** Master volume 0..1. */
+    volume: number;
   }
 
   // ---- scene context ----------------------------------------------------------
@@ -146,7 +188,7 @@ declare module "alpha" {
     readonly ui: UI;
     readonly audio: Audio<G["sounds"]>;
 
-    spawn(spec: EntitySpec<G["tags"]>): Entity<G["tags"]>;
+    spawn(spec: EntitySpec<G["tags"], G["images"]>): Entity<G["tags"]>;
     /** Removed at the end of the step. Destroying twice is a no-op. */
     destroy(entity: Entity<G["tags"]>): void;
     /** Throws if no entity has the tag. */
@@ -203,7 +245,8 @@ declare module "alpha" {
     start: StartScene<G>;
     /** Every declared scene, exactly once. */
     scenes: { [K in keyof G["scenes"]]: Scene<G, K> };
-    assets: { sounds: Record<G["sounds"], string> };
+    /** Every asset is loaded before the start scene; a missing file stops boot with its name. */
+    assets: { sounds: Record<G["sounds"], SoundAsset>; images?: Record<G["images"], string> };
   }
 
   export interface Game<G extends GameTypes> {

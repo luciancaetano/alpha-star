@@ -2,6 +2,7 @@
 export interface Flappy {
   actions: "flap" | "restart";
   sounds: "flap" | "point";
+  images: never;
   tags: "bird" | "solid" | "goal" | "scrolls";
   scenes: {
     title: undefined;

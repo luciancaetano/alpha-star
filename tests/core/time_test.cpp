@@ -1,0 +1,51 @@
+#include <doctest/doctest.h>
+
+#include <vector>
+
+#include "core/error.hpp"
+#include "core/fixed_step.hpp"
+#include "core/timers.hpp"
+
+using alpha::core::Error;
+using alpha::core::FixedStep;
+using alpha::core::TimerId;
+using alpha::core::Timers;
+
+TEST_CASE("FixedStep turns real time into whole steps and keeps the remainder") {
+  FixedStep fs(0.25, 8);
+  CHECK(fs.advance(0.1) == 0);
+  CHECK(fs.advance(0.2) == 1);  // 0.3 total -> 1 step, 0.05 left
+  CHECK(fs.advance(0.45) == 2);
+  CHECK(fs.dt() == 0.25);
+}
+
+TEST_CASE("FixedStep caps steps after a stall and drops the backlog") {
+  FixedStep fs(0.25, 3);
+  CHECK(fs.advance(10.0) == 3);
+  CHECK(fs.advance(0.0) == 0);
+}
+
+TEST_CASE("Timers: after fires once, every repeats") {
+  Timers t;
+  const TimerId once = t.after(1.0);
+  const TimerId rep = t.every(0.5);
+  CHECK(t.advance(0.5) == std::vector<TimerId>{rep});
+  CHECK(t.advance(0.5) == std::vector<TimerId>{once, rep});
+  CHECK(t.advance(1.0) == std::vector<TimerId>{rep, rep});
+}
+
+TEST_CASE("Timers: cancel and clear stop firing") {
+  Timers t;
+  const TimerId a = t.every(1.0);
+  const TimerId b = t.every(1.0);
+  t.cancel(a);
+  CHECK(t.advance(1.0) == std::vector<TimerId>{b});
+  t.clear();
+  CHECK(t.advance(5.0).empty());
+}
+
+TEST_CASE("Timers reject non-positive periods") {
+  Timers t;
+  CHECK_THROWS_AS(t.every(0.0), Error);
+  CHECK_THROWS_AS(t.after(-1.0), Error);
+}

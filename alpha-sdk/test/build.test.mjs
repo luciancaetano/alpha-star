@@ -24,7 +24,9 @@ test("rejects an undeclared action with file and line, writing nothing", async (
   const { ok, problems } = await build(fixture("bad"), out);
   assert.equal(ok, false);
   assert.equal(problems.length, 1);
-  assert.equal(problems[0].line, 13);
+  const lines = fs.readFileSync(fixture("bad"), "utf8").split(/\r?\n/);
+  const flyLine = lines.findIndex((l) => l.includes('"fly"')) + 1;
+  assert.equal(problems[0].line, flyLine);
   assert.match(problems[0].message, /"fly".*"jump"/s);
   assert.equal(fs.existsSync(out), false);
 });

@@ -1,5 +1,13 @@
 # core: pure, dependency-free domain code. Tested by the fast harness preset.
 add_library(alpha_core
+  core/color.cpp
+  core/fixed_step.cpp
+  core/input.cpp
+  core/mixer.cpp
+  core/random.cpp
+  core/synth.cpp
+  core/tags.cpp
+  core/timers.cpp
   core/version.cpp)
 target_include_directories(alpha_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(alpha_core PUBLIC ALPHA_VERSION="${PROJECT_VERSION}")
@@ -9,8 +17,39 @@ if(NOT ALPHA_WITH_RUNTIME_DEPS)
   return()
 endif()
 
-# runtime: modules that touch SDL3 / Box2D / QuickJS-ng / EnTT.
+# Script runtime JS is embedded in the binary: the player ships one executable.
+set(ALPHA_JS_FILES alpha alpha_test runtime)
+foreach(js ${ALPHA_JS_FILES})
+  file(READ script/${js}.js ALPHA_JS_${js})
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS script/${js}.js)
+endforeach()
+configure_file(script/embedded_js.hpp.in
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/script/embedded_js.hpp @ONLY)
+
+# engine: everything the binary runs. Games are JS; nothing game-specific here.
+add_library(alpha_engine
+  ecs/world.cpp
+  physics/physics_world.cpp
+  platform/assets.cpp
+  platform/audio_out.cpp
+  platform/sdl_input.cpp
+  render/renderer.cpp
+  render/tessellate.cpp
+  render/text_layout.cpp
+  script/asset_bindings.cpp
+  script/error_overlay.cpp
+  script/host.cpp
+  script/js_engine.cpp
+  script/js_value.cpp
+  script/spec_parser.cpp
+  script/synth_parser.cpp
+  script/system_bindings.cpp
+  script/world_bindings.cpp)
+target_include_directories(alpha_engine PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/generated)
+target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnTT::EnTT qjs SDL3_image::SDL3_image)
+alpha_set_warnings(alpha_engine)
+
 add_executable(alpha_star main.cpp)
-target_link_libraries(alpha_star PRIVATE
-  alpha_core SDL3::SDL3 box2d::box2d qjs EnTT::EnTT)
+target_link_libraries(alpha_star PRIVATE alpha_engine)
 alpha_set_warnings(alpha_star)

@@ -1,6 +1,6 @@
 ﻿"""CRAP score per function: CRAP = ccn^2 * (1 - cov)^3 + ccn.
 
-Usage: python tools/crapper.py [coverage.xml]
+Usage: python tools/crapper.py [coverage.xml] [--only src/<module>]
 coverage.xml is Cobertura (OpenCppCoverage --export_type cobertura, or gcovr --xml).
 Without coverage every function counts as 0% covered (worst case).
 Exit 1 if any function in src/ has CRAP >= MAX_CRAP.
@@ -39,8 +39,8 @@ def crap(ccn, cov):
     return ccn * ccn * (1 - cov) ** 3 + ccn
 
 
-def scores(hits):
-    for path in cfg.cpp_files([cfg.SRC]):
+def scores(hits, root):
+    for path in cfg.cpp_files([root]):
         if path.name in cfg.UNPAIRED_CPP:
             continue  # composition root: covered by smoke run, not unit tests
         file_hits = hits.get(cfg.rel(path), {})
@@ -50,9 +50,14 @@ def scores(hits):
 
 
 def main(argv):
+    root = cfg.SRC
+    if "--only" in argv:
+        i = argv.index("--only")
+        root = cfg.ROOT / argv[i + 1]  # presets that build a subset score only that subset
+        argv = argv[:i] + argv[i + 2:]
     hits = load_hits(argv[0]) if argv else {}
     bad = 0
-    for score, cov, where in sorted(scores(hits), reverse=True):
+    for score, cov, where in sorted(scores(hits, root), reverse=True):
         flag = "FAIL" if score >= cfg.MAX_CRAP else "ok  "
         bad += flag == "FAIL"
         print(f"{flag} CRAP {score:6.2f} cov {cov:4.0%}  {where}")

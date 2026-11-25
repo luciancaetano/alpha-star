@@ -1,6 +1,6 @@
 """Full gate: configure, build, test, limits, CRAP, duplication.
 
-Usage: python tools/gate.py [--preset harness|dev] [--coverage cov.xml] [--mutate]
+Usage: python tools/gate.py [--preset dev|harness] [--coverage cov.xml] [--mutate]
 """
 import argparse
 import subprocess
@@ -18,7 +18,7 @@ def step(name, cmd):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--preset", default="harness")
+    ap.add_argument("--preset", default="dev")
     ap.add_argument("--coverage")
     ap.add_argument("--mutate", action="store_true")
     a = ap.parse_args()
@@ -29,7 +29,8 @@ def main():
         ("test", ["ctest", "--preset", a.preset]),
         ("coverage", [py, "tools/coverage.py", "--preset", a.preset]),
         ("limits", [py, "tools/check_limits.py"]),
-        ("crap", [py, "tools/crapper.py", a.coverage or f"build/{a.preset}/coverage.xml"]),
+        ("crap", [py, "tools/crapper.py", a.coverage or f"build/{a.preset}/coverage.xml",
+                  *(["--only", "src/core"] if a.preset == "harness" else [])]),
         ("dry", [py, "tools/dryer.py"]),
     ]
     if a.mutate:
