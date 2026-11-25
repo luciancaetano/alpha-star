@@ -20,25 +20,6 @@ JSValue configure(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-JSValue bind_action(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  const std::string action = string_arg(ctx, argv[0], "action name");
-  const auto inputs = strings_arg(ctx, argv[1], "config.actions." + action);
-  s.actions.bind(action, inputs);
-  return JS_UNDEFINED;
-}
-
-// kind: 0 = pressed, 1 = down, 2 = released
-JSValue action(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  const std::string name = string_arg(ctx, argv[0], "action");
-  const auto id = s.actions.find(name);
-  if (!id) throw core::Error("unknown action \"" + name + "\"; declare it in config.actions");
-  const int kind = static_cast<int>(number_arg(ctx, argv[1], "kind"));
-  const bool on = kind == 0 ? s.actions.pressed(*id)
-                : kind == 1 ? s.actions.down(*id)
-                            : s.actions.released(*id);
-  return JS_NewBool(ctx, on);
-}
-
 // random(min, max, integer): float in [min, max) or integer in [min, max].
 JSValue random(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const double min = number_arg(ctx, argv[0], "random min");
@@ -94,9 +75,8 @@ JSValue log(JSContext* ctx, ScriptState&, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 11> kNatives{{
-    {"configure", guarded<configure>, 3},     {"bindAction", guarded<bind_action>, 2},
-    {"action", guarded<action>, 2},           {"random", guarded<random>, 3},
+constexpr std::array<Native, 9> kNatives{{
+    {"configure", guarded<configure>, 3},     {"random", guarded<random>, 3},
     {"timerEvery", guarded<timer_every>, 1},
     {"timerAfter", guarded<timer_after>, 1},  {"clearTimers", guarded<clear_timers>, 0},
     {"advanceTimers", guarded<advance_timers>, 1}, {"saveRead", guarded<save_read>, 1},

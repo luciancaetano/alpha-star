@@ -17,17 +17,67 @@ function framesOf(seconds) {
 }
 
 // { action: [frame, ...] } -> Map(frame -> [action, ...]), validated against the game.
-function pressesByFrame(inputs, actions) {
+function pressesByFrame(inputs, actions, label) {
   const byFrame = new Map();
-  for (const [action, frames] of Object.entries(inputs ?? {})) {
-    if (!actions.includes(action)) fail(`simulate: inputs.${action} is not an action; actions: ${actions.join(", ")}`);
-    if (!Array.isArray(frames)) fail(`simulate: inputs.${action} must be an array of frame numbers`);
+  for (const [action, frames] of Object.entries(inputs)) {
+    if (!actions.includes(action)) fail(`simulate: ${label}.${action} is not an action; actions: ${actions.join(", ")}`);
+    if (!Array.isArray(frames)) fail(`simulate: ${label}.${action} must be an array of frame numbers`);
     for (const f of frames) {
-      if (!Number.isInteger(f) || f < 0) fail(`simulate: inputs.${action} has ${f}; frame numbers are integers >= 0`);
+      if (!Number.isInteger(f) || f < 0) fail(`simulate: ${label}.${action} has ${f}; frame numbers are integers >= 0`);
       byFrame.set(f, [...(byFrame.get(f) ?? []), action]);
     }
   }
   return byFrame;
+}
+
+// { axis: [[frame, value], ...] } -> [[axis, points]], validated against the game.
+function axisTimelines(axes, declared, label) {
+  const out = [];
+  for (const [axis, points] of Object.entries(axes ?? {})) {
+    if (!declared.includes(axis)) fail(`simulate: ${label}.axes.${axis} is not an axis; axes: ${declared.join(", ") || "(none)"}`);
+    if (!Array.isArray(points)) fail(`simulate: ${label}.axes.${axis} must be an array of [frame, value]`);
+    let last = -1;
+    for (const pt of points) {
+      const ok = Array.isArray(pt) && pt.length === 2 && Number.isInteger(pt[0]) && pt[0] > last &&
+        typeof pt[1] === "number" && pt[1] >= -1 && pt[1] <= 1;
+      if (!ok) fail(`simulate: ${label}.axes.${axis} has ${JSON.stringify(pt)}; entries are [frame, value] with increasing integer frames >= 0 and -1 <= value <= 1`);
+      last = pt[0];
+    }
+    out.push([axis, points]);
+  }
+  return out;
+}
+
+// inputs: one object (player 1) or an array with one object per player.
+function playerInputs(inputs, sim) {
+  const list = inputs === undefined ? [{}] : Array.isArray(inputs) ? inputs : [inputs];
+  if (list.length < 1 || list.length > 4) fail(`simulate: inputs as an array has one object per player (1..4 objects), got ${list.length}`);
+  return list.map((p, i) => {
+    const label = Array.isArray(inputs) ? `inputs[${i}]` : "inputs";
+    const { axes, ...actions } = p ?? {};
+    return { presses: pressesByFrame(actions, sim.actions(), label), axes: axisTimelines(axes, sim.axes(), label) };
+  });
+}
+
+// The value an axis timeline holds at frame f (undefined before its first entry).
+function axisAt(points, f) {
+  let v;
+  for (const [frame, value] of points) {
+    if (frame > f) break;
+    v = value;
+  }
+  return v;
+}
+
+function holdFrame(players, f) {
+  const held = [0, 1, 2, 3].map((p) => players[p]?.presses.get(f) ?? []);
+  N.holdActions(...held, players.length);
+  players.forEach((player, p) => {
+    for (const [axis, points] of player.axes) {
+      const v = axisAt(points, f);
+      if (v !== undefined) N.holdAxis(axis, p + 1, v);
+    }
+  });
 }
 
 // { "doc#id": [frame, ...] } -> Map(frame -> [[doc, id], ...]).
@@ -65,14 +115,14 @@ function runGame(game, opts) {
   try {
     const sim = createInstance(id, memorySave());
     sim.boot(game, opts.scene, "simulate");
-    const presses = pressesByFrame(opts.inputs, sim.actions());
+    const players = playerInputs(opts.inputs, sim);
     const clicks = clicksByFrame(opts.clicks);
     let error = null;
     for (let f = 0; f < frames && !error; ++f) {
       N.stepBudget();
       for (const target of clicks.get(f) ?? []) click(sim, f, target);
       try {
-        sim.within(() => N.holdActions(presses.get(f) ?? []));
+        sim.within(() => holdFrame(players, f));
         sim.step(DT);
       } catch (e) {
         error = e;  // the game pauses here, as it would in the engine

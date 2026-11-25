@@ -13,6 +13,7 @@
 #include "platform/audio_out.hpp"
 #include "platform/frame_latency.hpp"
 #include "platform/log_file.hpp"
+#include "platform/gamepads.hpp"
 #include "platform/sdl_input.hpp"
 #include "render/renderer.hpp"
 #include "script/host.hpp"
@@ -72,30 +73,35 @@ int fail(const char* what) {
   return 1;
 }
 
+// Device state between steps and the open gamepads (their player slots).
+struct Devices {
+  alpha::platform::InputState input;
+  alpha::platform::Gamepads pads;
+};
+
 // Controllers plugged in or out while running (also the ones present at start).
-void hot_plug(const SDL_Event& event) {
-  if (event.type == SDL_EVENT_GAMEPAD_ADDED) SDL_OpenGamepad(event.gdevice.which);
-  if (event.type == SDL_EVENT_GAMEPAD_REMOVED) SDL_CloseGamepad(SDL_GetGamepadFromID(event.gdevice.which));
+void hot_plug(Devices& d, const SDL_Event& event) {
+  if (const auto gone = d.pads.handle(event)) alpha::platform::release_player(d.input, *gone);
 }
 
 // Routing: dev tools first (F1, their windows), then the game UI (in game
 // pixels), and only what neither consumed drives game actions.
-bool pump(alpha::platform::InputState& input, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl) {
+bool pump(Devices& d, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl) {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_EVENT_QUIT) return false;
-    hot_plug(event);
+    hot_plug(d, event);
     if (!tools.handle(event)) continue;
     SDL_Event logical = event;
     SDL_ConvertEventToRenderCoordinates(sdl, &logical);
-    if (host.reaches_game(logical)) alpha::platform::apply_event(input, event);
+    if (host.reaches_game(logical)) alpha::platform::apply_event(d.input, event, d.pads.slots());
   }
   return true;
 }
 
 void tap(const Options& o, int frame, alpha::platform::InputState& input) {
   const auto code = alpha::core::parse_input(o.tap);
-  if (code && o.tap_every > 0 && frame % o.tap_every == 0) input.pressed.set(*code);
+  if (code && o.tap_every > 0 && frame % o.tap_every == 0) input.pressed[0].set(*code);
 }
 
 double seconds_since(Uint64& last) {
@@ -130,15 +136,16 @@ void draw(alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& t
 void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools) {
   alpha::platform::AudioOut audio;
   if (!audio.ok()) SDL_Log("no audio device (%s); running silent", SDL_GetError());
-  alpha::platform::InputState input;
+  Devices d;
   alpha::core::FixedStep clock(kDt, 5);
   Uint64 last = SDL_GetTicksNS();
   bool reported = false;
-  for (int frame = 0; pump(input, tools, host, renderer.sdl()) && (o.frames == 0 || frame < o.frames); ++frame) {
-    tap(o, frame, input);
+  for (int frame = 0; pump(d, tools, host, renderer.sdl()) && (o.frames == 0 || frame < o.frames); ++frame) {
+    tap(o, frame, d.input);
     const double elapsed = seconds_since(last);
     const int steps = steps_for_frame(o, clock, tools, elapsed);
-    for (int s = 0; s < steps; ++s) host.step(alpha::platform::consume(input), static_cast<float>(kDt));
+    for (int s = 0; s < steps; ++s) host.step(alpha::platform::consume(d.input, d.pads.slots()), static_cast<float>(kDt));
+    d.pads.rumble(host.take_rumble());
     audio.pump(host.mixer());
     draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps}, blend_for(o, clock, tools));
     if (host.paused() && !reported) reported = std::fprintf(stderr, "%s\n", host.error().c_str()) > 0;

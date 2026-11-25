@@ -23,7 +23,7 @@ struct Sandbox {
   std::string save_file() const;
 };
 
-core::InputSet space();
+core::InputFrame space();
 // Text of element `id` in whichever shown UI document has it; "" if none.
 std::string ui_text(script::Host& host, const std::string& id);
 // RML document with one element per id: <p id="...">.

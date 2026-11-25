@@ -4,6 +4,7 @@
 #include <string>
 
 #include "core/error.hpp"
+#include "script/input_bindings.hpp"
 #include "script/js_engine.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
@@ -30,15 +31,30 @@ JSValue instance_destroy(JSContext* ctx, ScriptState&, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-// holdActions(names): one step with exactly these actions held, as if their inputs were.
+// holdActions(p1, p2, p3, p4, players): one step with exactly these actions
+// held per player (arrays of names), as if their inputs were, and `players`
+// connected. Axes read 0 until holdAxis.
 JSValue hold_actions(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  core::InputSet held;
-  for (const std::string& name : strings_arg(ctx, argv[0], "held actions")) {
-    const auto id = s.actions.find(name);
-    if (!id) throw core::Error("unknown action \"" + name + "\"; declare it in config.actions");
-    held |= s.actions.inputs(*id);
+  core::InputFrame frame;
+  for (std::size_t p = 0; p < core::kMaxPlayers; ++p) {
+    for (const std::string& name : strings_arg(ctx, argv[p], "held actions")) {
+      const auto id = s.controls.actions.find(name);
+      if (!id) throw core::Error("unknown action \"" + name + "\"; declare it in config.actions");
+      frame.players[p].held |= s.controls.actions.inputs(*id);
+    }
   }
-  s.actions.update(held);
+  frame.connected = static_cast<std::size_t>(player_arg(ctx, argv[4]) + 1);
+  s.controls.update(frame);
+  return JS_UNDEFINED;
+}
+
+// holdAxis(name, player 1..4, value): this step's value of one axis for one player.
+JSValue hold_axis(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  const std::string name = string_arg(ctx, argv[0], "axis");
+  const auto id = s.controls.axes.find(name);
+  if (!id) throw core::Error("unknown axis \"" + name + "\"; config.axes declares: " + s.controls.axes.names());
+  const auto value = static_cast<float>(number_arg(ctx, argv[2], "axis value"));
+  s.controls.axes.set(*id, player_arg(ctx, argv[1]), value);
   return JS_UNDEFINED;
 }
 
@@ -60,10 +76,10 @@ JSValue step_budget(JSContext* ctx, ScriptState&, JSValueConst*) {
 }
 
 // simulate() only: absent from shipping builds.
-constexpr std::array<Native, 5> kTestNatives{{
+constexpr std::array<Native, 6> kTestNatives{{
     {"instanceCreate", guarded<instance_create>, 0}, {"instanceDestroy", guarded<instance_destroy>, 1},
-    {"holdActions", guarded<hold_actions>, 1},       {"tagCounts", guarded<tag_counts>, 0},
-    {"stepBudget", guarded<step_budget>, 0},
+    {"holdActions", guarded<hold_actions>, 5},       {"holdAxis", guarded<hold_axis>, 3},
+    {"tagCounts", guarded<tag_counts>, 0},           {"stepBudget", guarded<step_budget>, 0},
 }};
 #endif
 

@@ -9,7 +9,6 @@
 #include "script/host.hpp"
 #include "host_fixture.hpp"
 
-using alpha::core::InputSet;
 using alpha::core::parse_input;
 using alpha::script::Host;
 namespace fs = std::filesystem;

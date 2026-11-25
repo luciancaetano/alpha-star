@@ -39,6 +39,16 @@ the export copies each declared file into the pack and fails naming any missing 
 ## How to add things
 
 - **New input:** add to `actions` in `types.ts`, then map devices in `main.ts` `config.actions`.
+  Sticks and triggers press actions too (`"GamepadLeftY-"` = left stick up, `"GamepadRT"`); Flappy
+  flaps on Space, mouse, any face button (A/B/X/Y) or the right trigger.
+- **Analog input:** add `axes: "moveX" | ...` to `types.ts` and `config.axes: { moveX: ["GamepadLeftX",
+  "A/D", "Left/Right"] }` (strongest source wins; `config.deadzone`, default 0.2); read
+  `ctx.input.axis("moveX")` in [-1, 1].
+- **Players:** gamepads become players 1..4 in connection order (a reconnected pad keeps its slot);
+  keyboard and mouse are player 1. `ctx.input.pressed(...)` is any player; `ctx.input.player(2).pressed(...)`
+  one; `ctx.input.players()` how many have a device.
+- **Rumble:** `ctx.input.rumble(strength 0..1, seconds, player?)`; Flappy rumbles lightly on a crash.
+  No-op without a gamepad (and in tests).
 - **New sound:** add to `sounds` in `types.ts`, then in `main.ts` `assets.sounds` either a WAV path
   (relative to this folder) or a synth spec `{ wave, freq, duration }` / list of notes.
   Play with `ctx.audio.play("name", { volume, pitch, loop })`; one-off procedural sounds with
@@ -87,7 +97,8 @@ the SDK is a release build and has no dev tools; nothing in a game can depend on
 ## Tests
 
 Write a `simulate(game, { scene, seconds, inputs, clicks })` test for each behavior you
-add. Inputs are action → frame numbers, clicks are `"document#elementId"` → frame numbers, so
+add. Inputs are action → frame numbers (plus `axes: { moveX: [[frame, value], ...] }`, held until
+the next entry; pass an array `[p1, p2, ...]` for several players), clicks are `"document#elementId"` → frame numbers, so
 runs are reproducible. Assert outcomes (`expect.scene`, `expect.count`, `expect.noErrors`,
 `expect.shown("hud")`, `expect.text("hud", "score").equals("3")`), not internals.
 

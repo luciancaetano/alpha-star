@@ -24,7 +24,11 @@ script::SavePathFor Sandbox::save() const {
 
 std::string Sandbox::save_file() const { return (dir / "save.json").string(); }
 
-core::InputSet space() { return core::InputSet{}.set(*core::parse_input("Space")); }
+core::InputFrame space() {
+  core::InputFrame frame;
+  frame.players[0].held.set(*core::parse_input("Space"));
+  return frame;
+}
 
 std::string ui_text(script::Host& host, const std::string& id) {
   if (!host.ui()) return "";

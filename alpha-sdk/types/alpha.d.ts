@@ -25,6 +25,8 @@ declare module "alpha" {
   export interface GameTypes {
     /** Input actions, e.g. "jump" | "fire". */
     actions: string;
+    /** Analog axes (config.axes), e.g. "moveX" | "moveY". Optional: omit if the game has none. */
+    axes?: string;
     /** Sound asset names. */
     sounds: string;
     /** Image asset names (use `never` if the game has none). */
@@ -106,13 +108,35 @@ declare module "alpha" {
 
   // ---- services -------------------------------------------------------------
 
-  export interface Input<A extends string> {
+  /** The game's axis names (`never` when GameTypes has no `axes`). */
+  export type AxisOf<G extends GameTypes> = G extends { axes: infer X extends string } ? X : never;
+
+  /** Player number: player 1 has the keyboard, the mouse and the first gamepad. */
+  export type Player = 1 | 2 | 3 | 4;
+
+  /** One player's input (or any player's, on ctx.input itself). */
+  export interface PlayerInput<A extends string, X extends string> {
     /** True only on the step the action went down. */
     pressed(action: A): boolean;
     /** True while held. */
     down(action: A): boolean;
     /** True only on the step the action went up. */
     released(action: A): boolean;
+    /**
+     * Axis value in [-1, 1] after config.deadzone (sticks +x right, +y down;
+     * triggers 0..1). On ctx.input: the player with the largest magnitude.
+     */
+    axis(name: X): number;
+  }
+
+  /** ctx.input: actions and axes of any player; `player(n)` for one. */
+  export interface Input<A extends string, X extends string = never> extends PlayerInput<A, X> {
+    /** Gamepads get players in connection order; a reconnected pad gets its slot back. */
+    player(n: Player): PlayerInput<A, X>;
+    /** Players with a device: 1 (keyboard) up to the highest connected gamepad's player. */
+    players(): number;
+    /** Vibrates gamepads: strength 0..1 for 0..10 seconds (0 stops); every player if omitted. No-op without a pad. */
+    rumble(strength: number, seconds: number, player?: Player): void;
   }
 
   /** Seeded by config.seed. Math.random is disabled. */
@@ -212,7 +236,7 @@ declare module "alpha" {
     readonly time: number;
     /** Scene state built by the scene's `state()`; reset on every enter. */
     state: S;
-    readonly input: Input<G["actions"]>;
+    readonly input: Input<G["actions"], AxisOf<G>>;
     readonly random: Random;
     readonly save: Save;
     readonly ui: UI<G["ui"]>;
@@ -261,8 +285,21 @@ declare module "alpha" {
     background?: Color;
     seed: number;
     gravity?: Vec2;
-    /** Action -> device inputs, e.g. ["Space", "MouseLeft", "GamepadA"]. */
+    /**
+     * Action -> device inputs, e.g. ["Space", "MouseLeft", "GamepadA"]. Sticks and
+     * triggers press too: "GamepadLeftY-" (left stick up), "GamepadLeftX+", "GamepadRT".
+     * The name "axes" is reserved.
+     */
     actions: Record<G["actions"], string[]>;
+    /**
+     * Axis -> sources; the axis reads the strongest one. A source is an analog axis
+     * ("GamepadLeftX", "GamepadLeftY", "GamepadRightX", "GamepadRightY", "GamepadLT",
+     * "GamepadRT") or a "Negative/Positive" input pair: "A/D", "Left/Right".
+     * e.g. `{ moveX: ["GamepadLeftX", "A/D", "Left/Right"] }`.
+     */
+    axes?: Record<AxisOf<G>, string[]>;
+    /** Stick (radial) and trigger deadzone, 0 <= d < 1. Default 0.2. */
+    deadzone?: number;
   }
 
   /** Scenes enterable without params. */
@@ -303,15 +340,26 @@ declare module "alpha" {
 }
 
 declare module "alpha/test" {
-  import type { Game, GameTypes } from "alpha";
+  import type { AxisOf, Game, GameTypes } from "alpha";
+
+  /**
+   * One player's simulated input: action -> frames (pressed for one step each),
+   * and `axes`: axis -> [frame, value] entries (value held until the next entry).
+   */
+  export type PlayerInputs<G extends GameTypes> = Partial<Record<G["actions"], number[]>> & {
+    axes?: Partial<Record<AxisOf<G>, Array<[frame: number, value: number]>>>;
+  };
 
   export interface SimulateOptions<G extends GameTypes> {
     /** Scene to start in (default: the game's `start`). */
     scene?: keyof G["scenes"] & string;
     /** Simulated time; the run is round(seconds * 60) fixed steps of 1/60 s. */
     seconds: number;
-    /** Action -> frame numbers (0-based) on which it is pressed for one step. */
-    inputs?: Partial<Record<G["actions"], number[]>>;
+    /**
+     * Player 1's input, or an array with one entry per player (1..4); frames are 0-based.
+     * e.g. `{ flap: [0, 30], axes: { moveX: [[0, 1], [60, 0]] } }`.
+     */
+    inputs?: PlayerInputs<G> | PlayerInputs<G>[];
     /**
      * "document#elementId" -> frame numbers on which that element is clicked
      * (before the step; its handler runs in that step). Clicking a hidden

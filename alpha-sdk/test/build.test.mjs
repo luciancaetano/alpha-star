@@ -30,3 +30,12 @@ test("rejects an undeclared action with file and line, writing nothing", async (
   assert.match(problems[0].message, /"fly".*"jump"/s);
   assert.equal(fs.existsSync(out), false);
 });
+
+test("axis names are typed: declared axes build, an undeclared one is rejected", async () => {
+  const good = await build(fixture("axes"), tmpOut());
+  assert.deepEqual(good.problems, []);
+  const bad = await build(fixture("bad_axis"), tmpOut());
+  assert.equal(bad.ok, false);
+  assert.equal(bad.problems.length, 1);
+  assert.match(bad.problems[0].message, /"moveY".*"moveX" \| "throttle"/s);
+});

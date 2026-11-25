@@ -7,7 +7,7 @@
 #include <string>
 
 #include "core/image.hpp"
-#include "core/input.hpp"
+#include "core/controls.hpp"
 #include "core/mixer.hpp"
 #include "core/random.hpp"
 #include "core/tags.hpp"
@@ -21,7 +21,7 @@ namespace alpha::script {
 // The runtime replaces `world` on every scene enter.
 struct ScriptState {
   core::TagRegistry tags;
-  core::Actions actions;
+  core::Controls controls;
   core::Random random{0};
   core::Timers timers;
   core::Vec2 gravity;

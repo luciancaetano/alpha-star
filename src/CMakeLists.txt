@@ -1,11 +1,14 @@
 # core: pure, dependency-free domain code. Tested by the fast harness preset.
 add_library(alpha_core
+  core/axes.cpp
   core/cli.cpp
   core/color.cpp
+  core/controls.cpp
   core/fixed_step.cpp
   core/input.cpp
   core/log_ring.cpp
   core/mixer.cpp
+  core/pad_slots.cpp
   core/random.cpp
   core/source_map.cpp
   core/synth.cpp
@@ -37,6 +40,7 @@ add_library(alpha_engine
   platform/assets.cpp
   platform/audio_out.cpp
   platform/frame_latency.cpp
+  platform/gamepads.cpp
   platform/log_file.cpp
   platform/sdl_input.cpp
   render/renderer.cpp
@@ -46,6 +50,7 @@ add_library(alpha_engine
   script/error_overlay.cpp
   script/host.cpp
   script/bundle_map.cpp
+  script/input_bindings.cpp
   script/instance_bindings.cpp
   script/instances.cpp
   script/js_engine.cpp

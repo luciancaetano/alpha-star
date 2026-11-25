@@ -6,6 +6,7 @@
 #include "script/bundle_map.hpp"
 #include "script/embedded_js.hpp"
 #include "script/error_overlay.hpp"
+#include "script/input_bindings.hpp"
 #include "script/instance_bindings.hpp"
 #include "script/system_bindings.hpp"
 #include "script/ui_bindings.hpp"
@@ -48,6 +49,7 @@ Host::Host(SavePathFor save_path_for)
   Value natives(ctx, JS_NewObject(ctx));
   install_world_bindings(ctx, natives.get());
   install_system_bindings(ctx, natives.get());
+  install_input_bindings(ctx, natives.get());
   install_asset_bindings(ctx, natives.get());
   install_instance_bindings(ctx, natives.get());
   install_ui_bindings(ctx, natives.get());
@@ -88,9 +90,9 @@ std::string Host::located(const std::exception& e) const {
   return source_map_ ? core::rewrite_locations(e.what(), bundle_path_, *source_map_) : e.what();
 }
 
-void Host::step(const core::InputSet& held, float dt) {
+void Host::step(const core::InputFrame& input, float dt) {
   if (paused()) return;
-  instances_.main().actions.update(held);
+  instances_.main().controls.update(input);
   if (instances_.main().world) instances_.main().world->snapshot();
   try {
     std::array<JSValueConst, 1> args{JS_NewFloat64(engine_->ctx(), dt)};
@@ -100,6 +102,8 @@ void Host::step(const core::InputSet& held, float dt) {
     pause(e);
   }
 }
+
+core::RumbleRequests Host::take_rumble() { return instances_.main().controls.take_rumble(); }
 
 void Host::pause(const std::exception& e) {
   error_ = located(e);

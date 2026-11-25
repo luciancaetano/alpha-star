@@ -10,10 +10,10 @@
 using namespace alpha::core;
 
 namespace {
-InputSet pressing(std::initializer_list<const char*> names) {
-  InputSet set;
-  for (const char* n : names) set.set(*parse_input(n));
-  return set;
+InputFrame pressing(std::initializer_list<const char*> names, std::size_t player = 0) {
+  InputFrame frame;
+  for (const char* n : names) frame.players[player].held.set(*parse_input(n));
+  return frame;
 }
 }  // namespace
 
@@ -41,6 +41,21 @@ TEST_CASE("Actions report pressed, down and released per step") {
   actions.update({});
   CHECK(actions.released(flap));
   CHECK_FALSE(actions.down(flap));
+}
+
+TEST_CASE("Actions report per player; the default is any player") {
+  Actions actions;
+  const std::vector<std::string> inputs{"GamepadA"};
+  const ActionId jump = actions.bind("jump", inputs);
+  actions.update(pressing({"GamepadA"}, 2));
+  CHECK(actions.pressed(jump));
+  CHECK(actions.pressed(jump, 2));
+  CHECK_FALSE(actions.down(jump, 0));
+  actions.update(pressing({"GamepadA"}, 1));
+  CHECK(actions.pressed(jump));  // player 2 pressed while player 3 let go
+  CHECK(actions.released(jump));
+  CHECK(actions.released(jump, 2));
+  CHECK_FALSE(actions.pressed(jump, 2));
 }
 
 TEST_CASE("Actions reject unknown inputs, naming the valid ones") {

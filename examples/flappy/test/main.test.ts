@@ -16,6 +16,12 @@ export function flappingKeepsBirdAliveBeforeFirstPipe() {
   run.expect.noErrors();
 }
 
+export function secondPlayerCanFlapToo() {
+  // Player 2's gamepad (e.g. its right trigger) flaps like player 1's keys.
+  const run = simulate(game, { scene: "play", seconds: 1, inputs: [{}, { flap: [0, 20, 40] }] });
+  run.expect.scene("play");
+}
+
 export function pipesSpawnOnSchedule() {
   // Two pairs by t=3.1s; each pair is 2 pipes + 1 goal.
   const run = simulate(game, { scene: "play", seconds: 3.1, inputs: { flap: FLAP_STEADILY } });

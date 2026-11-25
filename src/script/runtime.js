@@ -39,6 +39,7 @@ function validate(g) {
   for (const [key, s] of Object.entries(def.scenes)) {
     if (!s || s.name !== key || !s.def) fail(`scenes.${key} must be scene("${key}", {...})`);
   }
+  if (Object.hasOwn(def.config.actions ?? {}, "axes")) fail("config.actions.axes: the name \"axes\" is reserved (headless test inputs use it for analog axes); rename the action");
   if (!Object.hasOwn(def.scenes, def.start)) fail(`start "${def.start}" is not a scene; scenes: ${Object.keys(def.scenes).join(", ")}`);
   return def;
 }
@@ -120,6 +121,32 @@ function playArgs(opts = {}) {
   return [opts.volume ?? 1, opts.pitch ?? 1, Boolean(opts.loop)];
 }
 
+// ctx.input for player p (1..4), or any player (0).
+function playerInput(p) {
+  return {
+    pressed: (action) => N.action(action, 0, p),
+    down: (action) => N.action(action, 1, p),
+    released: (action) => N.action(action, 2, p),
+    axis: (name) => N.axis(name, p),
+  };
+}
+
+function checkPlayer(n, what) {
+  if (!Number.isInteger(n) || n < 1 || n > 4) fail(`${what}: player must be an integer 1..4, got ${n}`);
+  return n;
+}
+
+function makeInput() {
+  const players = [1, 2, 3, 4].map(playerInput);
+  return {
+    ...playerInput(0),
+    player: (n) => players[checkPlayer(n, `input.player(${n})`) - 1],
+    players: () => N.players(),
+    rumble: (strength, seconds, player) =>
+      N.rumble(strength, seconds, player === undefined ? 0 : checkPlayer(player, "input.rumble")),
+  };
+}
+
 // The ctx object a game's scenes see. `s` is the instance's mutable state.
 function makeCtx(s) {
   const addTimer = (id, fn) => {
@@ -131,11 +158,7 @@ function makeCtx(s) {
     get dt() { return s.stepDt; },
     get time() { return s.sceneTime; },
     state: undefined,
-    input: {
-      pressed: (action) => N.action(action, 0),
-      down: (action) => N.action(action, 1),
-      released: (action) => N.action(action, 2),
-    },
+    input: makeInput(),
     random: {
       range: (min, max) => N.random(min, max, false),
       int: (min, max) => N.random(min, max, true),
@@ -229,7 +252,9 @@ function bootGame(s, ctx, g, start, what) {
   const c = s.game.config;
   N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]));
   N.uiCreate(c.size[0], c.size[1]);
-  for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bindAction(action, inputs);
+  for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bind("actions", action, inputs);
+  if (c.deadzone !== undefined) N.deadzone(c.deadzone);
+  for (const [axis, sources] of Object.entries(c.axes ?? {})) N.bind("axes", axis, sources);
   preload(s.game.assets ?? {});
   s.saveData = s.save.read(c.title ?? "alpha-star");
   enter(s, ctx, start === undefined ? s.game.start : checkScene(s.game, start, what), undefined);
@@ -276,6 +301,7 @@ export function createInstance(id, save) {
     // Runs fn with this instance active (for the headless test runner).
     within: (fn) => within(id, fn),
     actions: () => Object.keys(s.game?.config.actions ?? {}),
+    axes: () => Object.keys(s.game?.config.axes ?? {}),
     scene: () => s.currentName,
   };
 }

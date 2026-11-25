@@ -32,7 +32,7 @@ constexpr std::array<std::pair<int, std::string_view>, 3> kMouse{{
     {SDL_BUTTON_MIDDLE, "MouseMiddle"},
 }};
 
-constexpr std::array<std::pair<SDL_GamepadButton, std::string_view>, 12> kGamepad{{
+constexpr std::array<std::pair<SDL_GamepadButton, std::string_view>, 14> kGamepad{{
     {SDL_GAMEPAD_BUTTON_SOUTH, "GamepadA"},       {SDL_GAMEPAD_BUTTON_EAST, "GamepadB"},
     {SDL_GAMEPAD_BUTTON_WEST, "GamepadX"},        {SDL_GAMEPAD_BUTTON_NORTH, "GamepadY"},
     {SDL_GAMEPAD_BUTTON_START, "GamepadStart"},   {SDL_GAMEPAD_BUTTON_BACK, "GamepadBack"},
@@ -40,7 +40,14 @@ constexpr std::array<std::pair<SDL_GamepadButton, std::string_view>, 12> kGamepa
     {SDL_GAMEPAD_BUTTON_DPAD_LEFT, "GamepadLeft"}, {SDL_GAMEPAD_BUTTON_DPAD_RIGHT, "GamepadRight"},
     {SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, "GamepadLB"},
     {SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, "GamepadRB"},
+    {SDL_GAMEPAD_BUTTON_LEFT_STICK, "GamepadLS"},  {SDL_GAMEPAD_BUTTON_RIGHT_STICK, "GamepadRS"},
 }};
+
+// SDL axis order (LEFTX, LEFTY, RIGHTX, RIGHTY, LEFT_TRIGGER, RIGHT_TRIGGER)
+// is core::Analog's order; SDL reports -32768..32767 (triggers 0..32767).
+float normalized(Sint16 value) {
+  return static_cast<float>(value) / (value < 0 ? 32768.0f : 32767.0f);
+}
 
 // Letters and digits are contiguous in SDL and named by their character.
 std::optional<core::InputCode> alphanumeric(SDL_Scancode code) {
@@ -55,10 +62,19 @@ std::optional<core::InputCode> alphanumeric(SDL_Scancode code) {
   return std::nullopt;
 }
 
-void set(InputState& state, std::optional<core::InputCode> code, bool is_down) {
+void set(InputState& state, std::size_t player, std::optional<core::InputCode> code, bool is_down) {
   if (!code) return;
-  state.down.set(*code, is_down);
-  if (is_down) state.pressed.set(*code);
+  state.down[player].set(*code, is_down);
+  if (is_down) state.pressed[player].set(*code);
+}
+
+void pad_button(InputState& state, const SDL_GamepadButtonEvent& e, const core::PadSlots& slots) {
+  if (const auto player = slots.slot_of(e.which)) set(state, *player, from_gamepad(e.button), e.down);
+}
+
+void pad_axis(InputState& state, const SDL_GamepadAxisEvent& e, const core::PadSlots& slots) {
+  const auto player = slots.slot_of(e.which);
+  if (player && e.axis < core::kAnalogCount) state.analog[*player][e.axis] = normalized(e.value);
 }
 
 }  // namespace
@@ -72,29 +88,41 @@ std::optional<core::InputCode> from_mouse(Uint8 button) { return lookup(kMouse, 
 
 std::optional<core::InputCode> from_gamepad(Uint8 button) { return lookup(kGamepad, static_cast<SDL_GamepadButton>(button)); }
 
-void apply_event(InputState& state, const SDL_Event& event) {
+void apply_event(InputState& state, const SDL_Event& event, const core::PadSlots& slots) {
   switch (event.type) {
     case SDL_EVENT_KEY_DOWN:
     case SDL_EVENT_KEY_UP:
-      if (!event.key.repeat) set(state, from_scancode(event.key.scancode), event.key.down);
+      if (!event.key.repeat) set(state, 0, from_scancode(event.key.scancode), event.key.down);
       break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
     case SDL_EVENT_MOUSE_BUTTON_UP:
-      set(state, from_mouse(event.button.button), event.button.down);
+      set(state, 0, from_mouse(event.button.button), event.button.down);
       break;
     case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
     case SDL_EVENT_GAMEPAD_BUTTON_UP:
-      set(state, from_gamepad(event.gbutton.button), event.gbutton.down);
+      pad_button(state, event.gbutton, slots);
+      break;
+    case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+      pad_axis(state, event.gaxis, slots);
       break;
     default:
       break;
   }
 }
 
-core::InputSet consume(InputState& state) {
-  const core::InputSet held = state.down | state.pressed;
-  state.pressed.reset();
-  return held;
+void release_player(InputState& state, std::size_t player) {
+  state.down[player].reset();
+  state.analog[player] = {};
+}
+
+core::InputFrame consume(InputState& state, const core::PadSlots& slots) {
+  core::InputFrame frame;
+  for (std::size_t p = 0; p < core::kMaxPlayers; ++p) {
+    frame.players[p] = {state.down[p] | state.pressed[p], state.analog[p]};
+    state.pressed[p].reset();
+  }
+  frame.connected = slots.players();
+  return frame;
 }
 
 }  // namespace alpha::platform

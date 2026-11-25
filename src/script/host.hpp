@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "core/input.hpp"
+#include "core/controls.hpp"
 #include "core/log_ring.hpp"
 #include "render/renderer.hpp"
 #include "core/source_map.hpp"
@@ -50,7 +50,9 @@ class Host {
   // On failure returns defaults and pauses.
   GameInfo load(const std::string& path);
   // One fixed step with the inputs held (or tapped) during it.
-  void step(const core::InputSet& held, float dt);
+  void step(const core::InputFrame& input, float dt);
+  // Gamepad vibrations the game asked for since the last call (ctx.input.rumble).
+  core::RumbleRequests take_rumble();
   // blend: how far real time is into the next fixed step (FixedStep::fraction);
   // 1 draws the current state exactly.
   render::Frame frame(float blend = 1.0f);

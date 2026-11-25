@@ -12,7 +12,11 @@ export default game({
     background: "#70c5ce",
     seed: 42,
     gravity: [0, 900],
-    actions: { flap: ["Space", "MouseLeft", "GamepadA"], restart: ["R"] },
+    // Any face button or the right trigger flaps, on any player's gamepad.
+    actions: {
+      flap: ["Space", "MouseLeft", "GamepadA", "GamepadB", "GamepadX", "GamepadY", "GamepadRT"],
+      restart: ["R"],
+    },
   },
   start: "title",
   scenes: { title, play, over },
