@@ -14,6 +14,7 @@ import os
 import sys
 
 import harness_config as cfg
+import resource_guard
 
 IMAGE = "alpha-star-linux"
 BUILD_VOLUME = "alpha-star-linux-build"
@@ -27,6 +28,7 @@ def engine():
 
 
 def main(argv):
+    resource_guard.limit()  # host side: podman client tree dies with this process
     tool = engine()
     build = [tool, "build", "--network=host", "-t", IMAGE, "-f", "tools/linux/Containerfile", "."]
     if subprocess.run(build, cwd=cfg.ROOT).returncode != 0:
@@ -34,7 +36,7 @@ def main(argv):
     command = argv[argv.index("--") + 1:] if "--" in argv else ["python3", "tools/gate.py"]
     # Capped so a gate never takes over the host: 8 CPUs, 8 parallel compile jobs.
     os.environ.setdefault("CMAKE_BUILD_PARALLEL_LEVEL", "8")
-    run = [tool, "run", "--rm", "--init", "--network=host", "--cpus", "8", "-e", "CMAKE_BUILD_PARALLEL_LEVEL", "-v", f"{cfg.ROOT}:/src", "-v", f"{BUILD_VOLUME}:/src/build",
+    run = [tool, "run", "--rm", "--init", "--network=host", "--cpus", "8", "--memory", "6g", "--memory-swap", "6g", "-e", "CMAKE_BUILD_PARALLEL_LEVEL", "-v", f"{cfg.ROOT}:/src", "-v", f"{BUILD_VOLUME}:/src/build",
            IMAGE, "xvfb-run", "-a", *command]
     return subprocess.run(run, cwd=cfg.ROOT).returncode
 

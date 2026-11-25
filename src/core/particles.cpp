@@ -37,10 +37,9 @@ Color shade(Color c, Color tint, float alpha) {
           channel(static_cast<float>(c.b * tint.b) * k), channel(static_cast<float>(c.a * tint.a) * k * alpha)};
 }
 
-Emitter::Emitter(EmitterSpec spec) : spec_(std::move(spec)) {
-  particles_.reserve(static_cast<std::size_t>(std::max(spec_.max, 0)));
-  pending_ = spec_.burst;
-}
+// No reserve of spec.max: storage grows with live particles, which the world
+// caps at kMaxParticles in total (many emitters must not each hold max).
+Emitter::Emitter(EmitterSpec spec) : spec_(std::move(spec)) { pending_ = spec_.burst; }
 
 int Emitter::step(float dt, Vec2 origin, Random& random, int budget) {
   age(dt);

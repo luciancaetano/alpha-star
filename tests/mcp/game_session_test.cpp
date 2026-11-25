@@ -52,6 +52,17 @@ TEST_CASE("session: state shows the scene, UI documents, entities and the frame 
   CHECK(s.entities[0].pos.y == doctest::Approx(20));
 }
 
+TEST_CASE("session: state carries a perf summary of the measured frames and the JS heap") {
+  Rig rig;
+  rig.to_play();
+  rig.game.host.end_frame();
+  const std::string perf = rig.session.state().perf;
+  CHECK(perf.starts_with("{\"frames\":1,\"total\":{"));
+  CHECK(perf.find("\"script\":{\"p50\":") != std::string::npos);
+  CHECK(perf.find("\"jsBytes\":") != std::string::npos);
+  CHECK(perf.find("\"jsObjects\":") != std::string::npos);
+}
+
 TEST_CASE("session: step needs a pause; clicks on hidden documents are refused") {
   Rig rig;
   CHECK(message_of([&] { rig.session.step(1); }).find("pause") != std::string::npos);

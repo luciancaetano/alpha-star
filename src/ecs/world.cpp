@@ -7,6 +7,7 @@
 
 #include "core/error.hpp"
 #include "core/index_of.hpp"
+#include "core/limits.hpp"
 #include "ecs/components.hpp"
 #include "ecs/effects.hpp"
 #include "ecs/hierarchy.hpp"
@@ -44,6 +45,9 @@ World::World(core::Vec2 gravity, core::Vec2 view_size, core::Random* random)
       random_(random ? random : &own_random_) {}
 
 EntityId World::spawn(const core::EntitySpec& spec) {
+  if (registry_.view<Transform>().size() >= core::kMaxEntities) {
+    throw core::Error("spawn: a scene holds at most " + std::to_string(core::kMaxEntities) + " entities; destroy some first");
+  }
   const entt::entity e = registry_.create();
   registry_.emplace<Transform>(e, spec.pos, spec.rotation, spec.z);
   registry_.emplace<Previous>(e, spec.pos, spec.rotation);
@@ -137,12 +141,15 @@ core::Vec2 World::velocity(EntityId id) const { return physics::PhysicsWorld::ve
 
 void World::set_velocity(EntityId id, core::Vec2 velocity) { physics::PhysicsWorld::set_velocity(body(id), velocity); }
 
-void World::free_doomed() {
+std::vector<EntityId> World::free_doomed() {
   const auto doomed = registry_.view<Doomed>();
+  std::vector<EntityId> freed;
   for (const entt::entity e : doomed) {
     if (const auto* body = registry_.try_get<PhysicsBody>(e)) physics_.destroy(body->id);
+    freed.push_back(to_id(e));
   }
   registry_.destroy(doomed.begin(), doomed.end());
+  return freed;
 }
 
 void World::sync_bodies() {
@@ -256,16 +263,18 @@ void World::resize_view(core::Vec2 size) {
 }
 
 StepEvents World::step(float dt) {
-  free_doomed();
-  const physics::StepContacts contacts = physics_.step(dt);
-  sync_bodies();
+  std::vector<EntityId> freed = free_doomed();
+  physics::StepContacts contacts;
+  core::timed(times_[core::Section::physics], [&] { contacts = physics_.step(dt); sync_bodies(); });
   follow_parents();
-  animate(dt);
-  step_emitters(registry_, dt, *random_);
+  core::timed(times_[core::Section::animation], [&] { animate(dt); });
+  core::timed(times_[core::Section::particles], [&] { step_emitters(registry_, dt, *random_); });
   step_view(dt);
   return {living_only(contacts.hits), living_only(contacts.hit_ends), living_only(contacts.sensor_enters),
-          living_only(contacts.sensor_exits)};
+          living_only(contacts.sensor_exits), std::move(freed)};
 }
+
+core::FrameTimes World::take_times() { return std::exchange(times_, {}); }
 
 void World::snapshot() {
   for (auto [e, t, p] : registry_.view<const Transform, Previous>().each()) p = {t.pos, t.rotation};

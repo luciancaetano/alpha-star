@@ -34,6 +34,7 @@ struct RenderStats {
   int drawn = 0;
   int culled = 0;
   int draw_calls = 0;
+  int vertices = 0;  // world geometry sent to SDL (game UI and dev tools not counted)
 };
 
 // Draws frames on an SDL renderer it does not own. The game's logical size

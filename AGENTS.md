@@ -37,7 +37,9 @@ make build-debug | build-prod | run-debug | debug   # debug = run under VS/lldb/
 make flappy                                         # build engine + examples/flappy, then play
                                                     # examples/platformer: sheets, Tiled map, camera
 make sdk-engine | sdk-engine-linux                  # stage release engine into alpha-sdk/engine/
-make linux-gate                                     # full gate inside the Linux container
+make gate                                           # full Windows gate (tools/gate.py, resource-guarded)
+make test                                           # tests only (ctest --preset dev under resource_guard)
+make linux-gate                                     # full gate in the Linux container: run on the dedicated Linux PC, not this one
 ```
 
 ```
@@ -75,6 +77,22 @@ outside `src/platform/vfs.cpp`. App lifecycle: `core::AppLifecycle` (pure) <- `p
 (SDL events) <- `script::AppEvents` in the loop: focus lost / minimized (`config.pauseOnFocusLoss`) and
 background pause steps + audio, resume resets the fixed-step clock, hooks `ctx.onPause/onResume/onLowMemory`.
 Builds and gates: `CMAKE_BUILD_PARALLEL_LEVEL=8` (the Linux gate also runs with `--cpus 8`); one build at a time.
+**Never freeze the user's PC** (a runaway fuzz test once did): `gate.py`, `linux_gate.py`, `stage_engine.py` and
+`bench.py` put themselves under `tools/resource_guard.py` (Windows Job Object: 8 GB for the whole tree, 50% CPU hard cap,
+below-normal priority, kill-on-close so nothing survives its parent). Run anything else heavy as
+`python tools/resource_guard.py -- <command>`; never call ctest/test binaries/bench/fuzz directly. ctest kills a test after
+900 s. Every native allocation sized by script data has a hard cap with an agent-facing error (no unbounded reserve/resize
+from a script number or string length).
+Caps live in `core/limits.hpp` (plus `kMaxParticles`, `Timers::kMinSeconds`, `script::kStackLimitKb`).
+Performance and robustness levers (step 13; see `docs/PERF.md`):
+- `python tools/bench.py [--only NAME] [--md]`: scenarios in `bench/*.js` on the release engine
+  (`--frames 720 --hidden --perf out.json`), ms/frame p50/p95/max per section. Not in the gate.
+- Fuzz: `tests/script/fuzz_test.cpp` + `tests/fixtures/fuzz/fuzz_game.js` (3 seeds in the gate);
+  longer: `ALPHA_FUZZ_SEEDS=50 ALPHA_FUZZ_STEPS=200 python tools/resource_guard.py -- ctest --preset dev -R fuzz`
+  (`ALPHA_FUZZ_ONLY=<regex>`, `ALPHA_FUZZ_TRACE=1` to narrow a finding).
+- Soak: `tests/script/perf_script_test.cpp` (1200 steps in the gate; `ALPHA_SOAK_STEPS=216000` = 1 h, under the guard).
+- Profiler: dev tools "Profiler" window (F12), MCP `game_state.perf`, `--perf PATH` on `--frames` runs.
+- Many entities moved per frame: `ctx.positions(tag)` (bulk), not `entity.pos` per entity.
 
 Dev tools (Dear ImGui, F12 or gamepad Back+Start; `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:
 never put game-facing features in `src/devtools/`.

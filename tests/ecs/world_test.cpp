@@ -1,6 +1,9 @@
 #include <doctest/doctest.h>
 
+#include <chrono>
+
 #include "core/error.hpp"
+#include "core/limits.hpp"
 #include "ecs/world.hpp"
 
 using namespace alpha::core;
@@ -32,6 +35,32 @@ EntitySpec falling_bird(Vec2 pos) {
 }
 
 }  // namespace
+
+TEST_CASE("a world holds at most kMaxEntities; destroyed ones count until the step frees them") {
+  World w({0, 0});
+  const EntitySpec spec = plain({kBird}, {0, 0});
+  EntityId first = 0;
+  for (std::size_t i = 0; i < alpha::core::kMaxEntities; ++i) {
+    const EntityId id = w.spawn(spec);
+    if (i == 0) first = id;
+  }
+  CHECK_THROWS_WITH(w.spawn(spec), doctest::Contains("at most 100000 entities"));
+  w.destroy(first);
+  CHECK_THROWS(w.spawn(spec));
+  const auto events = w.step(1.0f / 60.0f);
+  CHECK(events.freed == std::vector<EntityId>{first});
+  CHECK_NOTHROW(w.spawn(spec));
+}
+
+TEST_CASE("moving every entity once is linear in the world size (children looked up among linked ones)") {
+  World w({0, 0});
+  std::vector<EntityId> ids;
+  for (int i = 0; i < 10000; ++i) ids.push_back(w.spawn(plain({kBird}, {0, 0})));
+  const auto start = std::chrono::steady_clock::now();
+  for (const EntityId id : ids) w.set_position(id, {1, 2});
+  CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(2));  // was O(n^2): ~1e8 visits + sorts
+  CHECK(w.position(ids.back()).y == 2.0f);
+}
 
 TEST_CASE("find returns the oldest living entity; find_all keeps creation order") {
   World w({0, 0});

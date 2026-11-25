@@ -11,6 +11,7 @@ set(ALPHA_TEST_SOURCES
   core/pixel_grid_test.cpp
   core/window_test.cpp
   core/particles_test.cpp
+  core/perf_test.cpp
   core/input_test.cpp
   core/log_ring_test.cpp
   core/pack_watch_test.cpp
@@ -43,6 +44,8 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/error_overlay_test.cpp
     script/host_test.cpp
     script/host_limits_test.cpp
+    script/fuzz_test.cpp
+    script/perf_script_test.cpp
     script/input_script_test.cpp
     script/hot_reload_test.cpp
     script/reload_test.cpp

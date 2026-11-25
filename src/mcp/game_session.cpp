@@ -35,6 +35,15 @@ void GameSession::frame_done(double frame_ms) {
   if (frame_ms > 0.0) frame_ms_[frames_seen_++ % frame_ms_.size()] = frame_ms;
 }
 
+// {"frames", "total", <section>: {p50, p95, max} ms, "jsBytes", "jsObjects"}
+std::string GameSession::perf_summary() const {
+  std::string out = core::to_json(host_.perf());
+  const script::JsMemory js = host_.js_memory();
+  out.pop_back();  // the closing brace: the heap joins the same object
+  return out + ",\"jsBytes\":" + std::to_string(static_cast<long long>(js.used_bytes)) +
+         ",\"jsObjects\":" + std::to_string(static_cast<long long>(js.objects)) + "}";
+}
+
 double GameSession::fps() const {
   const std::size_t n = std::min(frames_seen_, frame_ms_.size());
   const double total = std::accumulate(frame_ms_.begin(), frame_ms_.begin() + static_cast<std::ptrdiff_t>(n), 0.0);
@@ -56,6 +65,7 @@ GameState GameSession::state() {
   s.locale = host_.locale();
   s.music = host_.mixer().music_name();
   s.app_paused = host_.app_paused();
+  s.perf = perf_summary();
   return s;
 }
 

@@ -47,6 +47,7 @@ TEST_CASE("cli: a malformed number is ignored, never a crash") {
 
 TEST_CASE("cli: test mode") {
   const CliOptions o = parse({"--test", "t.js", "--assets", "proj"});
+  CHECK(parse({"pack", "--frames", "9", "--perf", "p.json"}).perf == "p.json");
   CHECK(o.game.empty());
   CHECK(o.test_file == "t.js");
   CHECK(o.test_assets == "proj");

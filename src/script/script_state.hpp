@@ -14,6 +14,7 @@
 #include "core/glyph_layout.hpp"
 #include "core/window.hpp"
 #include "core/mixer.hpp"
+#include "core/perf.hpp"
 #include "core/random.hpp"
 #include "core/sheet.hpp"
 #include "core/tags.hpp"
@@ -69,6 +70,8 @@ struct ScriptState {
   bool reduced_motion = false;
   // Game UI (assets.ui documents), created at boot with config.size.
   std::unique_ptr<ui::Ui> ui;
+  // Time natives spent this frame by section (timers, physics, ...); Host collects it.
+  core::FrameTimes times;
 };
 
 

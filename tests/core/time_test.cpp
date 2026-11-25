@@ -67,4 +67,8 @@ TEST_CASE("Timers reject non-positive periods") {
   Timers t;
   CHECK_THROWS_AS(t.every(0.0), Error);
   CHECK_THROWS_AS(t.after(-1.0), Error);
+  // Fuzz finding: every(5e-324) made one advance collect ~1e322 firings (bad_alloc).
+  CHECK_THROWS_WITH(t.every(5e-324), doctest::Contains(">= 0.001"));
+  CHECK_THROWS_AS(t.after(std::nan("")), Error);
+  CHECK_NOTHROW(t.every(0.001));
 }

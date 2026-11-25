@@ -1,7 +1,8 @@
 # Production roadmap (multi-agent pipeline)
 
-One subagent per step, strictly sequential (shared files). Each step: TDD, both gates
-(Windows `python tools/gate.py`, Linux `python tools/linux_gate.py`) GATE PASS,
+One subagent per step, strictly sequential (shared files). Each step: TDD, Windows gate
+(`python tools/gate.py` / `make gate`) GATE PASS; the Linux gate (`make linux-gate`) runs on the
+dedicated Linux PC later, not on this PC (user decision, step 13),
 `cd alpha-sdk && npm test` green, LOG.md + GLOSSARY.md updated, one commit on
 `feat/script-api-sdk`. Never push or publish externally.
 
@@ -28,7 +29,7 @@ build/gate/container at a time, `podman machine start` only for the Linux gate a
 | 12 | Portable IO (SDL_IOStream everywhere) + app lifecycle (suspend/resume, focus pause) | done (this commit; LOG 221-232) |
 | 12b | Antialiased shapes (user request: Flappy's bird circle is jagged): feathered 1 px alpha edge ring on circles/rects/outlines (ImGui-style, works on SDL_Renderer everywhere, no shaders), circle segment count adaptive to on-screen radius (camera zoom), option follows `pixelMode` (`config.pixelMode: false` = smooth shapes + linear images; per-shape `smooth?: boolean` override; `true` keeps today's crisp look); Flappy switches to `pixelMode: false` (its pixel font keeps `pixelMode: true`); software-renderer test: smooth edge pixel is partially transparent, crisp edge is not. ALSO (user request): dev tools toggle on **F12** instead of F1 (browser convention; frees F1 for games; gamepad Back+Start kept), and `ALPHA_DEVTOOLS` ON in the **release** preset too (the engine `alpha run`/`npm start`/`--watch` use) so devs open them during gameplay; shipping stays without (check_shipping unchanged, still fails on imgui markers); update docs (AGENTS.md flag table, README, examples' AGENTS.md: "F12 dev tools") and the routing tests | done |
 | 12c | Sharp text (user decision, option 1: KEEP FreeType + add bitmap fonts): (a) fix the blur at its root — rasterize TTF glyphs at the real output resolution (window pixels incl. high-DPI and letterbox scale, re-rasterized on window resize / camera zoom for world text), pixel-snapped glyph positions, FreeType hinting, for both RmlUi (render UI at output resolution or scale the font engine's size by the output scale) and world text; (b) ADD AngelCode BMFont (`.fnt` text/XML + PNG pages) in `assets.fonts` alongside TTF/OTF — via a font engine that serves both to RmlUi (`Rml::FontEngineInterface`) and world text; crisp bitmap text at integer multiples with the font image `pixelMode`; (c) embedded CC0/public-domain default font so text works with no files; (d) licensing: FreeType under FTL — `alpha export` writes a `CREDITS.txt`/third-party notices file into the pack (FreeType credit + other engine deps' notices) automatically, and docs explain that the FONT's license is what matters (OFL fine; bitmap from a font follows the font's license); tests: rendered glyph edges hit whole pixels at the output scale (no half-transparent columns from scaling), BMFont parser + render, notices file in the pack; Flappy text visibly sharp (screenshot); MSDF scalable text deferred to step 16 | done 0a3ac48 |
-| 13 | Performance: benchmarks, batch API, profiler in dev tools; fuzz JS/C++ boundary, soak tests, leak fixes | todo |
+| 13 | Performance: benchmarks, batch API, profiler in dev tools; fuzz JS/C++ boundary, soak tests, leak fixes | done (this commit; LOG 252-) |
 | 14 | `alpha init` templates, docs site + API reference + agent docs, 5+ examples, LICENSE/semver/CHANGELOG/CONTRIBUTING | todo |
 | 15 | Android target (`alpha export --target android-arm64`, APK, touch) | todo |
 | 16 | Shaders / post-processing / 2D lighting (SDL_GPU) | todo |

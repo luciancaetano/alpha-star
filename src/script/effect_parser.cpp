@@ -112,7 +112,7 @@ void parse_look(JSContext* ctx, JSValueConst obj, const std::string& path, core:
 
 core::ShapeSpec parse_text_shape(JSContext* ctx, JSValueConst obj, ScriptState& s) {
   core::TextLook look;
-  look.text = to_string(ctx, field(ctx, obj, "text").get());
+  look.text = text_arg(ctx, field(ctx, obj, "text").get(), kSpawn + "shape.text");
   if (has(ctx, obj, "font")) look.font = string_arg(ctx, field(ctx, obj, "font").get(), kSpawn + "shape.font");
   look.size = number_or(ctx, obj, "size", "shape.size", 16.0f);
   if (!(look.size >= 1 && look.size <= 256)) throw core::Error(kSpawn + "shape.size must be 1..256 (pixels)");

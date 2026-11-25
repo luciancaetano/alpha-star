@@ -3,6 +3,7 @@
 #include <string>
 
 #include "core/error.hpp"
+#include "core/limits.hpp"
 
 namespace alpha::script {
 
@@ -21,6 +22,9 @@ ScriptState& Instances::at(std::uint32_t id) {
 }
 
 std::uint32_t Instances::create() {
+  if (states_.size() >= core::kMaxInstances) {
+    throw core::Error("at most " + std::to_string(core::kMaxInstances) + " game instances (simulate runs) at once");
+  }
   auto state = std::make_unique<ScriptState>();
   state->asset_dir = main().asset_dir;
   state->save_path_for = [](const std::string&) { return std::string(); };

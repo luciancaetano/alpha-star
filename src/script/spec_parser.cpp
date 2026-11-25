@@ -68,7 +68,7 @@ bool smooth_of(JSContext* ctx, JSValueConst obj, bool fallback) {
   if (!has(ctx, obj, "smooth")) return fallback;
   const Value v = field(ctx, obj, "smooth");
   if (!JS_IsBool(v.get())) {
-    throw core::Error(kPrefix + "shape.smooth must be true (antialiased edges) or false (crisp), got " + to_string(ctx, v.get()));
+    throw core::Error(kPrefix + "shape.smooth must be true (antialiased edges) or false (crisp), got " + describe(ctx, v.get()));
   }
   return JS_ToBool(ctx, v.get()) == 1;
 }

@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "core/error.hpp"
+#include "core/limits.hpp"
 
 namespace alpha::script {
 
@@ -36,6 +37,16 @@ std::string to_string(JSContext* ctx, JSValueConst v) {
   return out;
 }
 
+std::string describe(JSContext* ctx, JSValueConst v) {
+  constexpr std::size_t kShown = 120;
+  int64_t length = 0;
+  if (JS_IsArray(v) && JS_GetLength(ctx, v, &length) == 0 && length > 64) {
+    return "an array of " + std::to_string(length) + " items";  // String() of it may take seconds
+  }
+  const std::string text = to_string(ctx, v);
+  return text.size() <= kShown ? text : text.substr(0, kShown) + "...";
+}
+
 std::string take_exception(JSContext* ctx) {
   const Value error(ctx, JS_GetException(ctx));
   std::string text = to_string(ctx, error.get());
@@ -47,14 +58,29 @@ std::string take_exception(JSContext* ctx) {
 double number_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
   double out = 0.0;
   if (!JS_IsNumber(v) || JS_ToFloat64(ctx, &out, v) != 0) {
-    throw core::Error(what + " must be a number, got " + to_string(ctx, v));
+    throw core::Error(what + " must be a number, got " + describe(ctx, v));
   }
   return out;
 }
 
 std::string string_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
-  if (!JS_IsString(v)) throw core::Error(what + " must be a string, got " + to_string(ctx, v));
+  if (!JS_IsString(v)) throw core::Error(what + " must be a string, got " + describe(ctx, v));
   return to_string(ctx, v);
+}
+
+double dt_arg(JSContext* ctx, JSValueConst v) {
+  const double dt = number_arg(ctx, v, "dt");
+  if (!(dt >= 0.0 && dt <= 1.0)) throw core::Error("dt must be 0..1 seconds (one step), got " + std::to_string(dt));
+  return dt;
+}
+
+std::string text_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
+  std::string text = to_string(ctx, v);
+  if (text.size() > core::kMaxTextChars) {
+    throw core::Error(what + " is " + std::to_string(text.size()) + " bytes long; displayed text is at most " +
+                      std::to_string(core::kMaxTextChars));
+  }
+  return text;
 }
 
 namespace {
@@ -62,9 +88,13 @@ namespace {
 // Every item of a JS array read by `read(ctx, item, what[i])`.
 template <typename T, typename Read>
 std::vector<T> array_of(JSContext* ctx, JSValueConst v, const std::string& what, const char* kind, Read read) {
-  if (!JS_IsArray(v)) throw core::Error(what + " must be an array of " + kind + ", got " + to_string(ctx, v));
+  if (!JS_IsArray(v)) throw core::Error(what + " must be an array of " + kind + ", got " + describe(ctx, v));
   int64_t length = 0;
   JS_GetLength(ctx, v, &length);
+  if (length > static_cast<int64_t>(core::kMaxArrayItems)) {
+    throw core::Error(what + " has " + std::to_string(length) + " items; at most " +
+                      std::to_string(core::kMaxArrayItems) + " are allowed");
+  }
   std::vector<T> out;
   for (int64_t i = 0; i < length; ++i) {
     const Value item(ctx, JS_GetPropertyUint32(ctx, v, static_cast<std::uint32_t>(i)));
@@ -86,7 +116,7 @@ std::vector<double> numbers_arg(JSContext* ctx, JSValueConst v, const std::strin
 core::Vec2 vec2_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
   int64_t length = 0;
   if (!JS_IsArray(v) || JS_GetLength(ctx, v, &length) != 0 || length != 2) {
-    throw core::Error(what + " must be [x, y], got " + to_string(ctx, v));
+    throw core::Error(what + " must be [x, y], got " + describe(ctx, v));
   }
   const Value x(ctx, JS_GetPropertyUint32(ctx, v, 0));
   const Value y(ctx, JS_GetPropertyUint32(ctx, v, 1));

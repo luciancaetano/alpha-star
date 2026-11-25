@@ -34,12 +34,19 @@ class Value {
 
 // Text of any JS value (String(v)).
 std::string to_string(JSContext* ctx, JSValueConst v);
+// A bad value for an error message: short, and never String() of a huge array.
+std::string describe(JSContext* ctx, JSValueConst v);
 // Message and stack of the pending exception; clears it.
 std::string take_exception(JSContext* ctx);
 
 // Argument readers: throw core::Error naming `what` when the type is wrong.
 double number_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 std::string string_arg(JSContext* ctx, JSValueConst v, const std::string& what);
+// One step's dt in seconds: 0..1 (a fixed step is 1/60; more would make
+// timers and emitters catch up without bound).
+double dt_arg(JSContext* ctx, JSValueConst v);
+// String(v) shown to players (world/UI text), at most core::kMaxTextChars bytes.
+std::string text_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 std::vector<std::string> strings_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 core::Vec2 vec2_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 std::vector<double> numbers_arg(JSContext* ctx, JSValueConst v, const std::string& what);

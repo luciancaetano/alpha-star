@@ -34,6 +34,25 @@ TEST_CASE("an allocation bomb pauses the game with the memory limit") {
   CHECK(host.error().find("256 MB") != std::string::npos);
 }
 
+TEST_CASE("unbounded recursion inside a native call is a stack overflow error, not a crash") {
+  Sandbox box;
+  Host host(box.save());
+  // String() of an array holding itself recurses through Array.join from C++ (a native's error message).
+  host.load(box.write("deep.js", tiny("update", "const a = [1]; a.push(a); globalThis.__native.loadSound(a, 'x.wav', 'sfx');")));
+  host.step({}, kDt);
+  REQUIRE(host.paused());
+  CHECK(host.error().find("sound name must be a string") != std::string::npos);
+}
+
+TEST_CASE("plain unbounded recursion pauses the game with a stack overflow error") {
+  Sandbox box;
+  Host host(box.save());
+  host.load(box.write("deep.js", tiny("update", "const f = (n) => [f(n + 1)]; f(0);")));
+  host.step({}, kDt);
+  REQUIRE(host.paused());
+  CHECK_MESSAGE(host.error().find("Maximum call stack size exceeded") != std::string::npos, host.error());
+}
+
 TEST_CASE("the save file is chosen from the game title") {
   Sandbox box;
   std::string seen;

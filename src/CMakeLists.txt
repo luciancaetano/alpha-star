@@ -17,6 +17,7 @@ add_library(alpha_core
   core/music_track.cpp
   core/particles.cpp
   core/pad_slots.cpp
+  core/perf.cpp
   core/random.cpp
   core/sheet.cpp
   core/source_map.cpp
@@ -138,6 +139,7 @@ if(ALPHA_DEVTOOLS)
     devtools/dev_tools.cpp
     devtools/inspector.cpp
     devtools/panels.cpp
+    devtools/profiler.cpp
     devtools/routing.cpp
     devtools/snapshot.cpp
     devtools/time_control.cpp)
@@ -165,7 +167,7 @@ if(ALPHA_MCP)
 endif()
 
 if(ALPHA_DEBUG_TOOLS)  # hot reload: dev/release only
-  target_sources(alpha_engine PRIVATE script/hot_reload.cpp script/test_report.cpp)
+  target_sources(alpha_engine PRIVATE script/hot_reload.cpp script/test_report.cpp script/perf_report.cpp)
 endif()
 
 add_executable(alpha_star main.cpp)

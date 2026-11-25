@@ -5,6 +5,7 @@
 #include <imgui_impl_sdlrenderer3.h>
 
 #include "devtools/inspector.hpp"
+#include "devtools/profiler.hpp"
 #include "devtools/routing.hpp"
 
 namespace alpha::devtools {
@@ -54,6 +55,7 @@ void DevTools::draw(script::Host& host, FrameStats stats) {
   ImGui_ImplSDL3_NewFrame();
   ImGui::NewFrame();
   draw_panels(panels_, time_, host, snapshot(host, stats));
+  profiler_window(host, stats.drawn);
   ImGui::Render();
   // ImGui draws in window pixels, not in the game's letterboxed logical size.
   int w = 0;

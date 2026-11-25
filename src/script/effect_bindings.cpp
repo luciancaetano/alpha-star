@@ -63,7 +63,7 @@ core::ShapeSpec& text_shape(JSContext* ctx, ScriptState& s, JSValueConst id) {
 JSValue text(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   core::ShapeSpec& shape = text_shape(ctx, s, argv[0]);
   if (JS_IsUndefined(argv[1])) return new_string(ctx, shape.text->text);
-  shape.text->text = to_string(ctx, argv[1]);
+  shape.text->text = text_arg(ctx, argv[1], "entity.text");
   lay_out(s, shape);
   return JS_UNDEFINED;
 }

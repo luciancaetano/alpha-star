@@ -11,6 +11,7 @@
 #include "core/camera.hpp"
 #include "core/entity_spec.hpp"
 #include "core/particles.hpp"
+#include "core/perf.hpp"
 #include "core/random.hpp"
 #include "physics/physics_world.hpp"
 
@@ -36,6 +37,7 @@ struct StepEvents {
   std::vector<Contact> hit_ends;   // solid contacts that ended
   std::vector<Contact> enters;     // a = visitor, b = sensor
   std::vector<Contact> exits;      // a = visitor, b = sensor
+  std::vector<EntityId> freed;     // destroyed entities whose storage this step freed
 };
 
 // One scene's entities. Every accessor throws core::Error for a dead id.
@@ -122,6 +124,8 @@ class World {
   // Frees destroyed entities, advances physics, syncs transforms, animations,
   // particle emitters and the camera.
   StepEvents step(float dt);
+  // Time spent in physics, animation and particles by step() since the last call.
+  core::FrameTimes take_times();
   // Living bodies' colliders, oldest first.
   std::vector<PlacedCollider> colliders() const;
   // Remembers every transform as "previous". Call at the start of each fixed step.
@@ -137,7 +141,7 @@ class World {
   void follow(entt::entity child);  // to its place under its parent
   void carry(entt::entity parent);  // every descendant follows
   void follow_parents();
-  void free_doomed();
+  std::vector<EntityId> free_doomed();
   void sync_bodies();
   void animate(float dt);
   void step_view(float dt);
@@ -154,6 +158,7 @@ class World {
   std::optional<EntityId> target_;
   core::Random own_random_{0};
   core::Random* random_;
+  core::FrameTimes times_;
 };
 
 }  // namespace alpha::ecs

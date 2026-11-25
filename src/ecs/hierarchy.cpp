@@ -1,7 +1,9 @@
 #include "ecs/hierarchy.hpp"
 
 #include <algorithm>
+#include <iterator>
 #include <string>
+#include <utility>
 
 #include "core/camera.hpp"
 #include "core/error.hpp"
@@ -9,16 +11,23 @@
 
 namespace alpha::ecs {
 
+namespace {
+
+// `entities` in creation order (their Sequence).
+std::vector<entt::entity> by_creation(const entt::registry& registry, std::vector<entt::entity> entities) {
+  std::sort(entities.begin(), entities.end(), [&registry](entt::entity a, entt::entity b) {
+    return registry.get<Sequence>(a).value < registry.get<Sequence>(b).value;
+  });
+  return entities;
+}
+
+}  // namespace
+
 std::vector<entt::entity> oldest_first(const entt::registry& registry, const std::function<bool(entt::entity)>& keep) {
-  std::vector<std::pair<std::uint64_t, entt::entity>> found;
-  for (auto [e, seq] : registry.view<const Sequence>(entt::exclude<Doomed>).each()) {
-    if (keep(e)) found.emplace_back(seq.value, e);
-  }
-  std::sort(found.begin(), found.end());
-  std::vector<entt::entity> out;
-  out.reserve(found.size());
-  for (const auto& p : found) out.push_back(p.second);
-  return out;
+  const auto all = registry.view<const Sequence>(entt::exclude<Doomed>);
+  std::vector<entt::entity> kept;
+  std::copy_if(all.begin(), all.end(), std::back_inserter(kept), keep);
+  return by_creation(registry, std::move(kept));
 }
 
 std::pair<core::Vec2, float> placed(const Transform& parent, const Parent& link) {
@@ -30,11 +39,15 @@ void relink(Parent& link, const Transform& parent, core::Vec2 pos, float degrees
   link.local_rotation = degrees - parent.rotation;
 }
 
+// Only linked entities are scanned: every set_position/destroy asks for
+// children, and scanning (and sorting) the whole world made moving n entities
+// O(n^2) per frame (bench: 2000 proxies cost 47 ms/step).
 std::vector<entt::entity> children_of(const entt::registry& registry, std::uint32_t parent) {
-  return oldest_first(registry, [&](entt::entity e) {
-    const auto* link = registry.try_get<Parent>(e);
-    return link && link->id == parent;
-  });
+  std::vector<entt::entity> children;
+  for (auto [e, link] : registry.view<const Parent>(entt::exclude<Doomed>).each()) {
+    if (link.id == parent) children.push_back(e);
+  }
+  return by_creation(registry, std::move(children));
 }
 
 std::vector<entt::entity> linked(const entt::registry& registry) {

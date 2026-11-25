@@ -22,6 +22,17 @@ struct ScriptError : core::Error {
 // exceeds either is stopped and the game pauses with a ScriptError.
 inline constexpr std::chrono::milliseconds kCallBudget{250};
 inline constexpr std::size_t kMemoryLimitMb = 256;
+// Native stack a script may use: QuickJS throws "stack overflow" past it.
+// Half of a Windows main-thread stack (1 MB): Debug interpreter frames are
+// large, so less breaks ordinary scripts; more leaves natives no room.
+inline constexpr std::size_t kStackLimitKb = 512;
+
+// The JS heap (JS_ComputeMemoryUsage): bytes in use and live objects.
+struct JsMemory {
+  double used_bytes = 0.0;
+  double objects = 0.0;
+  double gc_threshold = 0.0;  // bytes allocated before the next collection
+};
 
 // One QuickJS runtime + context. Modules come from built-in sources
 // ("alpha", ...) or from files.
@@ -39,6 +50,9 @@ class Engine {
   void restart_budget() { start_clock(); }
   // Wall time of the last call(), in milliseconds.
   double last_call_ms() const { return last_call_ms_; }
+  JsMemory memory() const;
+  // Runs a full collection (soak tests compare heaps without garbage).
+  void collect_garbage() { JS_RunGC(runtime_); }
   void add_builtin(std::string name, std::string_view source);
   // Evaluates a module (builtin name or file path); returns its namespace.
   Value import(const std::string& name);

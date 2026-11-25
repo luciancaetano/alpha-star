@@ -23,6 +23,7 @@ bool debug_option(CliOptions& o, std::string_view flag, std::string_view value) 
   else if (flag == "--tap-every") o.tap_every = count_of(value);
   else if (flag == "--test") o.test_file = value;
   else if (flag == "--assets") o.test_assets = value;
+  else if (flag == "--perf") o.perf = value;
   else return false;
   return true;
 }

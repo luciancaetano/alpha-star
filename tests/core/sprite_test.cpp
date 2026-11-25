@@ -1,5 +1,7 @@
 #include <doctest/doctest.h>
 
+#include <chrono>
+
 #include "core/sheet.hpp"
 #include "core/tilemap.hpp"
 
@@ -58,4 +60,21 @@ TEST_CASE("merge_cells covers every solid cell exactly once") {
   }
   for (std::size_t i = 0; i < solid.size(); ++i) CHECK(cover[i] == (solid[i] ? 1 : 0));
   CHECK(merge_cells({}, 5).empty());
+}
+
+TEST_CASE("merge_cells stays linear on a 1000 x 1000 checkerboard (no merges possible)") {
+  constexpr int kSide = 1000;
+  std::vector<bool> solid(static_cast<std::size_t>(kSide) * kSide);
+  for (std::size_t i = 0; i < solid.size(); ++i) solid[i] = ((i % kSide) + (i / kSide)) % 2 == 0;
+  const auto start = std::chrono::steady_clock::now();
+  const auto rects = merge_cells(solid, kSide);
+  CHECK(rects.size() == solid.size() / 2);
+  CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(5));  // was minutes (quadratic)
+  // Columns of solid cells still stack: a gap row ends them.
+  const std::vector<bool> towers{true, false, true, true, false, true, false, false, false, true, false, true};
+  const auto t = merge_cells(towers, 3);
+  REQUIRE(t.size() == 4);
+  CHECK(t[0] == Region{0, 0, 1, 2});
+  CHECK(t[1] == Region{2, 0, 1, 2});
+  CHECK(t[2] == Region{0, 3, 1, 1});
 }

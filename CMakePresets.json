@@ -36,8 +36,8 @@
   ],
   "testPresets": [
     { "name": "dev", "configurePreset": "dev", "configuration": "Debug",
-      "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error" } },
+      "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error", "timeout": 900 } },
     { "name": "harness", "configurePreset": "harness", "configuration": "Debug",
-      "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error" } }
+      "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error", "timeout": 900 } }
   ]
 }

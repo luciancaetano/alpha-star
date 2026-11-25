@@ -1,7 +1,10 @@
 #include "script/system_bindings.hpp"
 
 #include <array>
+#include <chrono>
+#include <cmath>
 #include <cstdio>
+#include <string>
 
 #include "core/error.hpp"
 #include "script/js_value.hpp"
@@ -40,13 +43,31 @@ JSValue timer_after(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_NewUint32(ctx, s.timers.after(number_arg(ctx, argv[0], "after(seconds)")));
 }
 
+// perfNow(): milliseconds on a steady clock (0 in builds that time nothing).
+JSValue perf_now(JSContext* ctx, ScriptState&, JSValueConst*) {
+  if constexpr (!core::kProfile) return JS_NewFloat64(ctx, 0.0);
+  const auto since = std::chrono::steady_clock::now().time_since_epoch();
+  return JS_NewFloat64(ctx, std::chrono::duration<double, std::milli>(since).count());
+}
+
+// perfAdd(section, ms): script time spent on an engine section (timer callbacks).
+JSValue perf_add(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  const double section = number_arg(ctx, argv[0], "perf section");
+  const double ms = number_arg(ctx, argv[1], "perf ms");
+  if (!(section >= 0 && section < static_cast<double>(core::kSections)) || !std::isfinite(ms)) {
+    throw core::Error("perfAdd(section 0.." + std::to_string(core::kSections - 1) + ", finite ms)");
+  }
+  s.times.ms[static_cast<std::size_t>(section)] += ms;
+  return JS_UNDEFINED;
+}
+
 JSValue clear_timers(JSContext*, ScriptState& s, JSValueConst*) {
   s.timers.clear();
   return JS_UNDEFINED;
 }
 
 JSValue advance_timers(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  return new_ids(ctx, s.timers.advance(number_arg(ctx, argv[0], "dt")));
+  return new_ids(ctx, s.timers.advance(dt_arg(ctx, argv[0])));
 }
 
 void write_log(JSContext* ctx, core::LogLine line) {
@@ -74,12 +95,13 @@ JSValue dev_warn(JSContext* ctx, ScriptState&, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 8> kNatives{{
+constexpr std::array<Native, 10> kNatives{{
     {"configure", guarded<configure>, 5},     {"random", guarded<random>, 3},
     {"timerEvery", guarded<timer_every>, 1},
     {"timerAfter", guarded<timer_after>, 1},  {"clearTimers", guarded<clear_timers>, 0},
     {"advanceTimers", guarded<advance_timers>, 1}, {"log", guarded<log>, 2},
-    {"devWarn", guarded<dev_warn>, 1},
+    {"devWarn", guarded<dev_warn>, 1},        {"perfNow", guarded<perf_now>, 0},
+    {"perfAdd", guarded<perf_add>, 2},
 }};
 
 }  // namespace

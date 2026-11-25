@@ -42,6 +42,7 @@ class GameSession final : public Session {
  private:
   ui::Ui& game_ui();
   double fps() const;
+  std::string perf_summary() const;
 
   script::Host& host_;
   render::Renderer& renderer_;

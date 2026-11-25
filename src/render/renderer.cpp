@@ -154,6 +154,7 @@ void Renderer::flush(const core::View& view) {
   }
   SDL_RenderGeometry(sdl_, batch_key_.texture, vertices_.data(), static_cast<int>(vertices_.size()), nullptr, 0);
   ++stats_.draw_calls;
+  stats_.vertices += static_cast<int>(vertices_.size());
   batch_.clear();
 }
 

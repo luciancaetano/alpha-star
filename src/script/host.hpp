@@ -10,6 +10,7 @@
 
 #include "core/controls.hpp"
 #include "core/log_ring.hpp"
+#include "core/perf.hpp"
 #include "core/window.hpp"
 #include "render/renderer.hpp"
 #include "script/vm.hpp"
@@ -122,6 +123,16 @@ class Host {
   // Wall time of the last step's script call (compare with kCallBudget).
   double last_call_ms() const { return step_ms_; }
 
+  // Profiler: the frame being measured (steps and UI add to it; the main
+  // loop adds render and audio), then end_frame() keeps it in the history.
+  core::FrameTimes& frame_times() { return frame_times_; }
+  void end_frame();
+  const core::PerfHistory& perf() const { return perf_; }
+  // JS heap of the running game, and its living entities (0 without a scene).
+  JsMemory js_memory() const { return vm_->engine->memory(); }
+  void collect_garbage() { vm_->engine->collect_garbage(); }
+  std::size_t entity_count();
+
  private:
   // Boots the game at `path` (main.js) in `vm`; `from`: carried scene JSON or "".
   static GameInfo boot(Vm& vm, const std::string& path, const std::string& from);
@@ -130,6 +141,7 @@ class Host {
   std::vector<TestResult> run_tests(const std::string& path, const std::string& asset_dir);
 #endif
   void pause(const std::exception& e);
+  void collect_times();
   // Calls runtime export `name`(arg) unless a script error paused the game.
   void notify(const char* name, JSValue arg);
 
@@ -142,6 +154,8 @@ class Host {
   std::string error_;
   double step_ms_ = 0.0;
   bool app_paused_ = false;
+  core::FrameTimes frame_times_;
+  core::PerfHistory perf_{600};  // 10 s at 60 fps
 #if ALPHA_DEBUG_TOOLS
   std::string reload_error_;
 #endif

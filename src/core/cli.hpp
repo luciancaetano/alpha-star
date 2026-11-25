@@ -17,6 +17,7 @@ struct CliOptions {
   bool devtools = false;
   std::string test_file;  // non-empty = test mode
   std::string test_assets;
+  std::string perf;      // --perf PATH: per-section frame times as JSON at exit (bench)
   int control_port = 0;  // agent control channel (ALPHA_MCP); 0 = off
   bool hidden = false;   // no visible window (agent runs; ALPHA_MCP)
 };

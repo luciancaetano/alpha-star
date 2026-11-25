@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "core/error.hpp"
+#include "core/limits.hpp"
 #include "script/js_value.hpp"
 
 namespace alpha::script {
@@ -78,6 +79,10 @@ std::vector<core::Tone> parse_synth(JSContext* ctx, JSValueConst spec, const std
   int64_t length = 0;
   JS_GetLength(ctx, spec, &length);
   if (length == 0) throw core::Error(what + " must contain at least one note");
+  if (length > static_cast<int64_t>(core::kMaxSynthNotes)) {
+    throw core::Error(what + " has " + std::to_string(length) + " notes; at most " +
+                      std::to_string(core::kMaxSynthNotes));
+  }
   std::vector<core::Tone> tones;
   for (int64_t i = 0; i < length; ++i) {
     tones.push_back(tone(ctx, copy.at(static_cast<std::uint32_t>(i)), what + "[" + std::to_string(i) + "]"));

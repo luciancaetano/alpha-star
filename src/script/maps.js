@@ -89,6 +89,7 @@ export function loadMap(name, file) {
   if (m.orientation !== "orthogonal") fail(`${what}: only orthogonal maps are supported, got "${m.orientation}"`);
   if (m.infinite) fail(`${what}: infinite maps are not supported; uncheck "Infinite" in Tiled's map properties`);
   const tilesets = (m.tilesets ?? []).map((t) => tileset(t, file, what)).sort((a, b) => a.firstgid - b.firstgid);
+  tilesets.forEach((t, i) => { t.end = tilesets[i + 1]?.firstgid ?? Infinity; });  // gids [firstgid, end)
   return {
     name, width: m.width, height: m.height, tile: [m.tilewidth, m.tileheight],
     size: [m.width * m.tilewidth, m.height * m.tileheight], tilesets, layers: layers(m.layers, what),
@@ -113,19 +114,28 @@ function tilesetOf(map, gid) {
 }
 
 // Cells of one layer grouped by tileset: Map(tileset -> [dx, dy, sx, sy, ...]).
+// Hot at boot (a 500 x 500 layer is 250000 cells): plain loop, the last
+// tileset and its list reused while consecutive cells share it.
 function cellsByTileset(map, layer) {
   const groups = new Map();
-  layer.data.forEach((raw, i) => {
-    const gid = raw & GID_MASK;
-    const ts = gid ? tilesetOf(map, gid) : null;
-    if (!ts) return;
+  const data = layer.data;
+  const [tw, th] = map.tile;
+  let ts = null;
+  let cells = null;
+  for (let i = 0; i < data.length; i++) {
+    const gid = data[i] & GID_MASK;
+    if (!gid) continue;
+    if (!ts || gid < ts.firstgid || gid >= ts.end) {
+      ts = tilesetOf(map, gid);
+      if (!ts) continue;
+      cells = groups.get(ts) ?? [];
+      groups.set(ts, cells);
+    }
     const local = gid - ts.firstgid;
-    const cells = groups.get(ts) ?? [];
-    cells.push((i % layer.width) * map.tile[0], Math.floor(i / layer.width) * map.tile[1] + map.tile[1] - ts.tile[1],
+    cells.push((i % layer.width) * tw, Math.floor(i / layer.width) * th + th - ts.tile[1],
       ts.margin + (local % ts.columns) * (ts.tile[0] + ts.spacing),
       ts.margin + Math.floor(local / ts.columns) * (ts.tile[1] + ts.spacing));
-    groups.set(ts, cells);
-  });
+  }
   return groups;
 }
 

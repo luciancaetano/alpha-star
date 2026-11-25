@@ -24,7 +24,7 @@ core::ImagePtr decoded_image(ScriptState& s, const std::string& file, bool smoot
 
 bool smooth_arg(JSContext* ctx, JSValueConst v) {
   if (JS_IsUndefined(v)) return false;
-  if (!JS_IsBool(v)) throw core::Error("pixelMode must be true or false, got " + to_string(ctx, v));
+  if (!JS_IsBool(v)) throw core::Error("pixelMode must be true or false, got " + describe(ctx, v));
   return JS_ToBool(ctx, v) == 0;
 }
 

@@ -7,6 +7,10 @@ namespace alpha::script {
 Engine::Engine() : runtime_(JS_NewRuntime()), ctx_(JS_NewContext(runtime_)) {
   JS_SetModuleLoaderFunc(runtime_, nullptr, &Engine::load, this);
   JS_SetMemoryLimit(runtime_, kMemoryLimitMb * 1024 * 1024);
+  // QuickJS's default (1 MB) equals a whole Windows main-thread stack, so deep
+  // recursion (e.g. String() of an array containing itself) overflowed the real
+  // stack before QuickJS could throw. Leave the engine's own frames room.
+  JS_SetMaxStackSize(runtime_, kStackLimitKb * 1024);
   JS_SetInterruptHandler(runtime_, &Engine::interrupt, this);
   JS_SetRuntimeOpaque(runtime_, this);
 }
@@ -108,6 +112,7 @@ void Engine::start_clock() {
 }
 
 Value Engine::call(const Value& fn, std::span<JSValueConst> args) {
+  JS_UpdateStackTop(runtime_);  // the limit counts from where this call starts
   start_clock();
   Value result = check(JS_Call(ctx_, fn.get(), JS_UNDEFINED, static_cast<int>(args.size()),
                                args.data()));
@@ -118,6 +123,13 @@ Value Engine::call(const Value& fn, std::span<JSValueConst> args) {
 
 void Engine::stop_clock() {
   last_call_ms_ = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started_).count();
+}
+
+JsMemory Engine::memory() const {
+  JSMemoryUsage u{};
+  JS_ComputeMemoryUsage(runtime_, &u);
+  return {static_cast<double>(u.memory_used_size), static_cast<double>(u.obj_count),
+          static_cast<double>(JS_GetGCThreshold(runtime_))};
 }
 
 }  // namespace alpha::script

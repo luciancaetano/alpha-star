@@ -10,9 +10,10 @@ using TimerId = std::uint32_t;
 // Game-time timers. Deterministic: driven only by advance(dt).
 class Timers {
  public:
-  // Fires every `period` seconds, first after one period. Throws Error if period <= 0.
+  static constexpr double kMinSeconds = 0.001;
+  // Fires every `period` seconds, first after one period. Throws Error if period < kMinSeconds (or NaN).
   TimerId every(double period);
-  // Fires once after `delay` seconds. Throws Error if delay <= 0.
+  // Fires once after `delay` seconds. Throws Error if delay < kMinSeconds (or NaN).
   TimerId after(double delay);
   void cancel(TimerId id);
   void clear();

@@ -16,6 +16,7 @@ import subprocess
 import sys
 
 import harness_config as cfg
+import resource_guard
 import toolchain
 
 ARCH = {"amd64": "x64", "x86_64": "x64", "arm64": "arm64", "aarch64": "arm64"}
@@ -48,6 +49,7 @@ def stage(preset, subdir):
 
 
 def main(argv):
+    resource_guard.limit()
     if "--linux" in argv:
         return subprocess.run([sys.executable, "tools/linux_gate.py", "--", "python3",
                                "tools/stage_engine.py"], cwd=cfg.ROOT).returncode

@@ -11,6 +11,7 @@ namespace alpha::devtools {
 struct FrameStats {
   double frame_ms = 0.0;  // real time since the previous frame
   int steps = 0;          // fixed steps run this frame
+  render::RenderStats drawn;  // the frame's world drawing (profiler)
 };
 
 // Everything the dev tools overlay shows, read once per frame.

@@ -1,6 +1,7 @@
 #include "script/world_bindings.hpp"
 
 #include <array>
+#include <cstring>
 #include <vector>
 
 #include "core/error.hpp"
@@ -77,6 +78,40 @@ JSValue set_position(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
+// positionsOf(tag): ArrayBuffer of 3n float64: n ids, then n x, then n y (oldest first).
+JSValue positions_of(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  const auto tag = s.tags.find(string_arg(ctx, argv[0], "positions(tag)"));
+  const std::vector<ecs::EntityId> ids = tag ? world(s).find_all(*tag) : std::vector<ecs::EntityId>{};
+  const std::size_t n = ids.size();
+  std::vector<double> out(3 * n);
+  for (std::size_t i = 0; i < n; ++i) {
+    const core::Vec2 p = world(s).position(ids[i]);
+    out[i] = ids[i];
+    out[n + i] = p.x;
+    out[2 * n + i] = p.y;
+  }
+  return JS_NewArrayBufferCopy(ctx, reinterpret_cast<const std::uint8_t*>(out.data()), out.size() * sizeof(double));
+}
+
+// setPositions(buffer): writes back a positionsOf buffer; entities destroyed since are skipped.
+JSValue set_positions(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  std::size_t size = 0;
+  const std::uint8_t* bytes = JS_GetArrayBuffer(ctx, &size, argv[0]);
+  if (!bytes || size % (3 * sizeof(double)) != 0) {
+    JS_FreeValue(ctx, JS_GetException(ctx));  // not an ArrayBuffer: our message instead
+    throw core::Error("positions.write(): the buffer must come from ctx.positions(tag)");
+  }
+  const std::size_t n = size / (3 * sizeof(double));
+  std::vector<double> v(3 * n);
+  std::memcpy(v.data(), bytes, size);
+  for (std::size_t i = 0; i < n; ++i) {
+    if (!(v[i] >= 0 && v[i] <= 4294967295.0)) throw core::Error("positions.write(): ids must stay as read");
+    const auto id = static_cast<ecs::EntityId>(v[i]);
+    if (world(s).alive(id)) world(s).set_position(id, {static_cast<float>(v[n + i]), static_cast<float>(v[2 * n + i])});
+  }
+  return JS_UNDEFINED;
+}
+
 JSValue rotation(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_NewFloat64(ctx, world(s).rotation(id_arg(ctx, argv[0])));
 }
@@ -126,16 +161,20 @@ JSValue hits(JSContext* ctx, const std::vector<physics::Hit>& list) {
 }
 
 JSValue step_world(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  const ecs::StepEvents events = world(s).step(static_cast<float>(number_arg(ctx, argv[0], "dt")));
+  const ecs::StepEvents events = world(s).step(static_cast<float>(dt_arg(ctx, argv[0])));
   JSValue out = JS_NewObject(ctx);
   JS_SetPropertyStr(ctx, out, "hits", hits(ctx, events.hits));
   JS_SetPropertyStr(ctx, out, "hitEnds", pairs(ctx, events.hit_ends));
   JS_SetPropertyStr(ctx, out, "enters", pairs(ctx, events.enters));
   JS_SetPropertyStr(ctx, out, "exits", pairs(ctx, events.exits));
+  JS_SetPropertyStr(ctx, out, "freed", new_ids(ctx, events.freed));
+  const core::FrameTimes spent = world(s).take_times();
+  for (std::size_t i = 0; i < core::kSections; ++i) s.times.ms[i] += spent.ms[i];
   return out;
 }
 
-constexpr std::array<Native, 16> kNatives{{
+constexpr std::array<Native, 18> kNatives{{
+    {"positionsOf", guarded<positions_of>, 1}, {"setPositions", guarded<set_positions>, 1},
     {"resetWorld", guarded<reset_world>, 0},  {"spawn", guarded<spawn>, 1},
     {"destroy", guarded<destroy>, 1},         {"alive", guarded<alive>, 1},
     {"hasTag", guarded<has_tag>, 2},          {"tags", guarded<tags>, 1},

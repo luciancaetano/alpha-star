@@ -121,64 +121,98 @@ function uiCall(what, args, fn) {
   }
 }
 
+// Entity proxies share their accessors through prototypes: an object literal
+// of closures per entity cost ~7 KB of JS heap each (10000 entities = 70 MB).
+const posProto = {
+  get x() { return N.position(this.id)[0]; },
+  set x(v) { N.setPosition(this.id, v, N.position(this.id)[1]); },
+  get y() { return N.position(this.id)[1]; },
+  set y(v) { N.setPosition(this.id, N.position(this.id)[0], v); },
+};
+
+function entityProto(entity, data) {
+  return {
+    get alive() { return N.alive(this.id); },
+    get tags() { return N.tags(this.id); },
+    get rotation() { return N.rotation(this.id); },
+    set rotation(v) { N.setRotation(this.id, v); },
+    get z() { return N.z(this.id); },
+    set z(v) { N.setZ(this.id, v); },
+    get animation() { return N.animation(this.id); },
+    set animation(name) { N.play(this.id, name, false); },
+    play(name) { return N.play(this.id, name, true); },
+    get tint() { return N.look(this.id)[0]; },
+    set tint(v) { const l = N.look(this.id); N.setLook(this.id, v, l[1], l[2]); },
+    get alpha() { return N.look(this.id)[1]; },
+    set alpha(v) { const l = N.look(this.id); N.setLook(this.id, l[0], v, l[2]); },
+    get blend() { return N.look(this.id)[2]; },
+    set blend(v) { const l = N.look(this.id); N.setLook(this.id, l[0], l[1], v); },
+    get text() { return N.text(this.id); },
+    set text(v) { N.text(this.id, String(v)); },
+    get layer() { return N.layer(this.id); },
+    emit(count) { return N.emit(this.id, count); },
+    get emitting() { return N.emitting(this.id); },
+    set emitting(v) { N.emitting(this.id, Boolean(v)); },
+    get particles() { return N.particles(this.id); },
+    get flipX() { return N.flip(this.id)[0]; },
+    set flipX(v) { N.flip(this.id, Boolean(v), N.flip(this.id)[1]); },
+    get flipY() { return N.flip(this.id)[1]; },
+    set flipY(v) { N.flip(this.id, N.flip(this.id)[0], Boolean(v)); },
+    get body() {  // made on first use, then kept (same object every time)
+      const body = bodyOf(this.id);
+      Object.defineProperty(this, "body", { value: body, enumerable: true });
+      return body;
+    },
+    get scale() { return N.scale(this.id); },
+    set scale(v) { N.scale(this.id, v); },
+    get parent() {
+      const p = N.parent(this.id);
+      return p === null ? null : entity(p);
+    },
+    get children() { return N.children(this.id).map(entity); },
+    get data() {
+      if (!data.has(this.id)) data.set(this.id, {});
+      return data.get(this.id);
+    },
+    set data(v) { data.set(this.id, checkData(v, `entity ${this.id}: data`)); },
+  };
+}
+
 function makeEntities() {
   const data = new Map();  // id -> entity.data
   const entities = new Map();
+  const proto = entityProto(entity, data);
   function entity(id) {
     let e = entities.get(id);
     if (e) return e;
-    e = {
-      id,
-      get alive() { return N.alive(id); },
-      get tags() { return N.tags(id); },
-      pos: {
-        get x() { return N.position(id)[0]; },
-        set x(v) { N.setPosition(id, v, N.position(id)[1]); },
-        get y() { return N.position(id)[1]; },
-        set y(v) { N.setPosition(id, N.position(id)[0], v); },
-      },
-      get rotation() { return N.rotation(id); },
-      set rotation(v) { N.setRotation(id, v); },
-      get z() { return N.z(id); },
-      set z(v) { N.setZ(id, v); },
-      get animation() { return N.animation(id); },
-      set animation(name) { N.play(id, name, false); },
-      play: (name) => N.play(id, name, true),
-      get tint() { return N.look(id)[0]; },
-      set tint(v) { const l = N.look(id); N.setLook(id, v, l[1], l[2]); },
-      get alpha() { return N.look(id)[1]; },
-      set alpha(v) { const l = N.look(id); N.setLook(id, l[0], v, l[2]); },
-      get blend() { return N.look(id)[2]; },
-      set blend(v) { const l = N.look(id); N.setLook(id, l[0], l[1], v); },
-      get text() { return N.text(id); },
-      set text(v) { N.text(id, String(v)); },
-      get layer() { return N.layer(id); },
-      emit: (count) => N.emit(id, count),
-      get emitting() { return N.emitting(id); },
-      set emitting(v) { N.emitting(id, Boolean(v)); },
-      get particles() { return N.particles(id); },
-      get flipX() { return N.flip(id)[0]; },
-      set flipX(v) { N.flip(id, Boolean(v), N.flip(id)[1]); },
-      get flipY() { return N.flip(id)[1]; },
-      set flipY(v) { N.flip(id, N.flip(id)[0], Boolean(v)); },
-      body: bodyOf(id),
-      get scale() { return N.scale(id); },
-      set scale(v) { N.scale(id, v); },
-      get parent() {
-        const p = N.parent(id);
-        return p === null ? null : entity(p);
-      },
-      get children() { return N.children(id).map(entity); },
-      get data() {
-        if (!data.has(id)) data.set(id, {});
-        return data.get(id);
-      },
-      set data(v) { data.set(id, checkData(v, `entity ${id}: data`)); },
-    };
+    e = Object.create(proto);
+    e.id = id;
+    e.pos = Object.create(posProto, { id: { value: id } });
     entities.set(id, e);
     return e;
   }
-  return { entity, data, clear: () => { entities.clear(); data.clear(); } };
+  // Freed entities leave both maps (a script may still hold a proxy: it reads as dead).
+  function forget(ids) {
+    for (const id of ids) {
+      entities.delete(id);
+      data.delete(id);
+    }
+  }
+  return { entity, data, forget, clear: () => { entities.clear(); data.clear(); } };
+}
+
+// ctx.positions(tag): every living entity with the tag in two native calls.
+// x[i], y[i] are entity ids[i]'s position; write() sets them all back.
+function positionsOf(tag) {
+  const buf = N.positionsOf(tag);
+  const count = buf.byteLength / 24;
+  return {
+    count,
+    ids: new Float64Array(buf, 0, count),
+    x: new Float64Array(buf, count * 8, count),
+    y: new Float64Array(buf, count * 16, count),
+    write: () => N.setPositions(buf),
+  };
 }
 
 // entity.data: a JSON-safe plain object, copied so prefabs never share one.
@@ -454,6 +488,7 @@ function makeCtx(s) {
       return s.entities.entity(ids[0]);
     },
     findAll: (tag) => N.findAll(tag).map(s.entities.entity),
+    positions: (tag) => positionsOf(tag),
     onHit: (tagA, tagB, fn) => s.handlers.push({ kind: "hits", tagA, tagB, fn }),
     onEnter: (tagA, tagB, fn) => s.handlers.push({ kind: "enters", tagA, tagB, fn }),
     onHitEnd: (tagA, tagB, fn) => s.handlers.push({ kind: "hitEnds", tagA, tagB, fn }),
@@ -602,9 +637,12 @@ function stepGame(s, ctx, dt) {
   s.stepDt = dt;
   for (const id of N.uiEvents()) s.uiHandlers.get(id)?.();  // clicks since the last step
   s.current.def.update?.(ctx);
+  const t0 = N.perfNow();
   for (const id of N.advanceTimers(dt)) s.timers.get(id)?.();
   s.tweens.step(dt);
+  N.perfAdd(1, N.perfNow() - t0);  // section 1 = timers (with tweens)
   const events = N.stepWorld(dt);
+  s.entities.forget(events.freed);
   s.sceneTime += dt;
   dispatch(s, events.hits, "hits");
   dispatch(s, events.enters, "enters");

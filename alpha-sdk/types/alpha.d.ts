@@ -419,6 +419,15 @@ declare module "alpha" {
    * identity camera (pos = center of config.size, zoom 1): world pixels = screen pixels.
    * Moves on the fixed step (deterministic); the UI and overlays never move with it.
    */
+  /** ctx.positions(tag): ids[i] is at (x[i], y[i]); write() sets every position back. */
+  export interface Positions {
+    readonly count: number;
+    readonly ids: Float64Array;
+    readonly x: Float64Array;
+    readonly y: Float64Array;
+    write(): void;
+  }
+
   export interface Camera {
     /** World point at the screen center. */
     pos: Vec2Ref;
@@ -736,6 +745,12 @@ declare module "alpha" {
     /** Throws if no entity has the tag. */
     find(tag: G["tags"]): Entity<G["tags"], AnimationOf<G>>;
     findAll(tag: G["tags"]): Entity<G["tags"], AnimationOf<G>>[];
+    /**
+     * Every living entity with the tag, positions in bulk (oldest first). For many
+     * entities per frame this is several times cheaper than `entity.pos` per entity:
+     * edit `x[i]` / `y[i]`, then `write()` once. Entities destroyed since are skipped.
+     */
+    positions(tag: G["tags"]): Positions;
 
     /**
      * Draws the map's visible tile layers (one batched, culled entity per layer and
@@ -785,9 +800,9 @@ declare module "alpha" {
     tween(target: Entity<G["tags"], any>, opts: TweenOptions<EntityTweenKeys>): Tween;
     tween<O extends object>(target: O, opts: TweenOptions<{ [K in keyof O]: O[K] extends number ? K : never }[keyof O] & string>): Tween;
 
-    /** Repeats every `seconds` of game time, first call after `seconds`. */
+    /** Repeats every `seconds` (>= 0.001) of game time, first call after `seconds`. */
     every(seconds: number, fn: () => void): void;
-    /** Runs once after `seconds` of game time. */
+    /** Runs once after `seconds` (>= 0.001) of game time. */
     after(seconds: number, fn: () => void): void;
 
     /** Switches scene at the end of this step. */

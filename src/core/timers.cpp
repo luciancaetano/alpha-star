@@ -16,7 +16,9 @@ TimerId Timers::every(double period) { return add(period, period); }
 TimerId Timers::after(double delay) { return add(delay, 0.0); }
 
 TimerId Timers::add(double delay, double period) {
-  if (delay <= 0.0) throw Error("timer seconds must be > 0, got " + std::to_string(delay));
+  // A shorter period would fire thousands of times per step (one advance
+  // collects every firing): 1 ms is far below any frame.
+  if (!(delay >= kMinSeconds)) throw Error("timer seconds must be >= 0.001, got " + std::to_string(delay));
   timers_.push_back({next_id_, now_ + delay, period});
   return next_id_++;
 }

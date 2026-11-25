@@ -7,7 +7,15 @@ FLAPPY := examples/flappy
 # Game pack the run/debug targets open (override: make run-debug GAME=path/to/pack).
 GAME ?= $(FLAPPY)/dist
 
-.PHONY: build-debug build-prod run-debug debug flappy flappy-build sdk-engine sdk-engine-linux linux-gate
+.PHONY: build-debug build-prod run-debug debug flappy flappy-build sdk-engine sdk-engine-linux linux-gate gate test
+
+# Full Windows gate (build, tests, coverage, limits, file access, CRAP, duplication); resource-guarded.
+gate:
+	$(PYTHON) tools/gate.py
+
+# Tests only (dev preset, after build-debug), under the resource guard.
+test:
+	$(PYTHON) tools/resource_guard.py -- ctest --preset dev
 
 build-debug:
 	cmake --preset dev
@@ -38,6 +46,6 @@ sdk-engine:
 sdk-engine-linux:
 	$(PYTHON) tools/stage_engine.py --linux
 
-# Full gate on Linux (podman/docker container).
+# Full gate on Linux (podman/docker container): for the dedicated Linux PC, not the Windows dev PC.
 linux-gate:
 	$(PYTHON) tools/linux_gate.py

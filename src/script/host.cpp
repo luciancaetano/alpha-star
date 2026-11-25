@@ -1,5 +1,6 @@
 #include "script/host.hpp"
 
+#include <algorithm>
 #include <array>
 
 #include "platform/vfs.hpp"
@@ -98,6 +99,25 @@ void Host::step(const core::InputFrame& input, float dt) {
   } catch (const std::exception& e) {
     pause(e);
   }
+  collect_times();
+}
+
+// The step's natives timed their sections; the script is the rest of the call.
+void Host::collect_times() {
+  core::FrameTimes& spent = vm_->main().times;
+  frame_times_[core::Section::script] += std::max(0.0, vm_->engine->last_call_ms() - spent.total());
+  for (std::size_t i = 0; i < core::kSections; ++i) frame_times_.ms[i] += spent.ms[i];
+  spent = {};
+}
+
+void Host::end_frame() {
+  perf_.push(frame_times_);
+  frame_times_ = {};
+}
+
+std::size_t Host::entity_count() {
+  const ecs::World* w = world();
+  return w ? w->entities().size() : 0;
 }
 
 void Host::set_app_paused(bool paused) {
@@ -129,6 +149,7 @@ void Host::pause(const std::exception& e) {
 }
 
 render::Frame Host::frame(float blend) {
+  const core::ScopedTime t(frame_times_[core::Section::render]);  // building the draw list
   render::Frame f{info_.background, {}, {}};
   if (const ecs::World* world = vm_->main().world.get()) {
     f.shapes = world->draw_items(blend);
@@ -157,6 +178,7 @@ bool Host::reaches_game(const SDL_Event& event) {
 void Host::draw_ui(SDL_Renderer* sdl, double now) {
   ui::Ui* game_ui = vm_->main().ui.get();
   if (!game_ui || paused()) return;  // the error overlay must stay readable
+  const core::ScopedTime t(frame_times_[core::Section::ui]);
   game_ui->tick(now);
   game_ui->render(sdl);
 }

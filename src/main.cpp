@@ -30,6 +30,7 @@
 #include "mcp/control.hpp"
 #endif
 #if ALPHA_DEBUG_TOOLS
+#include "script/perf_report.hpp"
 #include "script/test_report.hpp"
 #endif
 
@@ -59,6 +60,7 @@ using alpha::devtools::FrameStats;
 struct FrameStats {
   double frame_ms = 0.0;
   int steps = 0;
+  alpha::render::RenderStats drawn;
 };
 struct Tools {
   Tools(SDL_Window*, SDL_Renderer*) {}
@@ -171,8 +173,10 @@ void draw(alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& t
           float blend) {
   alpha::render::Frame frame = host.frame(blend);
   tools.decorate(frame, host.world());
-  renderer.draw(frame);
+  alpha::core::timed(host.frame_times()[alpha::core::Section::render], [&] { renderer.draw(frame); });
   host.draw_ui(renderer.sdl(), static_cast<double>(SDL_GetTicksNS()) / 1e9);
+  host.end_frame();  // the dev tools below show this frame's times
+  stats.drawn = renderer.stats();
   tools.draw(host, stats);
 }
 
@@ -183,11 +187,11 @@ void report_error(const alpha::script::Host& host, std::string& reported) {
   std::fprintf(stderr, "%s\n", reported.c_str());
 }
 
-// --frames runs (dev/release): what the last frame drew, for measuring culling and batching.
-void report_render([[maybe_unused]] const Options& o, [[maybe_unused]] const alpha::render::Renderer& renderer) {
+// --frames runs (dev/release): what the last frame drew; --perf PATH: the bench report.
+void report_render([[maybe_unused]] const Options& o, [[maybe_unused]] alpha::script::Host& host,
+                   [[maybe_unused]] const alpha::render::Renderer& renderer) {
 #if ALPHA_DEBUG_TOOLS  // diagnostics
-  const alpha::render::RenderStats& st = renderer.stats();
-  if (o.frames > 0) SDL_Log("render: %d drawn, %d culled, %d draw calls (last frame)", st.drawn, st.culled, st.draw_calls);
+  if (o.frames > 0) alpha::script::report_run(o.perf, host, renderer.stats());
 #endif
 }
 
@@ -219,8 +223,8 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
     d.pads.rumble(host.take_rumble());
     sync_window(window, host, renderer);
     audio.pause(app.paused());
-    audio.pump(host.mixer());
-    draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps}, blend_for(o, clock, tools, control));
+    alpha::core::timed(host.frame_times()[alpha::core::Section::audio], [&] { audio.pump(host.mixer()); });
+    draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps, {}}, blend_for(o, clock, tools, control));
     hot_reload.poll(host, static_cast<double>(SDL_GetTicksNS()) / 1e9);
     report_error(host, reported);
     if (!o.screenshot.empty() && frame + 1 == o.frames) renderer.save_bmp(o.screenshot);
@@ -228,7 +232,7 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
     renderer.present();
     app.idle();
   }
-  report_render(o, renderer);
+  report_render(o, host, renderer);
 }
 
 

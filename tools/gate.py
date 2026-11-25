@@ -7,6 +7,7 @@ import subprocess
 import sys
 
 import harness_config as cfg
+import resource_guard
 
 
 def step(name, cmd):
@@ -17,6 +18,7 @@ def step(name, cmd):
 
 
 def main():
+    resource_guard.limit()  # memory/CPU caps; the whole tree dies with the gate
     ap = argparse.ArgumentParser()
     ap.add_argument("--preset", default="dev")
     ap.add_argument("--coverage")

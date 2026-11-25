@@ -68,7 +68,7 @@ JSValue ui_hide(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 
 JSValue ui_set(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const auto [doc, id] = target(ctx, argv);
-  ui_of(s).set(doc, id, to_string(ctx, argv[2]));
+  ui_of(s).set(doc, id, text_arg(ctx, argv[2], "text"));
   return JS_UNDEFINED;
 }
 
@@ -97,9 +97,12 @@ JSValue ui_click(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 }
 
 // uiView(): { doc: { shown, texts: { id: text } } } for alpha/test expectations.
+// The view is read before any JS value exists: a throw after JS_NewObject
+// leaked it (fuzz finding: QuickJS asserted on leaked objects at shutdown).
 JSValue ui_view(JSContext* ctx, ScriptState& s, JSValueConst*) {
+  const auto views = ui_of(s).view();
   JSValue out = JS_NewObject(ctx);
-  for (const auto& [name, view] : ui_of(s).view()) {
+  for (const auto& [name, view] : views) {
     JSValue doc = JS_NewObject(ctx);
     JSValue texts = JS_NewObject(ctx);
     for (const auto& [id, text] : view.texts) JS_SetPropertyStr(ctx, texts, id.c_str(), JS_NewString(ctx, text.c_str()));
