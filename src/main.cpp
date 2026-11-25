@@ -9,6 +9,7 @@
 #include "core/fixed_step.hpp"
 #include "core/version.hpp"
 #include "platform/audio_out.hpp"
+#include "platform/frame_latency.hpp"
 #include "platform/sdl_input.hpp"
 #include "render/renderer.hpp"
 #include "script/host.hpp"
@@ -214,6 +215,8 @@ int main(int argc, char** argv) {
     return fail("SDL_CreateWindowAndRenderer");
   }
   SDL_SetRenderVSync(sdl, 1);
+  const bool short_queue = alpha::platform::limit_frame_queue(sdl);
+  SDL_Log("renderer %s, frame queue: %s", SDL_GetRendererName(sdl), short_queue ? "1 frame" : "driver default");
   alpha::render::Renderer renderer(sdl, info.width, info.height);
   {
     Tools tools(window, sdl);  // gone before its renderer
