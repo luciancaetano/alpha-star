@@ -2,3 +2,4 @@ node_modules/
 dist/
 build/
 jogar.bat
+jogar-dev.bat

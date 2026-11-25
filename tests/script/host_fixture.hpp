@@ -3,6 +3,7 @@
 // Shared helpers for Host tests: a temp directory per test and a tiny game.
 #include <filesystem>
 #include <string>
+#include <vector>
 
 #include "core/input.hpp"
 #include "script/host.hpp"
@@ -23,7 +24,10 @@ struct Sandbox {
 };
 
 core::InputSet space();
-std::string first_text(script::Host& host);
+// Text of element `id` in whichever shown UI document has it; "" if none.
+std::string ui_text(script::Host& host, const std::string& id);
+// RML document with one element per id: <p id="...">.
+std::string rml(const std::vector<std::string>& ids);
 // A game whose `play` scene runs `body` in update (or enter).
 std::string tiny(const std::string& hook, const std::string& body);
 

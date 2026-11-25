@@ -49,10 +49,17 @@ add_library(alpha_engine
   script/spec_parser.cpp
   script/synth_parser.cpp
   script/system_bindings.cpp
-  script/world_bindings.cpp)
+  script/ui_bindings.cpp
+  script/world_bindings.cpp
+  ui/input.cpp
+  ui/library.cpp
+  ui/pad_nav.cpp
+  ui/rml_renderer.cpp
+  ui/ui.cpp)
 target_include_directories(alpha_engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/generated)
-target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnTT::EnTT qjs SDL3_image::SDL3_image)
+target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnTT::EnTT qjs SDL3_image::SDL3_image
+  RmlUi::Core alpha_rmlui_sdl)
 alpha_set_warnings(alpha_engine)
 
 # devtools: Dear ImGui engine dev tools (F1). Only with ALPHA_DEVTOOLS; a

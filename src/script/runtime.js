@@ -50,6 +50,17 @@ function preload(assets) {
     else N.synthSound(name, sound);
   }
   for (const [name, file] of Object.entries(assets.images ?? {})) N.loadImage(name, file);
+  for (const [name, file] of Object.entries(assets.fonts ?? {})) N.loadFont(name, file);
+  for (const [name, file] of Object.entries(assets.ui ?? {})) N.loadUi(name, file);
+}
+
+// ctx.ui errors start with the call, e.g. `ui.set("hud", "scroe"): no element ...`.
+function uiCall(what, args, fn) {
+  try {
+    return fn();
+  } catch (e) {
+    fail(`ui.${what}(${args.map((a) => JSON.stringify(a)).join(", ")}): ${e.message}`);
+  }
 }
 
 // ctx.save backends: the engine's save file, or memory only (simulate).
@@ -138,9 +149,12 @@ function makeCtx(s) {
       },
     },
     ui: {
-      text(content, opts) {
-        if (!opts || !Array.isArray(opts.pos)) fail("ui.text(content, opts): opts.pos must be [x, y]");
-        s.texts.push({ content, opts });
+      show: (name) => uiCall("show", [name], () => N.uiShow(name)),
+      hide: (name) => uiCall("hide", [name], () => N.uiHide(name)),
+      set: (name, id, text) => uiCall("set", [name, id], () => N.uiSet(name, id, String(text))),
+      on(name, id, event, fn) {
+        if (typeof fn !== "function") fail(`ui.on("${name}", "${id}", "${event}", fn): fn must be a function`);
+        s.uiHandlers.set(uiCall("on", [name, id, event], () => N.uiOn(name, id, event)), fn);
       },
     },
     audio: {
@@ -191,7 +205,8 @@ function enter(s, ctx, name, params) {
   s.timers.clear();
   s.entities.clear();
   s.handlers = [];
-  s.texts = [];
+  N.uiReset();
+  s.uiHandlers.clear();
   s.sceneTime = 0;
   s.current = s.game.scenes[name];
   s.currentName = name;
@@ -213,6 +228,7 @@ function bootGame(s, ctx, g, start) {
   s.game = validate(g);
   const c = s.game.config;
   N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]));
+  N.uiCreate(c.size[0], c.size[1]);
   for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bindAction(action, inputs);
   preload(s.game.assets ?? {});
   s.saveData = s.save.read(c.title ?? "alpha-star");
@@ -222,6 +238,7 @@ function bootGame(s, ctx, g, start) {
 
 function stepGame(s, ctx, dt) {
   s.stepDt = dt;
+  for (const id of N.uiEvents()) s.uiHandlers.get(id)?.();  // clicks since the last step
   s.current.def.update?.(ctx);
   for (const id of N.advanceTimers(dt)) s.timers.get(id)?.();
   const events = N.stepWorld(dt);
@@ -233,17 +250,6 @@ function stepGame(s, ctx, dt) {
     s.pending = null;
     enter(s, ctx, name, params);
   }
-}
-
-function textsOf(s) {
-  return s.texts.map(({ content, opts }) => ({
-    text: String(typeof content === "function" ? content() : content),
-    x: opts.pos[0],
-    y: opts.pos[1],
-    size: opts.size ?? 16,
-    color: opts.color ?? "#ffffff",
-    align: opts.align ?? "left",
-  }));
 }
 
 // Runs fn with native instance `id` active, restoring the previous one after.
@@ -259,7 +265,7 @@ function within(id, fn) {
 // One game instance. `id` is its native instance; `save` its ctx.save backend.
 export function createInstance(id, save) {
   const s = {
-    game: null, current: null, currentName: null, pending: null, texts: [], handlers: [],
+    game: null, current: null, currentName: null, pending: null, handlers: [], uiHandlers: new Map(),
     saveData: {}, save, sceneTime: 0, stepDt: 1 / 60, masterVolume: 1,
     timers: new Map(), entities: makeEntities(),
   };
@@ -267,7 +273,8 @@ export function createInstance(id, save) {
   return {
     boot: (g, start) => within(id, () => bootGame(s, ctx, g, start)),
     step: (dt) => within(id, () => stepGame(s, ctx, dt)),
-    frameTexts: () => within(id, () => textsOf(s)),
+    click: (doc, element) => within(id, () => N.uiClick(doc, element)),
+    uiView: () => within(id, () => N.uiView()),
     hold: (actions) => within(id, () => N.holdActions(actions)),
     actions: () => Object.keys(s.game?.config.actions ?? {}),
     scene: () => s.currentName,
@@ -285,10 +292,6 @@ export function boot(g) {
 
 export function step(dt) {
   main.step(dt);
-}
-
-export function frameTexts() {
-  return main.frameTexts();
 }
 
 export function sceneName() {

@@ -19,7 +19,7 @@
 
 // Composition root: alpha_star <pack-dir | game.js> [options]  (pack = `alpha export` output)
 // With no arguments it runs the pack it sits in (standalone export).
-// alpha_star --test <tests.js>: runs every exported test function headlessly
+// alpha_star --test <tests.js> [--assets DIR]: runs every exported test function headlessly
 // (no window, no audio), one PASS/FAIL line each; exit code 0 iff all pass.
 //   --frames N        run exactly N frames, one fixed step each (deterministic)
 //   --screenshot PATH save the last frame as BMP (with --frames)
@@ -106,13 +106,23 @@ int fail(const char* what) {
   return 1;
 }
 
-// Events the dev tools capture (F1, typing/clicking in their windows) never reach the game.
-bool pump(alpha::platform::InputState& input, Tools& tools) {
+// Controllers plugged in or out while running (also the ones present at start).
+void hot_plug(const SDL_Event& event) {
+  if (event.type == SDL_EVENT_GAMEPAD_ADDED) SDL_OpenGamepad(event.gdevice.which);
+  if (event.type == SDL_EVENT_GAMEPAD_REMOVED) SDL_CloseGamepad(SDL_GetGamepadFromID(event.gdevice.which));
+}
+
+// Routing: dev tools first (F1, their windows), then the game UI (in game
+// pixels), and only what neither consumed drives game actions.
+bool pump(alpha::platform::InputState& input, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl) {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_EVENT_QUIT) return false;
-    if (event.type == SDL_EVENT_GAMEPAD_ADDED) SDL_OpenGamepad(event.gdevice.which);
-    if (tools.handle(event)) alpha::platform::apply_event(input, event);
+    hot_plug(event);
+    if (!tools.handle(event)) continue;
+    SDL_Event logical = event;
+    SDL_ConvertEventToRenderCoordinates(sdl, &logical);
+    if (host.reaches_game(logical)) alpha::platform::apply_event(input, event);
   }
   return true;
 }
@@ -147,6 +157,7 @@ void draw(alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& t
   alpha::render::Frame frame = host.frame(blend);
   tools.decorate(frame, host.world());
   renderer.draw(frame);
+  host.draw_ui(renderer.sdl(), static_cast<double>(SDL_GetTicksNS()) / 1e9);
   tools.draw(host, stats);
 }
 
@@ -157,7 +168,7 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
   alpha::core::FixedStep clock(kDt, 5);
   Uint64 last = SDL_GetTicksNS();
   bool reported = false;
-  for (int frame = 0; pump(input, tools) && (o.frames == 0 || frame < o.frames); ++frame) {
+  for (int frame = 0; pump(input, tools, host, renderer.sdl()) && (o.frames == 0 || frame < o.frames); ++frame) {
     tap(o, frame, input);
     const double elapsed = seconds_since(last);
     const int steps = steps_for_frame(o, clock, tools, elapsed);
@@ -179,9 +190,9 @@ std::string indented(const std::string& text) {
   return out;
 }
 
-int run_tests(const char* path) {
+int run_tests(const char* path, const char* asset_dir) {
   alpha::script::Host host([](const std::string&) { return std::string(); });
-  const auto results = host.test(path);
+  const auto results = host.test(path, asset_dir);
   std::size_t failed = 0;
   for (const auto& r : results) {
     failed += r.passed() ? 0U : 1U;
@@ -196,7 +207,8 @@ int run_tests(const char* path) {
 }  // namespace
 
 int main(int argc, char** argv) {
-  if (argc == 3 && std::string_view(argv[1]) == "--test") return run_tests(argv[2]);
+  const bool assets = argc == 5 && std::string_view(argv[3]) == "--assets";
+  if ((argc == 3 || assets) && std::string_view(argv[1]) == "--test") return run_tests(argv[2], assets ? argv[4] : "");
   const Options options = parse(argc, argv);
   if (options.game.empty()) {
     std::fprintf(stderr, "usage: alpha_star <pack-dir | game.js> [--frames N] [--screenshot out.bmp] [--devtools]\n");
@@ -220,6 +232,7 @@ int main(int argc, char** argv) {
     if (options.devtools) tools.toggle();
     run(options, host, renderer, tools);
   }
+  host.release_ui();
   SDL_DestroyRenderer(sdl);
   SDL_DestroyWindow(window);
   SDL_Quit();

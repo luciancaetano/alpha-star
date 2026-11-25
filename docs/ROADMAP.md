@@ -1,0 +1,35 @@
+# Production roadmap (multi-agent pipeline)
+
+One subagent per step, strictly sequential (shared files). Each step: TDD, both gates
+(Windows `python tools/gate.py`, Linux `python tools/linux_gate.py`) GATE PASS,
+`cd alpha-sdk && npm test` green, LOG.md + GLOSSARY.md updated, one commit on
+`feat/script-api-sdk`. Never push or publish externally.
+
+Resource rules (user's PC, they may be gaming): `CMAKE_BUILD_PARALLEL_LEVEL=8`, one
+build/gate/container at a time, `podman machine start` only for the Linux gate and
+`podman machine stop` right after, at most one release build per step.
+
+| # | Step | Status |
+|---|---|---|
+| 1 | Linux port, CI, call budget, memory limit, per-user saves | done d316e06 |
+| 2 | simulate() + `alpha test`, TS source maps | done 26aec1d |
+| 3 | Dear ImGui dev tools (F1) | done d17227e |
+| - | Render interpolation (frame pacing) | done 69d5ea1 |
+| - | Low latency: D3D11 frame queue 1, short audio buffer | branch fix/latency 588c3af — merge after step 4 |
+| 4 | RmlUi game UI (old ctx.ui dropped) + UI gamepad navigation | in progress |
+| 5 | Gameplay joystick: axes, triggers, deadzone, players, rumble, hot-plug, simulate axes | todo |
+| 6 | MCP server (agent drives the game: start, input, state, screenshots, errors) | todo |
+| 7 | Hot reload (pack re-export -> running engine reloads) | todo |
+| 8 | Camera (follow/zoom/shake/bounds) + sprite sheets & animation + atlas packing + tilemaps (Tiled import) | todo |
+| 9 | Particles, tint/alpha/blend, layers/parallax, world text, fullscreen & scaling modes | todo |
+| 10 | Physics: end events, raycasts/queries, layers/filters, materials, joints, one-way, CCD; tween/easing, vector math, parent/child, entity data, prefabs | todo |
+| 11 | Audio: OGG/MP3, streaming music, buses, crossfade, pan; save slots/versioning, settings; localization; accessibility | todo |
+| 12 | Portable IO (SDL_IOStream everywhere) + app lifecycle (suspend/resume, focus pause) | todo |
+| 13 | Performance: benchmarks, batch API, profiler in dev tools; fuzz JS/C++ boundary, soak tests, leak fixes | todo |
+| 14 | `alpha init` templates, docs site + API reference + agent docs, 5+ examples, LICENSE/semver/CHANGELOG/CONTRIBUTING | todo |
+| 15 | Android target (`alpha export --target android-arm64`, APK, touch) | todo |
+| 16 | Shaders / post-processing / 2D lighting (SDL_GPU) | todo |
+| 17 | Release prep: npm per-platform engine packages, signing hooks, final verification | todo |
+
+Out of reach here: macOS verification (no Mac), Xbox (needs GDK access), running CI on
+GitHub and publishing (need the user's approval to push/publish).

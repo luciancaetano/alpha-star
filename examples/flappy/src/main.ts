@@ -25,5 +25,9 @@ export default game({
         { wave: "triangle", freq: 1320, duration: 0.12, volume: 0.4 },
       ],
     },
+    // Fonts are used by name in the .rcss (font-family: pixel). OFL, see assets/fonts/OFL.txt.
+    fonts: { pixel: "assets/fonts/PressStart2P-Regular.ttf" },
+    // Each document's own <link>/src files (flappy.rcss) are packed with it.
+    ui: { title: "assets/ui/title.rml", hud: "assets/ui/hud.rml", over: "assets/ui/over.rml" },
   },
 });

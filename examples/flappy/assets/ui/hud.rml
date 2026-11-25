@@ -1,0 +1,9 @@
+<rml>
+<head>
+  <link type="text/rcss" href="flappy.rcss"/>
+  <style>#score { margin-top: 28dp; font-size: 32dp; }</style>
+</head>
+<body>
+  <p id="score" class="shadow">0</p>
+</body>
+</rml>

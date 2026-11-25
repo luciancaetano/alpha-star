@@ -33,7 +33,15 @@ declare module "alpha" {
     tags: string;
     /** Scene name -> params its enter() receives (`undefined` = none). */
     scenes: { [name: string]: SceneParams };
+    /**
+     * UI document name (assets.ui) -> ids of its elements that scripts touch,
+     * e.g. `{ hud: "score"; over: "score" | "again" }`. Use `{}` if the game has no UI,
+     * `never` for a document scripts only show/hide.
+     */
+    ui: UiTypes;
   }
+
+  export type UiTypes = { [doc: string]: string };
 
   export type SceneParams = { [key: string]: SaveValue } | undefined;
 
@@ -122,17 +130,29 @@ declare module "alpha" {
     set(key: string, value: SaveValue): void;
   }
 
-  export interface TextOptions {
-    pos: Vec2;
-    /** Glyph height in px (default 16). The built-in font is square: each char is `size` px wide. */
-    size?: number;
-    color?: Color;
-    align?: "left" | "center" | "right";
-  }
-
-  export interface UI {
-    /** A function is re-evaluated every frame. */
-    text(content: string | (() => string), opts: TextOptions): void;
+  /**
+   * Game UI: RmlUi documents (HTML/CSS-like `.rml` + `.rcss`) declared in
+   * assets.ui, loaded hidden before the first scene. Scene-scoped: on every
+   * scene change all documents are reloaded hidden (texts back to the file's)
+   * and all handlers dropped. Drawn over the game, in game pixels.
+   * Focusable elements (buttons) need `tab-index: auto` in the RCSS; style
+   * `:hover` / `:focus` / `:active`. Gamepad: D-pad / left stick move focus,
+   * A clicks the focused element, B is "back"; mouse and touch click.
+   * Input the UI uses (a click on an element with a handler, A/Enter/Space on a
+   * focused element, navigation, typing in a text field) never also triggers
+   * game actions.
+   */
+  export interface UI<U extends UiTypes> {
+    show(doc: keyof U & string): void;
+    hide(doc: keyof U & string): void;
+    /** Sets the element's content to plain text (never parsed as markup). */
+    set<D extends keyof U & string>(doc: D, id: U[D], text: string | number): void;
+    /**
+     * "click": the element (or anything inside it) is clicked by mouse, touch,
+     * or Enter/Space/gamepad A while focused. "back": Escape or gamepad B while
+     * the document is shown. Handlers run at the start of the next step.
+     */
+    on<D extends keyof U & string>(doc: D, id: U[D], event: "click" | "back", fn: () => void): void;
   }
 
   /** One procedural note. `freq` is Hz, or [from, to] for a slide. Seconds for times. */
@@ -195,7 +215,7 @@ declare module "alpha" {
     readonly input: Input<G["actions"]>;
     readonly random: Random;
     readonly save: Save;
-    readonly ui: UI;
+    readonly ui: UI<G["ui"]>;
     readonly audio: Audio<G["sounds"]>;
 
     spawn(spec: EntitySpec<G["tags"], G["images"]>): Entity<G["tags"]>;
@@ -256,7 +276,14 @@ declare module "alpha" {
     /** Every declared scene, exactly once. */
     scenes: { [K in keyof G["scenes"]]: Scene<G, K> };
     /** Every asset is loaded before the start scene; a missing file stops boot with its name. */
-    assets: { sounds: Record<G["sounds"], SoundAsset>; images?: Record<G["images"], string> };
+    assets: {
+      sounds: Record<G["sounds"], SoundAsset>;
+      images?: Record<G["images"], string>;
+      /** Font name -> .ttf/.otf file; the name is the `font-family` used in .rcss. */
+      fonts?: Record<string, string>;
+      /** Document name -> .rml file. Files it links (`<link href>`, `src=`, rcss `url()`) are packed too. */
+      ui?: Record<keyof G["ui"] & string, string>;
+    };
   }
 
   export interface Game<G extends GameTypes> {
@@ -285,12 +312,22 @@ declare module "alpha/test" {
     seconds: number;
     /** Action -> frame numbers (0-based) on which it is pressed for one step. */
     inputs?: Partial<Record<G["actions"], number[]>>;
+    /**
+     * "document#elementId" -> frame numbers on which that element is clicked
+     * (before the step; its handler runs in that step). Clicking a hidden
+     * document or an unknown id fails the test.
+     */
+    clicks?: { [target: string]: number[] };
   }
 
   export interface Expect<G extends GameTypes> {
     scene(name: keyof G["scenes"] & string): void;
     noErrors(): void;
     count(tag: G["tags"]): { equals(n: number): void; atLeast(n: number): void };
+    /** Plain text of a UI element at the end of the run. */
+    text<D extends keyof G["ui"] & string>(doc: D, id: G["ui"][D]): { equals(text: string): void };
+    /** The UI document is shown at the end of the run. */
+    shown(doc: keyof G["ui"] & string): void;
   }
 
   export interface Run<G extends GameTypes> {

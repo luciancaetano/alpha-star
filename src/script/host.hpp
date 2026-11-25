@@ -56,7 +56,18 @@ class Host {
   render::Frame frame(float blend = 1.0f);
   // Test mode (no game booted): imports a test module and calls each exported
   // function once, in name order. A module that fails to load is one failure.
-  std::vector<TestResult> test(const std::string& path);
+  // Game assets resolve against `asset_dir` (default: the module's directory).
+  std::vector<TestResult> test(const std::string& path, const std::string& asset_dir = "");
+
+  // Game UI (RmlUi). Events go to the UI first: false when the UI consumed the
+  // event (ui/input.hpp rule), so it must not drive game input. Mouse
+  // coordinates in game pixels.
+  bool reaches_game(const SDL_Event& event);
+  // Draws the UI over the game frame (not while paused: the error overlay
+  // shows instead); `now` (seconds) drives held-gamepad focus repeat.
+  void draw_ui(SDL_Renderer* sdl, double now);
+  // Frees the UI's textures; call before destroying the SDL renderer.
+  void release_ui();
 
   // Audio produced by the game; the platform layer drains it every frame.
   core::Mixer& mixer() { return instances_.main().mixer; }
@@ -70,6 +81,8 @@ class Host {
   std::string scene();
   // The running scene's world; null before the first scene starts.
   ecs::World* world();
+  // The game's UI; null before boot.
+  ui::Ui* ui() { return instances_.main().ui.get(); }
   const core::TagRegistry& tags();
   // Wall time of the last step's script call (compare with kCallBudget).
   double last_call_ms() const { return step_ms_; }
@@ -78,18 +91,16 @@ class Host {
   GameInfo boot(const std::string& target);
   // Imports the user's bundle (game or tests) and remembers its source map.
   Value import_bundle(const std::string& path);
-  std::vector<TestResult> run_tests(const std::string& path);
+  std::vector<TestResult> run_tests(const std::string& path, const std::string& asset_dir);
   // An error message with bundle locations mapped to the original sources.
   std::string located(const std::exception& e) const;
   void pause(const std::exception& e);
-  std::vector<core::TextItem> texts();
 
   Instances instances_;
   std::unique_ptr<Engine> engine_;
   std::string bundle_path_;
   std::optional<core::SourceMap> source_map_;
   std::optional<Value> step_fn_;
-  std::optional<Value> texts_fn_;
   std::optional<Value> scene_fn_;
   GameInfo info_;
   std::string error_;

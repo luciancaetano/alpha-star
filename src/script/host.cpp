@@ -8,7 +8,9 @@
 #include "script/error_overlay.hpp"
 #include "script/instance_bindings.hpp"
 #include "script/system_bindings.hpp"
+#include "script/ui_bindings.hpp"
 #include "script/world_bindings.hpp"
+#include "ui/input.hpp"
 
 namespace alpha::script {
 
@@ -20,29 +22,6 @@ core::Color color_field(JSContext* ctx, const Value& obj, const char* name, cons
   const auto color = core::parse_color(text);
   if (!color) throw core::Error(what + " must be a color like \"#ffffff\", got \"" + text + "\"");
   return *color;
-}
-
-core::Align align_field(JSContext* ctx, const Value& obj) {
-  const Value v = obj.prop("align");
-  const std::string name = string_arg(ctx, v.get(), "ui.text align");
-  if (name == "center") return core::Align::Center;
-  if (name == "right") return core::Align::Right;
-  if (name == "left") return core::Align::Left;
-  throw core::Error("ui.text align must be \"left\", \"center\" or \"right\", got \"" + name + "\"");
-}
-
-float number_field(JSContext* ctx, const Value& obj, const char* name, const std::string& what) {
-  const Value v = obj.prop(name);
-  return static_cast<float>(number_arg(ctx, v.get(), what));
-}
-
-core::TextItem text_item(JSContext* ctx, const Value& obj) {
-  const Value text = obj.prop("text");
-  return {to_string(ctx, text.get()),
-          {number_field(ctx, obj, "x", "ui.text pos[0]"), number_field(ctx, obj, "y", "ui.text pos[1]")},
-          number_field(ctx, obj, "size", "ui.text size"),
-          color_field(ctx, obj, "color", "ui.text color"),
-          align_field(ctx, obj)};
 }
 
 GameInfo game_info(JSContext* ctx, const Value& info) {
@@ -69,6 +48,7 @@ Host::Host(SavePathFor save_path_for)
   install_system_bindings(ctx, natives.get());
   install_asset_bindings(ctx, natives.get());
   install_instance_bindings(ctx, natives.get());
+  install_ui_bindings(ctx, natives.get());
   JS_SetPropertyStr(ctx, global.get(), "__native", natives.release());
 }
 
@@ -90,7 +70,6 @@ GameInfo Host::boot(const std::string& target) {
   instances_.main().asset_dir = std::filesystem::path(path).parent_path();
   const Value runtime = engine_->import("alpha:runtime");
   step_fn_.emplace(runtime.prop("step"));
-  texts_fn_.emplace(runtime.prop("frameTexts"));
   scene_fn_.emplace(runtime.prop("sceneName"));
   const Value game = import_bundle(path).prop("default");
   std::array<JSValueConst, 1> args{game.get()};
@@ -120,16 +99,6 @@ void Host::step(const core::InputSet& held, float dt) {
   }
 }
 
-std::vector<core::TextItem> Host::texts() {
-  JSContext* ctx = engine_->ctx();
-  const Value list = engine_->call(*texts_fn_, {});
-  int64_t length = 0;
-  JS_GetLength(ctx, list.get(), &length);
-  std::vector<core::TextItem> items;
-  for (int64_t i = 0; i < length; ++i) items.push_back(text_item(ctx, list.at(static_cast<std::uint32_t>(i))));
-  return items;
-}
-
 void Host::pause(const std::exception& e) {
   error_ = located(e);
   instances_.log().push(core::LogLevel::Error, error_);
@@ -139,26 +108,37 @@ void Host::pause(const std::exception& e) {
 render::Frame Host::frame(float blend) {
   render::Frame f{info_.background, {}, {}};
   if (instances_.main().world) f.shapes = instances_.main().world->draw_items(blend);
-  try {
-    if (!paused()) f.texts = texts();
-  } catch (const std::exception& e) {
-    pause(e);
-  }
   if (paused()) f.texts = error_overlay(error_, static_cast<float>(info_.width));
   return f;
 }
 
-std::vector<TestResult> Host::test(const std::string& path) {
+bool Host::reaches_game(const SDL_Event& event) {
+  ui::Ui* game_ui = instances_.main().ui.get();
+  return paused() || !game_ui || !ui::consumes(*game_ui, event);
+}
+
+void Host::draw_ui(SDL_Renderer* sdl, double now) {
+  ui::Ui* game_ui = instances_.main().ui.get();
+  if (!game_ui || paused()) return;  // the error overlay must stay readable
+  game_ui->tick(now);
+  game_ui->render(sdl);
+}
+
+void Host::release_ui() {
+  if (ui::Ui* game_ui = instances_.main().ui.get()) game_ui->attach(nullptr);
+}
+
+std::vector<TestResult> Host::test(const std::string& path, const std::string& asset_dir) {
   try {
-    return run_tests(path);
+    return run_tests(path, asset_dir);
   } catch (const std::exception& e) {
     return {{"(loading " + path + ")", located(e)}};
   }
 }
 
-std::vector<TestResult> Host::run_tests(const std::string& path) {
+std::vector<TestResult> Host::run_tests(const std::string& path, const std::string& asset_dir) {
   JSContext* ctx = engine_->ctx();
-  instances_.main().asset_dir = std::filesystem::path(path).parent_path();
+  instances_.main().asset_dir = asset_dir.empty() ? std::filesystem::path(path).parent_path() : asset_dir;
   const Value names_fn = engine_->import("alpha/test").prop("testNames");
   const Value tests = import_bundle(path);
   std::array<JSValueConst, 1> args{tests.get()};

@@ -1,0 +1,13 @@
+<rml>
+<head>
+  <link type="text/rcss" href="flappy.rcss"/>
+  <style>
+    h1 { margin-top: 150dp; font-size: 36dp; }
+    .hint { margin-top: 110dp; }
+  </style>
+</head>
+<body>
+  <h1 class="shadow">FLAPPY</h1>
+  <p class="hint shadow blink">press flap</p>
+</body>
+</rml>

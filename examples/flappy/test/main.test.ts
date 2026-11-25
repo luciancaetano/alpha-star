@@ -22,3 +22,27 @@ export function pipesSpawnOnSchedule() {
   run.expect.scene("play");
   run.expect.count("scrolls").atLeast(6);
 }
+
+export function titleShowsItsScreen() {
+  simulate(game, { seconds: 0.1 }).expect.shown("title");
+}
+
+export function hudStartsAtZero() {
+  const run = simulate(game, { scene: "play", seconds: 0.5 });
+  run.expect.shown("hud");
+  run.expect.text("hud", "score").equals("0");
+}
+
+export function gameOverShowsScoreAndBest() {
+  const run = simulate(game, { scene: "play", seconds: 3 });
+  run.expect.scene("over");
+  run.expect.text("over", "score").equals("0");
+  run.expect.text("over", "best").equals("0");
+}
+
+export function playAgainButtonRestarts() {
+  // The bird hits the ground well before 3 s; the click lands on the game-over screen.
+  const run = simulate(game, { scene: "play", seconds: 3.1, clicks: { "over#again": [180] } });
+  run.expect.scene("play");
+  run.expect.shown("hud");
+}

@@ -41,7 +41,7 @@ function project() {
   fs.mkdirSync(path.join(root, "src"));
   fs.writeFileSync(path.join(root, "src", "main.ts"), `
 import { define } from "alpha";
-interface T { actions: never; sounds: never; images: never; tags: never; scenes: { play: undefined } }
+interface T { actions: never; sounds: never; images: never; tags: never; scenes: { play: undefined }; ui: {} }
 const { scene, game } = define<T>();
 export default game({ config: { title: "t", size: [10, 10], seed: 1, actions: {} }, start: "play",
   scenes: { play: scene("play", {}) }, assets: { sounds: {} } });

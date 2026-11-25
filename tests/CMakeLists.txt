@@ -22,7 +22,10 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/host_limits_test.cpp
     script/simulate_test.cpp
     script/console_test.cpp
-    script/host_fixture.cpp)
+    script/host_fixture.cpp
+    script/ui_script_test.cpp
+    ui/pad_nav_test.cpp
+    ui/ui_test.cpp)
   set(ALPHA_TEST_LIBS alpha_engine)
 endif()
 

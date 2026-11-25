@@ -68,6 +68,39 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   target_compile_options(box2d PRIVATE -Wno-error=maybe-uninitialized)
 endif()
 
+# Game UI: RmlUi (HTML/CSS-like .rml/.rcss) with its FreeType font engine.
+# FreeType static and self-contained: no zlib/bzip2/png/harfbuzz/brotli from the system.
+foreach(dep ZLIB BZIP2 PNG HARFBUZZ BROTLI)
+  set(FT_DISABLE_${dep} ON CACHE BOOL "" FORCE)
+endforeach()
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(freetype
+  GIT_REPOSITORY https://github.com/freetype/freetype.git
+  GIT_TAG VER-2-14-3
+  GIT_SHALLOW TRUE
+  SYSTEM)
+FetchContent_MakeAvailable(freetype)
+# RmlUi looks for the Freetype::Freetype target; ours is the one built above.
+add_library(Freetype::Freetype ALIAS freetype)
+set(CMAKE_DISABLE_FIND_PACKAGE_Freetype ON)
+
+set(RMLUI_SAMPLES OFF CACHE BOOL "" FORCE)
+set(RMLUI_LUA_BINDINGS OFF CACHE BOOL "" FORCE)
+set(RMLUI_FONT_ENGINE "freetype" CACHE STRING "" FORCE)
+set(RMLUI_INSTALL_RUNTIME_DEPENDENCIES OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(rmlui
+  GIT_REPOSITORY https://github.com/mikke89/RmlUi.git
+  GIT_TAG 6.3
+  GIT_SHALLOW TRUE
+  SYSTEM)
+FetchContent_MakeAvailable(rmlui)
+# Key/mouse conversion helpers from RmlUi's SDL3 platform backend (not its
+# renderer or event handler: the engine routes input and renders itself).
+add_library(alpha_rmlui_sdl STATIC ${rmlui_SOURCE_DIR}/Backends/RmlUi_Platform_SDL.cpp)
+target_include_directories(alpha_rmlui_sdl SYSTEM PUBLIC ${rmlui_SOURCE_DIR}/Backends)
+target_compile_definitions(alpha_rmlui_sdl PUBLIC RMLUI_SDL_VERSION_MAJOR=3)
+target_link_libraries(alpha_rmlui_sdl PUBLIC RmlUi::Core SDL3::SDL3)
+
 # Dear ImGui: engine dev tools only (ALPHA_DEVTOOLS), never in shipping builds.
 # ImGui has no CMake build; alpha_imgui compiles the core plus the SDL3 platform
 # and SDL_Renderer backends. SYSTEM includes: its warnings are not ours.

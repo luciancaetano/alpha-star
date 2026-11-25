@@ -26,9 +26,18 @@ std::string Sandbox::save_file() const { return (dir / "save.json").string(); }
 
 core::InputSet space() { return core::InputSet{}.set(*core::parse_input("Space")); }
 
-std::string first_text(script::Host& host) {
-  const auto texts = host.frame().texts;
-  return texts.empty() ? "" : texts.front().text;
+std::string ui_text(script::Host& host, const std::string& id) {
+  if (!host.ui()) return "";
+  for (const auto& [name, view] : host.ui()->view()) {
+    if (view.shown && view.texts.contains(id)) return view.texts.at(id);
+  }
+  return "";
+}
+
+std::string rml(const std::vector<std::string>& ids) {
+  std::string body;
+  for (const std::string& id : ids) body += "<p id=\"" + id + "\"></p>";
+  return "<rml><head></head><body>" + body + "</body></rml>";
 }
 
 std::string tiny(const std::string& hook, const std::string& body) {

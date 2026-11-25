@@ -1,0 +1,13 @@
+<rml>
+<head>
+  <link type="text/rcss" href="flappy.rcss"/>
+</head>
+<body>
+  <div class="panel">
+    <h1>GAME OVER</h1>
+    <p class="row">SCORE <span id="score">0</span></p>
+    <p class="row">BEST <span id="best">0</span></p>
+    <button id="again" autofocus>PLAY AGAIN</button>
+  </div>
+</body>
+</rml>

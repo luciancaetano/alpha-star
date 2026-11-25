@@ -30,6 +30,30 @@ function pressesByFrame(inputs, actions) {
   return byFrame;
 }
 
+// { "doc#id": [frame, ...] } -> Map(frame -> [[doc, id], ...]).
+function clicksByFrame(clicks) {
+  const byFrame = new Map();
+  for (const [target, frames] of Object.entries(clicks ?? {})) {
+    const [doc, id, extra] = target.split("#");
+    if (!doc || !id || extra !== undefined) fail(`simulate: clicks key "${target}" must be "document#elementId"`);
+    if (!Array.isArray(frames)) fail(`simulate: clicks["${target}"] must be an array of frame numbers`);
+    for (const f of frames) {
+      if (!Number.isInteger(f) || f < 0) fail(`simulate: clicks["${target}"] has ${f}; frame numbers are integers >= 0`);
+      byFrame.set(f, [...(byFrame.get(f) ?? []), [doc, id]]);
+    }
+  }
+  return byFrame;
+}
+
+// A click the test asked for; a hidden document or unknown id fails the test.
+function click(sim, f, [doc, id]) {
+  try {
+    sim.click(doc, id);
+  } catch (e) {
+    fail(`simulate: clicks["${doc}#${id}"] at frame ${f}: ${e.message}`);
+  }
+}
+
 function describe(error) {
   return error ? `${error.message}\n${error.stack ?? ""}`.trimEnd() : "";
 }
@@ -42,9 +66,11 @@ function runGame(game, opts) {
     const sim = createInstance(id, memorySave());
     sim.boot(game, opts.scene);
     const presses = pressesByFrame(opts.inputs, sim.actions());
+    const clicks = clicksByFrame(opts.clicks);
     let error = null;
     for (let f = 0; f < frames && !error; ++f) {
       N.stepBudget();
+      for (const target of clicks.get(f) ?? []) click(sim, f, target);
       try {
         sim.hold(presses.get(f) ?? []);
         sim.step(DT);
@@ -52,7 +78,7 @@ function runGame(game, opts) {
         error = e;  // the game pauses here, as it would in the engine
       }
     }
-    return { frames, scene: sim.scene(), counts: sim.tagCounts(), error };
+    return { frames, scene: sim.scene(), counts: sim.tagCounts(), ui: sim.uiView(), error };
   } finally {
     N.instanceDestroy(id);
   }
@@ -69,6 +95,19 @@ function expectations(r) {
     noErrors() {
       if (r.error) fail(`expected no errors, got: ${describe(r.error)}`);
     },
+    text: (doc, id) => ({
+      equals(text) {
+        const d = r.ui[doc];
+        if (!d) fail(`expect.text("${doc}", "${id}"): unknown document; assets.ui has: ${Object.keys(r.ui).join(", ") || "(none)"}`);
+        if (!Object.hasOwn(d.texts, id)) fail(`expect.text("${doc}", "${id}"): no element with that id; ids: ${Object.keys(d.texts).join(", ") || "(none)"}`);
+        const got = d.texts[id];
+        const hidden = d.shown ? "" : ` (document "${doc}" is hidden)`;
+        if (got !== text) fail(`expected ${doc}#${id} text "${text}" ${after}, got "${got}"${hidden}${paused}`);
+      },
+    }),
+    shown(doc) {
+      if (!r.ui[doc]?.shown) fail(`expected document "${doc}" shown ${after}; shown: ${Object.keys(r.ui).filter((k) => r.ui[k].shown).join(", ") || "(none)"}${paused}`);
+    },
     count: (tag) => ({
       equals(n) {
         if (count(tag) !== n) fail(`expected ${n} "${tag}" ${after}, got ${count(tag)}${paused}`);
@@ -81,7 +120,7 @@ function expectations(r) {
 }
 
 export function simulate(game, opts) {
-  if (!opts || typeof opts !== "object") fail("simulate(game, { seconds, scene?, inputs? }): options are required");
+  if (!opts || typeof opts !== "object") fail("simulate(game, { seconds, scene?, inputs?, clicks? }): options are required");
   const r = runGame(game, opts);
   return { frames: r.frames, expect: expectations(r) };
 }

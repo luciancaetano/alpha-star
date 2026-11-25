@@ -11,7 +11,7 @@ function project(assets, files) {
   fs.mkdirSync(path.join(root, "src"));
   fs.writeFileSync(path.join(root, "src", "main.ts"), `
 import { define } from "alpha";
-interface T { actions: never; sounds: "a" | "b"; images: "i"; tags: never; scenes: { play: undefined } }
+interface T { actions: never; sounds: "a" | "b"; images: "i"; tags: never; scenes: { play: undefined }; ui: { hud: "score" } }
 const { scene, game } = define<T>();
 const play = scene("play", {});
 export default game({
@@ -71,4 +71,39 @@ test("the pack's source map names sources relative to the pack, so errors show s
   const b64 = js.match(/sourceMappingURL=data:application\/json;base64,(\S+)/)[1];
   const map = JSON.parse(Buffer.from(b64, "base64").toString("utf8"));
   assert.deepEqual(map.sources, ["../src/main.ts"]);
+});
+
+const UI_ASSETS = `{ sounds: { a: "assets/sfx/a.wav", b: "assets/sfx/a.wav" }, images: { i: "assets/img/i.png" },
+                     fonts: { pixel: "assets/fonts/p.ttf" }, ui: { hud: "assets/ui/hud.rml" } }`;
+const UI_FILES = {
+  "assets/sfx/a.wav": "WAV",
+  "assets/img/i.png": "PNG",
+  "assets/fonts/p.ttf": "TTF",
+  "assets/ui/hud.rml": `<rml><head><link type="text/rcss" href="../style/main.rcss"/></head>
+    <body><img src="logo.png"/><a href="#top">x</a><p id="score" style="decorator: image(inline.png);"/></body></rml>`,
+  "assets/style/main.rcss": `body { decorator: image( ../img/bg.png ); } p { background: url("dot.png"); }`,
+  "assets/ui/logo.png": "LOGO",
+  "assets/ui/inline.png": "IN",
+  "assets/img/bg.png": "BG",
+  "assets/style/dot.png": "DOT",
+};
+
+test("export copies fonts, ui documents and every file they reference", async () => {
+  const p = project(UI_ASSETS, { ...UI_FILES, "assets/ui/unused.png": "x" });
+  const { ok, problems } = await exportPack(p);
+  assert.deepEqual(problems, []);
+  assert.ok(ok);
+  for (const file of Object.keys(UI_FILES)) {
+    assert.equal(fs.readFileSync(path.join(p.out, file), "utf8"), UI_FILES[file], file);
+  }
+  assert.equal(fs.existsSync(path.join(p.out, "assets/ui/unused.png")), false);
+});
+
+test("export names the document and the missing file it references", async () => {
+  const { "assets/img/bg.png": _gone, ...files } = UI_FILES;
+  const p = project(UI_ASSETS, files);
+  const { ok, problems } = await exportPack(p);
+  assert.equal(ok, false);
+  assert.match(problems[0].message, /assets\.ui\.hud: assets\/style\/main\.rcss references "\.\.\/img\/bg\.png", not found/);
+  assert.equal(fs.existsSync(p.out), false);
 });

@@ -30,6 +30,7 @@ class Renderer {
 
   void draw(const Frame& frame);
   void present();
+  SDL_Renderer* sdl() const { return sdl_; }
   // Saves what draw() produced, before present(). Returns false on failure.
   bool save_bmp(const std::string& path) const;
 

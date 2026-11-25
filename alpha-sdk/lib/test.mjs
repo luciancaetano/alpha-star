@@ -10,7 +10,7 @@ export async function buildTests({ root, entry }) {
   return { ok: ok && problems.length === 0, problems, outfile };
 }
 
-/** Engine arguments for a bundled test module. */
-export function testArgs(outfile) {
-  return ["--test", outfile];
+/** Engine arguments for a bundled test module; game assets resolve against the project root. */
+export function testArgs(outfile, root) {
+  return ["--test", outfile, "--assets", root];
 }

@@ -3,7 +3,6 @@ import { bird } from "../prefabs/bird";
 import { ground } from "../prefabs/ground";
 import { pipePair } from "../prefabs/pipes";
 import { BIRD, PIPE } from "../tuning";
-import { centered } from "../ui";
 
 export default scene("play", {
   state: () => ({ score: 0 }),
@@ -11,11 +10,12 @@ export default scene("play", {
   enter(ctx) {
     ctx.spawn(ground());
     ctx.spawn(bird(true));
-    centered(ctx.ui, () => String(ctx.state.score), 40, 32);
+    ctx.ui.show("hud");
 
     ctx.onHit("bird", "solid", () => ctx.go("over", { score: ctx.state.score }));
     ctx.onEnter("bird", "goal", (_bird, goal) => {
       ctx.state.score += 1;
+      ctx.ui.set("hud", "score", ctx.state.score);
       ctx.destroy(goal);
       ctx.audio.play("point");
     });

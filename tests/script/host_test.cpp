@@ -16,7 +16,7 @@ namespace fs = std::filesystem;
 using alpha::test::Sandbox;
 using alpha::test::tiny;
 using alpha::test::space;
-using alpha::test::first_text;
+using alpha::test::ui_text;
 
 namespace {
 
@@ -33,13 +33,13 @@ const play = scene("play", {
                 body: { type: "static", collider: { rect: [100, 10] } } });
     ctx.spawn({ tags: ["ball"], pos: [50, 10], shape: { circle: 5, color: "#ff0000", outline: "#000" },
                 body: { type: "dynamic", collider: { circle: 5 } } });
-    ctx.ui.text(() => `flaps ${ctx.state.flaps} coins ${ctx.findAll("coin").length}`,
-                { pos: [50, 5], size: 8, align: "center" });
+    ctx.ui.show("hud");
     ctx.onHit("ball", "ground", () => ctx.go("over", { ticks: ctx.state.ticks }));
     ctx.every(0.25, () => ctx.spawn({ tags: ["coin"], pos: [10, 10] }));
   },
   update(ctx) {
     ctx.state.ticks += 1;
+    ctx.ui.set("hud", "status", `flaps ${ctx.state.flaps} coins ${ctx.findAll("coin").length}`);
     if (ctx.input.pressed("flap")) {
       ctx.state.flaps += 1;
       ctx.find("ball").body.velocity = [0, -60];
@@ -49,7 +49,8 @@ const play = scene("play", {
 
 const over = scene("over", {
   enter(ctx, { ticks }) {
-    ctx.ui.text(`over after ${ticks} best ${ctx.save.get("best", -1)}`, { pos: [0, 50] });
+    ctx.ui.show("over");
+    ctx.ui.set("over", "status", `over after ${ticks} best ${ctx.save.get("best", -1)}`);
     ctx.save.set("best", ticks);
   },
 });
@@ -59,25 +60,32 @@ export default game({
             gravity: [0, 900], actions: { flap: ["Space"] } },
   start: "play",
   scenes: { play, over },
-  assets: { sounds: {} },
+  assets: { sounds: {}, ui: { hud: "hud.rml", over: "over.rml" } },
 });
 )js";
 
+// Writes kGame and its two UI documents; returns the game path.
+std::string write_game(const Sandbox& box) {
+  box.write("hud.rml", alpha::test::rml({"status"}));
+  box.write("over.rml", alpha::test::rml({"status"}));
+  return box.write("game.js", kGame);
+}
+
 }  // namespace
 
-TEST_CASE("host boots a JS game: config, shapes and live text") {
+TEST_CASE("host boots a JS game: config, shapes and its UI") {
   Sandbox box;
   Host host(box.save());
-  const auto info = host.load(box.write("game.js", kGame));
+  const auto info = host.load(write_game(box));
   REQUIRE_MESSAGE(!host.paused(), host.error());
   CHECK(info.title == "test");
   CHECK(info.width == 100);
   CHECK(info.background == alpha::core::Color{0x10, 0x20, 0x30, 255});
   const auto frame = host.frame();
   CHECK(frame.shapes.size() == 2);
-  REQUIRE(frame.texts.size() == 1);
-  CHECK(frame.texts[0].text == "flaps 0 coins 0");
-  CHECK(frame.texts[0].align == alpha::core::Align::Center);
+  CHECK(frame.texts.empty());
+  host.step({}, kDt);
+  CHECK(ui_text(host, "status") == "flaps 0 coins 0");
 }
 
 TEST_CASE("a pack directory runs its main.js and resolves assets inside it") {
@@ -96,28 +104,28 @@ TEST_CASE("a pack directory runs its main.js and resolves assets inside it") {
 TEST_CASE("input actions, timers and velocity reach the script") {
   Sandbox box;
   Host host(box.save());
-  host.load(box.write("game.js", kGame));
+  host.load(write_game(box));
   host.step(space(), kDt);
   host.step(space(), kDt);  // held: not pressed again
   for (int i = 0; i < 14; ++i) host.step({}, kDt);
-  CHECK(first_text(host) == "flaps 1 coins 1");
+  CHECK(ui_text(host, "status") == "flaps 1 coins 1");
 }
 
 TEST_CASE("collision handler switches scene with params; save persists across runs") {
   Sandbox box;
-  const std::string path = box.write("game.js", kGame);
+  const std::string path = write_game(box);
   {
     Host host(box.save());
     host.load(path);
-    for (int i = 0; i < 120 && first_text(host).rfind("over", 0) != 0; ++i) host.step({}, kDt);
-    CHECK(first_text(host).rfind("over after ", 0) == 0);
-    CHECK(first_text(host).find("best -1") != std::string::npos);
+    for (int i = 0; i < 120 && ui_text(host, "status").rfind("over", 0) != 0; ++i) host.step({}, kDt);
+    CHECK(ui_text(host, "status").rfind("over after ", 0) == 0);
+    CHECK(ui_text(host, "status").find("best -1") != std::string::npos);
     CHECK(host.frame().shapes.empty());  // new scene, new world
   }
   Host again(box.save());
   again.load(path);
-  for (int i = 0; i < 120 && first_text(again).rfind("over", 0) != 0; ++i) again.step({}, kDt);
-  CHECK(first_text(again).find("best -1") == std::string::npos);
+  for (int i = 0; i < 120 && ui_text(again, "status").rfind("over", 0) != 0; ++i) again.step({}, kDt);
+  CHECK(ui_text(again, "status").find("best -1") == std::string::npos);
 }
 
 TEST_CASE("entity proxies read and write the engine world") {
@@ -223,7 +231,7 @@ TEST_CASE("a throw in update pauses the game and shows where") {
   CHECK(host.error().find("boom") != std::string::npos);
   CHECK(host.error().find("boom.js") != std::string::npos);
   host.step({}, kDt);  // stays paused, no crash
-  CHECK(first_text(host) == "SCRIPT ERROR (game paused)");
+  CHECK(host.frame().texts.front().text == "SCRIPT ERROR (game paused)");
 }
 
 TEST_CASE("script mistakes produce errors written for the agent") {

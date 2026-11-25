@@ -13,6 +13,7 @@
 #include "core/tags.hpp"
 #include "core/timers.hpp"
 #include "ecs/world.hpp"
+#include "ui/ui.hpp"
 
 namespace alpha::script {
 
@@ -33,6 +34,8 @@ struct ScriptState {
   std::map<std::string, core::SoundPtr, std::less<>> sounds;
   std::map<std::string, core::ImagePtr, std::less<>> images;
   core::Mixer mixer;
+  // Game UI (assets.ui documents), created at boot with config.size.
+  std::unique_ptr<ui::Ui> ui;
 };
 
 

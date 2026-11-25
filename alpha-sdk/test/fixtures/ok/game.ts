@@ -5,6 +5,7 @@ interface T {
   actions: "jump";
   sounds: never;
   images: never;
+  ui: {};
   tags: "hero";
   scenes: { play: undefined; over: { score: number } };
 }

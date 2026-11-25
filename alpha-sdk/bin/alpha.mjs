@@ -58,7 +58,7 @@ async function exportCmd(args) {
 async function testCmd(args) {
   const { ok, problems, outfile } = await buildTests({ root: process.cwd(), entry: args.entry });
   if (!ok) return report(problems, "test build");
-  return launch(args, testArgs(outfile));
+  return launch(args, testArgs(outfile, process.cwd()));
 }
 
 function launch(args, engineArgs = [args.out, ...args.engineArgs]) {

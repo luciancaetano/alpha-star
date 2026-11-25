@@ -34,7 +34,8 @@ export async function readGameDef(entry) {
   }
 }
 
-// Files the pack must contain: every string sound and every image.
+// Files the pack must contain: every string sound, image, font and UI document
+// (the files a document references are found by uiReferences once it exists).
 export function assetFiles(def) {
   const assets = def?.assets ?? {};
   const files = [];
@@ -44,7 +45,54 @@ export function assetFiles(def) {
   for (const [name, image] of Object.entries(assets.images ?? {})) {
     files.push({ key: `assets.images.${name}`, file: image });
   }
+  for (const kind of ["fonts", "ui"]) {
+    for (const [name, file] of Object.entries(assets[kind] ?? {})) files.push({ key: `assets.${kind}.${name}`, file });
+  }
   return files;
+}
+
+// Relative file references in RML (`href=`, `src=`) and RCSS (`url(...)`, `image(...)`).
+const REFERENCE = /\b(?:href|src)\s*=\s*"([^"]*)"|\b(?:url|image)\(\s*["']?([^"')\s]+)["']?\s*\)/g;
+
+function referencesIn(text) {
+  return [...text.matchAll(REFERENCE)].map((m) => m[1] ?? m[2])
+    .filter((ref) => ref && !ref.startsWith("#") && !/^[a-z]+:/i.test(ref));
+}
+
+// Every file a UI document pulls in, transitively (an .rcss may reference
+// images), as { key, file } with paths relative to the project; or a problem.
+function uiReferences(root, { key, file }) {
+  const found = [];
+  const queue = [path.normalize(file)];
+  const seen = new Set(queue);
+  while (queue.length) {
+    const doc = queue.shift();
+    if (!/\.(rml|rcss)$/i.test(doc)) continue;
+    for (const ref of referencesIn(fs.readFileSync(path.join(root, doc), "utf8"))) {
+      const target = path.normalize(path.join(path.dirname(doc), ref));
+      if (seen.has(target)) continue;
+      seen.add(target);
+      const shown = doc.split(path.sep).join("/");
+      const missing = target.startsWith("..") || !fs.existsSync(path.join(root, target));
+      if (missing) return { problem: problem(`${key}: ${shown} references "${ref}", not found inside the project`) };
+      found.push({ key, file: target });
+      queue.push(target);
+    }
+  }
+  return { found };
+}
+
+// Declared files plus what the UI documents reference; problems if any is missing.
+function packFiles(root, def) {
+  const files = assetFiles(def);
+  const problems = files.map((f) => checkAsset(root, f)).filter(Boolean);
+  if (problems.length) return { files, problems };
+  for (const f of files.filter((x) => x.key.startsWith("assets.ui."))) {
+    const { found, problem: p } = uiReferences(root, f);
+    if (p) return { files, problems: [p] };
+    files.push(...found);
+  }
+  return { files, problems: [] };
 }
 
 // A pack must be self-contained: relative paths that stay inside the project.
@@ -88,8 +136,7 @@ export async function exportPack({ root, entry, out, target = null }) {
     if (!built.ok) return { ok: false, problems: built.problems, files: [] };
     const def = await readGameDef(entry);
     if (!def) return { ok: false, problems: [problem("main module must `export default game({...})`", entry)], files: [] };
-    const files = assetFiles(def);
-    const problems = files.map((f) => checkAsset(root, f)).filter(Boolean);
+    const { files, problems } = packFiles(root, def);
     if (problems.length) return { ok: false, problems, files };
     fs.rmSync(out, { recursive: true, force: true });
     fs.mkdirSync(out, { recursive: true });
