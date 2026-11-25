@@ -76,12 +76,6 @@ JSValue ui_on(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_NewUint32(ctx, handler);
 }
 
-JSValue ui_click(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  const auto [doc, id] = target(ctx, argv);
-  ui_of(s).click(doc, id);
-  return JS_UNDEFINED;
-}
-
 JSValue ui_events(JSContext* ctx, ScriptState& s, JSValueConst*) {
   const auto events = ui_of(s).take_events();
   return new_ids(ctx, events);
@@ -89,6 +83,13 @@ JSValue ui_events(JSContext* ctx, ScriptState& s, JSValueConst*) {
 
 JSValue ui_reset(JSContext*, ScriptState& s, JSValueConst*) {
   ui_of(s).reset();
+  return JS_UNDEFINED;
+}
+
+#if ALPHA_DEBUG_TOOLS  // simulate() natives, up to kTestNatives
+JSValue ui_click(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  const auto [doc, id] = target(ctx, argv);
+  ui_of(s).click(doc, id);
   return JS_UNDEFINED;
 }
 
@@ -106,17 +107,25 @@ JSValue ui_view(JSContext* ctx, ScriptState& s, JSValueConst*) {
   return out;
 }
 
-constexpr std::array<Native, 11> kNatives{{
+constexpr std::array<Native, 2> kTestNatives{{
+    {"uiClick", guarded<ui_click>, 2}, {"uiView", guarded<ui_view>, 0}}};
+#endif
+
+constexpr std::array<Native, 9> kNatives{{
     {"uiCreate", guarded<ui_create>, 2}, {"loadUi", guarded<load_ui>, 2},
     {"loadFont", guarded<load_font>, 2}, {"uiShow", guarded<ui_show>, 1},
     {"uiHide", guarded<ui_hide>, 1},     {"uiSet", guarded<ui_set>, 3},
-    {"uiOn", guarded<ui_on>, 3},         {"uiClick", guarded<ui_click>, 2},
-    {"uiEvents", guarded<ui_events>, 0}, {"uiReset", guarded<ui_reset>, 0},
-    {"uiView", guarded<ui_view>, 0},
+    {"uiOn", guarded<ui_on>, 3},         {"uiEvents", guarded<ui_events>, 0},
+    {"uiReset", guarded<ui_reset>, 0},
 }};
 
 }  // namespace
 
-void install_ui_bindings(JSContext* ctx, JSValueConst target) { install(ctx, target, kNatives); }
+void install_ui_bindings(JSContext* ctx, JSValueConst target) {
+  install(ctx, target, kNatives);
+#if ALPHA_DEBUG_TOOLS
+  install(ctx, target, kTestNatives);
+#endif
+}
 
 }  // namespace alpha::script

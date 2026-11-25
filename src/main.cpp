@@ -5,21 +5,26 @@
 #include <filesystem>
 #include <string>
 #include <string_view>
+#include <vector>
 
+#include "core/cli.hpp"
 #include "core/fixed_step.hpp"
 #include "core/version.hpp"
 #include "platform/audio_out.hpp"
 #include "platform/frame_latency.hpp"
+#include "platform/log_file.hpp"
 #include "platform/sdl_input.hpp"
 #include "render/renderer.hpp"
 #include "script/host.hpp"
 
-#ifdef ALPHA_DEVTOOLS
+#if ALPHA_DEVTOOLS
 #include "devtools/dev_tools.hpp"
 #endif
 
 // Composition root: alpha_star <pack-dir | game.js> [options]  (pack = `alpha export` output)
-// With no arguments it runs the pack it sits in (standalone export).
+// With no game argument it runs the pack it sits in (standalone export).
+// Flags below exist only with ALPHA_DEBUG_TOOLS (see cmake/Flavors.cmake); every
+// unknown flag is ignored, and shipping builds know none.
 // alpha_star --test <tests.js> [--assets DIR]: runs every exported test function headlessly
 // (no window, no audio), one PASS/FAIL line each; exit code 0 iff all pass.
 //   --frames N        run exactly N frames, one fixed step each (deterministic)
@@ -29,11 +34,11 @@
 //   --devtools        open the dev tools (F1) at start; dev builds only
 namespace {
 
-#ifdef ALPHA_DEVTOOLS
+#if ALPHA_DEVTOOLS
 using Tools = alpha::devtools::DevTools;
 using alpha::devtools::FrameStats;
 #else
-// Shipping builds have no dev tools: the loop calls these no-ops instead.
+// Builds without ALPHA_DEVTOOLS have no dev tools: the loop calls these no-ops instead.
 struct FrameStats {
   double frame_ms = 0.0;
   int steps = 0;
@@ -52,53 +57,13 @@ struct Tools {
 constexpr double kDt = 1.0 / 60.0;
 constexpr float kWindowScale = 1.5f;
 
-struct Options {
-  std::string game;
-  int frames = 0;  // 0 = run until closed
-  std::string screenshot;
-  std::string tap;
-  int tap_every = 0;
-  bool devtools = false;
-};
+using Options = alpha::core::CliOptions;
 
 // Standalone pack (`alpha export --standalone`): main.js next to the executable.
 std::string fused_pack() {
   const char* base = SDL_GetBasePath();
   if (!base || !std::filesystem::exists(std::filesystem::path(base) / "main.js")) return "";
   return base;
-}
-
-// Applies one `--flag value`.
-void set_option(Options& o, std::string_view flag, const char* value) {
-  if (flag == "--frames") o.frames = std::stoi(value);
-  if (flag == "--screenshot") o.screenshot = value;
-  if (flag == "--tap") o.tap = value;
-  if (flag == "--tap-every") o.tap_every = std::stoi(value);
-}
-
-Options parse(int argc, char** argv) {
-  Options o;
-  const bool has_game = argc > 1 && argv[1][0] != '-';
-  o.game = has_game ? argv[1] : fused_pack();
-  for (int i = has_game ? 2 : 1; i < argc; ++i) {
-    const std::string_view flag = argv[i];
-    if (flag == "--devtools") o.devtools = true;
-    else if (i + 1 < argc) set_option(o, flag, argv[++i]);
-  }
-  return o;
-}
-
-// ctx.save lives in the per-user data dir, never next to the game (which may be
-// read-only or shared): e.g. %APPDATA%/alpha-star/<title>/save.json.
-std::string save_path_for(const std::string& title) {
-  char* dir = SDL_GetPrefPath("alpha-star", title.c_str());
-  if (!dir) {
-    SDL_Log("no per-user data dir (%s); saves disabled", SDL_GetError());
-    return "";
-  }
-  std::string path = std::string(dir) + "save.json";
-  SDL_free(dir);
-  return path;
 }
 
 int fail(const char* what) {
@@ -182,6 +147,7 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
   }
 }
 
+#if ALPHA_DEBUG_TOOLS
 // Error text indented under its FAIL line, without trailing blank lines.
 std::string indented(const std::string& text) {
   std::string out;
@@ -191,7 +157,7 @@ std::string indented(const std::string& text) {
   return out;
 }
 
-int run_tests(const char* path, const char* asset_dir) {
+int run_tests(const std::string& path, const std::string& asset_dir) {
   alpha::script::Host host([](const std::string&) { return std::string(); });
   const auto results = host.test(path, asset_dir);
   std::size_t failed = 0;
@@ -200,25 +166,55 @@ int run_tests(const char* path, const char* asset_dir) {
     if (r.passed()) std::printf("PASS %s\n", r.name.c_str());
     else std::printf("FAIL %s\n    %s\n", r.name.c_str(), indented(r.error).c_str());
   }
-  if (results.empty()) std::printf("no tests: %s exports no functions\n", path);
+  if (results.empty()) std::printf("no tests: %s exports no functions\n", path.c_str());
   std::printf("%zu passed, %zu failed\n", results.size() - failed, failed);
   return failed == 0 && !results.empty() ? 0 : 1;
 }
 
+#endif
+
+// No game argument and no fused pack: tell the developer (usage) or the player.
+int no_game() {
+#if ALPHA_DEBUG_TOOLS
+  std::fprintf(stderr,
+               "usage: alpha_star <pack-dir | game.js> [--frames N] [--screenshot out.bmp] [--tap INPUT] "
+               "[--tap-every K] [--devtools]\n       alpha_star --test <tests.js> [--assets DIR]\n");
+#else
+  const char* text = "No game found. Put this program next to the game's main.js (alpha export --standalone).";
+  SDL_Log("%s", text);
+  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "alpha-star", text, nullptr);
+#endif
+  return 2;
+}
+
+// VSync with the shortest frame queue the driver allows (input latency).
+void limit_latency(SDL_Renderer* sdl) {
+  SDL_SetRenderVSync(sdl, 1);
+  [[maybe_unused]] const bool short_queue = alpha::platform::limit_frame_queue(sdl);
+#if ALPHA_DEBUG_TOOLS  // diagnostics
+  SDL_Log("renderer %s, frame queue: %s", SDL_GetRendererName(sdl), short_queue ? "1 frame" : "driver default");
+#endif
+}
+
+std::string save_path_for(const std::string& title) { return alpha::platform::pref_file(title, "save.json"); }
+
 }  // namespace
 
 int main(int argc, char** argv) {
-  const bool assets = argc == 5 && std::string_view(argv[3]) == "--assets";
-  if ((argc == 3 || assets) && std::string_view(argv[1]) == "--test") return run_tests(argv[2], assets ? argv[4] : "");
-  const Options options = parse(argc, argv);
-  if (options.game.empty()) {
-    std::fprintf(stderr, "usage: alpha_star <pack-dir | game.js> [--frames N] [--screenshot out.bmp] [--devtools]\n");
-    return 2;
-  }
+  const std::vector<std::string_view> args(argv + 1, argv + argc);
+  const Options options = alpha::core::parse_cli(args);
+#if ALPHA_DEBUG_TOOLS
+  if (!options.test_file.empty()) return run_tests(options.test_file, options.test_assets);
+#endif
+  const std::string game = options.game.empty() ? fused_pack() : options.game;
+  if (game.empty()) return no_game();
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) return fail("SDL_Init");
-  SDL_Log("alpha-star %s", alpha::core::version().data());
   alpha::script::Host host(save_path_for);
-  const alpha::script::GameInfo info = host.load(options.game);
+  const alpha::script::GameInfo info = host.load(game);
+#if ALPHA_SHIPPING  // no console: logs go to <pref dir>/log.txt
+  alpha::platform::redirect_logs(alpha::platform::pref_file(info.title, "log.txt"), host.log());
+#endif
+  SDL_Log("alpha-star %s", alpha::core::version().data());
   SDL_Window* window = nullptr;
   SDL_Renderer* sdl = nullptr;
   const auto w = static_cast<int>(static_cast<float>(info.width) * kWindowScale);
@@ -226,9 +222,7 @@ int main(int argc, char** argv) {
   if (!SDL_CreateWindowAndRenderer(info.title.c_str(), w, h, SDL_WINDOW_RESIZABLE, &window, &sdl)) {
     return fail("SDL_CreateWindowAndRenderer");
   }
-  SDL_SetRenderVSync(sdl, 1);
-  const bool short_queue = alpha::platform::limit_frame_queue(sdl);
-  SDL_Log("renderer %s, frame queue: %s", SDL_GetRendererName(sdl), short_queue ? "1 frame" : "driver default");
+  limit_latency(sdl);
   alpha::render::Renderer renderer(sdl, info.width, info.height);
   {
     Tools tools(window, sdl);  // gone before its renderer

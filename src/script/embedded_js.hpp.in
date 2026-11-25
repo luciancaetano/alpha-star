@@ -6,7 +6,9 @@
 namespace alpha::script::embedded {
 
 inline constexpr std::string_view kAlpha = R"__alpha_js__(@ALPHA_JS_alpha@)__alpha_js__";
+#if ALPHA_DEBUG_TOOLS  // the alpha/test module is absent from other builds
 inline constexpr std::string_view kAlphaTest = R"__alpha_js__(@ALPHA_JS_alpha_test@)__alpha_js__";
+#endif
 inline constexpr std::string_view kRuntime = R"__alpha_js__(@ALPHA_JS_runtime@)__alpha_js__";
 
 }  // namespace alpha::script::embedded

@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import * as esbuild from "esbuild";
 import { build } from "./build.mjs";
-import { availableTargets, bundledEngine, engineFile } from "./engine.mjs";
+import { describeTargets, engineFile, shippingEngine } from "./engine.mjs";
 
 const SHIM = path.join(path.dirname(fileURLToPath(import.meta.url)), "alpha-shim.mjs");
 
@@ -117,13 +117,14 @@ function copyAssets(root, out, files) {
   }
 }
 
-// Standalone pack: the engine binary sits next to main.js and, started with no
-// arguments, runs it (like a fused LOVE game).
+// Standalone pack: the shipping engine binary sits next to main.js and, started
+// with no arguments, runs it (like a fused LOVE game).
 function engineFor(target) {
-  const engine = bundledEngine(target);
+  const engine = shippingEngine(target);
   if (engine) return { engine };
-  const have = availableTargets().join(", ") || "(none; stage one with tools/stage_engine.py)";
-  return { problem: problem(`no bundled engine for target "${target}"; SDK has: ${have}`) };
+  const have = describeTargets() || "(none)";
+  return { problem: problem(`no shipping engine for target "${target}"; SDK has: ${have}; ` +
+    "stage both flavors with tools/stage_engine.py") };
 }
 
 // root: project directory (asset paths are relative to it). target: null for

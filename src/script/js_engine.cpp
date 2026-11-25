@@ -38,10 +38,20 @@ void Engine::add_builtin(std::string name, std::string_view source) {
   builtins_[std::move(name)] = std::string(source);
 }
 
+// "built-in modules: alpha, ..." (internal "alpha:" modules are not listed). Which
+// builtins exist depends on the build flavor, e.g. alpha/test is not in shipping.
+std::string Engine::public_builtins() const {
+  std::string names;
+  for (const auto& [name, source] : builtins_) {
+    if (name.find(':') == std::string::npos) names += (names.empty() ? "" : ", ") + name;
+  }
+  return "built-in modules: " + names;
+}
+
 std::string Engine::source_of(const std::string& name) const {
   if (const auto it = builtins_.find(name); it != builtins_.end()) return it->second;
   std::ifstream file(name, std::ios::binary);
-  if (!file) throw core::Error("cannot open module \"" + name + "\"");
+  if (!file) throw core::Error("cannot open module \"" + name + "\" (no such file; " + public_builtins() + ")");
   std::ostringstream text;
   text << file.rdbuf();
   return text.str();

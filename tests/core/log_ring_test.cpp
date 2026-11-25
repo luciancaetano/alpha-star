@@ -28,3 +28,8 @@ TEST_CASE("log ring clear empties it; level names are readable") {
   CHECK(alpha::core::level_name(LogLevel::Warn) == "warn");
   CHECK(alpha::core::level_name(LogLevel::Error) == "error");
 }
+
+TEST_CASE("a log line reads as it does on stderr and in the shipping log file") {
+  CHECK(alpha::core::format_line({LogLevel::Warn, "low fuel"}) == "[warn] low fuel\n");
+  CHECK(alpha::core::format_line({LogLevel::Info, ""}) == "[log] \n");
+}

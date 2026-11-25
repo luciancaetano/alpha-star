@@ -54,6 +54,7 @@ class Engine {
   void start_clock();
   void stop_clock();
   std::string source_of(const std::string& name) const;
+  std::string public_builtins() const;
   JSValue compile(const std::string& name);
   void run_jobs();
 

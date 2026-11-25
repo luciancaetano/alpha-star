@@ -40,7 +40,9 @@ Host::Host(SavePathFor save_path_for)
   JSContext* ctx = engine_->ctx();
   JS_SetContextOpaque(ctx, &instances_);
   engine_->add_builtin("alpha", embedded::kAlpha);
+#if ALPHA_DEBUG_TOOLS  // test runner only; importing it elsewhere lists the builtins that exist
   engine_->add_builtin("alpha/test", embedded::kAlphaTest);
+#endif
   engine_->add_builtin("alpha:runtime", embedded::kRuntime);
   const Value global(ctx, JS_GetGlobalObject(ctx));
   Value natives(ctx, JS_NewObject(ctx));
@@ -128,6 +130,7 @@ void Host::release_ui() {
   if (ui::Ui* game_ui = instances_.main().ui.get()) game_ui->attach(nullptr);
 }
 
+#if ALPHA_DEBUG_TOOLS
 std::vector<TestResult> Host::test(const std::string& path, const std::string& asset_dir) {
   try {
     return run_tests(path, asset_dir);
@@ -155,6 +158,7 @@ std::vector<TestResult> Host::run_tests(const std::string& path, const std::stri
   }
   return results;
 }
+#endif
 
 const core::LogRing& Host::log() const { return instances_.log(); }
 

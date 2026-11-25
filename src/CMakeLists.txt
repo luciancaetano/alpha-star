@@ -1,5 +1,6 @@
 # core: pure, dependency-free domain code. Tested by the fast harness preset.
 add_library(alpha_core
+  core/cli.cpp
   core/color.cpp
   core/fixed_step.cpp
   core/input.cpp
@@ -13,6 +14,7 @@ add_library(alpha_core
   core/version.cpp)
 target_include_directories(alpha_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(alpha_core PUBLIC ALPHA_VERSION="${PROJECT_VERSION}")
+target_link_libraries(alpha_core PUBLIC alpha_flavor)
 alpha_set_warnings(alpha_core)
 
 if(NOT ALPHA_WITH_RUNTIME_DEPS)
@@ -35,6 +37,7 @@ add_library(alpha_engine
   platform/assets.cpp
   platform/audio_out.cpp
   platform/frame_latency.cpp
+  platform/log_file.cpp
   platform/sdl_input.cpp
   render/renderer.cpp
   render/tessellate.cpp
@@ -74,7 +77,6 @@ if(ALPHA_DEVTOOLS)
     devtools/snapshot.cpp
     devtools/time_control.cpp)
   target_link_libraries(alpha_devtools PUBLIC alpha_engine PRIVATE alpha_imgui)
-  target_compile_definitions(alpha_devtools PUBLIC ALPHA_DEVTOOLS)
   alpha_set_warnings(alpha_devtools)
 endif()
 

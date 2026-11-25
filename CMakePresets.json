@@ -4,7 +4,8 @@
     {
       "name": "dev",
       "binaryDir": "${sourceDir}/build/dev",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "ALPHA_COVERAGE": "ON", "ALPHA_DEVTOOLS": "ON" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "ALPHA_COVERAGE": "ON",
+        "ALPHA_DEVTOOLS": "ON", "ALPHA_MCP": "ON", "ALPHA_DEBUG_TOOLS": "ON" }
     },
     {
       "name": "harness",
@@ -15,15 +16,23 @@
     },
     {
       "name": "release",
-      "description": "Production build, no tests",
+      "description": "Optimized engine for alpha run/test: debug CLI + test runner, no dev tools/MCP",
       "binaryDir": "${sourceDir}/build/release",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "ALPHA_BUILD_TESTS": "OFF", "ALPHA_DEVTOOLS": "OFF" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "ALPHA_BUILD_TESTS": "OFF",
+        "ALPHA_DEVTOOLS": "OFF", "ALPHA_MCP": "OFF", "ALPHA_DEBUG_TOOLS": "ON", "ALPHA_SHIPPING": "OFF" }
+    },
+    {
+      "name": "shipping",
+      "description": "Player build (alpha export --standalone): no dev/debug/agent features, LTO, stripped, no console",
+      "binaryDir": "${sourceDir}/build/shipping",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "ALPHA_BUILD_TESTS": "OFF", "ALPHA_SHIPPING": "ON" }
     }
   ],
   "buildPresets": [
     { "name": "dev", "configurePreset": "dev", "configuration": "Debug" },
     { "name": "harness", "configurePreset": "harness", "configuration": "Debug" },
-    { "name": "release", "configurePreset": "release", "configuration": "Release" }
+    { "name": "release", "configurePreset": "release", "configuration": "Release" },
+    { "name": "shipping", "configurePreset": "shipping", "configuration": "Release" }
   ],
   "testPresets": [
     { "name": "dev", "configurePreset": "dev", "configuration": "Debug",

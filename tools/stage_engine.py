@@ -1,7 +1,11 @@
-"""Build the release engine and stage it inside the SDK (like Electron's prebuilt binaries).
+"""Build both engine flavors and stage them inside the SDK (like Electron's prebuilt binaries).
 
 Usage: python tools/stage_engine.py          # this machine -> alpha-sdk/engine/<platform>-<arch>/
        python tools/stage_engine.py --linux  # same, built inside the Linux container
+
+  release  -> engine/<target>/alpha_star[.exe]           (alpha run / alpha test)
+  shipping -> engine/<target>/shipping/alpha_star[.exe]  (alpha export --standalone),
+              staged only if tools/check_shipping.py passes on it
 
 Targets use Node's names (process.platform-process.arch): win32-x64, linux-x64, ...
 """
@@ -22,22 +26,33 @@ def target():
     return f"{system}-{ARCH.get(platform.machine().lower(), platform.machine().lower())}"
 
 
-def build_release():
-    for cmd in (["cmake", "--preset", "release"], ["cmake", "--build", "--preset", "release"]):
+FLAVORS = {"release": "", "shipping": "shipping"}  # preset -> subdir of engine/<target>
+
+
+def build(preset):
+    for cmd in (["cmake", "--preset", preset], ["cmake", "--build", "--preset", preset]):
         if subprocess.run(cmd, cwd=cfg.ROOT).returncode != 0:
             sys.exit(f"stage_engine: {' '.join(cmd)} failed")
+
+
+def stage(preset, subdir):
+    build(preset)
+    exe = toolchain.built_exe(preset)
+    if preset == "shipping" and subprocess.run([sys.executable, "tools/check_shipping.py", "--binary", str(exe)],
+                                               cwd=cfg.ROOT).returncode != 0:
+        sys.exit("stage_engine: shipping binary failed tools/check_shipping.py; not staged")
+    dest = cfg.ROOT / "alpha-sdk" / "engine" / target() / subdir
+    dest.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(exe, dest / exe.name)
+    print(f"stage_engine: {preset} {exe.name} -> {cfg.rel(dest / exe.name)}")
 
 
 def main(argv):
     if "--linux" in argv:
         return subprocess.run([sys.executable, "tools/linux_gate.py", "--", "python3",
                                "tools/stage_engine.py"], cwd=cfg.ROOT).returncode
-    build_release()
-    exe = toolchain.built_exe("release")
-    dest = cfg.ROOT / "alpha-sdk" / "engine" / target()
-    dest.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(exe, dest / exe.name)
-    print(f"stage_engine: {exe.name} -> {cfg.rel(dest / exe.name)}")
+    for preset, subdir in FLAVORS.items():
+        stage(preset, subdir)
     return 0
 
 

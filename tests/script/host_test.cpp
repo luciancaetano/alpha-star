@@ -266,6 +266,9 @@ TEST_CASE("load failures pause with a readable reason") {
     return host.error();
   };
   CHECK(load_error("").find("cannot open module") != std::string::npos);
+  const std::string unknown = load_error("import { simulate } from 'alpha/nope';\nexport default 1;");
+  CHECK(unknown.find("cannot open module \"alpha/nope\"") != std::string::npos);
+  CHECK(unknown.find("built-in modules: alpha") != std::string::npos);
   CHECK(load_error("export const x = 1;").find("export default game") != std::string::npos);
   CHECK(load_error("export default {").find("SyntaxError") != std::string::npos);
 }

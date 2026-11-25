@@ -17,6 +17,9 @@ struct LogLine {
   std::string text;
 };
 
+// "[level] text" plus a newline: one line as written to stderr or the shipping log file.
+std::string format_line(const LogLine& line);
+
 // The newest `capacity` log lines, oldest first. Script console.* calls and
 // script errors land here so the dev tools can show them.
 class LogRing {

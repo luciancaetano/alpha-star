@@ -9,6 +9,10 @@ std::string_view level_name(LogLevel level) {
   return kNames.at(static_cast<std::size_t>(level));
 }
 
+std::string format_line(const LogLine& line) {
+  return "[" + std::string(level_name(line.level)) + "] " + line.text + "\n";
+}
+
 LogRing::LogRing(std::size_t capacity) : capacity_(capacity) {}
 
 void LogRing::push(LogLevel level, std::string text) {

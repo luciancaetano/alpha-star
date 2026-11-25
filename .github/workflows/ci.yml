@@ -17,6 +17,12 @@ jobs:
       - run: pip install -r tools/requirements.txt
       # Coverage uses Microsoft.CodeCoverage.Console, shipped with the runner's Visual Studio.
       - run: python tools/gate.py
+      # Build flavors: the shipping engine must contain no dev/debug/agent features
+      # (positive), and the check must bite on the release engine (negative).
+      - run: cmake --preset release && cmake --build --preset release
+      - run: cmake --preset shipping && cmake --build --preset shipping
+      - run: python tools/check_shipping.py
+      - run: python tools/check_shipping.py --preset release --expect-found
 
   gate-linux:
     runs-on: ubuntu-24.04
@@ -39,6 +45,10 @@ jobs:
           "$RUNNER_TEMP/harness/bin/pip" install -r tools/requirements.txt gcovr==8.3
           echo "$RUNNER_TEMP/harness/bin" >> "$GITHUB_PATH"
       - run: xvfb-run -a python3 tools/gate.py
+      - run: cmake --preset release && cmake --build --preset release
+      - run: cmake --preset shipping && cmake --build --preset shipping
+      - run: python3 tools/check_shipping.py
+      - run: python3 tools/check_shipping.py --preset release --expect-found
 
   # macOS is not yet verified: build + ctest only, no coverage gate, and a
   # failure here does not fail the workflow.

@@ -11,10 +11,8 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>")
 
 option(ALPHA_WITH_RUNTIME_DEPS "Fetch SDL3, Box2D, QuickJS-ng, EnTT" ON)
 option(ALPHA_BUILD_TESTS "Build tests" ON)
-# Dear ImGui engine dev tools (F1). Never in shipping builds: release preset turns it off.
-option(ALPHA_DEVTOOLS "Build the Dear ImGui dev tools into the engine" OFF)
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(Flavors)
 include(Warnings)
 include(Dependencies)
 

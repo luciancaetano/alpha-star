@@ -48,7 +48,7 @@ function clicksByFrame(clicks) {
 // A click the test asked for; a hidden document or unknown id fails the test.
 function click(sim, f, [doc, id]) {
   try {
-    sim.click(doc, id);
+    sim.within(() => N.uiClick(doc, id));
   } catch (e) {
     fail(`simulate: clicks["${doc}#${id}"] at frame ${f}: ${e.message}`);
   }
@@ -64,7 +64,7 @@ function runGame(game, opts) {
   const id = N.instanceCreate();
   try {
     const sim = createInstance(id, memorySave());
-    sim.boot(game, opts.scene);
+    sim.boot(game, opts.scene, "simulate");
     const presses = pressesByFrame(opts.inputs, sim.actions());
     const clicks = clicksByFrame(opts.clicks);
     let error = null;
@@ -72,13 +72,13 @@ function runGame(game, opts) {
       N.stepBudget();
       for (const target of clicks.get(f) ?? []) click(sim, f, target);
       try {
-        sim.hold(presses.get(f) ?? []);
+        sim.within(() => N.holdActions(presses.get(f) ?? []));
         sim.step(DT);
       } catch (e) {
         error = e;  // the game pauses here, as it would in the engine
       }
     }
-    return { frames, scene: sim.scene(), counts: sim.tagCounts(), ui: sim.uiView(), error };
+    return { frames, scene: sim.scene(), counts: sim.within(() => N.tagCounts()), ui: sim.within(() => N.uiView()), error };
   } finally {
     N.instanceDestroy(id);
   }

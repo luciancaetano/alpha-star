@@ -16,12 +16,13 @@ std::uint32_t instance_arg(JSContext* ctx, JSValueConst v) {
   return static_cast<std::uint32_t>(number_arg(ctx, v, "instance id"));
 }
 
-JSValue instance_create(JSContext* ctx, ScriptState&, JSValueConst*) {
-  return JS_NewUint32(ctx, instances_of(ctx).create());
-}
-
 JSValue instance_use(JSContext* ctx, ScriptState&, JSValueConst* argv) {
   return JS_NewUint32(ctx, instances_of(ctx).use(instance_arg(ctx, argv[0])));
+}
+
+#if ALPHA_DEBUG_TOOLS  // simulate() natives, up to kTestNatives
+JSValue instance_create(JSContext* ctx, ScriptState&, JSValueConst*) {
+  return JS_NewUint32(ctx, instances_of(ctx).create());
 }
 
 JSValue instance_destroy(JSContext* ctx, ScriptState&, JSValueConst* argv) {
@@ -58,14 +59,23 @@ JSValue step_budget(JSContext* ctx, ScriptState&, JSValueConst*) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 6> kNatives{{
-    {"instanceCreate", guarded<instance_create>, 0}, {"instanceUse", guarded<instance_use>, 1},
-    {"instanceDestroy", guarded<instance_destroy>, 1}, {"holdActions", guarded<hold_actions>, 1},
-    {"tagCounts", guarded<tag_counts>, 0},           {"stepBudget", guarded<step_budget>, 0},
+// simulate() only: absent from shipping builds.
+constexpr std::array<Native, 5> kTestNatives{{
+    {"instanceCreate", guarded<instance_create>, 0}, {"instanceDestroy", guarded<instance_destroy>, 1},
+    {"holdActions", guarded<hold_actions>, 1},       {"tagCounts", guarded<tag_counts>, 0},
+    {"stepBudget", guarded<step_budget>, 0},
 }};
+#endif
+
+constexpr std::array<Native, 1> kNatives{{{"instanceUse", guarded<instance_use>, 1}}};
 
 }  // namespace
 
-void install_instance_bindings(JSContext* ctx, JSValueConst target) { install(ctx, target, kNatives); }
+void install_instance_bindings(JSContext* ctx, JSValueConst target) {
+  install(ctx, target, kNatives);
+#if ALPHA_DEBUG_TOOLS
+  install(ctx, target, kTestNatives);
+#endif
+}
 
 }  // namespace alpha::script

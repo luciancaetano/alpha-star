@@ -4,16 +4,18 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { availableTargets, bundledEngine, engineFile, hostTarget, resolveEngine } from "../lib/engine.mjs";
+import { availableTargets, bundledEngine, engineFile, hostTarget, resolveEngine, shippingEngine } from "../lib/engine.mjs";
 import { exportPack } from "../lib/pack.mjs";
 
 const ENGINE_DIR = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), "engine");
 const FAKE = "testos-x99";  // never a real target, so real staged engines stay untouched
 
-function withFakeEngine(fn) {
+// Release engine (run/test) and, unless releaseOnly, the shipping one (export --standalone).
+function withFakeEngine(fn, { releaseOnly = false } = {}) {
   const dir = path.join(ENGINE_DIR, FAKE);
-  fs.mkdirSync(dir, { recursive: true });
+  fs.mkdirSync(path.join(dir, "shipping"), { recursive: true });
   fs.writeFileSync(path.join(dir, engineFile(FAKE)), "ENGINE");
+  if (!releaseOnly) fs.writeFileSync(path.join(dir, "shipping", engineFile(FAKE)), "SHIPPING");
   return Promise.resolve(fn()).finally(() => fs.rmSync(dir, { recursive: true, force: true }));
 }
 
@@ -34,6 +36,8 @@ test("bundled engines are discovered per target", () =>
     assert.ok(availableTargets().includes(FAKE));
     assert.equal(bundledEngine(FAKE), path.join(ENGINE_DIR, FAKE, engineFile(FAKE)));
     assert.equal(bundledEngine("nope-x0"), null);
+    assert.equal(shippingEngine(FAKE), path.join(ENGINE_DIR, FAKE, "shipping", engineFile(FAKE)));
+    assert.equal(shippingEngine("nope-x0"), null);
   }));
 
 function project() {
@@ -49,13 +53,13 @@ export default game({ config: { title: "t", size: [10, 10], seed: 1, actions: {}
   return { root, entry: path.join(root, "src", "main.ts"), out: path.join(root, "dist") };
 }
 
-test("standalone export puts the target's engine next to main.js", () =>
+test("standalone export puts the target's shipping engine next to main.js", () =>
   withFakeEngine(async () => {
     const p = project();
     const { ok, problems } = await exportPack({ ...p, target: FAKE });
     assert.deepEqual(problems, []);
     assert.ok(ok);
-    assert.equal(fs.readFileSync(path.join(p.out, engineFile(FAKE)), "utf8"), "ENGINE");
+    assert.equal(fs.readFileSync(path.join(p.out, engineFile(FAKE)), "utf8"), "SHIPPING");
     assert.ok(fs.existsSync(path.join(p.out, "main.js")));
   }));
 
@@ -63,6 +67,17 @@ test("standalone export for a missing target lists what the SDK has", async () =
   const p = project();
   const { ok, problems } = await exportPack({ ...p, target: "nope-x0" });
   assert.equal(ok, false);
-  assert.match(problems[0].message, /no bundled engine for target "nope-x0"; SDK has:/);
+  assert.match(problems[0].message, /no shipping engine for target "nope-x0"; SDK has:/);
   assert.equal(fs.existsSync(p.out), false);
 });
+
+test("standalone export without a shipping engine says which flavors exist", () =>
+  withFakeEngine(async () => {
+    const p = project();
+    const { ok, problems } = await exportPack({ ...p, target: FAKE });
+    assert.equal(ok, false);
+    assert.match(problems[0].message, new RegExp(`no shipping engine for target "${FAKE}"`));
+    assert.ok(problems[0].message.includes(`${FAKE} (release only)`), problems[0].message);
+    assert.match(problems[0].message, /tools\/stage_engine\.py/);
+    assert.equal(fs.existsSync(p.out), false);
+  }, { releaseOnly: true }));

@@ -1,5 +1,9 @@
-// Engine binaries shipped inside the SDK, one per platform (like Electron):
-//   engine/<platform>-<arch>/alpha_star[.exe]   e.g. engine/win32-x64, engine/linux-x64
+// Engine binaries shipped inside the SDK, one per platform (like Electron), in two
+// build flavors (cmake/Flavors.cmake in the alpha-star repo):
+//   engine/<platform>-<arch>/alpha_star[.exe]           release: `alpha run` / `alpha test`
+//                                                       (headless flags, --test runner)
+//   engine/<platform>-<arch>/shipping/alpha_star[.exe]  shipping: `alpha export --standalone`
+//                                                       (no dev/debug/agent features, no console)
 // Staged by tools/stage_engine.py in the alpha-star repo.
 import fs from "node:fs";
 import path from "node:path";
@@ -16,6 +20,20 @@ export function engineFile(target) {
 export function bundledEngine(target = hostTarget()) {
   const file = path.join(ENGINE_DIR, target, engineFile(target));
   return fs.existsSync(file) ? file : null;
+}
+
+export function shippingEngine(target = hostTarget()) {
+  const file = path.join(ENGINE_DIR, target, "shipping", engineFile(target));
+  return fs.existsSync(file) ? file : null;
+}
+
+// "win32-x64, linux-x64 (release only)": every staged target and its flavors.
+export function describeTargets() {
+  if (!fs.existsSync(ENGINE_DIR)) return "";
+  return fs.readdirSync(ENGINE_DIR)
+    .filter((t) => bundledEngine(t) || shippingEngine(t))
+    .map((t) => (!shippingEngine(t) ? `${t} (release only)` : !bundledEngine(t) ? `${t} (shipping only)` : t))
+    .join(", ");
 }
 
 export function availableTargets() {

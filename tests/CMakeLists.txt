@@ -1,6 +1,7 @@
 set(ALPHA_TEST_SOURCES
   test_main.cpp
   core/audio_test.cpp
+  core/cli_test.cpp
   core/input_test.cpp
   core/log_ring_test.cpp
   core/source_map_test.cpp
@@ -15,6 +16,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     physics/physics_world_test.cpp
     platform/assets_test.cpp
     platform/frame_latency_test.cpp
+    platform/log_file_test.cpp
     platform/sdl_input_test.cpp
     render/renderer_test.cpp
     render/tessellate_test.cpp

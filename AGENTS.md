@@ -25,7 +25,7 @@ QuickJS-ng scripts that AI agents write for vibecoder users.
 src/<module>/   engine code; one module per folder (core, ecs, physics, render, platform, script, ui, devtools, mcp)
 tests/<module>/ doctest tests mirroring src/
 alpha-sdk/      npm package: script API types + `alpha` CLI (check/export/run) + bundled engines
-tools/          harness levers (limits, crapper, dryer, mutator)
+tools/          harness levers (limits, crapper, dryer, mutator, check_shipping)
 docs/           GLOSSARY.md, LOG.md
 cmake/          dependency + warnings config
 ```
@@ -53,8 +53,28 @@ Game UI is RmlUi (`src/ui/`, `.rml`/`.rcss` in `assets.ui`); Dear ImGui is engin
 Input order: dev tools → game UI (`ui::consumes`) → game actions; what the UI consumed never drives actions.
 Builds and gates: `CMAKE_BUILD_PARALLEL_LEVEL=8` (the Linux gate also runs with `--cpus 8`); one build at a time.
 
-Dev tools (Dear ImGui, F1; `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`
-(ON in preset dev, OFF in release): never put game-facing features in `src/devtools/`.
+Dev tools (Dear ImGui, F1; `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:
+never put game-facing features in `src/devtools/`.
+
+### Build flavors (`cmake/Flavors.cmake`)
+
+**Every dev/debug/agent-only feature lands behind its `ALPHA_*` flag and is absent from shipping.**
+Test it with `#if ALPHA_X` (never `#ifdef`): each flag is always defined as 0 or 1. Strings in
+embedded JS (comments included) end up in the binary too.
+
+| Flag | Gates | dev | release | shipping |
+|---|---|---|---|---|
+| `ALPHA_DEVTOOLS` | Dear ImGui dev tools (`src/devtools/`, `--devtools`) | ON | OFF | OFF |
+| `ALPHA_MCP` | MCP server for agents (step 6) | ON | OFF | OFF |
+| `ALPHA_DEBUG_TOOLS` | CLI `--frames --screenshot --tap --tap-every --devtools`, `--test` runner, `alpha/test` + its natives, diagnostic logs | ON | ON | OFF |
+| `ALPHA_SHIPPING` | forces the three OFF; IPO/LTO, stripped / no PDB, Windows GUI subsystem (no console), asserts off; unknown flags ignored; logs only to `<pref dir>/log.txt` | OFF | OFF | ON |
+
+```
+cmake --preset shipping && cmake --build --preset shipping   # player engine
+python tools/check_shipping.py                               # fails on any dev/debug/agent marker
+python tools/stage_engine.py                                 # stage release + shipping into alpha-sdk/engine/
+```
+`alpha run`/`alpha test` use the release engine; `alpha export --standalone` copies the shipping one.
 
 `python tools/gate.py` (preset dev; `--preset harness` = fast core-only) runs build + tests + all checks. A change is done only when it passes.
 

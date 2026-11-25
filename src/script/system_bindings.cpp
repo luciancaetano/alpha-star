@@ -88,8 +88,9 @@ JSValue log(JSContext* ctx, ScriptState&, JSValueConst* argv) {
   if (level < 0 || level > 2) throw core::Error("log level must be 0, 1 or 2");
   const auto lvl = static_cast<core::LogLevel>(level);
   std::string text = string_arg(ctx, argv[1], "log text");
-  std::fprintf(stderr, "[%s] %s\n", core::level_name(lvl).data(), text.c_str());
-  instances_of(ctx).log().push(lvl, std::move(text));
+  core::LogLine line{lvl, std::move(text)};
+  std::fputs(core::format_line(line).c_str(), stderr);  // shipping: stderr is the log file
+  instances_of(ctx).log().push(line.level, std::move(line.text));
   return JS_UNDEFINED;
 }
 

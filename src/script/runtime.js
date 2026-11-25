@@ -5,7 +5,7 @@
 // A game runs as an *instance*: all of its state lives in the closure made by
 // createInstance, and its native state (world, timers, random, assets) lives
 // in the engine under the same instance id. The engine's own game is instance
-// 0; every simulate() run (alpha/test) is a fresh instance, so runs never see
+// 0; every headless test run is a fresh instance, so runs never see
 // each other. Every call into an instance selects it natively first.
 const N = globalThis.__native;
 
@@ -63,7 +63,7 @@ function uiCall(what, args, fn) {
   }
 }
 
-// ctx.save backends: the engine's save file, or memory only (simulate).
+// ctx.save backends: the engine's save file, or memory only (test runs).
 export const fileSave = {
   read: (title) => JSON.parse(N.saveRead(title) || "{}"),
   write: (data) => N.saveWrite(JSON.stringify(data)),
@@ -224,7 +224,7 @@ function dispatch(s, pairs, kind) {
   }
 }
 
-function bootGame(s, ctx, g, start) {
+function bootGame(s, ctx, g, start, what) {
   s.game = validate(g);
   const c = s.game.config;
   N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]));
@@ -232,7 +232,7 @@ function bootGame(s, ctx, g, start) {
   for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bindAction(action, inputs);
   preload(s.game.assets ?? {});
   s.saveData = s.save.read(c.title ?? "alpha-star");
-  enter(s, ctx, start === undefined ? s.game.start : checkScene(s.game, start, "simulate"), undefined);
+  enter(s, ctx, start === undefined ? s.game.start : checkScene(s.game, start, what), undefined);
   return { title: c.title ?? "alpha-star", size: c.size, background: c.background ?? "#000000" };
 }
 
@@ -271,14 +271,12 @@ export function createInstance(id, save) {
   };
   const ctx = makeCtx(s);
   return {
-    boot: (g, start) => within(id, () => bootGame(s, ctx, g, start)),
+    boot: (g, start, what) => within(id, () => bootGame(s, ctx, g, start, what)),
     step: (dt) => within(id, () => stepGame(s, ctx, dt)),
-    click: (doc, element) => within(id, () => N.uiClick(doc, element)),
-    uiView: () => within(id, () => N.uiView()),
-    hold: (actions) => within(id, () => N.holdActions(actions)),
+    // Runs fn with this instance active (for the headless test runner).
+    within: (fn) => within(id, fn),
     actions: () => Object.keys(s.game?.config.actions ?? {}),
     scene: () => s.currentName,
-    tagCounts: () => within(id, () => N.tagCounts()),
   };
 }
 

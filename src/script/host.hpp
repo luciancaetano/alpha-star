@@ -54,10 +54,12 @@ class Host {
   // blend: how far real time is into the next fixed step (FixedStep::fraction);
   // 1 draws the current state exactly.
   render::Frame frame(float blend = 1.0f);
+#if ALPHA_DEBUG_TOOLS
   // Test mode (no game booted): imports a test module and calls each exported
   // function once, in name order. A module that fails to load is one failure.
   // Game assets resolve against `asset_dir` (default: the module's directory).
   std::vector<TestResult> test(const std::string& path, const std::string& asset_dir = "");
+#endif
 
   // Game UI (RmlUi). Events go to the UI first: false when the UI consumed the
   // event (ui/input.hpp rule), so it must not drive game input. Mouse
@@ -91,7 +93,9 @@ class Host {
   GameInfo boot(const std::string& target);
   // Imports the user's bundle (game or tests) and remembers its source map.
   Value import_bundle(const std::string& path);
+#if ALPHA_DEBUG_TOOLS
   std::vector<TestResult> run_tests(const std::string& path, const std::string& asset_dir);
+#endif
   // An error message with bundle locations mapped to the original sources.
   std::string located(const std::exception& e) const;
   void pause(const std::exception& e);

@@ -4,7 +4,7 @@
 //   alpha check                  type-check only
 //   alpha export [--out dist] [--standalone [--target win32-x64|linux-x64]]
 //                                type-check, bundle and copy assets into a pack;
-//                                --standalone also copies the engine binary in,
+//                                --standalone also copies the shipping engine in,
 //                                so the pack runs by itself (default target: this machine)
 //   alpha run [--out dist] [--engine path] [-- engine args]
 //                                export, then open the pack in the engine
