@@ -16,7 +16,7 @@ const ENGINE_MISSING = !fs.existsSync(ENGINE)
   : false;
 
 const TOOLS = ["alpha_check", "alpha_export", "alpha_test", "game_click", "game_input", "game_logs", "game_pause",
-               "game_resume", "game_screenshot", "game_start", "game_state", "game_step", "game_stop"];
+               "game_reload", "game_resume", "game_screenshot", "game_start", "game_state", "game_step", "game_stop"];
 
 /** `alpha mcp` started from `cwd`, connected as an MCP client. */
 async function connect(cwd) {
@@ -78,5 +78,40 @@ test("alpha mcp drives Flappy end to end with the real engine", { skip: ENGINE_M
   } finally {
     await client.close();
     fs.rmSync(out, { recursive: true, force: true });
+  }
+});
+
+/** A copy of Flappy (sources, assets, tests) to edit freely. */
+function flappyCopy() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-flappy-"));
+  for (const item of ["src", "assets", "test", "package.json", "tsconfig.json"]) {
+    fs.cpSync(path.join(FLAPPY, item), path.join(root, item), { recursive: true });
+  }
+  return root;
+}
+
+test("game_reload picks up a code change in the running game; a type error changes nothing",
+     { skip: ENGINE_MISSING, timeout: 120000 }, async () => {
+  const root = flappyCopy();
+  const tuning = path.join(root, "src", "tuning.ts");
+  const client = await connect(root);
+  const birdX = (state) => state.entities.find((e) => e.tags.includes("bird")).pos[0];
+  try {
+    const started = stateOf(await call(client, "game_start", { hidden: true }));
+    assert.equal(birdX(started), 80);
+    fs.writeFileSync(tuning, fs.readFileSync(tuning, "utf8").replace("x: 80,", "x: 100,"));
+    const reloaded = stateOf(await call(client, "game_reload"));
+    assert.equal(reloaded.scene, "title");
+    assert.equal(reloaded.error, null);
+    assert.equal(birdX(reloaded), 100);
+    fs.writeFileSync(tuning, fs.readFileSync(tuning, "utf8").replace("x: 100,", "x: \"wide\","));
+    const bad = await call(client, "game_reload");
+    assert.ok(bad.isError);
+    assert.match(textOf(bad), /not changed[\s\S]*bird\.ts:\d+:\d+: error/);
+    assert.equal(birdX(stateOf(await call(client, "game_state"))), 100);
+    await call(client, "game_stop");
+  } finally {
+    await client.close();
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });

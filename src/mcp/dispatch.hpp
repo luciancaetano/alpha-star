@@ -51,6 +51,7 @@ class Dispatcher {
   Fields screenshot(const json::Object& r);
   Fields logs(const json::Object& r);
   Fields quit(const json::Object& r);
+  Fields reload(const json::Object& r);
   std::string command_names() const;
 
   Session& session_;

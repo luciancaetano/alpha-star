@@ -6,8 +6,10 @@
 //                                type-check, bundle and copy assets into a pack;
 //                                --standalone also copies the shipping engine in,
 //                                so the pack runs by itself (default target: this machine)
-//   alpha run [--out dist] [--engine path] [-- engine args]
-//                                export, then open the pack in the engine
+//   alpha run [--watch] [--out dist] [--engine path] [-- engine args]
+//                                export, then open the pack in the engine; --watch re-exports
+//                                on every source/asset change and the engine hot-reloads the
+//                                game (type errors are printed; the pack and game stay as they were)
 //   alpha test [--entry test/main.test.ts] [--engine path]
 //                                type-check + bundle the tests, run every exported
 //                                test function headlessly in the engine; exit 1 on failure
@@ -16,15 +18,16 @@
 //
 // Options: --entry <file> (default src/main.ts; test/main.test.ts for `test`). Engine lookup for `run`/`test`:
 // --engine, $ALPHA_STAR, the engine bundled in this SDK, `alpha_star` on PATH.
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { formatProblem, typecheck } from "../lib/build.mjs";
 import { hostTarget, resolveEngine } from "../lib/engine.mjs";
 import { exportPack } from "../lib/pack.mjs";
 import { buildTests, testArgs } from "../lib/test.mjs";
+import { watchProject } from "../lib/watch.mjs";
 
-const USAGE = `usage: alpha <check|export|run|test|mcp> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>] [--engine path] [-- engine args]`;
+const USAGE = `usage: alpha <check|export|run|test|mcp> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>] [--watch] [--engine path] [-- engine args]`;
 
 const VERSION = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
@@ -41,6 +44,7 @@ function parse(argv) {
     out: path.resolve(opt("out", "dist")),
     engine: resolveEngine(opt("engine", "")),
     target: own.includes("--standalone") ? opt("target", hostTarget()) : null,
+    watch: own.includes("--watch"),
     engineArgs: dash >= 0 ? argv.slice(dash + 1) : [],
   };
 }
@@ -66,13 +70,41 @@ async function testCmd(args) {
   return launch(args, testArgs(outfile, process.cwd()));
 }
 
+function cannotStart(args, error) {
+  console.error(`cannot start engine "${args.engine}": ${error.message}. ` +
+                `No engine bundled for ${hostTarget()}; pass --engine <path>, set ALPHA_STAR, or put alpha_star on PATH.`);
+  return 1;
+}
+
+function onExport(r) {
+  if (r.ok) console.log(`re-exported (main.js + ${r.files.length} asset file(s)); the engine reloads the game`);
+  else report(r.problems, "export");
+}
+
+// The engine runs the pack while every change re-exports it; ends when the game closes.
+function launchWatching(args) {
+  const child = spawn(args.engine, [args.out, ...args.engineArgs], { stdio: "inherit" });
+  const watcher = watchProject({ root: process.cwd(), entry: args.entry, out: args.out, onExport });
+  console.log("watching for changes (close the game window to stop)");
+  return new Promise((resolve) => {
+    const done = (code) => {
+      watcher.close();
+      resolve(code);
+    };
+    child.once("error", (e) => done(cannotStart(args, e)));
+    child.once("exit", (code) => done(code ?? 1));
+  });
+}
+
+async function runCmd(args) {
+  const code = await exportCmd(args);
+  if (code) return code;
+  return args.watch ? launchWatching(args) : launch(args);
+}
+
 function launch(args, engineArgs = [args.out, ...args.engineArgs]) {
   const run = spawnSync(args.engine, engineArgs, { stdio: "inherit" });
-  if (run.error) {
-    console.error(`cannot start engine "${args.engine}": ${run.error.message}. ` +
-                  `No engine bundled for ${hostTarget()}; pass --engine <path>, set ALPHA_STAR, or put alpha_star on PATH.`);
-    return 1;
-  }
+  if (run.error) return cannotStart(args, run.error);
   return run.status ?? 1;
 }
 
@@ -80,7 +112,7 @@ async function main(argv) {
   const args = parse(argv);
   if (args.command === "check") return report(typecheck(args.entry), "check");
   if (args.command === "export") return exportCmd(args);
-  if (args.command === "run") return (await exportCmd(args)) || launch(args);
+  if (args.command === "run") return runCmd(args);
   if (args.command === "test") return testCmd(args);
   if (args.command === "mcp") return (await import("../lib/mcp.mjs")).runMcp({ root: process.cwd(), engine: args.engine, version: VERSION });
   console.error(USAGE);

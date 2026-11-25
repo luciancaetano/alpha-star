@@ -18,6 +18,7 @@
 #include "platform/sdl_input.hpp"
 #include "render/renderer.hpp"
 #include "script/host.hpp"
+#include "script/hot_reload.hpp"
 
 #if ALPHA_DEVTOOLS
 #include "devtools/dev_tools.hpp"
@@ -40,6 +41,8 @@
 // With ALPHA_MCP (dev, release): agent control channel, see src/mcp/dispatch.hpp
 //   --control PORT    serve the alpha-control protocol on 127.0.0.1:PORT
 //   --hidden          no visible window (agent runs)
+// With ALPHA_DEBUG_TOOLS (dev, release) the game hot-reloads when its pack changes
+// (script/hot_reload.hpp); the control channel has a `reload` command too.
 namespace {
 
 #if ALPHA_DEVTOOLS
@@ -163,9 +166,11 @@ void draw(alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& t
   tools.draw(host, stats);
 }
 
-// The pausing script error, once, on stderr.
-void report_error(const alpha::script::Host& host, bool& reported) {
-  if (host.paused() && !reported) reported = std::fprintf(stderr, "%s\n", host.error().c_str()) > 0;
+// Each new pausing script error, once, on stderr (a reload may fix one and bring another).
+void report_error(const alpha::script::Host& host, std::string& reported) {
+  if (!host.paused() || host.error() == reported) return;
+  reported = host.error();
+  std::fprintf(stderr, "%s\n", reported.c_str());
 }
 
 void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools) {
@@ -174,8 +179,11 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
   Devices d;
   alpha::core::FixedStep clock(kDt, 5);
   Uint64 last = SDL_GetTicksNS();
-  bool reported = false;
+  std::string reported;
   bool running = true;
+  // dev/release: reload when the pack changes. Not in --frames runs (deterministic) nor under an
+  // agent (--control): the agent reloads explicitly, so a re-export never restarts a scene mid-step.
+  alpha::script::HotReload hot_reload(host, o.frames == 0 && o.control_port == 0);
   Control control = make_control(o, host, renderer, [&d] { return alpha::platform::consume(d.input, d.pads.slots()); });
   for (int frame = 0; running && pump(d, tools, host, renderer.sdl()) && (o.frames == 0 || frame < o.frames); ++frame) {
     tap(o, frame, d.input);
@@ -185,6 +193,7 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
     d.pads.rumble(host.take_rumble());
     audio.pump(host.mixer());
     draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps}, blend_for(o, clock, tools, control));
+    hot_reload.poll(host, static_cast<double>(SDL_GetTicksNS()) / 1e9);
     report_error(host, reported);
     if (!o.screenshot.empty() && frame + 1 == o.frames) renderer.save_bmp(o.screenshot);
     running = control.poll(elapsed * 1000.0);  // agent requests see this frame drawn, before present

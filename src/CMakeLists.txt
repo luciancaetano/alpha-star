@@ -15,6 +15,9 @@ add_library(alpha_core
   core/tags.cpp
   core/timers.cpp
   core/version.cpp)
+if(ALPHA_DEBUG_TOOLS)  # hot reload's file watch: dev/release only
+  target_sources(alpha_core PRIVATE core/pack_watch.cpp)
+endif()
 target_include_directories(alpha_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(alpha_core PUBLIC ALPHA_VERSION="${PROJECT_VERSION}")
 target_link_libraries(alpha_core PUBLIC alpha_flavor)
@@ -50,6 +53,7 @@ add_library(alpha_engine
   script/asset_bindings.cpp
   script/error_overlay.cpp
   script/host.cpp
+  script/vm.cpp
   script/bundle_map.cpp
   script/input_bindings.cpp
   script/instance_bindings.cpp
@@ -103,6 +107,10 @@ if(ALPHA_MCP)
     target_link_libraries(alpha_mcp PRIVATE ws2_32)
   endif()
   alpha_set_warnings(alpha_mcp)
+endif()
+
+if(ALPHA_DEBUG_TOOLS)  # hot reload: dev/release only
+  target_sources(alpha_engine PRIVATE script/hot_reload.cpp)
 endif()
 
 add_executable(alpha_star main.cpp)

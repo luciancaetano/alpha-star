@@ -86,6 +86,15 @@ ui::Ui& GameSession::game_ui() {
   return *game_ui;
 }
 
+void GameSession::reload() {
+#if ALPHA_DEBUG_TOOLS
+  const std::string error = host_.reload();
+  if (!error.empty()) throw core::Error(error);
+#else
+  throw core::Error("reload needs an engine built with ALPHA_DEBUG_TOOLS (dev or release)");
+#endif
+}
+
 Png GameSession::screenshot() {
   renderer_.draw(host_.frame());
   host_.draw_ui(renderer_.sdl(), static_cast<double>(SDL_GetTicksNS()) / 1e9);

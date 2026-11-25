@@ -12,6 +12,7 @@ npm install                 # once
 npm run check               # type-check only (fast)
 npm run export              # type-check + bundle + copy assets -> dist/ (the pack)
 npm start                   # export, then open the pack in the engine bundled in the SDK
+npx alpha run --watch       # same, then every save re-exports and the game hot-reloads
 npm test                    # type-check + run test/main.test.ts headlessly (alpha test)
 npx alpha run -- --frames 120 --screenshot s.bmp   # headless check
 npx alpha export --standalone --out build/game     # pack + engine binary: runs by itself
@@ -22,6 +23,13 @@ Playing the game yourself: `npx alpha mcp` is an MCP server (tools `game_start`,
 `../../alpha-sdk/README.md`, "Using alpha-star with an AI agent"). Example: `game_start`
 -> `game_pause` -> `game_input {kind: "press", action: "flap"}` -> `game_step {frames: 2}`
 -> state shows scene `play`.
+
+Hot reload: after editing code, `game_reload` (MCP) re-exports and reloads the running
+game without restarting it, or run `npx alpha run --watch` and just save. Kept: the save,
+the current scene and its enter params, and `ctx.state` if it is plain JSON and the scene
+still declares `state` (otherwise `state(params)` runs again); entities are respawned by
+the scene's `enter`. A type error or a game that fails to load changes nothing: the old
+game keeps running and the error is reported (terminal, on-screen overlay, MCP reply).
 
 A change is done only when `npm run export` prints `exported dist (...)`.
 Errors are `file:line:col: error: ...`; nothing is written while any exist.

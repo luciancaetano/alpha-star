@@ -6,7 +6,8 @@
 
 namespace alpha::script {
 
-Instances::Instances(std::function<std::string(const std::string&)> save_path_for) {
+Instances::Instances(std::function<std::string(const std::string&)> save_path_for, core::LogRing& log)
+    : log_(log) {
   auto state = std::make_unique<ScriptState>();
   state->save_path_for = std::move(save_path_for);
   active_ = state.get();

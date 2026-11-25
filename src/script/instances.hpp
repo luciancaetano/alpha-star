@@ -19,7 +19,8 @@ class Instances {
  public:
   static constexpr std::uint32_t kMain = 0;
 
-  explicit Instances(std::function<std::string(const std::string&)> save_path_for);
+  // log: console.* lines and pausing errors of every instance (owned by the host).
+  Instances(std::function<std::string(const std::string&)> save_path_for, core::LogRing& log);
   ScriptState& active() { return *active_; }
   ScriptState& main() { return *states_.at(kMain); }
   // A fresh instance whose assets resolve like the main one's; it never saves to disk.
@@ -28,7 +29,7 @@ class Instances {
   std::uint32_t use(std::uint32_t id);
   // Throws Error for the main or the active instance.
   void destroy(std::uint32_t id);
-  // console.* lines and pausing errors of every instance, newest last.
+  // newest last.
   core::LogRing& log() { return log_; }
   const core::LogRing& log() const { return log_; }
 
@@ -39,7 +40,7 @@ class Instances {
   ScriptState* active_;
   std::uint32_t active_id_ = kMain;
   std::uint32_t next_id_ = kMain + 1;
-  core::LogRing log_{200};
+  core::LogRing& log_;
 };
 
 inline Instances& instances_of(JSContext* ctx) { return *static_cast<Instances*>(JS_GetContextOpaque(ctx)); }

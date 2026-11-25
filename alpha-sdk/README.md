@@ -8,6 +8,7 @@ alpha check                         type-check only
 alpha export [--out dist]           type-check, bundle, copy assets into a pack
 alpha export --standalone           ... plus the player engine (runs by itself)
 alpha run [-- engine args]          export, then open the pack in the engine
+alpha run --watch                   ... and re-export on every change: the game hot-reloads
 alpha test                          run test/main.test.ts headlessly (simulate + expect)
 alpha mcp                           MCP server for AI agents (below)
 ```
@@ -48,12 +49,36 @@ directory (`{"command": "npx", "args": ["alpha", "mcp"], "cwd": "<game folder>"}
 | `game_click` | Click a UI element: `"document#elementId"` |
 | `game_screenshot` | PNG of the current frame |
 | `game_logs` | console lines and script errors since a cursor |
+| `game_reload` | Re-export and hot-reload the running game (keeps scene, params, JSON `ctx.state`, save); type/load errors change nothing and come back as the error |
 | `game_stop` | Close the game (also done when the server exits) |
 
 A typical loop: edit code → `alpha_check` → `alpha_test` → `game_start` →
 `game_pause` → `game_input` + `game_step` → `game_state` / `game_screenshot` →
 fix → repeat. Input goes through the game's own actions, exactly like a device,
 and `game_step` is deterministic (fixed step, seeded random).
+
+## Hot reload
+
+Change the code or an asset while the game runs and see it without restarting:
+
+- `alpha run --watch`: exports, opens the game, then watches the project (everything but
+  `dist/`, `build/`, `node_modules/`, `.git/`) and re-exports 200 ms after the last change.
+  The engine (release/dev builds) watches its pack (~4 polls/s, reloads once the pack has
+  been quiet for 0.3 s, so one export = one reload). Type errors are printed and the pack is
+  not rewritten, so the running game keeps working. `--watch` is opt-in: plain `alpha run`
+  stays "export, run, exit with the game's code" for scripts.
+- MCP `game_reload`: the same, on demand, for an agent. Under an agent (`--control`) the
+  engine does not watch files, so an export never restarts a scene in the middle of a
+  `game_step` sequence; the agent decides when to reload.
+
+What survives a reload: the save; the current scene and its `enter` params (if they are
+plain JSON, otherwise the game restarts at `start`); `ctx.state` if it is plain JSON (no
+functions, class instances, `undefined`, NaN/Infinity) and the new scene still declares
+`state` - otherwise `state(params)` runs again. The world is rebuilt: the scene's `enter`
+spawns its entities again. Window size and title are fixed at launch. A reload that fails
+(syntax, type or runtime error while booting the new code) keeps the old game running and
+reports the error in the terminal, as an overlay on the game and in the MCP reply.
+Shipping engines have no hot reload.
 
 ### How it works (and why it is safe)
 

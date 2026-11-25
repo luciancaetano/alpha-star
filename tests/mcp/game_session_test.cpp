@@ -110,3 +110,25 @@ TEST_CASE("session: fps averages recent frame times; quit is remembered; logs ar
   CHECK(rig.session.quit_requested());
   CHECK(&rig.session.log() == &rig.game.host.log());
 }
+
+#if ALPHA_DEBUG_TOOLS
+TEST_CASE("session: reload rereads the game file and restarts the current scene") {
+  Rig rig;
+  rig.to_play();
+  rig.game.box.write("game.js", "");
+  CHECK(message_of([&] { rig.session.reload(); }).find("previous game keeps running") != std::string::npos);
+  CHECK(rig.session.state().scene == "play");
+  CHECK(rig.session.state().entities.size() == 1);
+  rig.game.box.write("game.js",
+                     "import { define } from 'alpha'; const { scene, game } = define();\n"
+                     "const title = scene('title', {});\n"
+                     "const play = scene('play', { enter(ctx) { console.log('v2'); } });\n"
+                     "export default game({ config: { title: 't', size: [100, 100] }, start: 'title',\n"
+                     "  scenes: { title, play } });\n");
+  CHECK(message_of([&] { rig.session.reload(); }) == "");
+  CHECK(rig.session.state().scene == "play");
+  CHECK(rig.session.state().entities.empty());
+  CHECK(rig.game.logs().find("v2") != std::string::npos);
+  CHECK(rig.session.paused());  // the agent's pause survives a reload
+}
+#endif

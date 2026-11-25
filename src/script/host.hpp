@@ -6,18 +6,14 @@
 #include <string>
 #include <vector>
 
+#include <filesystem>
+
 #include "core/controls.hpp"
 #include "core/log_ring.hpp"
 #include "render/renderer.hpp"
-#include "core/source_map.hpp"
-#include "script/instances.hpp"
-#include "script/js_engine.hpp"
+#include "script/vm.hpp"
 
 namespace alpha::script {
-
-// Where ctx.save persists (a JSON file), chosen from the game title once the
-// game has booted far enough to know it.
-using SavePathFor = std::function<std::string(const std::string& title)>;
 
 struct GameInfo {
   std::string title = "alpha-star";
@@ -52,7 +48,7 @@ class Host {
   // One fixed step with the inputs held (or tapped) during it.
   void step(const core::InputFrame& input, float dt);
   // The game's actions and axes (agent control injects through them).
-  core::Controls& controls() { return instances_.main().controls; }
+  core::Controls& controls() { return vm_->main().controls; }
   // Gamepad vibrations the game asked for since the last call (ctx.input.rumble).
   core::RumbleRequests take_rumble();
   // blend: how far real time is into the next fixed step (FixedStep::fraction);
@@ -63,6 +59,19 @@ class Host {
   // function once, in name order. A module that fails to load is one failure.
   // Game assets resolve against `asset_dir` (default: the module's directory).
   std::vector<TestResult> test(const std::string& path, const std::string& asset_dir = "");
+
+  // Hot reload: boots the game again from the file load() was given (fresh
+  // script engine, every asset reread) and swaps it in only if it booted, then
+  // the old one is dropped. Kept: the save (a file), the current scene with
+  // its params (when JSON-safe; else the start scene), and ctx.state when it
+  // round-trips through JSON and the new scene still declares state (else
+  // state(params) runs again). The world is rebuilt by the scene's enter.
+  // Returns "" on success; otherwise the error, logged and shown over the game
+  // (reload_error) while the previous game keeps running untouched.
+  std::string reload();
+  const std::string& reload_error() const { return reload_error_; }
+  // The directory the game was loaded from: what a file watch should watch.
+  const std::filesystem::path& pack_dir() const { return pack_dir_; }
 #endif
 
   // Game UI (RmlUi). Events go to the UI first: false when the UI consumed the
@@ -76,7 +85,7 @@ class Host {
   void release_ui();
 
   // Audio produced by the game; the platform layer drains it every frame.
-  core::Mixer& mixer() { return instances_.main().mixer; }
+  core::Mixer& mixer() { return vm_->main().mixer; }
   bool paused() const { return !error_.empty(); }
   const std::string& error() const { return error_; }
 
@@ -88,31 +97,31 @@ class Host {
   // The running scene's world; null before the first scene starts.
   ecs::World* world();
   // The game's UI; null before boot.
-  ui::Ui* ui() { return instances_.main().ui.get(); }
+  ui::Ui* ui() { return vm_->main().ui.get(); }
   const core::TagRegistry& tags();
   // Wall time of the last step's script call (compare with kCallBudget).
   double last_call_ms() const { return step_ms_; }
 
  private:
-  GameInfo boot(const std::string& target);
-  // Imports the user's bundle (game or tests) and remembers its source map.
-  Value import_bundle(const std::string& path);
+  // Boots the game at `path` (main.js) in `vm`; `from`: carried scene JSON or "".
+  static GameInfo boot(Vm& vm, const std::string& path, const std::string& from);
 #if ALPHA_DEBUG_TOOLS
+  std::string carried_scene();
   std::vector<TestResult> run_tests(const std::string& path, const std::string& asset_dir);
 #endif
-  // An error message with bundle locations mapped to the original sources.
-  std::string located(const std::exception& e) const;
   void pause(const std::exception& e);
 
-  Instances instances_;
-  std::unique_ptr<Engine> engine_;
-  std::string bundle_path_;
-  std::optional<core::SourceMap> source_map_;
-  std::optional<Value> step_fn_;
-  std::optional<Value> scene_fn_;
+  SavePathFor save_path_for_;
+  core::LogRing log_{200};  // outlives every Vm: lines survive a reload
+  std::unique_ptr<Vm> vm_;
+  std::string main_path_;  // the game's main.js (or .js module)
+  std::filesystem::path pack_dir_;
   GameInfo info_;
   std::string error_;
   double step_ms_ = 0.0;
+#if ALPHA_DEBUG_TOOLS
+  std::string reload_error_;
+#endif
 };
 
 }  // namespace alpha::script

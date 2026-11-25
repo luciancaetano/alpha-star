@@ -221,7 +221,10 @@ function checkScene(game, name, what) {
   return name;
 }
 
-function enter(s, ctx, name, params) {
+// `kept`: {state} carried over from the same scene of a previous run of the
+// game (see carried); its state replaces state(params) only if the scene
+// still declares state.
+function enter(s, ctx, name, params, kept) {
   s.current?.def.exit?.(ctx);
   N.resetWorld();
   N.clearTimers();
@@ -233,7 +236,10 @@ function enter(s, ctx, name, params) {
   s.sceneTime = 0;
   s.current = s.game.scenes[name];
   s.currentName = name;
-  ctx.state = s.current.def.state ? s.current.def.state(params) : undefined;
+  s.currentParams = params;
+  const def = s.current.def;
+  if (!def.state) ctx.state = undefined;
+  else ctx.state = kept && Object.hasOwn(kept, "state") ? kept.state : def.state(params);
   s.current.def.enter?.(ctx, params);
 }
 
@@ -247,7 +253,37 @@ function dispatch(s, pairs, kind) {
   }
 }
 
-function bootGame(s, ctx, g, start, what) {
+// True for values that survive JSON.stringify + JSON.parse unchanged: null,
+// booleans, finite numbers, strings, arrays and plain objects of those.
+function jsonSafe(v, depth = 0) {
+  if (depth > 64) return false;
+  if (v === null || typeof v === "string" || typeof v === "boolean") return true;
+  if (typeof v === "number") return Number.isFinite(v);
+  if (Array.isArray(v)) return v.every((x) => jsonSafe(x, depth + 1));
+  if (typeof v !== "object") return false;
+  const proto = Object.getPrototypeOf(v);
+  if (proto !== Object.prototype && proto !== null) return false;
+  return Object.values(v).every((x) => jsonSafe(x, depth + 1));
+}
+
+// The running scene as JSON text another run of the game can start from:
+// {scene, params, state?}; state only when it is JSON-safe. "" when there is
+// no scene or its params are not JSON-safe (then the next run starts fresh).
+function carried(s, ctx) {
+  const params = s.currentParams;
+  if (!s.currentName || (params !== undefined && !jsonSafe(params))) return "";
+  const out = { scene: s.currentName, params };
+  if (ctx.state !== undefined && jsonSafe(ctx.state)) out.state = ctx.state;
+  return JSON.stringify(out);
+}
+
+// Where boot starts: the carried scene if the game still has it, else `start`.
+function startOf(s, start, what, from) {
+  if (from && Object.hasOwn(s.game.scenes, from.scene)) return from;
+  return { scene: start === undefined ? s.game.start : checkScene(s.game, start, what) };
+}
+
+function bootGame(s, ctx, g, start, what, from) {
   s.game = validate(g);
   const c = s.game.config;
   N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]));
@@ -257,7 +293,8 @@ function bootGame(s, ctx, g, start, what) {
   for (const [axis, sources] of Object.entries(c.axes ?? {})) N.bind("axes", axis, sources);
   preload(s.game.assets ?? {});
   s.saveData = s.save.read(c.title ?? "alpha-star");
-  enter(s, ctx, start === undefined ? s.game.start : checkScene(s.game, start, what), undefined);
+  const at = startOf(s, start, what, from);
+  enter(s, ctx, at.scene, at.params, at);
   return { title: c.title ?? "alpha-star", size: c.size, background: c.background ?? "#000000" };
 }
 
@@ -290,13 +327,15 @@ function within(id, fn) {
 // One game instance. `id` is its native instance; `save` its ctx.save backend.
 export function createInstance(id, save) {
   const s = {
-    game: null, current: null, currentName: null, pending: null, handlers: [], uiHandlers: new Map(),
+    game: null, current: null, currentName: null, currentParams: undefined, pending: null, handlers: [], uiHandlers: new Map(),
     saveData: {}, save, sceneTime: 0, stepDt: 1 / 60, masterVolume: 1,
     timers: new Map(), entities: makeEntities(),
   };
   const ctx = makeCtx(s);
   return {
-    boot: (g, start, what) => within(id, () => bootGame(s, ctx, g, start, what)),
+    // from: carried() of an earlier run of this game, parsed, or undefined.
+    boot: (g, start, what, from) => within(id, () => bootGame(s, ctx, g, start, what, from)),
+    carried: () => carried(s, ctx),
     step: (dt) => within(id, () => stepGame(s, ctx, dt)),
     // Runs fn with this instance active (for the headless test runner).
     within: (fn) => within(id, fn),
@@ -310,8 +349,13 @@ export function createInstance(id, save) {
 
 const main = createInstance(0, fileSave);
 
-export function boot(g) {
-  return main.boot(g);
+// from: JSON text from carried() of the run this one replaces, or "".
+export function boot(g, from) {
+  return main.boot(g, undefined, undefined, from ? JSON.parse(from) : undefined);
+}
+
+export function carriedScene() {
+  return main.carried();
 }
 
 export function step(dt) {

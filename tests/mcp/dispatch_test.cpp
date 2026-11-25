@@ -48,6 +48,11 @@ struct FakeSession final : Session {
   Png screenshot() override { return {"foo", 4, 2}; }
   const alpha::core::LogRing& log() const override { return ring; }
   void quit() override { calls.push_back("quit"); }
+  void reload() override {
+    if (fail_reload) throw Error("reload failed; the previous game keeps running: SyntaxError");
+    calls.push_back("reload");
+  }
+  bool fail_reload = false;
 };
 
 struct Rig {
@@ -172,4 +177,15 @@ TEST_CASE("control: with a token, nothing but hello works until it matches") {
   CHECK(d.handle(R"({"cmd":"state"})").find(R"("ok":true)") != std::string::npos);
   d.reset();
   CHECK_FALSE(ok(json::parse_object(d.handle(R"({"cmd":"state"})"))));
+}
+
+TEST_CASE("control: reload answers with the scene, or the error while the old game runs on") {
+  Rig rig;
+  const auto r = rig.send(R"({"cmd":"reload"})");
+  CHECK(ok(r));
+  CHECK(std::get<std::string>(r.at("scene")) == "title");
+  CHECK(std::get<double>(r.at("frame")) == 42);
+  CHECK(rig.session.calls == std::vector<std::string>{"reload"});
+  rig.session.fail_reload = true;
+  CHECK(error(rig.send(R"({"cmd":"reload"})")).find("previous game keeps running") != std::string::npos);
 }

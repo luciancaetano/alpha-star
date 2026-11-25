@@ -37,6 +37,7 @@ class GameSession final : public Session {
   Png screenshot() override;
   const core::LogRing& log() const override { return host_.log(); }
   void quit() override { quit_ = true; }
+  void reload() override;
 
  private:
   ui::Ui& game_ui();

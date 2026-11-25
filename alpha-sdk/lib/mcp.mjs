@@ -51,6 +51,12 @@ function tools() {
      { entry, out: z.string().optional().describe("Pack directory (default dist)."),
        hidden: z.boolean().optional().describe("No visible window (default false).") },
      async (a, c) => c.start(a)],
+    ["game_reload", "Hot reload: re-export the game started by game_start (same pack) and reload it in the running " +
+      "engine, without restarting it. Keeps the save, the current scene and its enter params, and ctx.state when it " +
+      "is plain JSON and the scene still declares state (else state(params) runs again); entities are respawned by " +
+      "the scene's enter. Type errors or a game that fails to load change nothing (the old game keeps running) and " +
+      "are returned as the error. Returns the new game_state.",
+     { entry }, async (a, c) => c.reload(a)],
     ["game_state", "Snapshot of the running game: scene, paused, error (the script error that paused the game, " +
       "mapped to your TypeScript source, or null), frame (fixed steps so far), fps, entities " +
       "[{id, tags, pos, rotation, z, velocity}] and ui {document: {shown, texts{elementId: text}}}.",
@@ -132,6 +138,15 @@ class Context {
     const r = await exportPack({ root: this.root, entry: this.file(a.entry, "src/main.ts"), out, target: null });
     if (!r.ok) return failure(`export failed:\n${problemsText(r.problems)}`);
     this.client = await GameClient.start({ engine: this.engine, pack: out, hidden: a.hidden ?? false, cwd: this.root });
+    this.pack = out;
+    return json(await this.state());
+  }
+
+  async reload(a) {
+    const game = this.game();
+    const r = await exportPack({ root: this.root, entry: this.file(a.entry, "src/main.ts"), out: this.pack, target: null });
+    if (!r.ok) return failure(`export failed; the running game was not changed:\n${problemsText(r.problems)}`);
+    await game.request("reload");
     return json(await this.state());
   }
 

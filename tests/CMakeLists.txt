@@ -5,6 +5,7 @@ set(ALPHA_TEST_SOURCES
   core/axes_test.cpp
   core/input_test.cpp
   core/log_ring_test.cpp
+  core/pack_watch_test.cpp
   core/source_map_test.cpp
   core/time_test.cpp
   core/values_test.cpp
@@ -26,6 +27,8 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/host_test.cpp
     script/host_limits_test.cpp
     script/input_script_test.cpp
+    script/hot_reload_test.cpp
+    script/reload_test.cpp
     script/simulate_test.cpp
     script/console_test.cpp
     script/host_fixture.cpp

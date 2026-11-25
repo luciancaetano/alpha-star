@@ -65,7 +65,7 @@ Dispatcher::Dispatcher(Session& session, std::string token)
                 {"hold", &Dispatcher::hold},       {"release", &Dispatcher::release},
                 {"axis", &Dispatcher::axis},       {"click", &Dispatcher::click},
                 {"screenshot", &Dispatcher::screenshot}, {"logs", &Dispatcher::logs},
-                {"quit", &Dispatcher::quit}} {}
+                {"quit", &Dispatcher::quit},       {"reload", &Dispatcher::reload}} {}
 
 std::string Dispatcher::greeting() const {
   return json::object({{"protocol", json::str(kProtocol)},
@@ -162,6 +162,12 @@ Fields Dispatcher::screenshot(const json::Object&) {
 
 Fields Dispatcher::logs(const json::Object& r) {
   return log_fields(session_.log(), static_cast<std::size_t>(integer(r, "since", 0, 0, INT_MAX)));
+}
+
+Fields Dispatcher::reload(const json::Object&) {
+  session_.reload();
+  const GameState s = session_.state();
+  return {{"scene", json::str(s.scene)}, {"frame", json::num(static_cast<double>(s.frame))}};
 }
 
 Fields Dispatcher::quit(const json::Object&) {

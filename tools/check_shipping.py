@@ -26,7 +26,7 @@ MARKERS = {
                   rb"ALPHA_CONTROL_TOKEN"],
     "ALPHA_DEBUG_TOOLS": [rb"--screenshot", rb"--frames", rb"--tap-every", rb"--devtools", rb"--assets",
                           rb"alpha/test", rb"simulate", rb"holdActions", rb"holdAxis", rb"testNames", rb"instanceCreate",
-                          rb"stepBudget", rb"uiView", rb"tagCounts"],
+                          rb"stepBudget", rb"uiView", rb"tagCounts", rb"previous game keeps running"],
 }
 
 

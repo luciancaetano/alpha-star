@@ -54,6 +54,9 @@ class Session {
   virtual Png screenshot() = 0;
   virtual const core::LogRing& log() const = 0;
   virtual void quit() = 0;
+  // Hot reload from the game's files (script::Host::reload); throws the error
+  // when the new code fails, and the previous game keeps running.
+  virtual void reload() = 0;
 };
 
 }  // namespace alpha::mcp
