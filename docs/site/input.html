@@ -24,4 +24,6 @@ ctx.input.bindings("jump");</code></pre>
 <h2 id="in-tests">In tests</h2>
 <pre><code>simulate(game, { seconds: 2, inputs: { jump: [30, 60], axes: { moveX: [[0, 1], [90, 0]] } } });
 simulate(game, { seconds: 2, inputs: [{ fire: [0] }, { axes: { moveX: [[0, -1]] } }] });  // players 1, 2</code></pre>
-<p>Action frames press for one step each; axis entries hold a value from that frame on. Input the game UI consumed (a clicked button, navigation) never also triggers game actions.</p></main></body></html>
+<p>Action frames press for one step each; axis entries hold a value from that frame on. Input the game UI consumed (a clicked button, navigation) never also triggers game actions.</p>
+<h2 id="per-platform-hints">Per-platform hints</h2>
+<p><code>ctx.platform</code> (<code>{ os, mobile }</code>) tells hints and layout where the game runs: show "tap" on phones (<code>ctx.platform.mobile</code>) and "press Space" elsewhere. Never use it for game rules. Preview with <code>alpha run -- --platform android</code>; test with <code>simulate(game, { platform: "android" })</code>. See <a href="android.html">Android</a>.</p></main></body></html>

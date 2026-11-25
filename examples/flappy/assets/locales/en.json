@@ -2,7 +2,9 @@
   "title": {
     "tagline": "A COSMIC ADVENTURE",
     "hint": "press flap",
-    "settings": "S / START: settings"
+    "settings": "S / START: settings",
+    "hintTouch": "tap to flap",
+    "settingsTouch": "BACK: settings"
   },
   "over": {
     "title": "GAME OVER",

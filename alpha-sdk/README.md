@@ -12,6 +12,12 @@ alpha export --standalone           ... plus the player engine (runs by itself)
 alpha export --no-atlas             ... without packing images into atlas pages
 alpha run [-- engine args]          export, then open the pack in the engine
 alpha run --watch                   ... and re-export on every change: the game hot-reloads
+alpha run -- --platform android     preview the phone UI on the desktop (ctx.platform)
+alpha export --target android-arm64 --out android [--variant debug|release|bundle] [--no-build]
+                                    Android project; debug = APK with dev tools (three fingers
+                                    held 1 s), release = APK, bundle = AAB for Google Play
+alpha run --target android-arm64 --out android [--device SERIAL]
+                                    debug APK on the USB phone, then its log (docs/guide/android.md)
 alpha test                          run test/main.test.ts headlessly (simulate + expect)
 alpha mcp                           MCP server for AI agents (below)
 alpha skills [--agents a,b] [--list] install/update the SDK's agent skills (asks which agents;

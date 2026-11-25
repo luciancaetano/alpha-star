@@ -1,0 +1,6 @@
+# Generated on every build: Gradle state, the machine's SDK path, native build, the game pack
+.gradle/
+build/
+local.properties
+app/.cxx/
+app/src/main/assets/

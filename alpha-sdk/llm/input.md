@@ -1,6 +1,6 @@
 # Input
 
-> summary: Actions and axes (config.actions/axes), device input names, mouse/touch, multiple players, rumble and rebinding; read when wiring controls or reading player input.
+> summary: Actions and axes (config.actions/axes), device input names, mouse/touch, ctx.platform hints, multiple players, rumble and rebinding; read when wiring controls or reading player input.
 
 ## API
 
@@ -52,4 +52,5 @@ Two players (see examples/topdown): `ctx.input.player(2).axis("moveX")`.
 - Input consumed by game UI (clicked button, focus navigation, typing) never also triggers game actions.
 - `pressed` is true for exactly one fixed step; poll it in `update`, not in timers.
 - Tests: `simulate(game, { seconds: 2, inputs: { jump: [30, 60], axes: { moveX: [[0, 1], [90, 0]] } } })`; per player: `inputs: [{ fire: [0] }, { axes: { moveX: [[0, -1]] } }]`. Action frames press for one step each; axis entries hold from that frame on.
+- Hints per platform: `ctx.platform` is `{ os: "windows"|"macos"|"linux"|"android"|"ios"|"web"|"other", mobile }` (mobile = android/ios). Use it for UI text/layout only ("tap" vs "press Space"), never rules. Preview `alpha run -- --platform android`; test `simulate(game, { platform: "android" })`.
 - Rebinds and `ctx.settings.reset()` persist in settings.json (saves-and-i18n.md).

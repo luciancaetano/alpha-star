@@ -5,12 +5,13 @@
 #include "devtools/panels.hpp"
 #include "devtools/snapshot.hpp"
 #include "devtools/time_control.hpp"
+#include "devtools/touch_toggle.hpp"
 #include "render/renderer.hpp"
 
 namespace alpha::devtools {
 
-// Built-in engine dev tools (Dear ImGui), toggled with F12 or gamepad
-// Back+Start. Only in ALPHA_DEVTOOLS builds; never visible to game scripts.
+// Built-in engine dev tools (Dear ImGui), toggled with F12, gamepad Back+Start
+// or three fingers held still for a second (touch screens). Only in ALPHA_DEVTOOLS builds; never visible to game scripts.
 // Owns the ImGui context for one window/renderer pair.
 class DevTools {
  public:
@@ -36,11 +37,13 @@ class DevTools {
 
  private:
   bool toggle_requested(const SDL_Event& event) const;
+  void track_fingers(const SDL_Event& event);
 
   SDL_Renderer* sdl_;
   bool open_ = false;
   Panels panels_;
   TimeControl time_;
+  TouchToggle touch_;
 };
 
 }  // namespace alpha::devtools

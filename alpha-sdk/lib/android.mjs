@@ -46,7 +46,8 @@ const xml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
   .replace(/"/g, "\\&quot;").replace(/'/g, "\\'");
 
 // The project's values from config.title / config.size / config.android; problems name the field.
-export function androidValues(config, engineSrc) {
+// The engine path is relative to the project's app/ folder, so a committed project builds in any clone.
+export function androidValues(config, engineSrc, appDir = engineSrc) {
   const a = config.android ?? {};
   const values = {
     PACKAGE: a.package ?? defaultPackage(config.title),
@@ -55,7 +56,7 @@ export function androidValues(config, engineSrc) {
     ORIENTATION: orientationFor(config.size),
     VERSION_CODE: String(a.versionCode ?? 1),
     VERSION_NAME: String(a.version ?? "1.0").replace(/"/g, ""),
-    ENGINE_CMAKE: path.join(engineSrc, "CMakeLists.txt").split(path.sep).join("/"),
+    ENGINE_CMAKE: path.relative(appDir, path.join(engineSrc, "CMakeLists.txt")).split(path.sep).join("/"),
   };
   const problems = [];
   if (!PACKAGE_ID.test(values.PACKAGE)) {
@@ -133,31 +134,42 @@ export function installHelp(out, toolchain) {
     `unpacked to <sdk>/cmdline-tools/latest${toolchain.sdk ? ` (your SDK: ${toolchain.sdk})` : ""}, then:`,
     `  sdkmanager ${SDK_PACKAGES.map((p) => `"${p}"`).join(" ")}`,
     "and a JDK 17 or newer (JAVA_HOME). Gradle 8.12 comes with the project's wrapper.",
-    "Build the APK (debug-signed, arm64-v8a):",
+    "Build (arm64-v8a): assembleDebug (dev tools), assembleRelease (APK), bundleRelease (AAB for Google Play):",
     `  cd ${out} && ${gradlew} assembleRelease`,
     "  -> app/build/outputs/apk/release/app-release.apk",
   ].join("\n");
 }
 
+// What each --variant builds: the Gradle task and its output under app/build/outputs.
+// debug: engine with dev tools (F12 / three fingers held 1 s), debug tools and logs, for your phone;
+// release: shipping engine, an APK for side-loading or other stores; bundle: shipping engine, the
+// AAB Google Play takes. All three are signed with ALPHA_ANDROID_KEYSTORE when set, else the debug key.
+export const VARIANTS = {
+  debug: { task: "assembleDebug", output: ["apk", "debug", "app-debug.apk"] },
+  release: { task: "assembleRelease", output: ["apk", "release", "app-release.apk"] },
+  bundle: { task: "bundleRelease", output: ["bundle", "release", "app-release.aab"] },
+};
+
 // Gradle under the engine repo's resource guard (one build, 8 CMake jobs).
-function runGradle(out, toolchain, engineSrc) {
+function runGradle(out, toolchain, engineSrc, variant) {
+  const { task, output } = VARIANTS[variant];
   const gradlew = path.join(out, process.platform === "win32" ? "gradlew.bat" : "gradlew");
   const guard = path.join(engineSrc, "tools", "resource_guard.py");
-  const command = fs.existsSync(guard) ? ["python", [guard, "--", gradlew, "assembleRelease"]]
-                                       : [gradlew, ["assembleRelease"]];
+  const command = fs.existsSync(guard) ? ["python", [guard, "--", gradlew, task]] : [gradlew, [task]];
   const env = { ...process.env, JAVA_HOME: toolchain.java, ANDROID_HOME: toolchain.sdk, CMAKE_BUILD_PARALLEL_LEVEL: "8" };
   const run = spawnSync(command[0], command[1], { cwd: out, env, stdio: "inherit", shell: process.platform === "win32" });
-  const apk = path.join(out, "app", "build", "outputs", "apk", "release", "app-release.apk");
-  return run.status === 0 && fs.existsSync(apk) ? apk : null;
+  const built = path.join(out, "app", "build", "outputs", ...output);
+  return run.status === 0 && fs.existsSync(built) ? built : null;
 }
 
 // Assembles the project in `out`; builds the APK when `build` and the toolchain is there.
 // bytecode: the APK ships game.jsbc compiled by this machine's release engine (same
 // QuickJS source hash; arm64 is 64-bit like the host), compiler overrides it.
 export async function exportAndroid({ root, entry, out, target, engineSrc, atlas = true, env = process.env, build = true,
-                                      bytecode = true, compiler = bundledEngine() }) {
+                                      bytecode = true, compiler = bundledEngine(), variant = "release" }) {
   const fail = (problems) => ({ ok: false, problems, files: [] });
   if (!ANDROID_TARGETS.includes(target)) return fail([problem(`unknown target "${target}"; Android targets: ${ANDROID_TARGETS.join(", ")}`)]);
+  if (!VARIANTS[variant]) return fail([problem(`unknown --variant "${variant}"; variants: ${Object.keys(VARIANTS).join(", ")}`)]);
   const source = findEngineSource(engineSrc, env);
   if (!source) {
     return fail([problem("the Android build compiles the engine from source: pass --engine-src <alpha-star checkout> " +
@@ -165,23 +177,26 @@ export async function exportAndroid({ root, entry, out, target, engineSrc, atlas
   }
   const def = await readGameDef(entry);
   if (!def) return fail([problem("main module must `export default game({...})`", entry)]);
-  const { values, problems } = androidValues(def.config ?? {}, source);
+  const { values, problems } = androidValues(def.config ?? {}, source, path.join(path.resolve(out), "app"));
   if (problems.length) return fail(problems);
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-android-"));
   try {
     const pack = await exportPack({ root, entry, out: staging, atlas, bytecode, compiler, bytecodeBits: ABI_BITS[target] });
     if (!pack.ok) return pack;
-    fs.rmSync(out, { recursive: true, force: true });
+    // The template is written over the project (Gradle's build/ and .cxx/ caches stay: no full
+    // native rebuild on every export); the pack replaces the assets folder whole.
+    const assets = path.join(out, "app", "src", "main", "assets");
     fs.mkdirSync(out, { recursive: true });
     copyTemplate(TEMPLATE, out, values);
-    fs.cpSync(staging, path.join(out, "app", "src", "main", "assets"), { recursive: true });
+    fs.rmSync(assets, { recursive: true, force: true });
+    fs.cpSync(staging, assets, { recursive: true });
     const iconProblem = copyIcon(root, def.config ?? {}, out);
     if (iconProblem) return fail([iconProblem]);
     const toolchain = findToolchain(env);
     if (toolchain.sdk) fs.writeFileSync(path.join(out, "local.properties"), `sdk.dir=${toolchain.sdk.split(path.sep).join("/")}\n`);
     const ready = toolchain.missing.length === 0;
-    const apk = build && ready ? runGradle(out, toolchain, source) : null;
-    if (build && ready && !apk) return fail([problem(`gradle assembleRelease failed in ${out} (its output is above)`)]);
+    const apk = build && ready ? runGradle(out, toolchain, source, variant) : null;
+    if (build && ready && !apk) return fail([problem(`gradle ${VARIANTS[variant].task} failed in ${out} (its output is above)`)]);
     return { ok: true, problems: [], files: pack.files, values, toolchain, apk,
              help: ready ? null : installHelp(out, toolchain) };
   } finally {

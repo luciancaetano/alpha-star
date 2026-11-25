@@ -464,6 +464,7 @@ function makeCtx(s) {
     get time() { return s.sceneTime; },
     state: undefined,
     input: makeInput(s),
+    get platform() { return s.platform; },
     random: {
       range: (min, max) => N.random(min, max, false),
       int: (min, max) => N.random(min, max, true),
@@ -721,8 +722,11 @@ function within(id, fn) {
 
 // One game instance. `id` is its native instance; `store` keeps its saves and
 // settings (fileStore() for the engine's game, memoryStore() for test runs).
-export function createInstance(id, store) {
+// platform: an os name to report instead of the engine's (headless runs pick one).
+export function createInstance(id, store, platform) {
+  const os = platform ?? N.platformOs();
   const s = {
+    platform: Object.freeze({ os, mobile: os === "android" || os === "ios" }),
     game: null, current: null, currentName: null, currentParams: undefined, pending: null, handlers: [], uiHandlers: new Map(),
     store, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60, appPaused: false,
     timers: new Map(), entities: makeEntities(), maps: new Map(), tweens: makeTweens(tweenAccess),

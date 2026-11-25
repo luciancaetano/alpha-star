@@ -128,6 +128,9 @@ Without your own key the APK is signed with the debug key; release signing is in
 | `Android toolchain missing: ...` | Install the listed package with the exact version above. |
 | `JDK 17+ (JAVA_HOME)` missing | Set `JAVA_HOME` to the JDK folder (the one with `bin\java.exe`), open a new terminal. |
 | `NDK ... did not have a source.properties file` | Wrong/partial NDK: reinstall `ndk;27.2.12479018`. |
+| Android shows "app not 16 KB compatible / LOAD segment not aligned" | The project predates the 16 KB flag: export again (adds `-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON`). |
+| `Package ... not found` from sdkmanager | Newer command-line tools use `/` in names: `ndk/27.2.12479018`. |
+| `SDL_CreateWindowAndRenderer failed: Could not fetch native window` | The phone was locked when the app started: unlock it and launch again. |
 | `License for package ... not accepted` | `sdkmanager --licenses`. |
 | `adb devices` lists nothing / `unauthorized` | USB debugging on, accept the RSA prompt, try another cable/port. |
 | `INSTALL_FAILED_NO_MATCHING_ABIS` | The device/emulator is not arm64: only `arm64-v8a` is built (no x86 emulator). |

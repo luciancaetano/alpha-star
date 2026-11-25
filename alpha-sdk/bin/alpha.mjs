@@ -39,11 +39,12 @@ import { formatProblem, typecheck } from "../lib/build.mjs";
 import { engineFile, hostTarget, resolveEngine } from "../lib/engine.mjs";
 import { signFile } from "../lib/sign.mjs";
 import { exportAndroid } from "../lib/android.mjs";
+import { runOnDevice } from "../lib/android_device.mjs";
 import { exportPack } from "../lib/pack.mjs";
 import { buildTests, testArgs } from "../lib/test.mjs";
 import { watchProject } from "../lib/watch.mjs";
 
-const USAGE = `usage: alpha <init|check|export|run|test|mcp|skills|--version> [--entry src/main.ts] [--out dist] [--standalone [--sign]] [--no-bytecode] [--target <platform-arch>|android-arm64] [--engine-src dir] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
+const USAGE = `usage: alpha <init|check|export|run|test|mcp|skills|--version> [--entry src/main.ts] [--out dist] [--standalone [--sign]] [--no-bytecode] [--target <platform-arch>|android-arm64 [--variant debug|release|bundle] [--no-build] [--device serial]] [--engine-src dir] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
 
 import { initProject, VERSION } from "../lib/init.mjs";
 
@@ -66,6 +67,9 @@ function parse(argv) {
     atlas: !own.includes("--no-atlas"),
     bytecode: !own.includes("--no-bytecode"),
     sign: own.includes("--sign"),
+    variant: opt("variant", own[0] === "run" ? "debug" : "release"),
+    build: !own.includes("--no-build"),
+    device: opt("device", undefined),
     engineArgs: dash >= 0 ? argv.slice(dash + 1) : [],
   };
 }
@@ -76,15 +80,30 @@ function report(problems, verb) {
   return problems.length ? 1 : 0;
 }
 
-async function androidCmd(args) {
+// Exports the Android project; returns the result (null after reporting a failure).
+async function androidExport(args) {
   const out = args.out === path.resolve("dist") ? path.resolve("build/android") : args.out;
   const r = await exportAndroid({ root: process.cwd(), entry: args.entry, out, target: args.android,
-                                  engineSrc: args.engineSrc, atlas: args.atlas, bytecode: args.bytecode });
-  if (!r.ok) return report(r.problems, "android export");
+                                  engineSrc: args.engineSrc, atlas: args.atlas, bytecode: args.bytecode,
+                                  variant: args.variant, build: args.build });
+  if (!r.ok) return report(r.problems, "android export") && null;
   console.log(`exported Android project ${path.relative(process.cwd(), out) || "."} (${r.values.PACKAGE}, ` +
               `${r.files.length} asset file(s))`);
-  console.log(r.apk ? `built ${r.apk}` : r.help);
-  return 0;
+  console.log(r.apk ? `built ${r.apk}` : r.help ?? "project only (--no-build)");
+  return r;
+}
+
+async function androidCmd(args) {
+  return (await androidExport(args)) ? 0 : 1;
+}
+
+// alpha run --target android-arm64: the debug build on the connected phone, its log here.
+async function androidRun(args) {
+  if (args.variant === "bundle") return report([{ file: "", line: 0, column: 0, message: "an AAB cannot be installed: run --variant debug or release" }], "run");
+  const r = await androidExport({ ...args, build: true });
+  if (!r) return 1;
+  if (!r.apk) return 1;  // toolchain missing: the export printed what to install
+  return runOnDevice({ sdk: r.toolchain.sdk, apk: r.apk, pkg: r.values.PACKAGE, device: args.device });
 }
 
 async function exportCmd(args) {
@@ -139,6 +158,7 @@ function launchWatching(args) {
 }
 
 async function runCmd(args) {
+  if (args.android) return androidRun(args);
   const code = await exportCmd(args);
   if (code) return code;
   return args.watch ? launchWatching(args) : launch(args);

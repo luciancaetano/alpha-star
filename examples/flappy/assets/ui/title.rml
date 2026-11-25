@@ -14,6 +14,6 @@
   <h1 class="shadow">FLAPPY<span class="orbit">ORBIT</span></h1>
   <!-- data-t: the engine fills these with ctx.t(key) in the current locale. -->
   <p id="hint" class="hint shadow" data-t="title.hint">press flap</p>
-  <p class="small shadow" data-t="title.settings">S / START: settings</p>
+  <p id="settings" class="small shadow" data-t="title.settings">S / START: settings</p>
 </body>
 </rml>

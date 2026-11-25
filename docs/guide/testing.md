@@ -25,6 +25,7 @@ export function holdingRightRuns() {
 | `clicks` | `{ "doc#id": [frames] }` |
 | `saves` / `settings` | Boot state, e.g. `{ main: { best: 5 } }`, `{ locale: "pt" }` |
 | `appPauses` | `[[from, to]]` frames the app is paused (focus lost) |
+| `platform` | the os `ctx.platform` reports (`"android"`, `"windows"`, ...; default: the machine running the test) |
 
 ## Checks
 

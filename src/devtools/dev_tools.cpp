@@ -33,7 +33,16 @@ bool DevTools::toggle_requested(const SDL_Event& event) const {
   return is_toggle(event, pad && SDL_GetGamepadButton(pad, other));
 }
 
+// Fingers reach the game too: the gesture only needs to see them.
+void DevTools::track_fingers(const SDL_Event& event) {
+  const SDL_TouchFingerEvent& f = event.tfinger;
+  if (event.type == SDL_EVENT_FINGER_DOWN) touch_.down(f.fingerID, f.x, f.y, SDL_NS_TO_MS(f.timestamp));
+  else if (event.type == SDL_EVENT_FINGER_MOTION) touch_.move(f.fingerID, f.x, f.y);
+  else if (event.type == SDL_EVENT_FINGER_UP || event.type == SDL_EVENT_FINGER_CANCELED) touch_.up(f.fingerID);
+}
+
 bool DevTools::handle(const SDL_Event& event) {
+  track_fingers(event);
   if (toggle_requested(event)) {
     toggle();
     return false;
@@ -50,6 +59,7 @@ void DevTools::decorate(render::Frame& frame, const ecs::World* world) const {
 }
 
 void DevTools::draw(script::Host& host, FrameStats stats) {
+  if (touch_.poll(SDL_GetTicks())) toggle();  // a held gesture sends no events: checked every frame
   if (!open_) return;
   ImGui_ImplSDLRenderer3_NewFrame();
   ImGui_ImplSDL3_NewFrame();

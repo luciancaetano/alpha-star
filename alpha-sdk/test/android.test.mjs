@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { androidValues, defaultPackage, exportAndroid, findToolchain, orientationFor, SDK_PACKAGES, TEMPLATE }
+import { androidValues, defaultPackage, exportAndroid, findToolchain, orientationFor, SDK_PACKAGES, TEMPLATE, VARIANTS }
   from "../lib/android.mjs";
 import { stampOf } from "../lib/bytecode.mjs";
 import { bundledEngine } from "../lib/engine.mjs";
@@ -50,10 +50,15 @@ test("android export assembles a Gradle project: pack in assets, ids and orienta
   assert.match(gradle, /applicationId "com\.studio\.flappy"/);
   assert.match(gradle, /versionCode 7/);
   assert.match(gradle, /versionName "1\.2"/);
-  assert.match(gradle, /-DALPHA_SHIPPING=ON/);
+  // The engine path is relative to app/, so a committed project builds in any clone.
+  const engine = path.relative(path.join(p.out, "app"), path.join(REPO, "CMakeLists.txt")).split(path.sep).join("/");
+  assert.ok(gradle.includes(`path file("${engine}")`), gradle.match(/path file\(.*\)/)?.[0]);
+  // debug APKs carry the dev tools (release engine flavor); release APKs and AABs ship without them.
+  assert.match(gradle, /debug \{\s*externalNativeBuild \{ cmake \{ arguments "-DALPHA_SHIPPING=OFF" \} \}/);
+  assert.match(gradle, /release \{[^}]*signingConfig.*\s*externalNativeBuild \{ cmake \{ arguments "-DALPHA_SHIPPING=ON" \} \}/);
   assert.match(gradle, /abiFilters 'arm64-v8a'/);
+  assert.match(gradle, /-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON/);  // Google Play: 16 KB pages
   assert.match(gradle, /System\.getenv\("ALPHA_ANDROID_KEYSTORE"\)/);  // release key from env, none stored
-  assert.ok(gradle.includes(`path file("${path.join(REPO, "CMakeLists.txt").split(path.sep).join("/")}")`));
   assert.doesNotMatch(gradle, /\{\{/);
   assert.match(read(main, "AndroidManifest.xml"), /android:screenOrientation="sensorPortrait"/);
   assert.match(read(main, "res", "values", "strings.xml"), /Flappy &lt;Star&gt;/);
@@ -74,6 +79,29 @@ test("android export without bytecode ships main.js; without a compiler it says 
   assert.ok(fs.existsSync(path.join(p.out, "app", "src", "main", "assets", "main.js")));
   const none = await exportAndroid({ ...p, target: "android-arm64", engineSrc: REPO, env: {}, build: false, compiler: null });
   assert.match(none.problems[0].message, /no release engine .*--no-bytecode/);
+});
+
+test("exporting again keeps Gradle's caches and replaces the pack whole", async () => {
+  const p = project(`{ title: "t", size: [10, 10], seed: 1, actions: { back: [] } }`);
+  const opts = { ...p, target: "android-arm64", engineSrc: REPO, env: {}, build: false, bytecode: false };
+  assert.ok((await exportAndroid(opts)).ok);
+  const cache = path.join(p.out, "app", "build", "marker");
+  const stale = path.join(p.out, "app", "src", "main", "assets", "removed.png");
+  fs.mkdirSync(path.dirname(cache), { recursive: true });
+  fs.writeFileSync(cache, "");
+  fs.writeFileSync(stale, "");
+  assert.ok((await exportAndroid(opts)).ok);
+  assert.ok(fs.existsSync(cache));
+  assert.equal(fs.existsSync(stale), false);
+});
+
+test("variants: debug, release and bundle map to their Gradle tasks; others are rejected", async () => {
+  assert.deepEqual(Object.fromEntries(Object.entries(VARIANTS).map(([k, v]) => [k, v.task])),
+                   { debug: "assembleDebug", release: "assembleRelease", bundle: "bundleRelease" });
+  assert.equal(VARIANTS.bundle.output.at(-1), "app-release.aab");
+  const p = project(`{ title: "t", size: [10, 10], seed: 1, actions: { back: [] } }`);
+  const r = await exportAndroid({ ...p, target: "android-arm64", engineSrc: REPO, env: {}, build: false, variant: "beta" });
+  assert.match(r.problems[0].message, /unknown --variant "beta"; variants: debug, release, bundle/);
 });
 
 test("android export rejects a bad package id, an unknown target and a missing engine source", async () => {

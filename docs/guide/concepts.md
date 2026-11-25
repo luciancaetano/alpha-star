@@ -56,7 +56,7 @@ unknown animation lists the sheet's animations).
 | Flavor | Has | Used by |
 |---|---|---|
 | dev | everything, debug build | engine development |
-| release | dev tools (F12), MCP control channel, headless flags, test runner | `alpha run`, `alpha test`, `alpha mcp` |
+| release | dev tools (F12 / three fingers 1 s), MCP control channel, headless flags, test runner | `alpha run`, `alpha test`, `alpha mcp` |
 | shipping | none of those; LTO, stripped, no console | `alpha export --standalone` (players) |
 
 Nothing in a game can depend on dev features: they are absent from the shipping engine.

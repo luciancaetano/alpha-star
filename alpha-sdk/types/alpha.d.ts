@@ -652,6 +652,13 @@ declare module "alpha" {
     reset(): void;
   }
 
+  export type Os = "windows" | "macos" | "linux" | "android" | "ios" | "web" | "other";
+  export interface Platform {
+    readonly os: Os;
+    /** Phone or tablet (android, ios): touch first, no keyboard. */
+    readonly mobile: boolean;
+  }
+
   /** Placeholders `{name}` in a text are filled from params; `count` also picks plural forms. */
   export type TextParams = { [name: string]: string | number };
 
@@ -775,6 +782,12 @@ declare module "alpha" {
     /** Scene state built by the scene's `state()`; reset on every enter. */
     state: S;
     readonly input: Input<G["actions"], AxisOf<G>>;
+    /**
+     * Where the game runs, for hints and layout ("tap" vs "press Space"). Never use it for
+     * game rules: the simulation stays the same everywhere. `alpha run --platform android`
+     * previews another OS; tests pass `simulate(game, { platform })`.
+     */
+    readonly platform: Platform;
     readonly random: Random;
     readonly save: Save;
     readonly settings: Settings<G>;
@@ -1055,7 +1068,7 @@ declare module "alpha" {
 }
 
 declare module "alpha/test" {
-  import type { AnimationOf, AxisOf, Game, GameTypes, LocaleOf, MusicOf } from "alpha";
+  import type { AnimationOf, AxisOf, Game, GameTypes, LocaleOf, MusicOf, Os } from "alpha";
 
   /**
    * One player's simulated input: action -> frames (pressed for one step each),
@@ -1090,6 +1103,8 @@ declare module "alpha/test" {
     saves?: { [slot: string]: { [k: string]: unknown } };
     /** `[[from, to], ...]` frames during which the app is paused (focus lost, background): no steps, onPause at `from`, onResume at `to`. */
     appPauses?: [number, number][];
+    /** What ctx.platform reports (default: the machine running the test). */
+    platform?: Os;
   }
 
   export interface Expect<G extends GameTypes> {

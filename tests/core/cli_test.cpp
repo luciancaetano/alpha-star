@@ -67,6 +67,12 @@ TEST_CASE("cli: test mode") {
   CHECK(o.test_file == "t.js");
   CHECK(o.test_assets == "proj");
 }
+
+TEST_CASE("cli: --platform previews another OS's UI (ctx.platform); unknown names are ignored") {
+  CHECK(parse({"pack", "--platform", "android"}).platform == alpha::core::Os::android);
+  CHECK_FALSE(parse({"pack", "--platform", "Android"}).platform.has_value());
+  CHECK_FALSE(parse({"pack"}).platform.has_value());
+}
 #else
 TEST_CASE("cli: without ALPHA_DEBUG_TOOLS every flag is unknown") {
   const CliOptions o = parse({"pack", "--frames", "120", "--test", "t.js"});

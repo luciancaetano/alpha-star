@@ -3,11 +3,22 @@
 #include <SDL3/SDL.h>
 
 #include <filesystem>
+#include <optional>
 
 #include "core/bytecode.hpp"
 #include "platform/vfs.hpp"
 
 namespace alpha::platform {
+
+namespace {
+
+std::optional<core::Os> preview;  // --platform (debug tools): set once by main, before boot
+
+}  // namespace
+
+core::Os running_os() { return preview.value_or(core::os_from_sdl(SDL_GetPlatform())); }
+
+void preview_os(std::optional<core::Os> os) { preview = os; }
 
 const char* orientations(int width, int height) {
   return height > width ? "Portrait PortraitUpsideDown" : "LandscapeLeft LandscapeRight";

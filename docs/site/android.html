@@ -18,6 +18,7 @@
 <p>Without it the exporter writes the project and prints what is missing. You need:</p>
 <p>1. A JDK 17 or newer (<code>JAVA_HOME</code>). 2. The Android SDK command-line tools, unpacked to <code>&lt;sdk&gt;/cmdline-tools/latest</code>    (<code>%LOCALAPPDATA%\Android\Sdk</code> on Windows, or set <code>ANDROID_HOME</code>). 3. The packages the project pins:</p>
 <pre><code>sdkmanager "platforms;android-35" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.31.6"</code></pre>
+<p>Newer command-line tools (the <code>android sdk</code> CLI) name packages with <code>/</code> instead of <code>;</code> (<code>"ndk/27.2.12479018"</code>); with <code>;</code> they answer <code>Package ... not found</code>.</p>
 <p>Gradle 8.12 comes with the project's wrapper (it downloads itself on the first build). The first build also fetches the engine's dependencies (SDL, Box2D, QuickJS, RmlUi, FreeType...).</p>
 <h2 id="build-and-install">Build and install</h2>
 <pre><code>cd build/android
@@ -32,6 +33,30 @@ set ALPHA_ANDROID_KEY_ALIAS=game
 set ALPHA_ANDROID_KEY_PASSWORD=...
 gradlew.bat assembleRelease</code></pre>
 <p>Keep the keystore and its passwords out of the repository; losing it means you cannot update the app on Google Play (use Play App Signing).</p>
+<h2 id="keep-the-project-in-your-repository">Keep the project in your repository</h2>
+<p>The exported project can be committed, like React Native's <code>android/</code> folder: export into the game (<code>--out android</code>) and version everything but what each build regenerates. The engine path in <code>app/build.gradle</code> is relative to the project, so it builds in any clone at the same place. <code>examples/flappy/android</code> is one:</p>
+<pre><code># android/.gitignore
+.gradle/
+build/
+local.properties
+app/.cxx/
+app/src/main/assets/</code></pre>
+<p>Exporting again writes the SDK template over the project (your edits to template files are replaced; Gradle's <code>build/</code> and <code>.cxx/</code> caches stay, so the engine is not rebuilt from scratch) and replaces the game pack in <code>app/src/main/assets</code> whole.</p>
+<h2 id="variants-debug-release-store">Variants: debug, release, store</h2>
+<pre><code>alpha export --target android-arm64 --out android --variant debug     # APK with dev tools, for your phone
+alpha export --target android-arm64 --out android --variant release   # APK, shipping engine (side-load, other stores)
+alpha export --target android-arm64 --out android --variant bundle    # AAB for Google Play, shipping engine
+alpha export --target android-arm64 --out android --no-build          # the project only
+alpha run --target android-arm64 --out android [--device SERIAL]      # debug APK on the connected phone + its log</code></pre>
+<p><code>alpha run</code> builds the debug variant, installs it with <code>adb install -r</code>, starts it and follows <code>adb logcat</code> (the engine's log and <code>console.log</code>) until Ctrl+C. Plug the phone in by USB with USB debugging on (Developer options) and accept the prompt on the phone; with several devices, pass <code>--device</code> with a serial from <code>adb devices</code>. Keep the phone unlocked: a locked phone gives no window (<code>Could not fetch native window</code>).</p>
+<p>The native libraries are built with 16 KB-aligned segments (<code>ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES</code>), which Google Play requires for apps targeting Android 15+.</p>
+<p><code>examples/flappy/package.json</code> wires these as npm scripts: <code>android:project</code>, <code>android:run</code>, <code>android:debug</code>, <code>android:release</code>, <code>android:bundle</code>, and <code>start:mobile</code> (desktop preview below).</p>
+<h2 id="dev-tools-on-the-phone">Dev tools on the phone</h2>
+<p>The debug variant carries the engine dev tools (Dear ImGui). Open and close them by holding <strong>three fingers still on the screen for one second</strong> (or Back+Start on a connected gamepad). The fingers still reach the game while you hold them. Release APKs and AABs have no dev tools at all.</p>
+<h2 id="hints-per-platform">Hints per platform</h2>
+<p><code>ctx.platform</code> says where the game runs: <code>{ os, mobile }</code>, with <code>os</code> one of <code>"windows"</code>, <code>"macos"</code>, <code>"linux"</code>, <code>"android"</code>, <code>"ios"</code>, <code>"web"</code>, <code>"other"</code> and <code>mobile</code> true on Android and iOS. Use it for hints and layout ("tap to flap" instead of "press Space"), never for game rules: the simulation stays the same everywhere.</p>
+<pre><code>if (ctx.platform.mobile) ctx.ui.set("title", "hint", ctx.t("title.hintTouch"));</code></pre>
+<p>Preview the phone UI on the desktop with <code>alpha run -- --platform android</code>, and test it with <code>simulate(game, { platform: "android" })</code>.</p>
 <h2 id="touch-back-button-lifecycle">Touch, back button, lifecycle</h2>
 <ul><li>A finger is also the mouse: <code>"MouseLeft"</code> and <code>ctx.input.mouse()</code> work unchanged (first finger).</li><li><code>"Touch"</code> is held while any finger is down; <code>"TouchLeft"</code> / <code>"TouchRight"</code> while one is on that half of the screen (two-button games: <code>left: ["Left", "TouchLeft"]</code>). A tap shorter than one step still presses.</li><li>The back button is the <code>"Back"</code> input; it does not close the app. Bind it with Escape: <code>back: ["Escape", "Back"]</code>, and quit or open a menu from the game.</li><li>Switching apps pauses the game: <code>ctx.onPause</code> runs, no steps run and audio stops until <code>ctx.onResume</code>. Saves and settings are written when set (atomically), so nothing is lost if Android kills the app in the background. The engine stops stepping the moment Android announces the background, before its event is polled.</li><li>Saves live in the app's private storage (<code>SDL_GetPrefPath</code>); the log goes to logcat.</li></ul>
 <h2 id="limitations">Limitations</h2>

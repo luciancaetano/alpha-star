@@ -1,7 +1,10 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 #include <string>
+
+#include "core/os.hpp"
 
 // What differs on phones (Android), kept to hints and the pack location so the
 // rest of the engine runs unchanged. Desktop builds call the same functions:
@@ -16,6 +19,10 @@ const char* orientations(int width, int height);
 // Before the window opens: the orientation, and the Android back button
 // delivered to the game as the "Back" input instead of closing the app.
 void prepare_mobile(int width, int height);
+
+// The OS this build runs on (ctx.platform), or the one `--platform` asked to preview.
+core::Os running_os();
+void preview_os(std::optional<core::Os> os);  // nullopt: the real one again
 
 // The pack that ships with the engine, as a path for Host::load, or "" when
 // there is none: game.jsbc or main.js next to the executable (`alpha export

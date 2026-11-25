@@ -10,6 +10,11 @@ export default scene("title", {
     ctx.spawn(ground());
     ctx.spawn(bird(false));
     ctx.ui.show("title");
+    // Phones have no keyboard: the hints name the screen and the back button instead.
+    if (ctx.platform.mobile) {
+      ctx.ui.set("title", "hint", ctx.t("title.hintTouch"));
+      ctx.ui.set("title", "settings", ctx.t("title.settingsTouch"));
+    }
     // Music outlives scenes: start it once, it loops from then on.
     if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });
   },

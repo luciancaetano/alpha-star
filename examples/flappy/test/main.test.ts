@@ -77,6 +77,18 @@ export function titleSpeaksThePlayersLanguage() {
   pt.expect.text("title", "hint").equals("aperte para voar");
 }
 
+export function titleHintsFollowThePlatform() {
+  const desktop = simulate(game, { seconds: 0.1, platform: "windows" });
+  desktop.expect.text("title", "hint").equals("press flap");
+  desktop.expect.text("title", "settings").equals("S / START: settings");
+  const phone = simulate(game, { seconds: 0.1, platform: "android" });
+  phone.expect.text("title", "hint").equals("tap to flap");
+  phone.expect.text("title", "settings").equals("BACK: settings");
+  const pt = simulate(game, { seconds: 0.1, platform: "android", settings: { locale: "pt" } });
+  pt.expect.text("title", "hint").equals("toque para voar");
+  pt.expect.text("title", "settings").equals("VOLTAR: ajustes");
+}
+
 export function settingsMenuSetsVolumeAndLanguage() {
   // S / Start opens the menu; the clicks land on its buttons (gamepad A on focus does the same).
   const run = simulate(game, {

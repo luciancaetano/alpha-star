@@ -106,7 +106,8 @@ Performance and robustness levers (step 13; see `docs/PERF.md`):
 - Profiler: dev tools "Profiler" window (F12), MCP `game_state.perf`, `--perf PATH` on `--frames` runs.
 - Many entities moved per frame: `ctx.positions(tag)` (bulk), not `entity.pos` per entity.
 
-Dev tools (Dear ImGui, F12 or gamepad Back+Start; `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:
+Dev tools (Dear ImGui, F12, gamepad Back+Start, or three fingers held still 1 s on touch screens
+(`devtools::TouchToggle`; Android debug APKs); `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:
 never put game-facing features in `src/devtools/`.
 
 ### Build flavors (`cmake/Flavors.cmake`)
@@ -119,7 +120,7 @@ embedded JS (comments included) end up in the binary too.
 |---|---|---|---|---|
 | `ALPHA_DEVTOOLS` | Dear ImGui dev tools (`src/devtools/`, F12, `--devtools`) | ON | ON | OFF |
 | `ALPHA_MCP` | agent control channel `src/mcp/` (`--control PORT`, `--hidden`) driven by `alpha mcp` | ON | ON | OFF |
-| `ALPHA_DEBUG_TOOLS` | CLI `--frames --screenshot --tap --tap-every --devtools`, `--test` runner, `alpha/test` + its natives, diagnostic logs | ON | ON | OFF |
+| `ALPHA_DEBUG_TOOLS` | CLI `--frames --screenshot --tap --tap-every --devtools --platform`, `--test` runner, `alpha/test` + its natives, diagnostic logs | ON | ON | OFF |
 | `ALPHA_SHIPPING` | forces the three OFF; IPO/LTO, stripped / no PDB, Windows GUI subsystem (no console), asserts off; unknown flags ignored; logs only to `<pref dir>/log.txt` | OFF | OFF | ON |
 
 ```
@@ -131,7 +132,8 @@ python tools/stage_engine.py                                 # stage release + s
 unmodified and ships `game.jsbc` (bytecode from the release engine's `--compile`, stamped `core::BuildStamp`;
 a pack dir runs it before main.js) instead of main.js; `check_shipping.py --pack DIR` verifies such a pack
 (`--signed` after `alpha export --sign`, which runs `$ALPHA_SIGN_CMD` on the pack's engine copy only).
-Android APKs ship `game.jsbc` too. Release: `python tools/pack_release.py --install-test` packs
+Android APKs ship `game.jsbc` too; their debug variant builds the engine with the release flavor (dev tools),
+release/bundle with shipping (`app/build.gradle` per build type; 16 KB-aligned `.so` for Google Play). Release: `python tools/pack_release.py --install-test` packs
 `@alpha-star/sdk` + `@alpha-star/engine-<target>` (exact-version optionalDependencies; the SDK resolves
 the platform package, then `alpha-sdk/engine/`) into `dist/release/` and never publishes.
 
@@ -177,7 +179,11 @@ the platform package, then `alpha-sdk/engine/`) into `dist/release/` and never p
 - **Docs follow features:** every change that creates or alters a feature (script API, config,
   CLI, asset option) updates, in the same change, the docs (`docs/guide/`, `alpha-sdk/README.md`,
   `alpha.d.ts` comments, `docs/GLOSSARY.md`) **and** the LLM docs in `alpha-sdk/llm/` (keep each
-  file's `> summary:` line accurate; add a file for a new feature area). Games pull those through
+  file's `> summary:` line accurate; add a file for a new feature area). **All of them, every time,
+  no exceptions:** guide page(s) + regenerated site (`cd alpha-sdk && npm run docs` -> `docs/site/`,
+  published to GitHub Pages), SDK README, `alpha.d.ts`, GLOSSARY, `BUILDING*.md` when the build or
+  toolchain changes, and the `alpha-sdk/llm/*.md` the SDK ships to agents. A change is not done while
+  any of them is stale. Games pull those through
   the `alpha-harness` skill (`skills/alpha-harness/alpha-harness.md`; skills live in
   `skills/<name>/<name>.md`, versioned here).
 - **Git:** work on `main`; never create a branch (or worktree branch) unless the user explicitly asks for one

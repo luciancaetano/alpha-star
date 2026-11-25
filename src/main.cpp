@@ -263,6 +263,7 @@ std::string save_path_for(const std::string& title) { return alpha::platform::pr
 int main(int argc, char** argv) {
   const std::vector<std::string_view> args(argv + 1, argv + argc);
   const Options options = alpha::core::parse_cli(args);
+  if (options.platform) alpha::platform::preview_os(options.platform);
 #if ALPHA_DEBUG_TOOLS
   if (const int code = alpha::script::run_command(options); code >= 0) return code;
 #endif
@@ -279,7 +280,10 @@ int main(int argc, char** argv) {
   SDL_Renderer* sdl = nullptr;
   alpha::platform::prepare_mobile(info.width, info.height);
   const alpha::core::Vec2 size{static_cast<float>(info.width), static_cast<float>(info.height)};
-  if (!alpha::platform::open_window({info.title, size, info.window, options.hidden}, &window, &sdl)) return fail("SDL_CreateWindowAndRenderer");
+  if (!alpha::platform::open_window({info.title, size, info.window, options.hidden}, &window, &sdl)) {
+    host.mixer().stop_all();  // same rule as the normal exit: SDL audio streams go before SDL_Quit
+    return fail("SDL_CreateWindowAndRenderer");
+  }
   limit_latency(sdl, info.window.vsync);
   alpha::render::Renderer renderer(sdl, info.width, info.height, info.window.scaling);
   {

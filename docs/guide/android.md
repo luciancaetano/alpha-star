@@ -46,6 +46,9 @@ Without it the exporter writes the project and prints what is missing. You need:
 sdkmanager "platforms;android-35" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.31.6"
 ```
 
+Newer command-line tools (the `android sdk` CLI) name packages with `/` instead of `;`
+(`"ndk/27.2.12479018"`); with `;` they answer `Package ... not found`.
+
 Gradle 8.12 comes with the project's wrapper (it downloads itself on the first build). The first
 build also fetches the engine's dependencies (SDL, Box2D, QuickJS, RmlUi, FreeType...).
 
@@ -73,6 +76,68 @@ gradlew.bat assembleRelease
 
 Keep the keystore and its passwords out of the repository; losing it means you cannot update the
 app on Google Play (use Play App Signing).
+
+## Keep the project in your repository
+
+The exported project can be committed, like React Native's `android/` folder: export into the
+game (`--out android`) and version everything but what each build regenerates. The engine path in
+`app/build.gradle` is relative to the project, so it builds in any clone at the same place.
+`examples/flappy/android` is one:
+
+```
+# android/.gitignore
+.gradle/
+build/
+local.properties
+app/.cxx/
+app/src/main/assets/
+```
+
+Exporting again writes the SDK template over the project (your edits to template files are
+replaced; Gradle's `build/` and `.cxx/` caches stay, so the engine is not rebuilt from scratch) and
+replaces the game pack in `app/src/main/assets` whole.
+
+## Variants: debug, release, store
+
+```
+alpha export --target android-arm64 --out android --variant debug     # APK with dev tools, for your phone
+alpha export --target android-arm64 --out android --variant release   # APK, shipping engine (side-load, other stores)
+alpha export --target android-arm64 --out android --variant bundle    # AAB for Google Play, shipping engine
+alpha export --target android-arm64 --out android --no-build          # the project only
+alpha run --target android-arm64 --out android [--device SERIAL]      # debug APK on the connected phone + its log
+```
+
+`alpha run` builds the debug variant, installs it with `adb install -r`, starts it and follows
+`adb logcat` (the engine's log and `console.log`) until Ctrl+C. Plug the phone in by USB with USB
+debugging on (Developer options) and accept the prompt on the phone; with several devices, pass
+`--device` with a serial from `adb devices`. Keep the phone unlocked: a locked phone gives no
+window (`Could not fetch native window`).
+
+The native libraries are built with 16 KB-aligned segments (`ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES`),
+which Google Play requires for apps targeting Android 15+.
+
+`examples/flappy/package.json` wires these as npm scripts: `android:project`, `android:run`,
+`android:debug`, `android:release`, `android:bundle`, and `start:mobile` (desktop preview below).
+
+## Dev tools on the phone
+
+The debug variant carries the engine dev tools (Dear ImGui). Open and close them by holding
+**three fingers still on the screen for one second** (or Back+Start on a connected gamepad). The
+fingers still reach the game while you hold them. Release APKs and AABs have no dev tools at all.
+
+## Hints per platform
+
+`ctx.platform` says where the game runs: `{ os, mobile }`, with `os` one of `"windows"`,
+`"macos"`, `"linux"`, `"android"`, `"ios"`, `"web"`, `"other"` and `mobile` true on Android and iOS.
+Use it for hints and layout ("tap to flap" instead of "press Space"), never for game rules: the
+simulation stays the same everywhere.
+
+```ts
+if (ctx.platform.mobile) ctx.ui.set("title", "hint", ctx.t("title.hintTouch"));
+```
+
+Preview the phone UI on the desktop with `alpha run -- --platform android`, and test it with
+`simulate(game, { platform: "android" })`.
 
 ## Touch, back button, lifecycle
 

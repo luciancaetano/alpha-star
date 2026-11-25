@@ -154,13 +154,20 @@ function appPausesOf(ranges) {
   return ranges;
 }
 
+// opts.platform: the os ctx.platform reports (UI per platform, deterministic on any host).
+const OSES = ["windows", "macos", "linux", "android", "ios", "web", "other"];
+function platformOf(os) {
+  if (os !== undefined && !OSES.includes(os)) fail(`simulate: platform must be one of ${OSES.join(", ")}, got ${JSON.stringify(os)}`);
+  return os;
+}
+
 // Runs the game in a fresh instance and returns what tests may inspect.
 function runGame(game, opts) {
   const frames = framesOf(opts.seconds);
   const id = N.instanceCreate();
   try {
     const store = memoryStore(seedFiles(opts));
-    const sim = createInstance(id, store);
+    const sim = createInstance(id, store, platformOf(opts.platform));
     sim.boot(game, opts.scene, "simulate");
     const players = playerInputs(opts.inputs, sim);
     const clicks = clicksByFrame(opts.clicks);

@@ -23,7 +23,7 @@
 <h2 id="errors">Errors</h2>
 <p>A script error pauses the game and shows a source-mapped message; it never crashes the engine. Messages are written for the agent that will fix them: what failed and what exists (e.g. an unknown animation lists the sheet's animations).</p>
 <h2 id="build-flavors">Build flavors</h2>
-<table><thead><tr><th>Flavor</th><th>Has</th><th>Used by</th></tr></thead><tbody><tr><td>dev</td><td>everything, debug build</td><td>engine development</td></tr><tr><td>release</td><td>dev tools (F12), MCP control channel, headless flags, test runner</td><td><code>alpha run</code>, <code>alpha test</code>, <code>alpha mcp</code></td></tr><tr><td>shipping</td><td>none of those; LTO, stripped, no console</td><td><code>alpha export --standalone</code> (players)</td></tr></tbody></table>
+<table><thead><tr><th>Flavor</th><th>Has</th><th>Used by</th></tr></thead><tbody><tr><td>dev</td><td>everything, debug build</td><td>engine development</td></tr><tr><td>release</td><td>dev tools (F12 / three fingers 1 s), MCP control channel, headless flags, test runner</td><td><code>alpha run</code>, <code>alpha test</code>, <code>alpha mcp</code></td></tr><tr><td>shipping</td><td>none of those; LTO, stripped, no console</td><td><code>alpha export --standalone</code> (players)</td></tr></tbody></table>
 <p>Nothing in a game can depend on dev features: they are absent from the shipping engine.</p>
 <h2 id="image-filtering-and-window-scaling">Image filtering and window scaling</h2>
 <p>Each image, sheet or map picks how it is sampled when drawn scaled or rotated:</p>

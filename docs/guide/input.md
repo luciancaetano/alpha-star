@@ -49,3 +49,10 @@ simulate(game, { seconds: 2, inputs: [{ fire: [0] }, { axes: { moveX: [[0, -1]] 
 
 Action frames press for one step each; axis entries hold a value from that frame on.
 Input the game UI consumed (a clicked button, navigation) never also triggers game actions.
+
+## Per-platform hints
+
+`ctx.platform` (`{ os, mobile }`) tells hints and layout where the game runs: show "tap" on phones
+(`ctx.platform.mobile`) and "press Space" elsewhere. Never use it for game rules. Preview with
+`alpha run -- --platform android`; test with `simulate(game, { platform: "android" })`.
+See [Android](android.md).

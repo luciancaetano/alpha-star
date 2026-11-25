@@ -12,6 +12,7 @@ set(ALPHA_TEST_SOURCES
   core/bmfont_test.cpp
   core/pixel_grid_test.cpp
   core/window_test.cpp
+  core/os_test.cpp
   core/particles_test.cpp
   core/perf_test.cpp
   core/postfx_test.cpp
@@ -82,7 +83,8 @@ if(ALPHA_WITH_RUNTIME_DEPS AND ALPHA_DEVTOOLS)
     devtools/inspector_test.cpp
     devtools/routing_test.cpp
     devtools/snapshot_test.cpp
-    devtools/time_control_test.cpp)
+    devtools/time_control_test.cpp
+    devtools/touch_toggle_test.cpp)
   list(APPEND ALPHA_TEST_LIBS alpha_devtools)
 endif()
 

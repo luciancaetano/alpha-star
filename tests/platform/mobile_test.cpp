@@ -23,6 +23,19 @@ TEST_CASE("prepare_mobile sets the orientation and traps the back button for the
   SDL_ResetHints();
 }
 
+TEST_CASE("running_os is the host's OS unless --platform previews another") {
+  using alpha::core::Os;
+#if defined(_WIN32)
+  CHECK(alpha::platform::running_os() == Os::windows);
+#elif defined(__linux__)
+  CHECK(alpha::platform::running_os() == Os::linux_os);
+#endif
+  alpha::platform::preview_os(Os::android);
+  CHECK(alpha::platform::running_os() == Os::android);
+  alpha::platform::preview_os(std::nullopt);
+  CHECK(alpha::platform::running_os() != Os::android);
+}
+
 TEST_CASE("a pack runs its game.jsbc when it has one, else its main.js") {
   namespace fs = std::filesystem;
   const fs::path dir = fs::temp_directory_path() / "alpha_pack_entry_test";

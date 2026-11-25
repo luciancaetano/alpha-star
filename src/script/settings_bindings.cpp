@@ -4,6 +4,8 @@
 #include <map>
 
 #include "core/error.hpp"
+#include "core/os.hpp"
+#include "platform/mobile.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
 #include "script/spec_fields.hpp"
@@ -51,12 +53,19 @@ JSValue locale_set(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 5> kNatives{{
+// platformOs(): ctx.platform.os ("windows", "android", ...).
+JSValue platform_os(JSContext* ctx, ScriptState&, JSValueConst*) {
+  const std::string_view name = core::os_name(platform::running_os());
+  return JS_NewStringLen(ctx, name.data(), name.size());
+}
+
+constexpr std::array<Native, 6> kNatives{{
     {"uiKeys", guarded<ui_keys>, 0},
     {"uiTranslate", guarded<ui_translate>, 2},
     {"uiAccess", guarded<ui_access>, 2},
     {"reducedMotion", guarded<reduced_motion>, 1},
     {"localeSet", guarded<locale_set>, 1},
+    {"platformOs", guarded<platform_os>, 0},
 }};
 
 }  // namespace

@@ -1,8 +1,11 @@
 #pragma once
 
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
+
+#include "core/os.hpp"
 
 namespace alpha::core {
 
@@ -23,6 +26,7 @@ struct CliOptions {
   std::string perf;      // --perf PATH: per-section frame times as JSON at exit (bench)
   int control_port = 0;  // agent control channel (ALPHA_MCP); 0 = off
   bool hidden = false;   // no visible window (agent runs; ALPHA_MCP)
+  std::optional<Os> platform;  // --platform android: ctx.platform as on that OS (UI previews)
 };
 
 // Parses argv[1..]. Never throws: unknown flags, missing values and malformed

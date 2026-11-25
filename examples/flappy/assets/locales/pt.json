@@ -2,7 +2,9 @@
   "title": {
     "tagline": "UMA AVENTURA CÓSMICA",
     "hint": "aperte para voar",
-    "settings": "S / START: ajustes"
+    "settings": "S / START: ajustes",
+    "hintTouch": "toque para voar",
+    "settingsTouch": "VOLTAR: ajustes"
   },
   "over": {
     "title": "FIM DE JOGO",

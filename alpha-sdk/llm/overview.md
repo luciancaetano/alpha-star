@@ -93,7 +93,8 @@ alpha --version          SDK version (= the bundled engines' version)
 alpha check              type-check only                 (npm run check)
 alpha test               run test/main.test.ts headless  (npm test)
 alpha export [--out dist] [--standalone] [--no-atlas]
-alpha run [--watch] [-- engine args]   export then play; --watch hot-reloads
+alpha run [--watch] [-- engine args]   export then play; --watch hot-reloads; -- --platform android previews phone UI
+alpha run --target android-arm64 --out android   debug APK on the USB phone + its log
 alpha mcp                MCP server for agents (mcp.md)
 alpha skills             install/update agent skills (.claude/skills, .agents/skills, ...); --agents, --list
 ```
@@ -104,4 +105,4 @@ Done = `npm run check` clean and `npm test` passing.
 - Determinism: fixed step, `ctx.random` only (`Math.random` throws "use ctx.random"). Particles, tweens, camera, animations all advance on the fixed step. Audio never affects the simulation.
 - A script error pauses the game with a source-mapped message; it never crashes the engine.
 - Hot reload keeps the save, the scene and JSON params, and JSON `ctx.state` (if the scene still declares `state`); `enter` rebuilds the world. Keep long-lived values in `ctx.state`, not entity data.
-- Dev tools (F12), MCP and `alpha/test` are absent from shipping engines: game code never depends on them.
+- Dev tools (F12; Android debug APK: three fingers held 1 s), MCP and `alpha/test` are absent from shipping engines: game code never depends on them.
