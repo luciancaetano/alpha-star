@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 
 // What differs on phones (Android), kept to hints and the pack location so the
@@ -17,8 +18,12 @@ const char* orientations(int width, int height);
 void prepare_mobile(int width, int height);
 
 // The pack that ships with the engine, as a path for Host::load, or "" when
-// there is none: main.js next to the executable (`alpha export --standalone`);
-// on Android the APK's assets (SDL reads relative paths from them).
+// there is none: game.jsbc or main.js next to the executable (`alpha export
+// --standalone`); on Android the APK's assets (SDL reads relative paths from them).
 std::string bundled_pack();
+
+// The file a pack directory runs: its game.jsbc (compiled standalone export)
+// when present, else its main.js. Bytecode is only ever taken from the pack itself.
+std::filesystem::path pack_entry(const std::filesystem::path& dir);
 
 }  // namespace alpha::platform

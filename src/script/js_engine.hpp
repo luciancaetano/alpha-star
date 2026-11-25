@@ -56,6 +56,12 @@ class Engine {
   void add_builtin(std::string name, std::string_view source);
   // Evaluates a module (builtin name or file path); returns its namespace.
   Value import(const std::string& name);
+  // Evaluates a module from QuickJS bytecode (an already checked game.jsbc
+  // body: QuickJS does not validate it); returns its namespace.
+  Value import_bytecode(std::string_view bytes);
+  // The module at `path` compiled (imports resolved) and written as bytecode
+  // without source or debug info, named `module_name` inside.
+  std::string bytecode_of(const std::string& path, const std::string& module_name);
   // Calls fn(args...) with `this` undefined. Throws ScriptError if it throws.
   Value call(const Value& fn, std::span<JSValueConst> args);
   // Wraps a result, turning a pending exception into ScriptError.
@@ -70,6 +76,8 @@ class Engine {
   std::string source_of(const std::string& name) const;
   std::string public_builtins() const;
   JSValue compile(const std::string& name);
+  JSValue compile_source(const std::string& source, const std::string& name);
+  Value evaluate(Value module);
   void run_jobs();
 
   JSRuntime* runtime_;

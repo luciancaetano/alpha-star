@@ -41,6 +41,19 @@ pessimistic; compare rows of the same table.
 | tilemap | 0.70/0.90/1.13 | 0.03/0.05/0.08 | 0.01/0.01/0.02 | 0.00/0.00/0.00 | 0.00/0.00/0.00 | 0.00/0.00/0.00 | 0.00/0.01/0.01 | 0.66/0.84/1.08 | 0.00/0.00/0.01 | 1 | 23124 | 1 | 4.4 |
 | ui | 4.04/4.73/7.78 | 1.15/1.46/2.10 | 0.00/0.01/0.12 | 0.00/0.00/0.01 | 0.00/0.00/0.00 | 0.00/0.00/0.00 | 2.79/3.37/6.65 | 0.00/0.00/0.01 | 0.00/0.00/0.01 | 0 | 0 | 0 | 0.4 |
 
+## Boot time: main.js vs game.jsbc (step 17a)
+
+Whole process, release engine, `alpha_star <pack> --frames 1 --hidden` (start, window + renderer,
+boot the game, one frame, exit), 1 warm-up + 11 runs each, under `tools/resource_guard.py`:
+
+| Game | main.js (bytes) | game.jsbc (bytes) | JS median ms (min-max) | bytecode median ms (min-max) |
+|---|---|---|---|---|
+| flappy | 33736 | 6458 | 469.4 (463.9-481.6) | 466.3 (463.4-472.0) |
+| topdown (largest example) | 35731 | 7561 | 354.6 (351.3-364.9) | 351.2 (348.3-363.1) |
+
+main.js sizes include the inline source map. Bytecode saves ~3 ms (no parse/compile); process
+start is dominated by SDL, the window and the renderer. Bytecode is about hiding source, not speed.
+
 ## What changed and why (LOG 261-263)
 
 - `World::set_position` / `destroy` looked up children by scanning and sorting the whole world:

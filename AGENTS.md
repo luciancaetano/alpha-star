@@ -120,7 +120,9 @@ cmake --preset shipping && cmake --build --preset shipping   # player engine
 python tools/check_shipping.py                               # fails on any dev/debug/agent marker
 python tools/stage_engine.py                                 # stage release + shipping into alpha-sdk/engine/
 ```
-`alpha run`/`alpha test`/`alpha mcp` use the release engine; `alpha export --standalone` copies the shipping one.
+`alpha run`/`alpha test`/`alpha mcp` use the release engine; `alpha export --standalone` copies the shipping one
+unmodified and ships `game.jsbc` (bytecode from the release engine's `--compile`, stamped `core::BuildStamp`;
+a pack dir runs it before main.js) instead of main.js; `check_shipping.py --pack DIR` verifies such a pack.
 
 `python tools/gate.py` (preset dev; `--preset harness` = fast core-only) runs build + tests + all checks. A change is done only when it passes.
 

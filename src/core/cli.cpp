@@ -6,6 +6,18 @@ namespace alpha::core {
 
 namespace {
 
+#if ALPHA_DEBUG_TOOLS
+// --compile <main.js> <out.jsbc>: the one flag with two values, only as the whole command.
+bool compile_request(CliOptions& o, std::span<const std::string_view> args) {
+  if (args.size() != 3 || args[0] != "--compile") return false;
+  o.compile_source = args[1];
+  o.compile_out = args[2];
+  return true;
+}
+#else
+bool compile_request(CliOptions&, std::span<const std::string_view>) { return false; }
+#endif
+
 #if ALPHA_DEBUG_TOOLS || ALPHA_MCP
 // A non-negative int, or 0 when the text is not exactly one.
 int count_of(std::string_view text) {
@@ -78,6 +90,7 @@ void parse_flags(CliOptions&, std::span<const std::string_view>) {}
 
 CliOptions parse_cli(std::span<const std::string_view> args) {
   CliOptions o;
+  if (compile_request(o, args)) return o;
   const bool has_game = !args.empty() && !args[0].starts_with('-');
   if (has_game) o.game = args[0];
   parse_flags(o, args.subspan(has_game ? 1 : 0));

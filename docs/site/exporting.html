@@ -8,6 +8,18 @@ npx alpha export --standalone --out build/game    # + the shipping engine: runs 
 npx alpha export --standalone --target linux-x64  # another platform the SDK has an engine for
 npx alpha export --no-atlas                       # keep images as separate files</code></pre>
 <p>A standalone export copies the <strong>shipping</strong> engine next to the pack: no dev tools, no MCP, no test runner or headless flags, no console window, logs only to the player's data folder. Run the executable in the folder to play.</p>
+<h2 id="standalone-layout-bytecode-next-to-an-unmodified-engine">Standalone layout: bytecode next to an unmodified engine</h2>
+<pre><code>build/game/
+  alpha_star.exe          the SDK's shipping engine, byte for byte (signable, same for every game)
+  game.jsbc               your game, compiled to QuickJS bytecode
+  alpha-atlas-*.png ...   assets as plain files
+  assets/...
+  THIRD_PARTY_NOTICES.txt</code></pre>
+<p>Nothing is appended to or embedded in the executable; the layout is the same on every platform. The SDK's release engine compiles the bundle (<code>alpha_star --compile main.js game.jsbc</code>) without source text or debug info, so the pack has no <code>main.js</code> and no source map.</p>
+<p><strong>Version lock.</strong> <code>game.jsbc</code> carries a stamp: engine version, QuickJS version and a build id. The engine runs only bytecode stamped with exactly its own build; anything else (or a truncated or damaged file) stops at start with a message naming both versions, shown on screen and in the log, telling the player to update the game. Ship the engine and <code>game.jsbc</code> from the same export. The export refuses to write a pack if the SDK's release and shipping engines are different builds (restage both).</p>
+<p><strong>What this protects, and what it doesn't.</strong> Players no longer get readable source, comments or your source map. Bytecode is <strong>not encryption</strong>: property names, strings and the program's structure are still in the file, and a determined person can decompile it. Do not put secrets (API keys) in a game.</p>
+<p><strong>Debugging a standalone build:</strong> <code>--no-bytecode</code> ships <code>main.js</code> instead (readable stack traces with line numbers). Error messages from <code>game.jsbc</code> have no line numbers. <code>alpha run</code>, <code>alpha test</code>, hot reload and the MCP tools always use JS + source maps.</p>
+<p>Check a pack before shipping it: <code>python tools/check_shipping.py --pack build/game</code> (in the alpha-star repo) fails on any JS source or source map, and when the engine differs from the staged shipping one.</p>
 <p>The pack includes <code>THIRD_PARTY_NOTICES.txt</code> (the engine's dependencies' licenses plus the license files your fonts name with <code>{ file, license }</code>). The font's own license is what matters for a font (OFL is fine).</p>
 <p>Engines live in the SDK under <code>engine/&lt;platform&gt;-&lt;arch&gt;/</code> (release: run/test/mcp) and <code>engine/&lt;platform&gt;-&lt;arch&gt;/shipping/</code> (players). Override with <code>--engine &lt;path&gt;</code> or <code>$ALPHA_STAR</code>.</p>
 <p>Android: <code>alpha export --target android-arm64</code> writes a Gradle project (and builds the APK when the toolchain is installed); see <a href="android.html">Android</a>.</p></main></body></html>

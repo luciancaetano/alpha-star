@@ -29,6 +29,15 @@ TEST_CASE("cli: unknown flags and their values are ignored safely") {
 }
 
 #if ALPHA_DEBUG_TOOLS
+TEST_CASE("cli: --compile <main.js> <out.jsbc> is a whole command") {
+  const CliOptions o = parse({"--compile", "dist/main.js", "dist/game.jsbc"});
+  CHECK(o.compile_source == "dist/main.js");
+  CHECK(o.compile_out == "dist/game.jsbc");
+  CHECK(o.game.empty());
+  CHECK(parse({"--compile", "main.js"}).compile_source.empty());
+  CHECK(parse({"pack", "--compile", "a.js", "b.jsbc"}).compile_source.empty());
+}
+
 TEST_CASE("cli: debug flags (ALPHA_DEBUG_TOOLS builds)") {
   const CliOptions o = parse({"pack", "--frames", "120", "--screenshot", "out.bmp", "--tap", "Space",
                               "--tap-every", "20", "--devtools"});
@@ -55,6 +64,7 @@ TEST_CASE("cli: test mode") {
 #else
 TEST_CASE("cli: without ALPHA_DEBUG_TOOLS every flag is unknown") {
   const CliOptions o = parse({"pack", "--frames", "120", "--test", "t.js"});
+  CHECK(parse({"--compile", "a.js", "b.jsbc"}).compile_source.empty());
   CHECK(o.frames == 0);
   CHECK(o.test_file.empty());
 }

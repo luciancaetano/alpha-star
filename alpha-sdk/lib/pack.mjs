@@ -13,7 +13,8 @@ import * as esbuild from "esbuild";
 import { buildAtlas } from "./atlas.mjs";
 import { build } from "./build.mjs";
 import { mapReferences } from "./maps.mjs";
-import { describeTargets, engineFile, shippingEngine } from "./engine.mjs";
+import { BYTECODE_FILE, compileBytecode } from "./bytecode.mjs";
+import { bundledEngine, describeTargets, engineFile, shippingEngine } from "./engine.mjs";
 
 const SHIM = path.join(path.dirname(fileURLToPath(import.meta.url)), "alpha-shim.mjs");
 
@@ -200,8 +201,8 @@ function copyAssets(root, out, files) {
   }
 }
 
-// Standalone pack: the shipping engine binary sits next to main.js and, started
-// with no arguments, runs it (like a fused LOVE game).
+// Standalone pack: the unmodified shipping engine binary sits next to game.jsbc
+// and, started with no arguments, runs it (like a fused LOVE game, nothing appended).
 function engineFor(target) {
   const engine = shippingEngine(target);
   if (engine) return { engine };
@@ -210,24 +211,38 @@ function engineFor(target) {
     "stage both flavors with tools/stage_engine.py") };
 }
 
+// The game file a pack ships: standalone packs get game.jsbc compiled from the
+// staged main.js (unless bytecode is off); every other pack keeps main.js.
+function gameFile(staging, standalone, { bytecode, compiler }) {
+  if (!standalone.engine || !bytecode) return { file: "main.js" };
+  const failed = compileBytecode({ compiler, shipping: standalone.engine, source: path.join(staging, "main.js"),
+                                   out: path.join(staging, BYTECODE_FILE) });
+  return failed ? { problem: failed } : { file: BYTECODE_FILE };
+}
+
 // root: project directory (asset paths are relative to it). target: null for
 // a plain pack, or "<platform>-<arch>" to include that engine binary. atlas: pack
 // images and sheet images into texture pages (default; transparent to game code).
-// Returns { ok, problems, files }. Writes nothing unless everything checks out.
-export async function exportPack({ root, entry, out, target = null, atlas = true }) {
+// bytecode: standalone packs ship game.jsbc (no JS source, no source map) compiled by
+// `compiler` (default: this machine's release engine). Returns { ok, problems, files }.
+// Writes nothing unless everything checks out.
+export async function exportPack({ root, entry, out, target = null, atlas = true, bytecode = true,
+                                   compiler = bundledEngine() }) {
   const standalone = target ? engineFor(target) : {};
   if (standalone.problem) return { ok: false, problems: [standalone.problem], files: [] };
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-pack-"));
   try {
     const built = await build(entry, path.join(out, "main.js"), path.join(staging, "main.js"));
     if (!built.ok) return { ok: false, problems: built.problems, files: [] };
+    const game = gameFile(staging, standalone, { bytecode, compiler });
+    if (game.problem) return { ok: false, problems: [game.problem], files: [] };
     const def = await readGameDef(entry);
     if (!def) return { ok: false, problems: [problem("main module must `export default game({...})`", entry)], files: [] };
     const { files, problems } = packFiles(root, def);
     if (problems.length) return { ok: false, problems, files };
     fs.rmSync(out, { recursive: true, force: true });
     fs.mkdirSync(out, { recursive: true });
-    fs.copyFileSync(path.join(staging, "main.js"), path.join(out, "main.js"));
+    fs.copyFileSync(path.join(staging, game.file), path.join(out, game.file));
     copyAssets(root, out, atlas ? writeAtlas(root, out, files) : files);
     writeNotices(root, out, def);
     if (standalone.engine) {
@@ -235,7 +250,7 @@ export async function exportPack({ root, entry, out, target = null, atlas = true
       fs.copyFileSync(standalone.engine, dest);
       fs.chmodSync(dest, 0o755);
     }
-    return { ok: true, problems: [], files };
+    return { ok: true, problems: [], files, game: game.file };
   } finally {
     fs.rmSync(staging, { recursive: true, force: true });
   }

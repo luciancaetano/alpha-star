@@ -4,6 +4,7 @@
 
 #include <filesystem>
 
+#include "core/bytecode.hpp"
 #include "platform/vfs.hpp"
 
 namespace alpha::platform {
@@ -22,9 +23,14 @@ std::string bundled_pack() {
   return "main.js";  // APK assets: main.js and assets/... at the root
 #else
   const char* base = SDL_GetBasePath();
-  if (!base || !vfs::exists(std::filesystem::path(base) / "main.js")) return "";
+  if (!base || !vfs::exists(pack_entry(base))) return "";
   return base;
 #endif
+}
+
+std::filesystem::path pack_entry(const std::filesystem::path& dir) {
+  const std::filesystem::path bytecode = dir / core::kBytecodeFile;
+  return vfs::exists(bytecode) ? bytecode : dir / "main.js";
 }
 
 }  // namespace alpha::platform

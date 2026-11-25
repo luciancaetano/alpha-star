@@ -2,6 +2,7 @@
 add_library(alpha_core
   core/app_lifecycle.cpp
   core/axes.cpp
+  core/bytecode.cpp
   core/camera.cpp
   core/cli.cpp
   core/color.cpp
@@ -102,6 +103,7 @@ add_library(alpha_engine
   script/vm.cpp
   script/body_parser.cpp
   script/bundle_map.cpp
+  script/bytecode.cpp
   script/camera_bindings.cpp
   script/effect_bindings.cpp
   script/effect_parser.cpp
@@ -133,6 +135,20 @@ add_library(alpha_engine
   ui/rml_renderer.cpp
   ui/translate.cpp
   ui/ui.cpp)
+# Bytecode build id (core/bytecode.hpp): game.jsbc runs only on an engine built from the same
+# QuickJS sources with the same pointer width. Derived here, identical for every flavor of one
+# checkout (release compiles, shipping runs) and line-ending independent.
+file(READ "${quickjs_SOURCE_DIR}/quickjs.c" ALPHA_QJS_SOURCE)
+file(READ "${quickjs_SOURCE_DIR}/quickjs.h" ALPHA_QJS_HEADER)
+string(REPLACE "\r\n" "\n" ALPHA_QJS_SOURCE "${ALPHA_QJS_SOURCE}${ALPHA_QJS_HEADER}")
+string(SHA256 ALPHA_QJS_HASH "${ALPHA_QJS_SOURCE}")
+string(SUBSTRING "${ALPHA_QJS_HASH}" 0 12 ALPHA_QJS_HASH)
+math(EXPR ALPHA_POINTER_BITS "${CMAKE_SIZEOF_VOID_P} * 8")
+set_source_files_properties(script/bytecode.cpp PROPERTIES
+  COMPILE_DEFINITIONS "ALPHA_BUILD_ID=\"${ALPHA_QJS_HASH}-${ALPHA_POINTER_BITS}\"")
+unset(ALPHA_QJS_SOURCE)
+unset(ALPHA_QJS_HEADER)
+
 target_include_directories(alpha_engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnTT::EnTT qjs SDL3_image::SDL3_image

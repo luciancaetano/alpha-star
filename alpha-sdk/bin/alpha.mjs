@@ -2,11 +2,12 @@
 // alpha: the one CLI for alpha-star games. Run from the game project directory.
 //
 //   alpha check                  type-check only
-//   alpha export [--out dist] [--standalone [--target win32-x64|linux-x64]] [--no-atlas]
+//   alpha export [--out dist] [--standalone [--target win32-x64|linux-x64] [--no-bytecode]] [--no-atlas]
 //                                type-check, bundle and copy assets into a pack (PNG images and
 //                                sprite sheets packed into alpha-atlas-N.png pages unless --no-atlas);
-//                                --standalone also copies the shipping engine in,
-//                                so the pack runs by itself (default target: this machine)
+//                                --standalone also copies the unmodified shipping engine in, so the
+//                                pack runs by itself (default target: this machine), and ships the
+//                                game as game.jsbc bytecode instead of main.js (--no-bytecode: main.js)
 //   alpha export --target android-arm64 [--out build/android] [--engine-src <alpha-star checkout>]
 //                                Gradle project (pack in its assets, engine built from source,
 //                                shipping flavor); builds the APK when the Android toolchain is
@@ -36,7 +37,7 @@ import { exportPack } from "../lib/pack.mjs";
 import { buildTests, testArgs } from "../lib/test.mjs";
 import { watchProject } from "../lib/watch.mjs";
 
-const USAGE = `usage: alpha <init|check|export|run|test|mcp|--version> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>|android-arm64] [--engine-src dir] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
+const USAGE = `usage: alpha <init|check|export|run|test|mcp|--version> [--entry src/main.ts] [--out dist] [--standalone] [--no-bytecode] [--target <platform-arch>|android-arm64] [--engine-src dir] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
 
 import { initProject, VERSION } from "../lib/init.mjs";
 
@@ -57,6 +58,7 @@ function parse(argv) {
     engineSrc: opt("engine-src", undefined),
     watch: own.includes("--watch"),
     atlas: !own.includes("--no-atlas"),
+    bytecode: !own.includes("--no-bytecode"),
     engineArgs: dash >= 0 ? argv.slice(dash + 1) : [],
   };
 }
@@ -80,11 +82,12 @@ async function androidCmd(args) {
 
 async function exportCmd(args) {
   if (args.android) return androidCmd(args);
-  const { ok, problems, files } = await exportPack({ root: process.cwd(), entry: args.entry, out: args.out,
-                                                    target: args.target, atlas: args.atlas });
+  const { ok, problems, files, game } = await exportPack({ root: process.cwd(), entry: args.entry, out: args.out,
+                                                          target: args.target, atlas: args.atlas,
+                                                          bytecode: args.bytecode });
   if (!ok) return report(problems, "export");
   const engine = args.target ? `, engine ${args.target}` : "";
-  console.log(`exported ${path.relative(process.cwd(), args.out) || "."} (main.js + ${files.length} asset file(s)${engine})`);
+  console.log(`exported ${path.relative(process.cwd(), args.out) || "."} (${game} + ${files.length} asset file(s)${engine})`);
   return 0;
 }
 

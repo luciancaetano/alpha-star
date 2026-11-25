@@ -1,6 +1,8 @@
 """Fail if a shipping engine binary contains dev/debug/agent-only features.
 
 Usage: python tools/check_shipping.py [--preset shipping | --binary PATH] [--expect-found]
+       python tools/check_shipping.py --pack DIR   # a standalone pack: game.jsbc, no readable
+                                                   # JS / source maps, engine == staged shipping one
 
 Default binary: the shipping preset's alpha_star (cmake --preset shipping);
 --preset NAME checks another preset's build (e.g. release for the negative test).
@@ -24,7 +26,7 @@ MARKERS = {
     "ALPHA_DEVTOOLS": [rb"(?i)imgui"],
     "ALPHA_MCP": [rb"(?i)modelcontextprotocol", rb"jsonrpc", rb"alpha-control", rb"--control", rb"--hidden",
                   rb"ALPHA_CONTROL_TOKEN"],
-    "ALPHA_DEBUG_TOOLS": [rb"--screenshot", rb"--frames", rb"--tap-every", rb"--devtools", rb"--assets",
+    "ALPHA_DEBUG_TOOLS": [rb"--screenshot", rb"--frames", rb"--tap-every", rb"--devtools", rb"--assets", rb"--compile",
                           rb"alpha/test", rb"simulate", rb"holdActions", rb"holdAxis", rb"testNames", rb"instanceCreate",
                           rb"stepBudget", rb"uiView", rb"tagCounts", rb"previous game keeps running"],
 }
@@ -71,12 +73,44 @@ def report(binary, hits, problems):
         print(f"  FORM  {problem}")
 
 
+SOURCE_SUFFIXES = (".js", ".mjs", ".cjs", ".ts", ".map")
+SOURCE_TEXT = [rb"sourceMappingURL", rb"export default", rb"import \{", rb"\bfunction\s*\w*\s*\([^)]*\)\s*\{"]
+
+
+def pack_problems(pack, staged):
+    """Standalone pack: game.jsbc and no readable JS; the engine is the staged shipping one, unmodified."""
+    problems = [f"ships source file {p.relative_to(pack)}" for p in pack.rglob("*") if p.suffix in SOURCE_SUFFIXES]
+    jsbc = pack / "game.jsbc"
+    data = jsbc.read_bytes() if jsbc.is_file() else b""
+    if not data.startswith(b"ALPHAJBC"):
+        problems.append("no game.jsbc (ALPHAJBC header)")
+    problems += [f"game.jsbc contains source text /{p.decode()}/" for p in SOURCE_TEXT if re.search(p, data)]
+    exe = pack / staged.name
+    if not exe.is_file() or exe.read_bytes() != staged.read_bytes():
+        problems.append(f"{exe.name} differs from the staged shipping engine {staged} (must be unmodified)")
+    return problems
+
+
+def check_pack(pack):
+    staged = sorted((Path(__file__).resolve().parent.parent / "alpha-sdk" / "engine").glob("*/shipping/alpha_star*"))
+    host = [s for s in staged if (pack / s.name).is_file() and (pack / s.name).read_bytes() == s.read_bytes()]
+    problems = pack_problems(pack, (host or staged or [Path("alpha_star")])[0])
+    print(f"check_shipping: pack {pack}")
+    for problem in problems:
+        print(f"  PACK  {problem}")
+    print("check_shipping: " + ("PASS" if not problems else "FAIL"))
+    return 0 if not problems else 1
+
+
 def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument("--binary", type=Path)
     ap.add_argument("--preset", default="shipping")
     ap.add_argument("--expect-found", action="store_true")
+    ap.add_argument("--pack", type=Path, help="check a standalone pack (alpha export --standalone) instead")
     a = ap.parse_args(argv)
+    if a.pack:
+        return check_pack(a.pack)
     binary = a.binary or toolchain.built_exe(a.preset)
     data = binary.read_bytes()
     hits = marker_hits(data)

@@ -5,6 +5,7 @@ set(ALPHA_TEST_SOURCES
   core/mixer_test.cpp
   core/cli_test.cpp
   core/axes_test.cpp
+  core/bytecode_test.cpp
   core/camera_test.cpp
   core/glyph_layout_test.cpp
   core/bmfont_test.cpp
@@ -49,6 +50,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/host_test.cpp
     script/host_limits_test.cpp
     script/fuzz_test.cpp
+    script/bytecode_script_test.cpp
     script/perf_script_test.cpp
     script/input_script_test.cpp
     script/hot_reload_test.cpp

@@ -58,10 +58,32 @@ std::string Engine::source_of(const std::string& name) const {
   return std::move(*text);
 }
 
-JSValue Engine::compile(const std::string& name) {
-  const std::string source = source_of(name);
+JSValue Engine::compile(const std::string& name) { return compile_source(source_of(name), name); }
+
+JSValue Engine::compile_source(const std::string& source, const std::string& name) {
   return JS_Eval(ctx_, source.c_str(), source.size(), name.c_str(),
                  JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+}
+
+std::string Engine::bytecode_of(const std::string& path, const std::string& module_name) {
+  start_clock();
+  const Value compiled = check(compile_source(source_of(path), module_name));
+  std::size_t size = 0;
+  std::uint8_t* bytes = JS_WriteObject(ctx_, &size, compiled.get(),
+                                       JS_WRITE_OBJ_BYTECODE | JS_WRITE_OBJ_STRIP_SOURCE | JS_WRITE_OBJ_STRIP_DEBUG);
+  if (!bytes) check(JS_EXCEPTION);
+  std::string out(reinterpret_cast<const char*>(bytes), size);
+  js_free(ctx_, bytes);
+  return out;
+}
+
+Value Engine::import_bytecode(std::string_view bytes) {
+  start_clock();
+  Value module = check(JS_ReadObject(ctx_, reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size(),
+                                     JS_READ_OBJ_BYTECODE));
+  if (JS_VALUE_GET_TAG(module.get()) != JS_TAG_MODULE) throw ScriptError("game bytecode does not hold a module");
+  if (JS_ResolveModule(ctx_, module.get()) < 0) check(JS_EXCEPTION);
+  return evaluate(std::move(module));
 }
 
 JSModuleDef* Engine::load(JSContext* ctx, const char* name, void* opaque) {
@@ -86,7 +108,10 @@ void Engine::run_jobs() {
 
 Value Engine::import(const std::string& name) {
   start_clock();
-  Value compiled = check(compile(name));
+  return evaluate(check(compile(name)));
+}
+
+Value Engine::evaluate(Value compiled) {
   auto* module = static_cast<JSModuleDef*>(JS_VALUE_GET_PTR(compiled.get()));
   const Value promise = check(JS_EvalFunction(ctx_, compiled.release()));
   run_jobs();

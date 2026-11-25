@@ -20,6 +20,15 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
   render-only, on every SDL renderer including the software one. Guide page "Shaders and lighting".
   Shmup example: bloom + CRT toggle (C); topdown: lantern and bullet lights. Custom shader code is not
   available yet (needs SDL 3.4).
+- Standalone packs ship bytecode: `alpha export --standalone` writes `game.jsbc` (QuickJS bytecode,
+  no source or debug info, compiled by the SDK's release engine via `alpha_star --compile`) next to
+  the unmodified shipping engine, instead of `main.js` + source map. `--no-bytecode` opts out.
+  Engines run only bytecode stamped with their own version and build (clear error otherwise; header
+  with length + checksum). `tools/check_shipping.py --pack DIR` checks a standalone pack.
+
+### Changed
+
+- A pack directory with a `game.jsbc` runs it instead of `main.js`.
 
 ## [0.2.0] - 2026-11-25
 

@@ -4,7 +4,9 @@
 #include "script/audio_bindings.hpp"
 #include "script/prefs_bindings.hpp"
 #include "script/settings_bindings.hpp"
+#include "platform/vfs.hpp"
 #include "script/bundle_map.hpp"
+#include "script/bytecode.hpp"
 #include "script/camera_bindings.hpp"
 #include "script/effect_bindings.hpp"
 #include "script/joint_bindings.hpp"
@@ -59,6 +61,10 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
 
 Value Vm::import_bundle(const std::string& path) {
   bundle_path = path;
+  if (platform::vfs::lower_extension(path) == ".jsbc") {  // standalone pack: no source, no map
+    source_map.reset();
+    return import_bytecode_file(*engine, path);
+  }
   source_map = load_bundle_map(engine->ctx(), path);
   return engine->import(path);
 }

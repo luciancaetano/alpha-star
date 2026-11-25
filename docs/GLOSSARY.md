@@ -116,3 +116,5 @@
 | PostFx | A scene's full-screen effect chain (`ctx.postfx`, `core::PostFx`): built-in effects in first-add order, render-only. |
 | Compositor | `render::Compositor`: lighting and post effects on SDL_Renderer alone (render targets, add/modulate blends, vertex colors); no shaders. |
 | Lightmap | Offscreen texture cleared to `config.lighting.ambient` with every entity `light` added, multiplied into the world. |
+| game.jsbc | A standalone pack's game: QuickJS bytecode of the bundled main.js (no source, no debug info) behind a 64-byte header (`core/bytecode.hpp`: magic `ALPHAJBC`, format, body length, FNV-1a 64 checksum, build stamp). Written by `alpha_star --compile` (release engine); a pack directory runs it instead of main.js (`platform::pack_entry`). Not encryption. |
+| Build stamp | `core::BuildStamp` (engine version, QuickJS version, build id = hash of the QuickJS sources + pointer width, from `src/CMakeLists.txt`): an engine runs only game.jsbc carrying exactly its own stamp, and says both stamps when they differ. |

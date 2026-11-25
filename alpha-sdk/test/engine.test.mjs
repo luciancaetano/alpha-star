@@ -53,10 +53,10 @@ export default game({ config: { title: "t", size: [10, 10], seed: 1, actions: {}
   return { root, entry: path.join(root, "src", "main.ts"), out: path.join(root, "dist") };
 }
 
-test("standalone export puts the target's shipping engine next to main.js", () =>
+test("standalone export --no-bytecode puts the target's shipping engine next to main.js", () =>
   withFakeEngine(async () => {
     const p = project();
-    const { ok, problems } = await exportPack({ ...p, target: FAKE });
+    const { ok, problems } = await exportPack({ ...p, target: FAKE, bytecode: false });
     assert.deepEqual(problems, []);
     assert.ok(ok);
     assert.equal(fs.readFileSync(path.join(p.out, engineFile(FAKE)), "utf8"), "SHIPPING");

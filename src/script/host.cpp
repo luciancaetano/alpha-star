@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 
+#include "platform/mobile.hpp"
 #include "platform/vfs.hpp"
 #include "script/error_overlay.hpp"
 #include "script/input_bindings.hpp"
@@ -68,7 +69,7 @@ Host::~Host() = default;
 GameInfo Host::load(const std::string& path) {
   // A pack directory (from `alpha export`) or its main.js directly.
   const std::filesystem::path pack(path);
-  main_path_ = platform::vfs::is_directory(pack) ?(pack / "main.js").string() : path;
+  main_path_ = platform::vfs::is_directory(pack) ? platform::pack_entry(pack).string() : path;
   pack_dir_ = std::filesystem::path(main_path_).parent_path();
   try {
     info_ = boot(*vm_, main_path_, "");

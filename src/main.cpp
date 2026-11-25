@@ -29,12 +29,14 @@
 #include "mcp/control.hpp"
 #endif
 #if ALPHA_DEBUG_TOOLS
+#include "script/bytecode.hpp"
 #include "script/perf_report.hpp"
 #include "script/test_report.hpp"
 #endif
 
 // Composition root: alpha_star <pack-dir | game.js> [options]  (pack = `alpha export` output)
-// With no game argument it runs the pack it sits in (standalone export).
+// With no game argument it runs the pack it sits in (standalone export: game.jsbc).
+// alpha_star --compile <main.js> <out.jsbc> (ALPHA_DEBUG_TOOLS): bytecode for standalone packs.
 // Flags below exist only with ALPHA_DEBUG_TOOLS (see cmake/Flavors.cmake); every
 // unknown flag is ignored, and shipping builds know none.
 // alpha_star --test <tests.js> [--assets DIR]: runs every exported test function headlessly
@@ -237,7 +239,7 @@ int no_game() {
                "usage: alpha_star <pack-dir | game.js> [--frames N] [--screenshot out.bmp] [--tap INPUT] "
                "[--tap-every K] [--devtools]\n       alpha_star --test <tests.js> [--assets DIR]\n");
 #else
-  const char* text = "No game found. Put this program next to the game's main.js (alpha export --standalone).";
+  const char* text = "No game found. Put this program next to the game's game.jsbc (alpha export --standalone).";
   SDL_Log("%s", text);
   SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "alpha-star", text, nullptr);
 #endif
@@ -262,6 +264,7 @@ int main(int argc, char** argv) {
   const Options options = alpha::core::parse_cli(args);
 #if ALPHA_DEBUG_TOOLS
   if (!options.test_file.empty()) return alpha::script::run_test_file(options.test_file, options.test_assets);
+  if (!options.compile_source.empty()) return alpha::script::compile_file(options.compile_source, options.compile_out);
 #endif
   const std::string game = options.game.empty() ? alpha::platform::bundled_pack() : options.game;
   if (game.empty()) return no_game();
