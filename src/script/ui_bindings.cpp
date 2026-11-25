@@ -46,10 +46,8 @@ JSValue load_ui(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 JSValue load_font(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   ui_of(s);  // fonts need the UI library alive
   const auto [name, path] = asset(ctx, s, argv, "fonts");
-  ui::load_font(path, name);
-  s.fonts[name] = path;  // world text rasterizes it too
-  if (smooth_arg(ctx, argv[2])) s.smooth_fonts.insert(name);
-  else s.smooth_fonts.erase(name);
+  const bool pixel = !smooth_arg(ctx, argv[2]);
+  s.fonts[name] = ui::load_font(path, name, pixel);  // world text draws it too
   return JS_UNDEFINED;
 }
 

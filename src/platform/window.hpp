@@ -4,9 +4,14 @@
 
 #include <string>
 
+#include "core/pixel_grid.hpp"
 #include "core/window.hpp"
 
 namespace alpha::platform {
+
+// How the renderer's logical presentation maps game pixels to output pixels
+// (identity without one).
+core::PixelGrid output_grid(SDL_Renderer* renderer);
 
 struct WindowSetup {
   std::string title;

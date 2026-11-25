@@ -1,0 +1,4 @@
+Built-in 8x8 font (text with no assets.fonts)
+=============================================
+
+alpha-star built-in font: 8x8 VGA glyphs from font8_8.asm by Marcel Sondaar, derived from the International Business Machines public domain VGA fonts. License: Public Domain.

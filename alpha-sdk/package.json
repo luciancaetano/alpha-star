@@ -18,6 +18,7 @@
     "lib",
     "types",
     "engine",
+    "notices",
     "tsconfig.game.json"
   ],
   "scripts": {

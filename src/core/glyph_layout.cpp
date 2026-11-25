@@ -1,5 +1,7 @@
 #include "core/glyph_layout.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <vector>
 
 namespace alpha::core {
@@ -7,11 +9,7 @@ namespace alpha::core {
 namespace {
 
 // Glyph index of code point c, or the index of '?'.
-std::size_t index_of(char32_t c) {
-  if (c >= U' ' && c <= U'~') return c - U' ';
-  if (c >= 0xA0 && c <= 0xFF) return kAsciiGlyphs + (c - 0xA0);
-  return U'?' - U' ';
-}
+std::size_t index_of(char32_t c) { return glyph_index(c).value_or(U'?' - U' '); }
 
 // Length of a UTF-8 sequence from its lead byte (0 = not a lead byte).
 std::size_t sequence_length(unsigned char lead) {
@@ -41,6 +39,21 @@ std::vector<char32_t> decode(std::string_view text) {
   return out;
 }
 
+// Pen position before each code point, then the line's width (kerning applied).
+std::vector<float> pen_positions(const FontAtlas& font, const std::vector<char32_t>& codes) {
+  std::vector<float> pens{0.0f};
+  for (std::size_t i = 0; i < codes.size(); ++i) {
+    float pen = pens.back();
+    if (i > 0 && !font.kerning.empty()) {
+      const auto pair = font.kerning.find({codes[i - 1], codes[i]});
+      if (pair != font.kerning.end()) pen += pair->second;
+      pens.back() = pen;
+    }
+    pens.push_back(pen + font.glyphs[index_of(codes[i])].advance);
+  }
+  return pens;
+}
+
 // Box width and where the line starts in it, for a line `width` wide.
 std::pair<float, float> anchored(float width, Align align) {
   if (align == Align::Center) return {width, 0.0f};
@@ -49,27 +62,34 @@ std::pair<float, float> anchored(float width, Align align) {
 
 }  // namespace
 
+std::optional<std::size_t> glyph_index(char32_t c) {
+  if (c >= U' ' && c <= U'~') return c - U' ';
+  if (c >= 0xA0 && c <= 0xFF) return kAsciiGlyphs + (c - 0xA0);
+  return std::nullopt;
+}
+
 char32_t glyph_code(std::size_t i) {
   return i < kAsciiGlyphs ? static_cast<char32_t>(U' ' + i) : static_cast<char32_t>(0xA0 + (i - kAsciiGlyphs));
 }
 
 TextQuads layout_text(const FontAtlas& font, std::string_view text, Align align) {
-  const std::vector<char32_t> codes = decode(text);
-  float width = 0.0f;
-  for (const char32_t c : codes) width += font.glyphs[index_of(c)].advance;
-  const auto [box_width, start] = anchored(width, align);
+  std::vector<char32_t> codes = decode(text);
+  for (char32_t& c : codes) c = glyph_code(index_of(c));
+  const std::vector<float> pens = pen_positions(font, codes);
+  const auto [box_width, start] = anchored(pens.back(), align);
   TextQuads out{TileGrid{}, Vec2{box_width, font.line_height}};
-  float pen = start;
-  for (const char32_t c : codes) {
-    const Glyph& g = font.glyphs[index_of(c)];
-    if (g.src.w > 0 && g.src.h > 0) out.grid.tiles.push_back({Vec2{pen + g.offset.x, g.offset.y}, g.src});
-    pen += g.advance;
+  for (std::size_t i = 0; i < codes.size(); ++i) {
+    const Glyph& g = font.glyphs[index_of(codes[i])];
+    if (g.src.w > 0 && g.src.h > 0) out.grid.tiles.push_back({Vec2{start + pens[i] + g.offset.x, g.offset.y}, g.src});
   }
   return out;
 }
 
-Vec2 debug_text_box(std::string_view text, float size, Align align) {
-  return {anchored(static_cast<float>(text.size()) * size, align).first, size};
+FontScale font_scale(int native, float size, float density) {
+  const float out = size * density;
+  if (native <= 0 && out > static_cast<float>(kMaxTextPixels)) return {kMaxTextPixels, out / static_cast<float>(kMaxTextPixels)};
+  if (native <= 0) return {std::max(1, static_cast<int>(std::lround(out))), 1.0f};
+  return {native, std::max(1.0f, std::round(out / static_cast<float>(native)))};
 }
 
 }  // namespace alpha::core

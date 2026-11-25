@@ -137,9 +137,11 @@ declare module "alpha" {
 
   /**
    * World text: drawn in the world (moves with the camera, z ordered like any shape).
-   * With `font` (an assets.fonts name) it is rasterized at `size` pixels; without, the
-   * engine's 8x8 pixel font scaled to `size`. `pos` is the anchor: `align` (default
-   * "center") picks which end sits on it; vertically centered. Printable ASCII only.
+   * With `font` (an assets.fonts name) it is drawn `size` pixels high; without, the
+   * built-in 8x8 font at the nearest whole multiple of 8. Glyphs are rasterized at the
+   * screen's resolution (window scale x camera zoom), so text stays sharp. `pos` is the
+   * anchor: `align` (default "center") picks which end sits on it; vertically centered.
+   * ASCII + Latin-1 (others draw as '?').
    */
   export interface TextShape<F extends string = never> {
     text: string;
@@ -875,8 +877,15 @@ declare module "alpha" {
       locales?: Record<LocaleOf<G>, string>;
       /** Image name -> file, or `{ file, pixelMode }` to override config.pixelMode for it. */
       images?: Record<G["images"], FileAsset>;
-      /** Font name -> .ttf/.otf file; the name is the `font-family` used in .rcss. */
-      fonts?: Record<FontOf<G>, FileAsset>;
+      /**
+       * Font name -> .ttf/.otf file or AngelCode BMFont .fnt (text or XML; its PNG pages are
+       * packed too); the name is the `font-family` used in .rcss and `font` of world text.
+       * `{ file, license }` names the font's license file: `alpha export` copies it and puts
+       * its text in the pack's THIRD_PARTY_NOTICES.txt. The FONT's license is what matters
+       * (OFL is fine; a bitmap font made from a font follows that font's license).
+       * No fonts at all: UI and world text use the engine's built-in 8x8 font (public domain).
+       */
+      fonts?: Record<FontOf<G>, FontAsset>;
       /** Document name -> .rml file. Files it links (`<link href>`, `src=`, rcss `url()`) are packed too. */
       ui?: Record<keyof G["ui"] & string, string>;
       /**
@@ -896,6 +905,13 @@ declare module "alpha" {
    * Fonts: the world-text glyph atlas; maps: their tilesets.
    */
   export type FileAsset = string | { file: string; pixelMode?: boolean };
+  /**
+   * A font: like FileAsset, plus `license` (its license file, credited in the pack).
+   * Text is rasterized at the screen's real resolution, so it stays sharp at any window
+   * scale; bitmap fonts draw at whole multiples of their size. pixelMode true: TrueType
+   * glyphs are rendered monochrome (pixel fonts stay crisp).
+   */
+  export type FontAsset = string | { file: string; pixelMode?: boolean; license?: string };
 
   export interface AnimationDef {
     /** Frame indices into the sheet. */

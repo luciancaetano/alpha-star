@@ -166,10 +166,11 @@ Installation instructions, build prerequisites, example projects and API documen
 - [TypeScript](https://www.typescriptlang.org/) — planned typed scripting workflow.
 - [Model Context Protocol](https://modelcontextprotocol.io/) — agent tooling integration.
 - [LDtk](https://ldtk.io/) — planned 2D level design integration.
+- [FreeType](https://freetype.org/) and [RmlUi](https://github.com/mikke89/RmlUi) — text and game UI. Text is rasterized at the screen's real resolution (window scale and high-DPI), so it stays sharp; TrueType/OpenType and AngelCode BMFont (`.fnt` + PNG pages) fonts are supported, and a built-in public domain 8x8 font is used when a game declares none.
 
 ## License
 
-The Alpha Star licensing model has not yet been announced. Third-party components remain subject to their respective licenses. Restricted console integrations will also be subject to applicable platform agreements.
+The Alpha Star licensing model has not yet been announced. Third-party components remain subject to their respective licenses: `alpha export` writes `THIRD_PARTY_NOTICES.txt` into every pack with the notices of the engine's dependencies (including the FreeType License credit) and the license file of each font that names one (`assets.fonts.x: { file, license }`). For fonts, the font's own license is what matters (SIL OFL is fine; a bitmap font made from a font follows that font's license). Restricted console integrations will also be subject to applicable platform agreements.
 
 ---
 

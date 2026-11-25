@@ -2,7 +2,8 @@
 //   <out>/main.js        the bundled game
 //   <out>/<asset paths>  every file declared in game.assets, plus the files UI
 //                        documents reference (<link href>, src=, url(), image()),
-//                        same relative paths
+//                        BMFont pages and font license files, same relative paths
+//   <out>/THIRD_PARTY_NOTICES.txt  engine dependency notices + font licenses
 // The engine runs a pack with: alpha_star <out>
 import fs from "node:fs";
 import os from "node:os";
@@ -62,6 +63,9 @@ export function assetFiles(def) {
   for (const kind of ["fonts", "ui", "maps", "music", "locales"]) {
     for (const [name, entry] of Object.entries(assets[kind] ?? {})) files.push({ key: `assets.${kind}.${name}`, file: entryFile(entry) });
   }
+  for (const [name, font] of Object.entries(assets.fonts ?? {})) {
+    if (typeof font?.license === "string") files.push({ key: `assets.fonts.${name}.license`, file: font.license });
+  }
   return files;
 }
 
@@ -111,7 +115,46 @@ function packFiles(root, def) {
     if (p) return { files, problems: [p] };
     files.push(...found);
   }
+  for (const f of files.filter((x) => /^assets\.fonts\.[^.]+$/.test(x.key) && /\.fnt$/i.test(x.file))) {
+    const { found, problem: p } = fontPages(root, f);
+    if (p) return { files, problems: [p] };
+    files.push(...found);
+  }
   return { files, problems: [] };
+}
+
+// The PNG pages a BMFont .fnt (text or XML) names in `page ... file="..."`.
+function fontPages(root, { key, file }) {
+  const text = fs.readFileSync(path.join(root, path.normalize(file)), "utf8");
+  const found = [];
+  for (const m of text.matchAll(/\bpage\b[^\n>]*\bfile\s*=\s*"([^"]+)"/g)) {
+    const target = path.normalize(path.join(path.dirname(file), m[1]));
+    if (target.startsWith("..") || !fs.existsSync(path.join(root, target))) {
+      return { problem: problem(`${key}: ${posix(file)} references "${m[1]}", not found inside the project`) };
+    }
+    found.push({ key, file: target });
+  }
+  return { found };
+}
+
+const NOTICES = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "notices");
+
+// THIRD_PARTY_NOTICES.txt: the notices of everything the engine links (alpha-sdk/notices,
+// made by tools/make_notices.py from the dependencies' own license files), then each
+// font's license file when assets.fonts.<name>.license names one.
+function writeNotices(root, out, def) {
+  const parts = ["This game runs on the alpha-star engine, which includes the software below.\n" +
+                 "Each part keeps its own license; the full texts follow."];
+  for (const name of fs.readdirSync(NOTICES).filter((n) => n.endsWith(".txt")).sort()) {
+    parts.push(fs.readFileSync(path.join(NOTICES, name), "utf8").trim());
+  }
+  for (const [name, font] of Object.entries(def?.assets?.fonts ?? {})) {
+    if (typeof font?.license !== "string") continue;
+    const title = `Font "${name}" (${posix(font.file)})`;
+    const text = fs.readFileSync(path.join(root, path.normalize(font.license)), "utf8").trim();
+    parts.push(`${title}\n${"=".repeat(title.length)}\n\n${text}`);
+  }
+  fs.writeFileSync(path.join(out, "THIRD_PARTY_NOTICES.txt"), parts.join("\n\n\n") + "\n");
 }
 
 // A pack must be self-contained: relative paths that stay inside the project.
@@ -186,6 +229,7 @@ export async function exportPack({ root, entry, out, target = null, atlas = true
     fs.mkdirSync(out, { recursive: true });
     fs.copyFileSync(path.join(staging, "main.js"), path.join(out, "main.js"));
     copyAssets(root, out, atlas ? writeAtlas(root, out, files) : files);
+    writeNotices(root, out, def);
     if (standalone.engine) {
       const dest = path.join(out, engineFile(target));
       fs.copyFileSync(standalone.engine, dest);

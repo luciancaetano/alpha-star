@@ -3,13 +3,15 @@
 #include <filesystem>
 
 #include "core/glyph_layout.hpp"
+#include "platform/vfs.hpp"
 
 namespace alpha::platform {
 
-// Rasterizes printable ASCII of a TTF/OTF font at `pixels` (em size) with
-// FreeType (the engine already links it for RmlUi) into one white RGBA atlas
-// whose alpha is the glyph coverage, so world text tints like any image.
-// Throws core::Error naming the file when it cannot be read or parsed.
-core::FontAtlasPtr rasterize_font(const std::filesystem::path& file, int pixels);
+// Rasterizes the atlas glyphs (ASCII + Latin-1) of a TTF/OTF font held in
+// `bytes` at `pixels` (em size) with FreeType, hinted, into one white RGBA
+// atlas whose alpha is the glyph coverage, so world text tints like any image.
+// `crisp` (pixelMode) renders monochrome: every pixel fully on or off.
+// Glyph offsets, advances and the ascent are whole pixels. Throws core::Error naming `file` when it cannot be parsed.
+core::FontAtlasPtr rasterize_font(const vfs::Bytes& bytes, const std::filesystem::path& file, int pixels, bool crisp);
 
 }  // namespace alpha::platform

@@ -3,10 +3,12 @@
 #include <SDL3/SDL.h>
 
 #include <memory>
+#include <string>
 
 #include "core/glyph_layout.hpp"
 #include "core/particles.hpp"
-#include "platform/glyphs.hpp"
+#include "platform/fonts.hpp"
+#include "render/font_cache.hpp"
 #include "render/renderer.hpp"
 
 using namespace alpha::core;
@@ -93,29 +95,101 @@ TEST_CASE("a layer's parallax moves it less than the camera") {
   CHECK(c.renderer.stats().draw_calls == 2);     // parallax breaks the batch
 }
 
-TEST_CASE("world text: font atlas glyphs in the text color, and the debug-font fallback through the camera") {
-  Canvas c;
-  const FontAtlasPtr font = alpha::platform::rasterize_font(ALPHA_TEST_FONT, 8);
-  TextQuads q = layout_text(*font, "##", Align::Center);
-  DrawItem text{{Rect{q.box}, {255, 0, 0, 255}, {}, font->image}, {116, 16}, 0};
-  text.shape.tiles = std::make_shared<TileGrid>(q.grid);
-  text.shape.text = TextLook{"##", "pixel", 8, Align::Center};
-  DrawItem debug{{Rect{debug_text_box("#", 8, Align::Center)}, {0, 0, 255, 255}}, {148, 16}, 0};
-  debug.shape.text = TextLook{"#", "", 8, Align::Center};
-  Frame f{kBg, {text, debug}, {}};
-  f.view = View{{132, 16}, 1.0f, 0.0f, {64, 32}};  // camera 100 px right: text at x 16, debug text at x 48
-  c.renderer.draw(f);
-  int red = 0;
-  int blue = 0;
-  for (int y = 10; y < 22; ++y) {
-    for (int x = 8; x < 60; ++x) {
-      red += c.pixel(x, y) == Color{255, 0, 0, 255};
-      blue += c.pixel(x, y) == Color{0, 0, 255, 255};
-    }
+namespace {
+
+// A text item as the script layer makes it.
+DrawItem text_item(const FontSourcePtr& face, const std::string& text, float size, Vec2 pos) {
+  DrawItem item{{Rect{{64, 32}}, kWhite}, pos, 0};
+  item.shape.text = TextLook{text, "f", face, size, Align::Center};
+  return item;
+}
+
+// Pixels in the box that are neither the background nor exactly `ink`.
+int blended(Canvas& c, Color ink, int w, int h) {
+  int n = 0;
+  for (int y = 0; y < h; ++y) {
+    for (int x = 0; x < w; ++x) n += c.pixel(x, y) != kBg && c.pixel(x, y) != ink;
   }
-  CHECK(red > 20);
-  CHECK(blue > 10);
-  CHECK_THROWS_WITH(alpha::platform::rasterize_font("no/such.ttf", 8), doctest::Contains("cannot read the file"));
+  return n;
+}
+
+int inked(Canvas& c, Color ink, int w, int h) {
+  int n = 0;
+  for (int y = 0; y < h; ++y) {
+    for (int x = 0; x < w; ++x) n += c.pixel(x, y) == ink;
+  }
+  return n;
+}
+
+// Rows whose white pixels form one run exactly `width` long.
+int solid_rows(Canvas& c, int width) {
+  int rows = 0;
+  for (int y = 0; y < 48; ++y) {
+    int first = -1;
+    int last = -1;
+    int n = 0;
+    for (int x = 0; x < 96; ++x) {
+      if (c.pixel(x, y) != kWhite) continue;
+      first = first < 0 ? x : first;
+      last = x;
+      ++n;
+    }
+    rows += n == width && last - first + 1 == width;
+  }
+  return rows;
+}
+
+}  // namespace
+
+TEST_CASE("world text at 1.5x window scale: rasterized at the output size, every edge on a whole pixel") {
+  Canvas c(Scaling::Letterbox, 96, 48);  // 64 x 32 game pixels shown 1.5x
+  // Press Start 2P is drawn on an 8-unit grid: at 16 game px = 24 output px its
+  // edges are whole output pixels, unless something resamples it.
+  const FontSourcePtr smooth = alpha::platform::load_font(ALPHA_TEST_FONT, false);
+  c.renderer.draw({kBg, {text_item(smooth, "#H", 16, {32.3f, 16.2f})}, {}});
+  CHECK(inked(c, kWhite, 96, 48) > 100);
+  CHECK(blended(c, kWhite, 96, 48) == 0);
+  Frame zoomed{kBg, {text_item(smooth, "#", 8, {32, 16})}, {}};
+  zoomed.view = View{{32, 16}, 2.0f, 0.0f, {64, 32}};  // 8 px x zoom 2 x 1.5 = 24 output px
+  c.renderer.draw(zoomed);
+  CHECK(inked(c, kWhite, 96, 48) > 100);
+  CHECK(blended(c, kWhite, 96, 48) == 0);
+}
+
+TEST_CASE("bitmap fonts draw whole texels: BMFont with kerning, and the built-in font with no file") {
+  Canvas c(Scaling::Letterbox, 96, 48);
+  const FontSourcePtr tiny = alpha::platform::load_font(ALPHA_TEST_FIXTURES "/fonts/tiny.fnt", true);
+  CHECK(tiny->native() == 4);
+  c.renderer.draw({kBg, {text_item(tiny, "AV", 4, {32, 16})}, {}});
+  // 4 px x 1.5 -> 2 output px per texel: two 3x4 blocks, kerned to touch (advance 4 - 1)
+  // Every inked row is one run of 12 px: no gap, so the kerning pair applied.
+  // 4 texel rows -> 8 px; SDL's software renderer turns this quad into a blit
+  // whose float->int height can lose the last row (GPUs sample pixel centers).
+  const int rows = solid_rows(c, 12);
+  CHECK(inked(c, kWhite, 96, 48) == rows * 12);
+  CHECK((rows == 8 || rows == 7));
+  CHECK(blended(c, kWhite, 96, 48) == 0);
+  c.renderer.draw({kBg, {text_item(nullptr, "Hi", 16, {32, 16})}, {}});  // no face: built-in 8x8
+  CHECK(inked(c, kWhite, 96, 48) > 40);
+  CHECK(blended(c, kWhite, 96, 48) == 0);
+  CHECK_THROWS_WITH(alpha::platform::load_font("no/such.ttf", true), doctest::Contains("cannot read the file"));
+  CHECK_THROWS_WITH(alpha::platform::load_font(ALPHA_TEST_FIXTURES "/fonts/tiny.png", true),
+                    doctest::Contains("not a font"));
+}
+
+TEST_CASE("world text atlases are cached per size and bounded; a resize makes new ones") {
+  const FontSourcePtr tiny = alpha::platform::load_font(ALPHA_TEST_FIXTURES "/fonts/tiny_xml.fnt", true);
+  int evicted = 0;
+  alpha::render::FontCache cache(2, [&](const Image*) { ++evicted; });
+  const FontSourcePtr smooth = alpha::platform::load_font(ALPHA_TEST_FONT, false);
+  const auto a = cache.get(smooth, 10);
+  CHECK(cache.get(smooth, 10) == a);
+  cache.get(smooth, 11);
+  cache.get(tiny, 4);
+  CHECK(cache.size() == 2);
+  CHECK(evicted == 1);  // the 10 px atlas
+  CHECK(cache.get(smooth, 10) != a);
+  CHECK(tiny->atlas(99)->kerning.at({U'A', U'V'}) == -1);
 }
 
 TEST_CASE("scaling modes: integer and stretch keep the logical size; expand grows it to the output's aspect") {

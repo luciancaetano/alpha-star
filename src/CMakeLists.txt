@@ -9,6 +9,8 @@ add_library(alpha_core
   core/entity_spec.cpp
   core/fixed_step.cpp
   core/glyph_layout.cpp
+  core/bmfont.cpp
+  core/pixel_grid.cpp
   core/input.cpp
   core/log_ring.cpp
   core/mixer.cpp
@@ -72,12 +74,15 @@ add_library(alpha_engine
   platform/frame_latency.cpp
   platform/gamepads.cpp
   platform/glyphs.cpp
+  platform/fonts.cpp
+  platform/default_font_data.cpp
   platform/lifecycle.cpp
   platform/log_file.cpp
   platform/music_stream.cpp
   platform/sdl_input.cpp
   platform/vfs.cpp
   platform/window.cpp
+  render/font_cache.cpp
   render/quads.cpp
   render/renderer.cpp
   render/tessellate.cpp
@@ -111,6 +116,8 @@ add_library(alpha_engine
   script/text_look.cpp
   script/ui_bindings.cpp
   script/world_bindings.cpp
+  ui/bitmap_text.cpp
+  ui/font_engine.cpp
   ui/input.cpp
   ui/library.cpp
   ui/pack_files.cpp

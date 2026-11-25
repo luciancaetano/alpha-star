@@ -24,6 +24,7 @@ struct Texture {
   Rml::Vector2i size;
   std::vector<Rml::byte> rgba;
   SDL_Texture* uploaded = nullptr;
+  bool nearest = false;  // generated (glyph atlases): drawn texel for pixel
 };
 
 SDL_Vertex to_sdl(const Rml::Vertex& v) {
@@ -73,9 +74,10 @@ void RmlRenderer::RenderGeometry(Rml::CompiledGeometryHandle geometry, Rml::Vect
   if (!sdl_) return;
   const auto* mesh = reinterpret_cast<const Mesh*>(geometry);
   scratch_ = mesh->vertices;
+  const core::Vec2 at = core::snap(grid_, {translation.x, translation.y});
   for (SDL_Vertex& v : scratch_) {
-    v.position.x += translation.x;
-    v.position.y += translation.y;
+    v.position.x += at.x;
+    v.position.y += at.y;
   }
   SDL_RenderGeometry(sdl_, uploaded(texture), scratch_.data(),
                      static_cast<int>(scratch_.size()), mesh->indices.data(),
@@ -92,6 +94,7 @@ SDL_Texture* RmlRenderer::uploaded(Rml::TextureHandle handle) {
   tex->uploaded = SDL_CreateTexture(sdl_, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, tex->size.x, tex->size.y);
   SDL_UpdateTexture(tex->uploaded, nullptr, tex->rgba.data(), tex->size.x * 4);
   SDL_SetTextureBlendMode(tex->uploaded, premultiplied_);
+  if (tex->nearest) SDL_SetTextureScaleMode(tex->uploaded, SDL_SCALEMODE_NEAREST);
   return tex->uploaded;
 }
 
@@ -109,7 +112,7 @@ Rml::TextureHandle RmlRenderer::LoadTexture(Rml::Vector2i& dimensions, const Rml
 }
 
 Rml::TextureHandle RmlRenderer::GenerateTexture(Rml::Span<const Rml::byte> source, Rml::Vector2i dimensions) {
-  return reinterpret_cast<Rml::TextureHandle>(new Texture{dimensions, {source.begin(), source.end()}});
+  return reinterpret_cast<Rml::TextureHandle>(new Texture{dimensions, {source.begin(), source.end()}, nullptr, true});
 }
 
 // Uploaded textures belong to the attached renderer (Ui::attach releases all

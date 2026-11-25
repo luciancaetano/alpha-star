@@ -71,6 +71,20 @@ pixelMode }` (its tilesets), `fonts.title: { file, pixelMode }` (world-text glyp
 Particles with an image or sheet shape use their source's mode. `alpha export` puts crisp
 and smooth images on separate atlas pages (`alpha-atlas-N.png`, `alpha-atlas-smooth-N.png`).
 
+## Fonts and sharp text
+
+`assets.fonts.name`: a `.ttf`/`.otf` file or an AngelCode BMFont `.fnt` (text or XML; its PNG
+pages are packed), as `"file"` or `{ file, pixelMode?, license? }`. The name is the `font-family`
+in `.rcss` and `font` of world text. Text is rasterized at the screen's real resolution (window
+scale, high-DPI, camera zoom), so it is sharp at any window size; bitmap fonts draw at whole
+multiples of their size; `pixelMode: true` renders TrueType monochrome (pixel fonts stay crisp;
+for an 8-px-grid font, sizes where size x window scale is a multiple of 8 look best). No fonts at
+all: UI and world text use the built-in 8x8 font (public domain).
+
+`alpha export` writes `THIRD_PARTY_NOTICES.txt` into every pack (engine dependencies incl. the
+FreeType License credit) plus the text of each font's `license` file. The font's own license is
+what matters: SIL OFL is fine; a bitmap font made from a font follows that font's license.
+
 ## Physics
 
 ```ts

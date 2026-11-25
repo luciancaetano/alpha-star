@@ -4,19 +4,20 @@
 #include FT_FREETYPE_H
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <type_traits>
+#include <utility>
 #include <string>
 #include <vector>
 
 #include "core/error.hpp"
-#include "platform/vfs.hpp"
 
 namespace alpha::platform {
 
 namespace {
 
-constexpr int kAtlasWidth = 512;
+constexpr int kAtlasWidth = 2048;  // kMaxTextPixels glyphs: 6 per row, about 32 rows
 constexpr int kGap = 1;  // between glyphs: nearest filtering never bleeds a neighbor in
 
 struct LibraryDeleter {
@@ -39,23 +40,25 @@ core::Error font_error(const std::filesystem::path& file, const std::string& why
   return core::Error("font \"" + file.generic_string() + "\": " + why);
 }
 
-vfs::Bytes read_file(const std::filesystem::path& file) {
-  auto bytes = vfs::read(file);
-  if (!bytes) throw font_error(file, "cannot read the file (paths are relative to the game's main file)");
-  return std::move(*bytes);
+// One coverage byte per pixel: 8-bit grey as is, 1-bit mono expanded to 0 / 255.
+std::uint8_t coverage_at(const FT_Bitmap& bm, int x, int y) {
+  const std::uint8_t* row = bm.buffer + static_cast<std::ptrdiff_t>(y) * bm.pitch;
+  if (bm.pixel_mode != FT_PIXEL_MODE_MONO) return row[x];
+  return (row[x / 8] & (0x80 >> (x % 8))) != 0 ? 255 : 0;
 }
 
-Bitmap render(FT_Face face, char32_t c, core::Glyph& glyph, float ascent) {
-  if (FT_Load_Char(face, static_cast<FT_ULong>(c), FT_LOAD_RENDER) != 0) return {};
+// Hinted, so the bitmap, its offset and the advance are whole pixels.
+Bitmap render(FT_Face face, char32_t c, core::Glyph& glyph, float ascent, bool crisp) {
+  const FT_Int32 flags = FT_LOAD_RENDER | (crisp ? FT_LOAD_TARGET_MONO : FT_LOAD_TARGET_NORMAL);
+  if (FT_Load_Char(face, static_cast<FT_ULong>(c), flags) != 0) return {};
   const FT_GlyphSlot slot = face->glyph;
   const FT_Bitmap& bm = slot->bitmap;
   Bitmap out{static_cast<int>(bm.width), static_cast<int>(bm.rows), {}};
   for (int y = 0; y < out.rows; ++y) {
-    const std::uint8_t* row = bm.buffer + static_cast<std::ptrdiff_t>(y) * bm.pitch;
-    out.coverage.insert(out.coverage.end(), row, row + out.width);
+    for (int x = 0; x < out.width; ++x) out.coverage.push_back(coverage_at(bm, x, y));
   }
   glyph.offset = {static_cast<float>(slot->bitmap_left), ascent - static_cast<float>(slot->bitmap_top)};
-  glyph.advance = static_cast<float>(slot->advance.x) / 64.0f;
+  glyph.advance = std::round(static_cast<float>(slot->advance.x) / 64.0f);
   return out;
 }
 
@@ -78,7 +81,7 @@ int pack(std::vector<Bitmap>& bitmaps, core::FontAtlas& atlas) {
   return y + shelf + kGap;
 }
 
-core::ImagePtr paint(const std::vector<Bitmap>& bitmaps, const core::FontAtlas& atlas, int height) {
+std::shared_ptr<core::Image> paint(const std::vector<Bitmap>& bitmaps, const core::FontAtlas& atlas, int height) {
   auto image = std::make_shared<core::Image>(core::Image{kAtlasWidth, height, {}, false});
   image->rgba.assign(static_cast<std::size_t>(kAtlasWidth) * static_cast<std::size_t>(height) * 4, 255);
   for (std::size_t p = 3; p < image->rgba.size(); p += 4) image->rgba[p] = 0;
@@ -96,25 +99,26 @@ core::ImagePtr paint(const std::vector<Bitmap>& bitmaps, const core::FontAtlas& 
 
 }  // namespace
 
-core::FontAtlasPtr rasterize_font(const std::filesystem::path& file, int pixels) {
-  const vfs::Bytes bytes = read_file(file);
+core::FontAtlasPtr rasterize_font(const vfs::Bytes& bytes, const std::filesystem::path& file, int pixels, bool crisp) {
   FT_Library raw_lib = nullptr;
   if (FT_Init_FreeType(&raw_lib) != 0) throw font_error(file, "FreeType failed to start");
   const Library lib(raw_lib);
   FT_Face raw_face = nullptr;
   if (FT_New_Memory_Face(lib.get(), bytes.data(), static_cast<FT_Long>(bytes.size()), 0, &raw_face) != 0) {
-    throw font_error(file, "not a font FreeType can read (use .ttf or .otf)");
+    throw font_error(file, "not a font FreeType can read (use .ttf, .otf or a BMFont .fnt)");
   }
   const Face face(raw_face);
-  FT_Set_Pixel_Sizes(face.get(), 0, static_cast<FT_UInt>(std::clamp(pixels, 1, 256)));
+  FT_Set_Pixel_Sizes(face.get(), 0, static_cast<FT_UInt>(std::clamp(pixels, 1, core::kMaxTextPixels)));
   auto atlas = std::make_shared<core::FontAtlas>();
-  const float ascent = static_cast<float>(face->size->metrics.ascender) / 64.0f;
-  atlas->line_height = static_cast<float>(face->size->metrics.height) / 64.0f;
+  atlas->ascent = std::round(static_cast<float>(face->size->metrics.ascender) / 64.0f);
+  atlas->line_height = std::round(static_cast<float>(face->size->metrics.height) / 64.0f);
   std::vector<Bitmap> bitmaps;
   for (std::size_t i = 0; i < core::kGlyphCount; ++i) {
-    bitmaps.push_back(render(face.get(), core::glyph_code(i), atlas->glyphs[i], ascent));
+    bitmaps.push_back(render(face.get(), core::glyph_code(i), atlas->glyphs[i], atlas->ascent, crisp));
   }
-  atlas->image = paint(bitmaps, *atlas, pack(bitmaps, *atlas));
+  auto image = paint(bitmaps, *atlas, pack(bitmaps, *atlas));
+  image->smooth = !crisp;
+  atlas->image = std::move(image);
   return atlas;
 }
 

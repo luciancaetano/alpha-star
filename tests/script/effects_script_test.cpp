@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string>
 
+#include "core/glyph_layout.hpp"
 #include "host_fixture.hpp"
 
 using alpha::core::Blend;
@@ -162,7 +163,7 @@ TEST_CASE("layers order drawing before entity z and carry their parallax") {
   CHECK(error_of(box, ", layers: { bg: { parallax: 1 } }", "").find("config.layers.bg must be { z: number") != std::string::npos);
 }
 
-TEST_CASE("world text: a font draws glyph quads; text is settable; no font uses the debug font") {
+TEST_CASE("world text: a font from assets.fonts; text is settable; no font uses the built-in font") {
   Sandbox box;
   Host host(box.save());
   host.load(box.write("g.js", game("", R"(
@@ -174,12 +175,13 @@ TEST_CASE("world text: a font draws glyph quads; text is settable; no font uses 
   steps(host, 1);
   const auto items = host.world()->draw_items();
   REQUIRE(items.size() == 2);
-  REQUIRE(items[0].shape.image);
-  REQUIRE(items[0].shape.tiles);
-  CHECK(items[0].shape.tiles->tiles.size() == 7);  // "score 10" without the space
+  REQUIRE(items[0].shape.text->face);
+  CHECK(items[0].shape.text->face->native() == 0);  // TrueType: rasterized per size by the renderer
   CHECK(items[0].shape.text->text == "score 10");
-  CHECK_FALSE(items[1].shape.image);
-  CHECK(std::get<alpha::core::Rect>(items[1].shape.geometry).size.x == 160.0f);  // 5 x 16, doubled for left align
+  CHECK(std::get<alpha::core::Rect>(items[0].shape.geometry).size.y == 8.0f);
+  REQUIRE(items[1].shape.text->face);
+  CHECK(items[1].shape.text->face->native() == 8);  // the built-in 8x8 font
+  CHECK(std::get<alpha::core::Rect>(items[1].shape.geometry).size.x == 160.0f);  // 5 x 8 x 2, doubled for left align
   CHECK(error_of(box, "", "ctx.spawn({ tags: [], pos: [0, 0], shape: { text: 'x', font: 'nope' } });", font_assets(box))
             .find("\"nope\" is not in assets.fonts; have: pixel") != std::string::npos);
 }

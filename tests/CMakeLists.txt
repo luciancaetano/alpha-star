@@ -7,6 +7,8 @@ set(ALPHA_TEST_SOURCES
   core/axes_test.cpp
   core/camera_test.cpp
   core/glyph_layout_test.cpp
+  core/bmfont_test.cpp
+  core/pixel_grid_test.cpp
   core/window_test.cpp
   core/particles_test.cpp
   core/input_test.cpp
@@ -58,7 +60,8 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/ui_script_test.cpp
     ui/pack_files_test.cpp
     ui/pad_nav_test.cpp
-    ui/ui_test.cpp)
+    ui/ui_test.cpp
+    ui/ui_text_test.cpp)
   set(ALPHA_TEST_LIBS alpha_engine)
 endif()
 

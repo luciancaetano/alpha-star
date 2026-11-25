@@ -207,3 +207,28 @@ test("export copies sound files in { file, bus }, music and locale files", async
     assert.ok(fs.existsSync(path.join(p.out, f)), f);
   }
 });
+
+test("export writes THIRD_PARTY_NOTICES.txt: engine deps (FreeType credit) and each font's license", async () => {
+  const fnt = 'info size=8\ncommon lineHeight=8 base=7 pages=1\npage id=0 file="tiny_0.png"\nchar id=65 x=0 y=0 width=1 height=1 xadvance=1 page=0\n';
+  const p = project(`{ sounds: { a: "a.wav", b: "a.wav" }, images: { i: "i.png" },
+                       fonts: { ui: { file: "fonts/p.ttf", license: "fonts/OFL.txt" }, tiny: { file: "fonts/tiny.fnt", pixelMode: true } } }`,
+                    { "a.wav": "WAV", "i.png": "PNG", "fonts/p.ttf": "TTF", "fonts/OFL.txt": "SIL Open Font License 1.1 text",
+                      "fonts/tiny.fnt": fnt, "fonts/tiny_0.png": "PNG0" });
+  const { ok, problems } = await exportPack({ ...p, atlas: false });
+  assert.deepEqual(problems, []);
+  assert.ok(ok);
+  const notices = fs.readFileSync(path.join(p.out, "THIRD_PARTY_NOTICES.txt"), "utf8");
+  assert.match(notices, /Portions of this software are copyright \(c\) \d{4} The FreeType Project \(www\.freetype\.org\)/);
+  for (const dep of ["SDL 3", "SDL_image", "Box2D", "EnTT", "QuickJS-ng", "RmlUi", "stb_vorbis", "dr_mp3", "Built-in 8x8 font"]) {
+    assert.ok(notices.includes(dep), dep);
+  }
+  assert.ok(!notices.includes("Dear ImGui"));  // dev tools never ship
+  assert.match(notices, /Font "ui" \(fonts\/p\.ttf\)[\s\S]*SIL Open Font License 1\.1 text/);
+  assert.equal(fs.readFileSync(path.join(p.out, "fonts/OFL.txt"), "utf8"), "SIL Open Font License 1.1 text");
+  assert.equal(fs.readFileSync(path.join(p.out, "fonts/tiny_0.png"), "utf8"), "PNG0");  // BMFont page
+
+  const missing = project(`{ sounds: { a: "a.wav", b: "a.wav" }, images: { i: "i.png" }, fonts: { t: "t.fnt" } }`,
+                          { "a.wav": "W", "i.png": "P", "t.fnt": 'common lineHeight=8\npage id=0 file="gone.png"\n' });
+  const r = await exportPack(missing);
+  assert.match(r.problems[0].message, /assets\.fonts\.t: t\.fnt references "gone\.png", not found/);
+});

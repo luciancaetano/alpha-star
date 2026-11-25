@@ -55,7 +55,26 @@ TEST_CASE("UTF-8 text: Latin-1 letters have glyphs; anything else and broken byt
   CHECK(alpha::core::glyph_code(alpha::core::kGlyphCount - 1) == 0xFF);
 }
 
-TEST_CASE("debug font boxes scale with size") {
-  CHECK(alpha::core::debug_text_box("abc", 16, Align::Center) == Vec2{48, 16});
-  CHECK(alpha::core::debug_text_box("abc", 16, Align::Right) == Vec2{96, 16});
+
+TEST_CASE("kerning pairs move the pen between the two glyphs") {
+  FontAtlas f = fake_font();
+  f.kerning[{U'A', U'V'}] = -3;
+  const auto q = alpha::core::layout_text(f, "AVA", Align::Center);
+  REQUIRE(q.grid.tiles.size() == 3);
+  CHECK(q.grid.tiles[1].pos.x == 1 + 8 - 3);
+  CHECK(q.grid.tiles[2].pos.x == 1 + 16 - 3);  // "VA" has no pair
+  CHECK(q.box.x == 21.0f);
+}
+
+TEST_CASE("font scale: scalable fonts rasterize at the output size, bitmaps draw whole texels") {
+  using alpha::core::font_scale;
+  CHECK(font_scale(0, 12, 1.5f).pixels == 18);
+  CHECK(font_scale(0, 12, 1.5f).texel == 1);
+  CHECK(font_scale(0, 0.2f, 1.0f).pixels == 1);
+  CHECK(font_scale(8, 12, 1.5f).pixels == 8);
+  CHECK(font_scale(8, 12, 1.5f).texel == 2);  // 18 output px / 8 = 2.25 -> 2
+  CHECK(font_scale(8, 2, 1.0f).texel == 1);   // never below the native size
+  CHECK(font_scale(8, 16, 3.0f).texel == 6);
+  CHECK(font_scale(0, 256, 2.0f).pixels == alpha::core::kMaxTextPixels);  // huge: the biggest atlas, stretched
+  CHECK(font_scale(0, 256, 2.0f).texel == doctest::Approx(512.0f / alpha::core::kMaxTextPixels));
 }

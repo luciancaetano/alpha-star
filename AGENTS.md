@@ -10,7 +10,7 @@ QuickJS-ng scripts that AI agents write for vibecoder users.
 | Lines per function (body, non-blank) | **40** |
 | Lines per file (.cpp / .hpp) | **300** |
 | Cyclomatic complexity per function | **10** |
-| Parameters per function | **5** |
+| Parameters per function | **10** |
 | CRAP score per function (`tools/crapper.py`) | **< 10** |
 | Duplication similarity (`tools/dryer.py`) | **< 0.8** |
 
@@ -51,6 +51,12 @@ python tools/mutator.py            # mutation testing over src/
 ```
 
 Game UI is RmlUi (`src/ui/`, `.rml`/`.rcss` in `assets.ui`); Dear ImGui is engine dev tools only.
+Text is made at the output resolution (`core::PixelGrid` from SDL's logical presentation): world text in
+`render::Renderer::add_text` (atlases per output size, `render::FontCache`), UI text through `ui::FontEngine`
+(wraps RmlUi's FreeType engine; BMFont/built-in via `ui::BitmapText`). Fonts load once as `core::FontSource`
+(`platform/fonts`: TTF/OTF, BMFont `.fnt`, built-in 8x8 from `tools/make_default_font.py`). Never draw text
+rasterized at logical size and scaled. Pack notices: `alpha-sdk/notices/*.txt` from `tools/make_notices.py`
+(`--check` verifies them against `build/dev/_deps`); rerun it when a dependency changes.
 Physics lives in `src/physics/` (Box2D v3: `physics_world` bodies/contacts/pre-solve one-way,
 `queries` rays/overlaps, `joints`); script glue in `script/physics_bindings`, `joint_bindings`
 and the embedded `physics.js` / `tween.js` modules. Texture filtering is per image

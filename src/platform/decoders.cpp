@@ -112,16 +112,10 @@ class Wav final : public Decoder {
   std::size_t at_ = 0;
 };
 
-std::string lower_extension(const std::string& path) {
-  std::string ext = std::filesystem::path(path).extension().string();
-  std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-  return ext;
-}
-
 }  // namespace
 
 std::unique_ptr<Decoder> open_decoder(const std::string& path) {
-  const std::string ext = lower_extension(path);
+  const std::string ext = vfs::lower_extension(path);
   if (ext == ".ogg") return std::make_unique<Vorbis>(path);
   if (ext == ".mp3") return std::make_unique<Mp3>(path);
   if (ext == ".wav") return std::make_unique<Wav>(path);

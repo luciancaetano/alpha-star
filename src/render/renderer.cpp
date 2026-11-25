@@ -4,7 +4,9 @@
 #include <utility>
 
 #include "core/particles.hpp"
+#include "platform/fonts.hpp"
 #include "platform/vfs.hpp"
+#include "platform/window.hpp"
 #include "render/quads.hpp"
 #include "render/text_layout.hpp"
 
@@ -29,6 +31,9 @@ SDL_RendererLogicalPresentation sdl_presentation(core::Scaling s) {
   return SDL_LOGICAL_PRESENTATION_LETTERBOX;  // expand: letterbox of a size with the window's aspect
 }
 
+// World-text atlases kept (sizes x fonts); a few per text size in use.
+constexpr std::size_t kFontAtlases = 32;
+
 }  // namespace
 
 Frame::Frame(core::Color bg, std::vector<core::DrawItem> s, std::vector<core::TextItem> t)
@@ -38,7 +43,8 @@ Renderer::Renderer(SDL_Renderer* sdl, int width, int height, core::Scaling scali
     : sdl_(sdl),
       game_size_{static_cast<float>(width), static_cast<float>(height)},
       size_(game_size_),
-      scaling_(scaling) {
+      scaling_(scaling),
+      fonts_(kFontAtlases, [this](const core::Image* image) { forget(image); }) {
   present_logical();
   SDL_SetRenderDrawBlendMode(sdl_, SDL_BLENDMODE_BLEND);
 }
@@ -55,12 +61,6 @@ void Renderer::present_logical() {
   SDL_SetRenderLogicalPresentation(sdl_, static_cast<int>(size_.x), static_cast<int>(size_.y), sdl_presentation(scaling_));
 }
 
-// Output pixels per game pixel (logical presentation), so feathers stay 1 output pixel wide.
-float Renderer::output_scale() const {
-  SDL_FRect shown{};
-  if (!SDL_GetRenderLogicalPresentationRect(sdl_, &shown) || shown.w <= 0) return 1.0f;
-  return shown.w / size_.x;
-}
 
 Renderer::~Renderer() {
   for (const auto& [image, tex] : textures_) SDL_DestroyTexture(tex);
@@ -72,10 +72,13 @@ void Renderer::draw(const Frame& frame) {
   SDL_SetRenderDrawColor(sdl_, bg.r, bg.g, bg.b, bg.a);
   SDL_RenderClear(sdl_);
   stats_ = {};
-  window_scale_ = output_scale();
+  grid_ = platform::output_grid(sdl_);
+  window_scale_ = grid_.scale.x;  // feathers stay 1 output pixel wide
   core::View view = frame.view.value_or(core::View{size_ * 0.5f, 1.0f, 0.0f, size_});
   view.size = size_;
   draw_shapes(frame.shapes, view);
+  for (SDL_Texture* tex : doomed_) SDL_DestroyTexture(tex);
+  doomed_.clear();
   for (const core::TextItem& text : frame.texts) draw_text(text);
 }
 
@@ -97,16 +100,44 @@ void Renderer::add(const core::DrawItem& item, const core::View& view) {
     return;
   }
   const core::ShapeSpec& shape = item.shape;
-  if (shape.text && !shape.image) return draw_world_text(item, view);
-  const BatchKey key{shape.image ? texture(shape.image) : nullptr, shape.blend, item.parallax};
-  if (!(key == batch_key_)) {
-    flush(view);
-    batch_key_ = key;
-  }
+  if (shape.text) return add_text(item, view);
+  batch({shape.image ? texture(shape.image) : nullptr, shape.blend, item.parallax}, view);
   if (!item.particles.empty()) particle_triangles(item, area, batch_);
-  else if (key.texture) image_triangles(item, area, batch_);
+  else if (batch_key_.texture) image_triangles(item, area, batch_);
   else tessellate(item, batch_, 1.0f / (core::parallax_view(view, item.parallax).zoom * window_scale_));
   ++stats_.drawn;
+}
+
+// Starts a new batch unless `key` continues the current one.
+void Renderer::batch(const BatchKey& key, const core::View& view) {
+  if (key == batch_key_) return;
+  flush(view);
+  batch_key_ = key;
+}
+
+// World text, rasterized for the output: density = output pixels per world
+// unit (window scale x camera zoom); the line starts on a whole output pixel,
+// so glyph texels map 1:1 (or a whole multiple, bitmap fonts) to the screen.
+void Renderer::add_text(const core::DrawItem& item, const core::View& view) {
+  const core::TextLook& look = *item.shape.text;
+  const core::FontSourcePtr face = look.face ? look.face : platform::default_font();
+  const core::View seen = core::parallax_view(view, item.parallax);
+  const float density = window_scale_ * seen.zoom;
+  const core::FontScale scale = core::font_scale(face->native(), look.size, density);
+  const core::FontAtlasPtr atlas = fonts_.get(face, scale.pixels);
+  const core::TextQuads quads = core::layout_text(*atlas, look.text, look.align);
+  const float unit = scale.texel / density;
+  const core::Vec2 corner = core::to_screen(seen, item.pos - quads.box * (unit * 0.5f));
+  batch({texture(atlas->image), item.shape.blend, item.parallax}, view);
+  text_triangles(item, {quads, *atlas->image, core::to_world(seen, core::snap(grid_, corner)), unit}, batch_);
+  ++stats_.drawn;
+}
+
+void Renderer::forget(const core::Image* image) {
+  const auto it = textures_.find(image);
+  if (it == textures_.end()) return;
+  doomed_.push_back(it->second);  // a batch may still use it: destroyed after this frame's flush
+  textures_.erase(it);
 }
 
 // The batch through its layer's camera, as one SDL_RenderGeometry call.
@@ -143,18 +174,6 @@ void Renderer::draw_text(const core::TextItem& text) {
   SDL_SetRenderScale(sdl_, at.scale, at.scale);
   SDL_RenderDebugText(sdl_, at.top_left.x, at.top_left.y, text.text.c_str());
   SDL_SetRenderScale(sdl_, 1.0f, 1.0f);
-}
-
-// Text without a font: the debug font, placed and scaled through the camera
-// (not rotated), in z order with everything else.
-void Renderer::draw_world_text(const core::DrawItem& item, const core::View& view) {
-  flush(view);
-  const core::View seen = core::parallax_view(view, item.parallax);
-  const core::TextLook& t = *item.shape.text;
-  const core::Color c = core::shade(item.shape.fill, item.shape.tint, item.shape.alpha);
-  SDL_SetRenderDrawBlendMode(sdl_, sdl_blend(item.shape.blend));
-  draw_text({t.text, core::to_screen(seen, item.pos), t.size * seen.zoom, c, t.align});
-  ++stats_.drawn;
 }
 
 void Renderer::present() { SDL_RenderPresent(sdl_); }

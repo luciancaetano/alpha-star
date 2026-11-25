@@ -49,14 +49,12 @@ struct ScriptState {
   core::SheetTable sheets;
   // Decoded image files by full path: an atlas page or tileset is decoded once.
   std::map<std::string, core::ImagePtr, std::less<>> decoded;
-  // assets.fonts files by name (RmlUi loads them too) and world-text atlases
-  // rasterized from them, per (font, pixel size).
-  std::map<std::string, std::filesystem::path, std::less<>> fonts;
-  std::map<std::pair<std::string, int>, core::FontAtlasPtr> font_atlases;
+  // assets.fonts by name (the game UI loads them too) and the atlases that
+  // size world-text boxes, per (font, pixel size).
+  std::map<std::string, core::FontSourcePtr, std::less<>> fonts;
+  std::map<std::pair<const core::FontSource*, int>, core::FontAtlasPtr> font_atlases;
   // config.collision.categories, in order (category i has bit i + 1).
   std::vector<std::string> categories;
-  // assets.fonts whose world-text atlases filter smoothly (pixelMode: false).
-  std::set<std::string, std::less<>> smooth_fonts;
   // config.pixelMode false: filled shapes get antialiased edges unless shape.smooth says otherwise.
   bool smooth_shapes = false;
   // config.layers by name.

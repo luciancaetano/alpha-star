@@ -48,7 +48,7 @@ export default game({
     },
     // Tiled map (JSON). Its tileset (tiles.tsj) and the tileset image are packed with it.
     maps: { level1: "assets/maps/level1.tmj" },
-    fonts: { pixel: "assets/fonts/PressStart2P-Regular.ttf" },
+    fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", license: "assets/fonts/OFL.txt" } },
     ui: { hud: "assets/ui/hud.rml", won: "assets/ui/won.rml" },
   },
 });

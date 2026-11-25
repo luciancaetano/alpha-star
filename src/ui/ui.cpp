@@ -13,6 +13,7 @@
 #include <utility>
 
 #include "core/error.hpp"
+#include "platform/window.hpp"
 #include "ui/translate.hpp"
 
 namespace alpha::ui {
@@ -231,6 +232,9 @@ void Ui::attach(SDL_Renderer* sdl) {
 
 void Ui::render(SDL_Renderer* sdl) {
   attach(sdl);
+  const core::PixelGrid grid = platform::output_grid(sdl);
+  set_density(grid.scale.y);
+  renderer_.set_grid(grid);
   context_->Update();
   renderer_.begin();
   context_->Render();

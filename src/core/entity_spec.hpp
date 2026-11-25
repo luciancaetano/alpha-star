@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -81,13 +82,18 @@ enum class Align { Left, Center, Right };
 // How a shape's pixels combine with what is under them.
 enum class Blend { Alpha, Add, Multiply };
 
-// World text: drawn with `font` (an assets.fonts name, rasterized at `size`
-// pixels) or, without one, the engine's 8x8 debug font scaled to `size`.
+class FontSource;
+using FontSourcePtr = std::shared_ptr<const FontSource>;
+
+// World text: drawn with `font` (an assets.fonts name) or, without one, the
+// built-in 8x8 font, `size` pixels high; rasterized by the renderer at the
+// output resolution (window pixels x camera zoom), so it stays sharp.
 // `pos` is the anchor: align picks which end (or the middle) of the line sits
 // on it; the line is vertically centered on it.
 struct TextLook {
   std::string text;
   std::string font;
+  FontSourcePtr face;  // the font itself (set by the script layer)
   float size = 16.0f;
   Align align = Align::Center;
 };

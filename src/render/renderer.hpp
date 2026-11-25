@@ -10,6 +10,8 @@
 #include "core/camera.hpp"
 #include "core/entity_spec.hpp"
 #include "core/window.hpp"
+#include "core/pixel_grid.hpp"
+#include "render/font_cache.hpp"
 #include "render/tessellate.hpp"
 
 namespace alpha::render {
@@ -64,18 +66,20 @@ class Renderer {
   };
 
   void present_logical();
-  float output_scale() const;
   void draw_shapes(const std::vector<core::DrawItem>& shapes, const core::View& view);
   void add(const core::DrawItem& item, const core::View& view);
   void flush(const core::View& view);
   SDL_Texture* texture(const core::ImagePtr& image);
   void draw_text(const core::TextItem& text);
-  void draw_world_text(const core::DrawItem& item, const core::View& view);
+  void add_text(const core::DrawItem& item, const core::View& view);
+  void batch(const BatchKey& key, const core::View& view);
+  void forget(const core::Image* image);
 
   SDL_Renderer* sdl_;
   core::Vec2 game_size_;
   core::Vec2 size_;
   core::Scaling scaling_;
+  core::PixelGrid grid_;       // game pixels -> output pixels, this frame
   float window_scale_ = 1.0f;  // output pixels per game pixel
   RenderStats stats_;
   // The batch being built: world-space triangles sharing one key.
@@ -84,6 +88,9 @@ class Renderer {
   std::vector<SDL_Vertex> vertices_;
   // Images live as long as the game; textures are created on first draw.
   std::unordered_map<const core::Image*, SDL_Texture*> textures_;
+  // World-text atlases at output sizes; an evicted one frees its texture.
+  FontCache fonts_;
+  std::vector<SDL_Texture*> doomed_;  // evicted this frame
 };
 
 }  // namespace alpha::render

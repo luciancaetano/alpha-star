@@ -104,6 +104,7 @@ function preload(s, assets, pixel) {
   }));
   for (const [name, f] of Object.entries(assets.fonts ?? {})) {
     const e = fileEntry(f, `assets.fonts.${name}`, pixel);
+    if (f?.license !== undefined && typeof f.license !== "string") fail(`assets.fonts.${name}.license must be a file path (the font's license, credited by alpha export), got ${show(f.license)}`);
     N.loadFont(name, e.file, e.pixelMode);
   }
   for (const [name, file] of Object.entries(assets.ui ?? {})) N.loadUi(name, file);

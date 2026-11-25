@@ -62,6 +62,8 @@ std::optional<std::string> written(const std::function<bool(SDL_IOStream*)>& wri
 // its pack root. Assets never name absolute paths, so a pack can move into an
 // APK or an archive without the game changing.
 std::filesystem::path in_pack(const std::filesystem::path& root, const std::string& name);
+// The file's extension in lower case (".ogg", ".fnt"; "" without one): picks a decoder.
+std::string lower_extension(const std::filesystem::path& path);
 
 // The process's stderr goes to `path` (shipping builds: the log file).
 bool redirect_stderr(const std::string& path);

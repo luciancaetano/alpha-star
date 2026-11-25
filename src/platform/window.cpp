@@ -2,12 +2,23 @@
 
 namespace alpha::platform {
 
+core::PixelGrid output_grid(SDL_Renderer* renderer) {
+  int w = 0;
+  int h = 0;
+  SDL_RendererLogicalPresentation mode = SDL_LOGICAL_PRESENTATION_DISABLED;
+  SDL_FRect shown{};
+  if (!SDL_GetRenderLogicalPresentation(renderer, &w, &h, &mode) || mode == SDL_LOGICAL_PRESENTATION_DISABLED) return {};
+  if (!SDL_GetRenderLogicalPresentationRect(renderer, &shown)) return {};
+  return core::pixel_grid({shown.x, shown.y}, {shown.w, shown.h}, {static_cast<float>(w), static_cast<float>(h)});
+}
+
 bool open_window(const WindowSetup& setup, SDL_Window** window, SDL_Renderer** renderer) {
   const core::WindowConfig& c = setup.config;
   SDL_WindowFlags flags = 0;
   if (c.resizable) flags |= SDL_WINDOW_RESIZABLE;
   if (c.fullscreen) flags |= SDL_WINDOW_FULLSCREEN;
   if (setup.hidden) flags |= SDL_WINDOW_HIDDEN;
+  flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;  // output in real pixels on high-DPI screens; text is made at that size
   const core::Vec2 size = core::initial_window_size(setup.game, c.scaling);
   return SDL_CreateWindowAndRenderer(setup.title.c_str(), static_cast<int>(size.x), static_cast<int>(size.y), flags,
                                      window, renderer);

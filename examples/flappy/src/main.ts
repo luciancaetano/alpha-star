@@ -39,7 +39,7 @@ export default game({
     // ctx.t(key) and data-t="key" in the .rml documents.
     locales: { en: "assets/locales/en.json", pt: "assets/locales/pt.json" },
     // Fonts are used by name in the .rcss (font-family: pixel). OFL, see assets/fonts/OFL.txt.
-    fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", pixelMode: true } },
+    fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", pixelMode: true, license: "assets/fonts/OFL.txt" } },
     // Each document's own <link>/src files (flappy.rcss) are packed with it.
     ui: {
       title: "assets/ui/title.rml",

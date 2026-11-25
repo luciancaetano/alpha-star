@@ -2,6 +2,8 @@
 
 #include <SDL3/SDL.h>
 
+#include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <cstring>
 
@@ -117,6 +119,12 @@ bool redirect_stderr(const std::string& path) {
 #else
   return std::freopen(path.c_str(), "w", stderr) != nullptr;
 #endif
+}
+
+std::string lower_extension(const std::filesystem::path& path) {
+  std::string ext = path.extension().string();
+  std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  return ext;
 }
 
 }  // namespace alpha::platform::vfs

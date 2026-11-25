@@ -64,6 +64,19 @@ void tiles(const core::DrawItem& item, const core::Box& area, std::vector<Vertex
   }
 }
 
+}  // namespace
+
+void text_triangles(const core::DrawItem& item, const GlyphRun& run, std::vector<Vertex>& out) {
+  const core::Color color = image_color(item.shape);
+  for (const core::TileQuad& t : run.quads.grid.tiles) {
+    const core::Vec2 a = run.origin + t.pos * run.unit;
+    const core::Vec2 size{static_cast<float>(t.src.w), static_cast<float>(t.src.h)};
+    box(a, a + size * run.unit, uv_of(run.image, t.src, false, false), color, out);
+  }
+}
+
+namespace {
+
 float radius_of(const core::Geometry& g) {
   if (const auto* c = std::get_if<core::Circle>(&g)) return c->radius;
   const core::Vec2 size = std::get<core::Rect>(g).size;
