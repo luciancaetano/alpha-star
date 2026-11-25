@@ -48,7 +48,16 @@ declare module "alpha" {
     sheets?: { [sheet: string]: string };
     /** Tiled map names (assets.maps), e.g. "level1". Optional. */
     maps?: string;
+    /** Draw layer names (config.layers), e.g. "bg" | "fx". Optional. */
+    layers?: string;
+    /** Font names (assets.fonts), used by world text and .rcss. Optional (any name). */
+    fonts?: string;
   }
+
+  /** The game's layer names (`never` without `layers`). */
+  export type LayerOf<G extends GameTypes> = G extends { layers: infer L extends string } ? L : never;
+  /** The game's font names (`string` without `fonts`). */
+  export type FontOf<G extends GameTypes> = G extends { fonts: infer F extends string } ? F : string;
 
   /** The game's sheets (`{}` when GameTypes has no `sheets`). */
   export type SheetsOf<G extends GameTypes> = G extends { sheets: infer S extends { [k: string]: string } } ? S : {};
@@ -92,12 +101,74 @@ declare module "alpha" {
     [K in keyof S & string]: { sheet: K; animation?: S[K]; size?: Vec2 } & Flips;
   }[keyof S & string];
 
-  /** A filled shape, an image (`size` defaults to the image's pixel size), or a sheet sprite. */
-  export type Shape<I extends string = never, S extends { [k: string]: string } = {}> =
+  /** How a look combines with what is under it. */
+  export type Blend = "alpha" | "add" | "multiply";
+
+  /** Every look: multiplied by `tint` ("#rrggbbaa" works) and `alpha` (0..1), blended with `blend`. */
+  export interface Look {
+    tint?: Color;
+    alpha?: number;
+    blend?: Blend;
+  }
+
+  /**
+   * World text: drawn in the world (moves with the camera, z ordered like any shape).
+   * With `font` (an assets.fonts name) it is rasterized at `size` pixels; without, the
+   * engine's 8x8 pixel font scaled to `size`. `pos` is the anchor: `align` (default
+   * "center") picks which end sits on it; vertically centered. Printable ASCII only.
+   */
+  export interface TextShape<F extends string = never> {
+    text: string;
+    font?: F;
+    /** Pixels (1..256), default 16. */
+    size?: number;
+    /** Default "#ffffff". */
+    color?: Color;
+    align?: "left" | "center" | "right";
+  }
+
+  /** A filled shape, an image (`size` defaults to the image's pixel size), a sheet sprite, or world text. */
+  export type Shape<I extends string = never, S extends { [k: string]: string } = {}, F extends string = never> = (
     | { circle: number; color: Color; outline?: Color }
     | { rect: Vec2; color: Color; outline?: Color }
     | ({ image: I; size?: Vec2 } & Flips)
-    | SheetShape<S>;
+    | SheetShape<S>
+    | TextShape<F>
+  ) & Look;
+
+  /** One number (both ends) or [min, max] (or [start, end]). */
+  export type Span = number | [number, number];
+
+  /**
+   * A particle emitter on the entity. Particles are born at the entity (it may move:
+   * they follow it as they are born) and then fly on their own in world space.
+   * Simulated on the fixed step with the game's seeded random (deterministic), at most
+   * 20000 live particles in the whole scene. A one-shot emitter emits its `burst`
+   * once and its entity is destroyed when the last particle dies.
+   */
+  export interface EmitterSpec<I extends string = never, S extends string = never> extends Look {
+    /** Particles per second (default 0: only bursts). */
+    rate?: number;
+    /** Particles on the first step (default 0). `entity.emit(n)` bursts later. */
+    burst?: number;
+    /** Seconds each particle lives (default 1). */
+    lifetime?: Span;
+    /** Pixels per second (default 0). */
+    speed?: Span;
+    /** Degrees: 0 = right, 90 = down, 270 = up (default [0, 360]: every way). */
+    angle?: Span;
+    /** Pixels per second squared, e.g. [0, 300]. */
+    gravity?: Vec2;
+    /** Pixel size at birth and at death (default 4). */
+    size?: Span;
+    /** One color, or [birth, death] (default ["#ffffffff", "#ffffff00"]: fades out). */
+    color?: Color | [Color, Color];
+    /** Particle shape (default "circle"); images and sheet frames are tinted by `color`. */
+    shape?: "circle" | "rect" | { image: I } | { sheet: S; frame?: number };
+    /** Most live particles of this emitter, 1..20000 (default 100). */
+    max?: number;
+    oneShot?: boolean;
+  }
 
   export interface BodySpec {
     type: "static" | "kinematic" | "dynamic";
@@ -106,13 +177,18 @@ declare module "alpha" {
   }
 
   /** Plain data describing an entity. Build it with functions, not classes. */
-  export interface EntitySpec<T extends string = string, I extends string = never, S extends { [k: string]: string } = {}> {
+  export interface EntitySpec<T extends string = string, I extends string = never, S extends { [k: string]: string } = {},
+    L extends string = never, F extends string = never> {
     tags: T[];
     pos: Vec2;
-    shape?: Shape<I, S>;
+    shape?: Shape<I, S, F>;
     body?: BodySpec;
+    emitter?: EmitterSpec<I, keyof S & string>;
     rotation?: number;
+    /** Order inside the entity's layer (default 0). */
     z?: number;
+    /** A config.layers name (default: the unnamed layer, z 0, parallax 1). */
+    layer?: L;
   }
 
   export interface Body {
@@ -141,6 +217,52 @@ declare module "alpha" {
     /** Mirror the shape horizontally / vertically (images and sheets). */
     flipX: boolean;
     flipY: boolean;
+    /**
+     * Look of the shape (or of the emitter's particles when there is no shape).
+     * Reads back as "#rrggbbaa". Throws for an entity with neither.
+     */
+    tint: Color;
+    /** 0..1. */
+    alpha: number;
+    blend: Blend;
+    /** World text entities: the line shown. Throws for other entities. */
+    text: string;
+    /** The config.layers name ("" = default layer). */
+    readonly layer: string;
+    /** Emitters: `count` particles on the next step. Throws without `emitter`. */
+    emit(count: number): void;
+    /** Emitters: `rate` emission on/off (bursts still work). */
+    emitting: boolean;
+    /** Live particles of the entity's emitter (0 without one). */
+    readonly particles: number;
+  }
+
+  /** ctx.window: the game window. Ignored by headless runs except for reading back. */
+  export interface GameWindow {
+    /** Switches at the end of the frame. Alt+Enter toggles it too (config.window.altEnter). */
+    fullscreen: boolean;
+    /** Window size in real pixels (the game draws in config.size game pixels). */
+    readonly size: Vec2;
+  }
+
+  /**
+   * config.window. scaling: "letterbox" (default; largest fit, bars), "integer" (whole
+   * multiples only: crisp pixel art, bars), "stretch" (fills, aspect lost), "expand"
+   * (fills keeping pixels square by showing more world; ctx.window.size grows the view).
+   */
+  export interface WindowConfig {
+    fullscreen?: boolean;
+    scaling?: "letterbox" | "integer" | "stretch" | "expand";
+    /** Default true. */
+    resizable?: boolean;
+    /** Alt+Enter toggles fullscreen (default true). */
+    altEnter?: boolean;
+  }
+
+  /** config.layers entry: drawn in `z` order (then entity z); parallax 0 = fixed to the screen, 1 = world (default). */
+  export interface LayerDef {
+    z: number;
+    parallax?: number;
   }
 
   /**
@@ -208,6 +330,10 @@ declare module "alpha" {
     z?: number;
     /** Where the map's top-left goes (default [0, 0]). */
     pos?: Vec2;
+    /** config.layers layer of every tile layer (default: the unnamed layer). */
+    layer?: string;
+    /** Per Tiled tile layer name: its config.layers layer (overrides `layer`). */
+    layers?: { [tiledLayer: string]: string };
   }
 
   // ---- services -------------------------------------------------------------
@@ -348,8 +474,9 @@ declare module "alpha" {
     readonly ui: UI<G["ui"]>;
     readonly audio: Audio<G["sounds"]>;
     readonly camera: Camera;
+    readonly window: GameWindow;
 
-    spawn(spec: EntitySpec<G["tags"], G["images"], SheetsOf<G>>): Entity<G["tags"], AnimationOf<G>>;
+    spawn(spec: EntitySpec<G["tags"], G["images"], SheetsOf<G>, LayerOf<G>, FontOf<G>>): Entity<G["tags"], AnimationOf<G>>;
     /** Removed at the end of the step. Destroying twice is a no-op. */
     destroy(entity: Entity<G["tags"], any>): void;
     /** Throws if no entity has the tag. */
@@ -415,6 +542,9 @@ declare module "alpha" {
     axes?: Record<AxisOf<G>, string[]>;
     /** Stick (radial) and trigger deadzone, 0 <= d < 1. Default 0.2. */
     deadzone?: number;
+    /** Named draw layers, e.g. `{ bg: { z: -100, parallax: 0.2 }, fx: { z: 100 } }`. */
+    layers?: Record<LayerOf<G>, LayerDef>;
+    window?: WindowConfig;
   }
 
   /** Scenes enterable without params. */
@@ -432,7 +562,7 @@ declare module "alpha" {
       sounds: Record<G["sounds"], SoundAsset>;
       images?: Record<G["images"], string>;
       /** Font name -> .ttf/.otf file; the name is the `font-family` used in .rcss. */
-      fonts?: Record<string, string>;
+      fonts?: Record<FontOf<G>, string>;
       /** Document name -> .rml file. Files it links (`<link href>`, `src=`, rcss `url()`) are packed too. */
       ui?: Record<keyof G["ui"] & string, string>;
       /**
@@ -516,6 +646,8 @@ declare module "alpha/test" {
     animation(tag: G["tags"]): { equals(name: AnimationOf<G> | ""): void };
     /** The UI document is shown at the end of the run. */
     shown(doc: keyof G["ui"] & string): void;
+    /** Live particles of every emitter at the end of the run. */
+    particles(): { equals(n: number): void; atLeast(n: number): void };
   }
 
   export interface Run<G extends GameTypes> {

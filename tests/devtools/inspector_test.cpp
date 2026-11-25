@@ -19,8 +19,8 @@ struct Scene {
     TagSet w;
     w.set(tags.intern("wall"));
     w.set(tags.intern("solid"));
-    bird = world.spawn({b, {10, 20}, 0.0f, 2, {}, BodySpec{BodyType::Dynamic, {Circle{5}, false}, {3, 4}}});
-    wall = world.spawn({w, {50, 60}, 30.0f, 0, ShapeSpec{Rect{{8, 4}}, Color{}, {}, {}}, {}});
+    bird = world.spawn({b, {10, 20}, 0.0f, 2, {}, BodySpec{BodyType::Dynamic, {Circle{5}, false}, {3, 4}}, {}, {}});
+    wall = world.spawn({w, {50, 60}, 30.0f, 0, ShapeSpec{Rect{{8, 4}}, Color{}, {}, {}}, {}, {}, {}});
   }
 };
 
@@ -76,7 +76,7 @@ TEST_CASE("applying a view of a destroyed entity does nothing") {
 TEST_CASE("collider shapes are outlines at the body, sensors in another color") {
   Scene s;
   TagSet none;
-  s.world.spawn({none, {5, 5}, 0.0f, 0, {}, BodySpec{BodyType::Static, {Rect{{4, 4}}, true}, {}}});
+  s.world.spawn({none, {5, 5}, 0.0f, 0, {}, BodySpec{BodyType::Static, {Rect{{4, 4}}, true}, {}}, {}, {}});
   const auto shapes = dev::collider_shapes(s.world);
   REQUIRE(shapes.size() == 2);
   CHECK(std::holds_alternative<Circle>(shapes[0].shape.geometry));

@@ -115,4 +115,11 @@ View view_of(const Camera& camera) {
   return {camera.pos + camera.shake_offset, camera.zoom, camera.rotation, camera.size};
 }
 
+View parallax_view(const View& view, float parallax) {
+  if (parallax == 1.0f) return view;
+  const Vec2 home = view.size * 0.5f;
+  return {home + (view.center - home) * parallax, 1.0f + (view.zoom - 1.0f) * parallax, view.rotation * parallax,
+          view.size};
+}
+
 }  // namespace alpha::core

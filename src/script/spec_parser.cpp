@@ -5,29 +5,17 @@
 
 #include "core/error.hpp"
 #include "core/index_of.hpp"
+#include "script/effect_parser.hpp"
 #include "script/js_value.hpp"
+#include "script/spec_fields.hpp"
 
 namespace alpha::script {
 
 namespace {
 
-const std::string kPrefix = "spawn: ";
+const std::string& kPrefix = kSpawn;
 
-bool has(JSContext* ctx, JSValueConst obj, const char* name) {
-  const Value v(ctx, JS_GetPropertyStr(ctx, obj, name));
-  return !JS_IsUndefined(v.get());
-}
-
-Value field(JSContext* ctx, JSValueConst obj, const char* name) {
-  return {ctx, JS_GetPropertyStr(ctx, obj, name)};
-}
-
-core::Color color(JSContext* ctx, JSValueConst obj, const std::string& path) {
-  const std::string text = string_arg(ctx, obj, kPrefix + path);
-  const auto parsed = core::parse_color(text);
-  if (!parsed) throw core::Error(kPrefix + path + " must be a color like \"#73bf2e\", got \"" + text + "\"");
-  return *parsed;
-}
+core::Color color(JSContext* ctx, JSValueConst obj, const std::string& path) { return color_arg(ctx, obj, path); }
 
 // { circle: r } or { rect: [w, h] }
 core::Geometry geometry(JSContext* ctx, JSValueConst obj, const std::string& path) {
@@ -40,17 +28,6 @@ core::Geometry geometry(JSContext* ctx, JSValueConst obj, const std::string& pat
     return core::Rect{vec2_arg(ctx, size.get(), kPrefix + path + ".rect")};
   }
   throw core::Error(kPrefix + path + " needs { circle: radius } or { rect: [width, height] }");
-}
-
-// assets.<kind>[name], or an error listing what the game declared.
-template <typename Table>
-const typename Table::mapped_type& named(const Table& table, const std::string& name, const std::string& field,
-                                         const char* kind) {
-  const auto it = table.find(name);
-  if (it != table.end()) return it->second;
-  const std::string known = core::keys_of(table, " ");
-  throw core::Error(kPrefix + field + " \"" + name + "\" is not in assets." + kind + "; have: " +
-                    (known.empty() ? "(none)" : known));
 }
 
 bool flag(JSContext* ctx, JSValueConst obj, const char* name) {
@@ -69,20 +46,20 @@ core::ShapeSpec picture_shape(JSContext* ctx, JSValueConst obj, const core::Imag
 }
 
 // { image: name, size?, flipX?, flipY? }
-core::ShapeSpec image(JSContext* ctx, JSValueConst obj, const SpriteAssets& assets) {
+core::ShapeSpec image(JSContext* ctx, JSValueConst obj, const ScriptState& assets) {
   const std::string name = string_arg(ctx, field(ctx, obj, "image").get(), kPrefix + "shape.image");
-  const core::Picture pic = named(assets.images, name, "shape.image", "images");
+  const core::Picture pic = named(assets.images, name, "shape.image", "assets.images");
   return picture_shape(ctx, obj, pic.image, pic.region);
 }
 
 // { sheet: name, animation?: name, size?, flipX?, flipY? }: starts at frame 0.
-std::pair<core::ShapeSpec, core::AnimationSpec> sheet(JSContext* ctx, JSValueConst obj, const SpriteAssets& assets) {
+std::pair<core::ShapeSpec, core::AnimationSpec> sheet(JSContext* ctx, JSValueConst obj, const ScriptState& assets) {
   const std::string name = string_arg(ctx, field(ctx, obj, "sheet").get(), kPrefix + "shape.sheet");
-  const core::SheetPtr sheet = named(assets.sheets, name, "shape.sheet", "sheets");
+  const core::SheetPtr sheet = named(assets.sheets, name, "shape.sheet", "assets.sheets");
   std::string anim;
   if (has(ctx, obj, "animation")) {
     anim = string_arg(ctx, field(ctx, obj, "animation").get(), kPrefix + "shape.animation");
-    named(sheet->animations, anim, "shape.animation", ("sheets." + name + ".animations").c_str());
+    named(sheet->animations, anim, "shape.animation", "assets.sheets." + name + ".animations");
   }
   return {picture_shape(ctx, obj, sheet->picture.image, sheet->frame(0)), {sheet, anim}};
 }
@@ -98,9 +75,11 @@ core::ShapeSpec filled(JSContext* ctx, JSValueConst obj) {
   return out;
 }
 
-void shape(JSContext* ctx, JSValueConst obj, const SpriteAssets& assets, core::EntitySpec& out) {
+void shape(JSContext* ctx, JSValueConst obj, ScriptState& assets, core::EntitySpec& out) {
   if (!JS_IsObject(obj)) throw core::Error(kPrefix + "shape must be an object");
-  if (has(ctx, obj, "sheet")) {
+  if (has(ctx, obj, "text")) {
+    out.shape = parse_text_shape(ctx, obj, assets);
+  } else if (has(ctx, obj, "sheet")) {
     auto [look, anim] = sheet(ctx, obj, assets);
     look.animation = std::move(anim);
     out.shape = std::move(look);
@@ -109,6 +88,7 @@ void shape(JSContext* ctx, JSValueConst obj, const SpriteAssets& assets, core::E
   } else {
     out.shape = filled(ctx, obj);
   }
+  parse_look(ctx, obj, "shape.", *out.shape);
 }
 
 core::BodyType body_type(JSContext* ctx, JSValueConst obj) {
@@ -152,17 +132,18 @@ double optional_number(JSContext* ctx, JSValueConst obj, const char* name) {
 
 }  // namespace
 
-core::EntitySpec parse_entity_spec(JSContext* ctx, JSValueConst spec, core::TagRegistry& tags,
-                                   const SpriteAssets& assets) {
+core::EntitySpec parse_entity_spec(JSContext* ctx, JSValueConst spec, ScriptState& s) {
   if (!JS_IsObject(spec)) throw core::Error(kPrefix + "expected an entity spec object");
   core::EntitySpec out;
-  out.tags = tag_set(ctx, spec, tags);
+  out.tags = tag_set(ctx, spec, s.tags);
   const Value pos = field(ctx, spec, "pos");
   out.pos = vec2_arg(ctx, pos.get(), kPrefix + "pos");
   out.rotation = static_cast<float>(optional_number(ctx, spec, "rotation"));
   out.z = static_cast<int>(optional_number(ctx, spec, "z"));
-  if (has(ctx, spec, "shape")) shape(ctx, field(ctx, spec, "shape").get(), assets, out);
+  out.layer = parse_layer(ctx, spec, s);
+  if (has(ctx, spec, "shape")) shape(ctx, field(ctx, spec, "shape").get(), s, out);
   if (has(ctx, spec, "body")) out.body = body(ctx, field(ctx, spec, "body").get());
+  if (has(ctx, spec, "emitter")) out.emitter = parse_emitter(ctx, field(ctx, spec, "emitter").get(), s);
   return out;
 }
 

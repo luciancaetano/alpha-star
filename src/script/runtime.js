@@ -115,6 +115,19 @@ function makeEntities() {
       get animation() { return N.animation(id); },
       set animation(name) { N.play(id, name, false); },
       play: (name) => N.play(id, name, true),
+      get tint() { return N.look(id)[0]; },
+      set tint(v) { const l = N.look(id); N.setLook(id, v, l[1], l[2]); },
+      get alpha() { return N.look(id)[1]; },
+      set alpha(v) { const l = N.look(id); N.setLook(id, l[0], v, l[2]); },
+      get blend() { return N.look(id)[2]; },
+      set blend(v) { const l = N.look(id); N.setLook(id, l[0], l[1], v); },
+      get text() { return N.text(id); },
+      set text(v) { N.text(id, String(v)); },
+      get layer() { return N.layer(id); },
+      emit: (count) => N.emit(id, count),
+      get emitting() { return N.emitting(id); },
+      set emitting(v) { N.emitting(id, Boolean(v)); },
+      get particles() { return N.particles(id); },
       get flipX() { return N.flip(id)[0]; },
       set flipX(v) { N.flip(id, Boolean(v), N.flip(id)[1]); },
       get flipY() { return N.flip(id)[1]; },
@@ -264,6 +277,11 @@ function makeCtx(s) {
       },
     },
     camera: makeCamera(),
+    window: {
+      get fullscreen() { return N.windowGet()[0]; },
+      set fullscreen(v) { N.windowFullscreen(Boolean(v)); },
+      get size() { const w = N.windowGet(); return [w[1], w[2]]; },
+    },
     spawn: (spec) => s.entities.entity(N.spawn(spec)),
     map: (name) => mapView(mapOf(s, name, "map")),
     spawnMap(name, opts = {}) {
@@ -371,11 +389,21 @@ function bootGame(s, ctx, g, start, what, from) {
   for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bind("actions", action, inputs);
   if (c.deadzone !== undefined) N.deadzone(c.deadzone);
   for (const [axis, sources] of Object.entries(c.axes ?? {})) N.bind("axes", axis, sources);
+  defineLayers(c.layers ?? {});
   preload(s, s.game.assets ?? {});
   s.saveData = s.save.read(c.title ?? "alpha-star");
   const at = startOf(s, start, what, from);
   enter(s, ctx, at.scene, at.params, at);
-  return { title: c.title ?? "alpha-star", size: c.size, background: c.background ?? "#000000" };
+  return { title: c.title ?? "alpha-star", size: c.size, background: c.background ?? "#000000", window: c.window };
+}
+
+// config.layers: { name: { z, parallax? } }, drawn in z order (then entity z).
+function defineLayers(layers) {
+  if (typeof layers !== "object") fail("config.layers must be { name: { z, parallax? } }");
+  for (const [name, l] of Object.entries(layers)) {
+    if (!l || typeof l.z !== "number") fail(`config.layers.${name} must be { z: number, parallax?: number }, got ${JSON.stringify(l)}`);
+    N.defineLayer(name, l.z, l.parallax ?? 1);
+  }
 }
 
 function stepGame(s, ctx, dt) {

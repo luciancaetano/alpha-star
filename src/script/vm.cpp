@@ -3,6 +3,7 @@
 #include "script/asset_bindings.hpp"
 #include "script/bundle_map.hpp"
 #include "script/camera_bindings.hpp"
+#include "script/effect_bindings.hpp"
 #include "script/embedded_js.hpp"
 #include "script/input_bindings.hpp"
 #include "script/instance_bindings.hpp"
@@ -35,6 +36,7 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
   install_sprite_bindings(ctx, natives.get());
   install_camera_bindings(ctx, natives.get());
   install_map_bindings(ctx, natives.get());
+  install_effect_bindings(ctx, natives.get());
   JS_SetPropertyStr(ctx, global.get(), "__native", natives.release());
 }
 

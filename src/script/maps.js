@@ -129,9 +129,9 @@ function cellsByTileset(map, layer) {
   return groups;
 }
 
-function drawLayer(map, layer, pos, z) {
+function drawLayer(map, layer, pos, z, target) {
   for (const [ts, cells] of cellsByTileset(map, layer)) {
-    N.tileLayer({ image: ts.image, tile: ts.tile, size: map.size, pos: [pos[0] + layer.offset[0], pos[1] + layer.offset[1]], z, cells });
+    N.tileLayer({ image: ts.image, tile: ts.tile, size: map.size, pos: [pos[0] + layer.offset[0], pos[1] + layer.offset[1]], z, cells, layer: target });
   }
 }
 
@@ -151,7 +151,8 @@ export function spawnLayers(map, opts, spawn) {
   const what = `spawnMap("${map.name}")`;
   const pos = opts.pos ?? [0, 0];
   for (const name of opts.collide ?? []) collideLayer(map, layerOf(map, name, "tiles", what), pos, spawn);
-  for (const l of map.layers) if (l.kind === "tiles" && l.visible) drawLayer(map, l, pos, opts.z ?? 0);
+  // opts.layer: the config.layers layer of every tile layer; opts.layers: per Tiled layer name.
+  for (const l of map.layers) if (l.kind === "tiles" && l.visible) drawLayer(map, l, pos, opts.z ?? 0, opts.layers?.[l.name] ?? opts.layer);
 }
 
 // What ctx.map(name) returns: sizes and object layers as plain data.

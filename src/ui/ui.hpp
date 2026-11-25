@@ -59,6 +59,8 @@ class Ui {
   std::vector<std::uint32_t> take_events();
   void reset();
   std::map<std::string, DocumentView> view() const;
+  // The logical screen changed size (scaling "expand").
+  void resize(int width, int height);
 
   // Engine side: drawing and input (see ui/input.hpp).
   void render(SDL_Renderer* sdl);

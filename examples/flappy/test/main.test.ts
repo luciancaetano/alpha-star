@@ -52,3 +52,17 @@ export function playAgainButtonRestarts() {
   run.expect.scene("play");
   run.expect.shown("hud");
 }
+
+export function flappingThrowsFeathers() {
+  // One flap on frame 0: a burst of 8 feathers that live 0.3 s or more.
+  const run = simulate(game, { scene: "play", seconds: 0.2, inputs: { flap: [0] } });
+  run.expect.particles().equals(8);
+  simulate(game, { scene: "play", seconds: 1 }).expect.particles().equals(0);
+}
+
+export function gameOverFadesTheWorld() {
+  const run = simulate(game, { scene: "play", seconds: 3.5 });
+  run.expect.scene("over");
+  run.expect.count("fade").equals(1);
+  run.expect.noErrors();
+}

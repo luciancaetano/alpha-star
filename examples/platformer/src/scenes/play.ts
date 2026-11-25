@@ -1,8 +1,9 @@
 import type { Context, Entity } from "alpha";
 import { scene } from "../alpha";
 import { coin } from "../prefabs/coin";
+import { dust, hill, popup } from "../prefabs/effects";
 import { player } from "../prefabs/player";
-import { CAMERA, PLAYER } from "../tuning";
+import { CAMERA, DUST, PLAYER, POPUP } from "../tuning";
 import type { Platformer } from "../types";
 
 type State = { coins: number; total: number; grounded: boolean; fallSpeed: number };
@@ -16,13 +17,24 @@ function animate(p: Hero, ctx: Play, move: number) {
   else p.animation = move !== 0 ? "run" : "idle";
 }
 
-// Touching ground; a hard landing shakes the camera.
-function land(ctx: Play) {
+// Touching ground: dust at the feet; a hard landing also shakes the camera.
+function land(ctx: Play, p: Hero) {
+  if (!ctx.state.grounded && ctx.state.fallSpeed > DUST.landing) ctx.spawn(dust([p.pos.x, p.pos.y + 8]));
   if (!ctx.state.grounded && ctx.state.fallSpeed > PLAYER.hardLanding) {
     ctx.camera.shake(CAMERA.shake, CAMERA.shakeSeconds);
     ctx.audio.play("land");
   }
   ctx.state.grounded = true;
+}
+
+// Coin popups rise and fade, then go away.
+function floatPopups(ctx: Play) {
+  for (const t of ctx.findAll("popup")) {
+    t.pos.y -= POPUP.rise * ctx.dt;
+    const alpha = t.alpha - POPUP.fade * ctx.dt;
+    if (alpha <= 0) ctx.destroy(t);
+    else t.alpha = alpha;
+  }
 }
 
 export default scene("play", {
@@ -33,6 +45,7 @@ export default scene("play", {
     const spawns = map.objects("spawns");
     const start = spawns.find((o) => o.name === "player") ?? spawns[0];
     const hero = ctx.spawn(player([start.x, start.y]));
+    for (let x = 0; x < map.size[0] * 0.2 + 320; x += 70) ctx.spawn(hill(x, 45 + (x % 3) * 15));
     for (const o of spawns.filter((s) => s.type === "coin")) ctx.spawn(coin(o));
     ctx.state.total = ctx.findAll("coin").length;
 
@@ -42,9 +55,10 @@ export default scene("play", {
     ctx.ui.set("hud", "coins", `coins 0/${ctx.state.total}`);
 
     ctx.onHit("player", "walls", (p, wall) => {
-      if (wall.pos.y > p.pos.y) land(ctx);  // the wall's center is below: standing on it
+      if (wall.pos.y > p.pos.y) land(ctx, p);  // the wall's center is below: standing on it
     });
     ctx.onEnter("player", "coin", (_p, c) => {
+      ctx.spawn(popup([c.pos.x, c.pos.y]));
       ctx.destroy(c);
       ctx.state.coins += 1;
       ctx.audio.play("coin");
@@ -67,6 +81,7 @@ export default scene("play", {
     p.body.velocity = [move * PLAYER.speed, vy];
     p.rotation = 0;  // the box never tips over
     animate(p, ctx, move);
+    floatPopups(ctx);
     if (p.pos.y > 400 || ctx.input.pressed("restart")) ctx.go("play");  // fell into the pit
   },
 });

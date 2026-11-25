@@ -10,6 +10,8 @@
 
 #include "core/camera.hpp"
 #include "core/entity_spec.hpp"
+#include "core/particles.hpp"
+#include "core/random.hpp"
 #include "physics/physics_world.hpp"
 
 namespace alpha::ecs {
@@ -39,7 +41,8 @@ struct StepEvents {
 class World {
  public:
   // view_size: the screen in game pixels (the camera starts showing exactly it).
-  explicit World(core::Vec2 gravity, core::Vec2 view_size = {});
+  // random: the game's seeded stream for particles (null: a private seed-0 one).
+  explicit World(core::Vec2 gravity, core::Vec2 view_size = {}, core::Random* random = nullptr);
   World(const World&) = delete;
   World& operator=(const World&) = delete;
 
@@ -74,21 +77,37 @@ class World {
   std::pair<bool, bool> flip(EntityId id) const;
   void set_flip(EntityId id, bool x, bool y);
 
+  // The entity's look: its shape, else its emitter's particle look (tint,
+  // alpha, blend, text are edited here). Throws when it has neither.
+  core::ShapeSpec& look(EntityId id);
+  const core::ShapeSpec& look(EntityId id) const;
+  const core::ShapeSpec* try_look(EntityId id) const;  // null when it has neither
+  const core::Layer& layer(EntityId id) const;
+  // Particles. Throws when the entity was not spawned with `emitter`.
+  core::Emitter& emitter(EntityId id);
+  const core::Emitter& emitter(EntityId id) const;
+  bool has_emitter(EntityId id) const;
+  // Live particles in the whole world.
+  int particle_count() const;
+
   // Camera: moved on the step (follow, bounds, shake); `follow` a living entity or none.
   core::Camera& camera() { return camera_; }
   void follow(std::optional<EntityId> target) { target_ = target; }
   bool following() const { return target_.has_value(); }
   // The camera between the previous and the current step, like draw_items.
   core::View view(float blend = 1.0f) const;
+  // The screen size the camera shows changed (scaling "expand").
+  void resize_view(core::Vec2 size);
 
-  // Frees destroyed entities, advances physics, syncs transforms, animations and the camera.
+  // Frees destroyed entities, advances physics, syncs transforms, animations,
+  // particle emitters and the camera.
   StepEvents step(float dt);
   // Living bodies' colliders, oldest first.
   std::vector<PlacedCollider> colliders() const;
   // Remembers every transform as "previous". Call at the start of each fixed step.
   void snapshot();
-  // Living shapes, ordered by z then creation, placed at the blend
-  // previous -> current by `blend` in [0, 1] (1 = current state).
+  // Living shapes and particles, ordered by layer z, z, then creation, placed
+  // at the blend previous -> current by `blend` in [0, 1] (1 = current state).
   std::vector<core::DrawItem> draw_items(float blend = 1.0f) const;
 
  private:
@@ -100,6 +119,7 @@ class World {
   void animate(float dt);
   void step_view(float dt);
   core::ShapeSpec& visual(EntityId id);
+  void attach(entt::entity e, const core::EntitySpec& spec);
   std::vector<Contact> living_pairs(const std::vector<physics::Pair>& pairs) const;
 
   entt::registry registry_;
@@ -108,6 +128,8 @@ class World {
   core::Camera camera_;
   core::View previous_view_;
   std::optional<EntityId> target_;
+  core::Random own_random_{0};
+  core::Random* random_;
 };
 
 }  // namespace alpha::ecs

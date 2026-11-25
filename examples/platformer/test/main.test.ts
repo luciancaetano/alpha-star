@@ -34,3 +34,18 @@ export function mapCollidersAreMergedBoxes() {
   run.expect.count("walls").atLeast(5);
   run.expect.scene("play");
 }
+
+export function landingRaisesDustThatClearsItself() {
+  // The hero lands ~0.15 s in: a one-shot puff whose entity goes away with its last particle.
+  const run = simulate(game, { seconds: 0.3 });
+  run.expect.count("dust").equals(1);
+  run.expect.particles().atLeast(5);
+  const later = simulate(game, { seconds: 1 });
+  later.expect.count("dust").equals(0);
+  later.expect.particles().equals(0);
+}
+
+export function pickedCoinsFloatAPlusOneThatFades() {
+  simulate(game, { seconds: 0.6, inputs: RIGHT }).expect.count("popup").atLeast(1);
+  simulate(game, { seconds: 2, inputs: RIGHT }).expect.count("popup").equals(0);
+}

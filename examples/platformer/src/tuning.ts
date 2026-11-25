@@ -9,4 +9,7 @@ export const PLAYER = {
   jump: -330,        // px/s upward on jump
   hardLanding: 300,  // landing faster than this (px/s) shakes the camera
 };
+// Dust puffed on landing, the "+1" floating over a picked coin.
+export const DUST = { count: 10, landing: 120 };  // landing faster than DUST.landing px/s raises dust
+export const POPUP = { rise: 24, fade: 1.6 };      // px/s up, alpha lost per second
 export const CAMERA = { lerp: 0.15, deadzone: [48, 32] as Vec2, shake: 3, shakeSeconds: 0.25 };

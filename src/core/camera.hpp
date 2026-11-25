@@ -33,6 +33,10 @@ Box visible_area(const View& view);
 // a -> b by t in [0, 1] (render interpolation).
 View blend(const View& a, const View& b, float t);
 bool overlaps(const Box& a, const Box& b);
+// How a layer with `parallax` sees the world: the camera's offset from the
+// identity camera (and its zoom and rotation) scaled by the factor, so 0 is
+// fixed to the screen and 1 is the camera itself.
+View parallax_view(const View& view, float parallax);
 
 struct Follow {
   float lerp = 1.0f;  // fraction of the remaining distance covered per fixed step, (0, 1]

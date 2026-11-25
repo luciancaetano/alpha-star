@@ -139,7 +139,8 @@ function runGame(game, opts) {
       }
     }
     const counts = sim.within(() => N.tagCounts());
-    return { frames, scene: sim.scene(), counts, animations: sim.within(() => animationsOf(counts)), ui: sim.within(() => N.uiView()), error };
+    return { frames, scene: sim.scene(), counts, animations: sim.within(() => animationsOf(counts)), ui: sim.within(() => N.uiView()),
+      particles: sim.within(() => N.particles()), error };
   } finally {
     N.instanceDestroy(id);
   }
@@ -176,6 +177,14 @@ function expectations(r) {
     shown(doc) {
       if (!r.ui[doc]?.shown) fail(`expected document "${doc}" shown ${after}; shown: ${Object.keys(r.ui).filter((k) => r.ui[k].shown).join(", ") || "(none)"}${paused}`);
     },
+    particles: () => ({
+      equals(n) {
+        if (r.particles !== n) fail(`expected ${n} live particles ${after}, got ${r.particles}${paused}`);
+      },
+      atLeast(n) {
+        if (r.particles < n) fail(`expected at least ${n} live particles ${after}, got ${r.particles}${paused}`);
+      },
+    }),
     count: (tag) => ({
       equals(n) {
         if (count(tag) !== n) fail(`expected ${n} "${tag}" ${after}, got ${count(tag)}${paused}`);

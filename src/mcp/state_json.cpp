@@ -17,7 +17,11 @@ std::string entity(const ecs::EntityView& e) {
                        {"rotation", json::num(e.rotation)},
                        {"z", json::num(e.z)},
                        {"velocity", e.velocity ? vec(*e.velocity) : "null"},
-                       {"animation", e.animation.empty() ? "null" : json::str(e.animation)}});
+                       {"animation", e.animation.empty() ? "null" : json::str(e.animation)},
+                       {"layer", e.layer.empty() ? "null" : json::str(e.layer)},
+                       {"alpha", json::num(e.alpha)},
+                       {"text", e.text ? json::str(*e.text) : "null"},
+                       {"particles", json::num(e.particles)}});
 }
 
 std::string document(const ui::DocumentView& d) {

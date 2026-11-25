@@ -45,6 +45,7 @@ JSValue load_font(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   ui_of(s);  // fonts need the UI library alive
   const auto [name, path] = asset(ctx, s, argv, "fonts");
   ui::load_font(path, name);
+  s.fonts[name] = path;  // world text rasterizes it too
   return JS_UNDEFINED;
 }
 

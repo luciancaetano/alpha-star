@@ -25,7 +25,7 @@ SheetPtr hero_sheet() {
 }
 
 EntitySpec animated(const SheetPtr& sheet, const std::string& anim) {
-  EntitySpec spec{{}, {0, 0}, 0.0f, 0, ShapeSpec{Rect{{8, 8}}, {}, {}, sheet->picture.image}, {}};
+  EntitySpec spec{{}, {0, 0}, 0.0f, 0, ShapeSpec{Rect{{8, 8}}, {}, {}, sheet->picture.image}, {}, {}, {}};
   spec.shape->animation = AnimationSpec{sheet, anim};
   return spec;
 }
@@ -69,7 +69,7 @@ TEST_CASE("unknown animations and entities without a sheet are errors that list 
   World w({0, 0});
   const EntityId e = w.spawn(animated(hero_sheet(), "run"));
   CHECK_THROWS_WITH_AS(w.play(e, "fly", false), doctest::Contains("jump, run"), Error);
-  const EntityId plain = w.spawn({{}, {0, 0}, 0.0f, 0, ShapeSpec{Circle{3}, {}, {}, {}}, {}});
+  const EntityId plain = w.spawn({{}, {0, 0}, 0.0f, 0, ShapeSpec{Circle{3}, {}, {}, {}}, {}, {}, {}});
   CHECK(w.animation(plain).empty());
   CHECK_THROWS_WITH_AS(w.play(plain, "run", false), doctest::Contains("sheet"), Error);
 }
@@ -80,14 +80,14 @@ TEST_CASE("flip mirrors a shape") {
   w.set_flip(e, true, false);
   CHECK(w.flip(e) == std::pair{true, false});
   CHECK(w.draw_items()[0].shape.flip_x);
-  const EntityId shapeless = w.spawn({{}, {0, 0}, 0.0f, 0, {}, {}});
+  const EntityId shapeless = w.spawn({{}, {0, 0}, 0.0f, 0, {}, {}, {}, {}});
   CHECK_THROWS_AS(w.set_flip(shapeless, true, true), Error);
 }
 
 TEST_CASE("the camera follows an entity on the step, and the view blends between steps") {
   World w({0, 0}, {100, 100});
   CHECK(w.view().center == Vec2{50, 50});
-  const EntityId e = w.spawn({{}, {300, 50}, 0.0f, 0, {}, {}});
+  const EntityId e = w.spawn({{}, {300, 50}, 0.0f, 0, {}, {}, {}, {}});
   w.camera().follow = Follow{1.0f, {}};
   w.follow(e);
   w.snapshot();

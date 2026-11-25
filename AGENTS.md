@@ -124,3 +124,5 @@ python tools/stage_engine.py                                 # stage release + s
 - Errors are written for the agent that will fix them (what failed, what was available).
 - A script error pauses the game; it never crashes the engine.
 - Deterministic simulation (fixed step, seeded RNG) so agent tests are not flaky.
+- Effects are data: particles only through a spawn spec's `emitter` (plus `entity.emit(n)`), layers
+  only through `config.layers` + `layer:`; both simulate on the fixed step with the game's seed.

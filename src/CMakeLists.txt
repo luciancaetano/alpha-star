@@ -7,9 +7,11 @@ add_library(alpha_core
   core/controls.cpp
   core/entity_spec.cpp
   core/fixed_step.cpp
+  core/glyph_layout.cpp
   core/input.cpp
   core/log_ring.cpp
   core/mixer.cpp
+  core/particles.cpp
   core/pad_slots.cpp
   core/random.cpp
   core/sheet.cpp
@@ -18,7 +20,8 @@ add_library(alpha_core
   core/tags.cpp
   core/tilemap.cpp
   core/timers.cpp
-  core/version.cpp)
+  core/version.cpp
+  core/window.cpp)
 if(ALPHA_DEBUG_TOOLS)  # hot reload's file watch: dev/release only
   target_sources(alpha_core PRIVATE core/pack_watch.cpp)
 endif()
@@ -54,6 +57,7 @@ configure_file(script/embedded_js.hpp.in
 
 # engine: everything the binary runs. Games are JS; nothing game-specific here.
 add_library(alpha_engine
+  ecs/effects.cpp
   ecs/entity_view.cpp
   ecs/world.cpp
   physics/physics_world.cpp
@@ -61,8 +65,10 @@ add_library(alpha_engine
   platform/audio_out.cpp
   platform/frame_latency.cpp
   platform/gamepads.cpp
+  platform/glyphs.cpp
   platform/log_file.cpp
   platform/sdl_input.cpp
+  platform/window.cpp
   render/quads.cpp
   render/renderer.cpp
   render/tessellate.cpp
@@ -73,16 +79,20 @@ add_library(alpha_engine
   script/vm.cpp
   script/bundle_map.cpp
   script/camera_bindings.cpp
+  script/effect_bindings.cpp
+  script/effect_parser.cpp
   script/input_bindings.cpp
   script/instance_bindings.cpp
   script/instances.cpp
   script/js_engine.cpp
   script/js_value.cpp
   script/map_bindings.cpp
+  script/spec_fields.cpp
   script/spec_parser.cpp
   script/sprite_bindings.cpp
   script/synth_parser.cpp
   script/system_bindings.cpp
+  script/text_look.cpp
   script/ui_bindings.cpp
   script/world_bindings.cpp
   ui/input.cpp
@@ -93,7 +103,7 @@ add_library(alpha_engine
 target_include_directories(alpha_engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnTT::EnTT qjs SDL3_image::SDL3_image
-  RmlUi::Core alpha_rmlui_sdl)
+  RmlUi::Core alpha_rmlui_sdl Freetype::Freetype)
 alpha_set_warnings(alpha_engine)
 
 # devtools: Dear ImGui engine dev tools (F1). Only with ALPHA_DEVTOOLS; a
@@ -130,7 +140,7 @@ if(ALPHA_MCP)
 endif()
 
 if(ALPHA_DEBUG_TOOLS)  # hot reload: dev/release only
-  target_sources(alpha_engine PRIVATE script/hot_reload.cpp)
+  target_sources(alpha_engine PRIVATE script/hot_reload.cpp script/test_report.cpp)
 endif()
 
 add_executable(alpha_star main.cpp)

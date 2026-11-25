@@ -3,26 +3,16 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
-#include <tuple>
+#include <utility>
 
 #include "core/error.hpp"
 #include "core/index_of.hpp"
 #include "ecs/components.hpp"
+#include "ecs/effects.hpp"
 
 namespace alpha::ecs {
 
 namespace {
-
-// Blends angles the short way around (350 -> 10 passes through 360, not 180).
-float blend_angle(float from, float to, float t) {
-  const float delta = std::remainder(to - from, 360.0f);
-  return from + delta * t;
-}
-
-core::DrawItem blended(const core::ShapeSpec& shape, const Previous& p, const Transform& t,
-                       float blend) {
-  return {shape, p.pos + (t.pos - p.pos) * blend, blend_angle(p.rotation, t.rotation, blend)};
-}
 
 EntityId to_id(entt::entity e) { return static_cast<EntityId>(entt::to_integral(e)); }
 
@@ -34,10 +24,23 @@ void show(const Animator& a, core::ShapeSpec& shape) {
   shape.src = a.sheet->frame(anim.frames[core::frame_at(anim, a.time)]);
 }
 
+constexpr const char* kNoEmitter = "emitter; spawn it with `emitter: { ... }`";
+
+// The entity's C component, or an error saying how to get one.
+template <typename C, typename Registry>
+auto& required(Registry& registry, entt::entity e, EntityId id, const char* missing) {
+  auto* c = registry.template try_get<C>(e);
+  if (!c) throw core::Error("entity " + std::to_string(id) + " has no " + missing);
+  return *c;
+}
+
 }  // namespace
 
-World::World(core::Vec2 gravity, core::Vec2 view_size)
-    : physics_(gravity), camera_(core::make_camera(view_size)), previous_view_(core::view_of(camera_)) {}
+World::World(core::Vec2 gravity, core::Vec2 view_size, core::Random* random)
+    : physics_(gravity),
+      camera_(core::make_camera(view_size)),
+      previous_view_(core::view_of(camera_)),
+      random_(random ? random : &own_random_) {}
 
 EntityId World::spawn(const core::EntitySpec& spec) {
   const entt::entity e = registry_.create();
@@ -45,7 +48,15 @@ EntityId World::spawn(const core::EntitySpec& spec) {
   registry_.emplace<Previous>(e, spec.pos, spec.rotation);
   registry_.emplace<Sequence>(e, next_sequence_++);
   registry_.emplace<Tags>(e, spec.tags);
+  registry_.emplace<Layered>(e, spec.layer);
+  attach(e, spec);
+  return to_id(e);
+}
+
+// The optional parts of a spawn: shape, body, emitter, animation.
+void World::attach(entt::entity e, const core::EntitySpec& spec) {
   if (spec.shape) registry_.emplace<Visual>(e, *spec.shape);
+  if (spec.emitter) registry_.emplace<Emission>(e, core::Emitter(*spec.emitter));
   if (spec.body) {
     registry_.emplace<PhysicsBody>(e, physics_.create(to_id(e), *spec.body, spec.pos, spec.rotation));
     registry_.emplace<Collider>(e, spec.body->collider);
@@ -55,7 +66,6 @@ EntityId World::spawn(const core::EntitySpec& spec) {
     registry_.emplace<Animator>(e, anim.sheet, "", 0.0f);
     if (!anim.name.empty()) play(to_id(e), anim.name, true);
   }
-  return to_id(e);
 }
 
 void World::destroy(EntityId id) {
@@ -160,10 +170,38 @@ std::vector<Contact> World::living_pairs(const std::vector<physics::Pair>& pairs
 }
 
 core::ShapeSpec& World::visual(EntityId id) {
-  auto* v = registry_.try_get<Visual>(living(id));
-  if (!v) throw core::Error("entity " + std::to_string(id) + " has no shape; spawn it with `shape`");
-  return v->shape;
+  return required<Visual>(registry_, living(id), id, "shape; spawn it with `shape`").shape;
 }
+
+core::ShapeSpec& World::look(EntityId id) {
+  return const_cast<core::ShapeSpec&>(std::as_const(*this).look(id));
+}
+
+const core::ShapeSpec* World::try_look(EntityId id) const {
+  const entt::entity e = living(id);
+  if (const auto* v = registry_.try_get<Visual>(e)) return &v->shape;
+  if (const auto* em = registry_.try_get<Emission>(e)) return &em->emitter.spec().look;
+  return nullptr;
+}
+
+const core::ShapeSpec& World::look(EntityId id) const {
+  if (const core::ShapeSpec* shape = try_look(id)) return *shape;
+  throw core::Error("entity " + std::to_string(id) + " has no shape or emitter; spawn it with `shape` or `emitter`");
+}
+
+const core::Layer& World::layer(EntityId id) const { return registry_.get<Layered>(living(id)).layer; }
+
+bool World::has_emitter(EntityId id) const { return registry_.all_of<Emission>(living(id)); }
+
+core::Emitter& World::emitter(EntityId id) {
+  return required<Emission>(registry_, living(id), id, kNoEmitter).emitter;
+}
+
+const core::Emitter& World::emitter(EntityId id) const {
+  return required<Emission>(registry_, living(id), id, kNoEmitter).emitter;
+}
+
+int World::particle_count() const { return ecs::particle_count(registry_); }
 
 std::string World::animation(EntityId id) const {
   const auto* a = registry_.try_get<Animator>(living(id));
@@ -209,11 +247,17 @@ void World::step_view(float dt) {
 
 core::View World::view(float blend) const { return core::blend(previous_view_, core::view_of(camera_), blend); }
 
+void World::resize_view(core::Vec2 size) {
+  camera_.size = size;
+  previous_view_.size = size;
+}
+
 StepEvents World::step(float dt) {
   free_doomed();
   const physics::StepContacts contacts = physics_.step(dt);
   sync_bodies();
   animate(dt);
+  step_emitters(registry_, dt, *random_);
   step_view(dt);
   return {living_pairs(contacts.hits), living_pairs(contacts.sensor_enters)};
 }
@@ -223,19 +267,7 @@ void World::snapshot() {
   previous_view_ = core::view_of(camera_);
 }
 
-std::vector<core::DrawItem> World::draw_items(float blend) const {
-  using Keyed = std::tuple<int, std::uint64_t, core::DrawItem>;
-  std::vector<Keyed> keyed;
-  const auto view = registry_.view<const Transform, const Previous, const Visual, const Sequence>(
-      entt::exclude<Doomed>);
-  for (auto [e, t, p, v, seq] : view.each()) keyed.emplace_back(t.z, seq.value, blended(v.shape, p, t, blend));
-  std::sort(keyed.begin(), keyed.end(), [](const Keyed& a, const Keyed& b) {
-    return std::tie(std::get<0>(a), std::get<1>(a)) < std::tie(std::get<0>(b), std::get<1>(b));
-  });
-  std::vector<core::DrawItem> items;
-  for (auto& k : keyed) items.push_back(std::move(std::get<2>(k)));
-  return items;
-}
+std::vector<core::DrawItem> World::draw_items(float blend) const { return draw_list(registry_, blend); }
 
 std::vector<PlacedCollider> World::colliders() const {
   std::vector<PlacedCollider> out;

@@ -8,6 +8,7 @@
 
 #include "core/error.hpp"
 #include "core/tilemap.hpp"
+#include "script/effect_parser.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
 #include "script/sprite_bindings.hpp"
@@ -42,7 +43,7 @@ std::vector<core::TileQuad> cells(JSContext* ctx, const Value& spec, core::Vec2 
   return out;
 }
 
-// tileLayer({image, tile: [w, h], size: [w, h], pos: [x, y], z, cells}) -> entity id.
+// tileLayer({image, tile: [w, h], size: [w, h], pos: [x, y], z, cells, layer?}) -> entity id.
 // One entity draws the whole layer (one batch, culled per cell); `pos` is its top-left.
 JSValue tile_layer(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const Value spec(ctx, JS_DupValue(ctx, argv[0]));
@@ -53,6 +54,7 @@ JSValue tile_layer(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   core::EntitySpec e;
   e.pos = vec2_arg(ctx, spec.prop("pos").get(), "tile layer pos") + size * 0.5f;
   e.z = static_cast<int>(number_arg(ctx, spec.prop("z").get(), "tile layer z"));
+  e.layer = parse_layer(ctx, spec.get(), s);
   e.shape = core::ShapeSpec{core::Rect{size}, {}, {}, decoded_image(s, string_arg(ctx, spec.prop("image").get(), "tileset image"))};
   e.shape->tiles = std::move(grid);
   return JS_NewUint32(ctx, world_of(s).spawn(e));

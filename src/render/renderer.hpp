@@ -9,6 +9,7 @@
 
 #include "core/camera.hpp"
 #include "core/entity_spec.hpp"
+#include "core/window.hpp"
 #include "render/tessellate.hpp"
 
 namespace alpha::render {
@@ -34,10 +35,12 @@ struct RenderStats {
 };
 
 // Draws frames on an SDL renderer it does not own. The game's logical size
-// is letterboxed into the output, so scripts only ever see game pixels.
+// is presented into the output by `scaling` (core::Scaling), so scripts only
+// ever see game pixels; with expand the logical size follows the window.
+// Batches break on texture, blend mode or layer parallax.
 class Renderer {
  public:
-  Renderer(SDL_Renderer* sdl, int width, int height);
+  Renderer(SDL_Renderer* sdl, int width, int height, core::Scaling scaling = core::Scaling::Letterbox);
   ~Renderer();
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;
@@ -46,22 +49,36 @@ class Renderer {
   const RenderStats& stats() const { return stats_; }
   void present();
   SDL_Renderer* sdl() const { return sdl_; }
+  // Game pixels the screen shows now (the game size, except with expand).
+  core::Vec2 logical_size() const { return size_; }
   // Saves what draw() produced, before present(). Returns false on failure.
   bool save_bmp(const std::string& path) const;
 
  private:
+  // What a batch shares: texture (or none), blend mode, layer parallax.
+  struct BatchKey {
+    SDL_Texture* texture = nullptr;
+    core::Blend blend = core::Blend::Alpha;
+    float parallax = 1.0f;
+    bool operator==(const BatchKey&) const = default;
+  };
+
+  void present_logical();
   void draw_shapes(const std::vector<core::DrawItem>& shapes, const core::View& view);
-  void add(const core::DrawItem& item, const core::Box& area, const core::View& view);
+  void add(const core::DrawItem& item, const core::View& view);
   void flush(const core::View& view);
   SDL_Texture* texture(const core::ImagePtr& image);
   void draw_text(const core::TextItem& text);
+  void draw_world_text(const core::DrawItem& item, const core::View& view);
 
   SDL_Renderer* sdl_;
+  core::Vec2 game_size_;
   core::Vec2 size_;
+  core::Scaling scaling_;
   RenderStats stats_;
-  // The batch being built: world-space triangles sharing one texture (or none).
+  // The batch being built: world-space triangles sharing one key.
   std::vector<Vertex> batch_;
-  SDL_Texture* batch_texture_ = nullptr;
+  BatchKey batch_key_;
   std::vector<SDL_Vertex> vertices_;
   // Images live as long as the game; textures are created on first draw.
   std::unordered_map<const core::Image*, SDL_Texture*> textures_;

@@ -18,13 +18,41 @@ core::Color color_field(JSContext* ctx, const Value& obj, const char* name, cons
   return *color;
 }
 
+bool flag_or(JSContext* ctx, const Value& obj, const char* name, bool fallback) {
+  const Value v = obj.prop(name);
+  return JS_IsUndefined(v.get()) ? fallback : JS_ToBool(ctx, v.get()) == 1;
+}
+
+// config.window: { fullscreen?, scaling?, resizable?, altEnter? }
+core::WindowConfig window_config(JSContext* ctx, const Value& info) {
+  const Value w = info.prop("window");
+  core::WindowConfig c;
+  if (JS_IsUndefined(w.get())) return c;
+  if (!JS_IsObject(w.get())) throw core::Error("config.window must be { fullscreen?, scaling?, resizable?, altEnter? }");
+  c.fullscreen = flag_or(ctx, w, "fullscreen", false);
+  c.resizable = flag_or(ctx, w, "resizable", true);
+  c.alt_enter = flag_or(ctx, w, "altEnter", true);
+  const Value scaling = w.prop("scaling");
+  if (JS_IsUndefined(scaling.get())) return c;
+  const std::string name = string_arg(ctx, scaling.get(), "config.window.scaling");
+  const auto parsed = core::parse_scaling(name);
+  if (!parsed) throw core::Error("config.window.scaling must be \"letterbox\", \"integer\", \"stretch\" or \"expand\", got \"" + name + "\"");
+  c.scaling = *parsed;
+  return c;
+}
+
 GameInfo game_info(JSContext* ctx, const Value& info) {
   const Value title = info.prop("title");
   const Value size = info.prop("size");
   const core::Vec2 wh = vec2_arg(ctx, size.get(), "config.size");
   if (wh.x < 1 || wh.y < 1) throw core::Error("config.size must be positive");
-  return {to_string(ctx, title.get()), static_cast<int>(wh.x), static_cast<int>(wh.y),
-          color_field(ctx, info, "background", "config.background")};
+  GameInfo out;
+  out.title = to_string(ctx, title.get());
+  out.width = static_cast<int>(wh.x);
+  out.height = static_cast<int>(wh.y);
+  out.background = color_field(ctx, info, "background", "config.background");
+  out.window = window_config(ctx, info);
+  return out;
 }
 
 }  // namespace
@@ -89,6 +117,14 @@ render::Frame Host::frame(float blend) {
   else if (!reload_error_.empty()) f.texts = error_overlay(reload_error_, static_cast<float>(info_.width));
 #endif
   return f;
+}
+
+void Host::resize_view(core::Vec2 size) {
+  ScriptState& s = vm_->main();
+  if (s.view_size == size) return;
+  s.view_size = size;
+  if (s.world) s.world->resize_view(size);
+  if (s.ui) s.ui->resize(static_cast<int>(size.x), static_cast<int>(size.y));
 }
 
 bool Host::reaches_game(const SDL_Event& event) {

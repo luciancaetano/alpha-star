@@ -43,6 +43,25 @@ runs stay deterministic; `expect.animation("player").equals("run")` checks one.
 `alpha export` packs PNG images and sheets into `alpha-atlas-N.png` pages (fewer draw
 calls; transparent to game code) and copies maps with their tilesets and images.
 
+## Particles, looks, layers, world text, window
+
+```ts
+// One way to make particles: an `emitter` on a spawn spec (data). It rides on its entity.
+ctx.spawn({ tags: ["dust"], pos: feet, layer: "fx",
+  emitter: { burst: 10, oneShot: true, lifetime: [0.3, 0.5], speed: [20, 50], angle: [190, 350],
+             gravity: [0, 60], size: [5, 2], color: ["#b89a6cff", "#b89a6c00"], shape: "rect" } });
+bird.emit(8);                         // burst on an entity spawned with an emitter
+e.tint = "#ff000080"; e.alpha = 0.5;  // any shape: tint, alpha, blend "alpha" | "add" | "multiply"
+ctx.spawn({ tags: ["popup"], pos, shape: { text: "+1", font: "pixel", size: 8, color: "#ffe14d" } });
+```
+
+`config.layers: { far: { z: -100, parallax: 0.2 }, fx: { z: 100 } }` + `layer: "far"` on specs
+(and `spawnMap(name, { layer, layers })` for tile layers). `config.window: { fullscreen?, scaling:
+"letterbox" | "integer" | "stretch" | "expand", resizable?, altEnter? }`; `ctx.window.fullscreen`,
+`ctx.window.size`. Particles run on the fixed step with the game's seeded random, so
+`simulate(...).expect.particles().equals(n)` is exact. MCP `game_state` entities carry `layer`,
+`alpha`, `text` and `particles`.
+
 ## Using alpha-star with an AI agent (MCP)
 
 `alpha mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server

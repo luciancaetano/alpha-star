@@ -108,3 +108,16 @@ TEST_CASE("blend interpolates center, zoom and rotation") {
   CHECK(m.zoom == doctest::Approx(2.0f));
   CHECK(m.rotation == doctest::Approx(45.0f));
 }
+
+TEST_CASE("parallax scales the camera's offset, zoom and rotation per layer") {
+  const alpha::core::View v{{260, 90}, 2.0f, 10.0f, {320, 180}};
+  const auto bg = alpha::core::parallax_view(v, 0.25f);
+  CHECK(bg.center.x == doctest::Approx(185.0f));
+  CHECK(bg.center.y == doctest::Approx(90.0f));
+  CHECK(bg.zoom == doctest::Approx(1.25f));
+  CHECK(bg.rotation == doctest::Approx(2.5f));
+  const auto fixed = alpha::core::parallax_view(v, 0.0f);
+  CHECK(fixed.center.x == doctest::Approx(160.0f));
+  CHECK(fixed.zoom == doctest::Approx(1.0f));
+  CHECK(alpha::core::parallax_view(v, 1.0f).center.x == 260.0f);
+}

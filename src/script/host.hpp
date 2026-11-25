@@ -10,6 +10,7 @@
 
 #include "core/controls.hpp"
 #include "core/log_ring.hpp"
+#include "core/window.hpp"
 #include "render/renderer.hpp"
 #include "script/vm.hpp"
 
@@ -20,6 +21,7 @@ struct GameInfo {
   int width = 640;
   int height = 360;
   core::Color background{0, 0, 0, 255};
+  core::WindowConfig window;  // config.window
 };
 
 // One exported test function of a test module; error is empty when it passed.
@@ -83,6 +85,14 @@ class Host {
   void draw_ui(SDL_Renderer* sdl, double now);
   // Frees the UI's textures; call before destroying the SDL renderer.
   void release_ui();
+
+  // ctx.window: the engine applies its fullscreen request and writes the
+  // real state every frame (platform::sync_window).
+  core::WindowState& window() { return vm_->main().window; }
+  const GameInfo& info() const { return info_; }
+  // The screen shows `size` game pixels now (scaling "expand"): the scene
+  // camera, later scenes and the UI follow.
+  void resize_view(core::Vec2 size);
 
   // Audio produced by the game; the platform layer drains it every frame.
   core::Mixer& mixer() { return vm_->main().mixer; }

@@ -16,6 +16,7 @@
 #include "platform/log_file.hpp"
 #include "platform/gamepads.hpp"
 #include "platform/sdl_input.hpp"
+#include "platform/window.hpp"
 #include "render/renderer.hpp"
 #include "script/host.hpp"
 #include "script/hot_reload.hpp"
@@ -25,6 +26,9 @@
 #endif
 #if ALPHA_MCP
 #include "mcp/control.hpp"
+#endif
+#if ALPHA_DEBUG_TOOLS
+#include "script/test_report.hpp"
 #endif
 
 // Composition root: alpha_star <pack-dir | game.js> [options]  (pack = `alpha export` output)
@@ -89,7 +93,6 @@ Control make_control(const alpha::core::CliOptions&, alpha::script::Host& host, 
   return Control{host, std::move(devices)};
 }
 #endif
-constexpr float kWindowScale = 1.5f;
 
 using Options = alpha::core::CliOptions;
 
@@ -124,6 +127,7 @@ bool pump(Devices& d, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_EVENT_QUIT) return false;
     hot_plug(d, event);
+    if (alpha::platform::window_event(event, host.info().window, host.window())) continue;
     if (!tools.handle(event)) continue;
     SDL_Event logical = event;
     SDL_ConvertEventToRenderCoordinates(sdl, &logical);
@@ -181,7 +185,13 @@ void report_render([[maybe_unused]] const Options& o, [[maybe_unused]] const alp
 #endif
 }
 
-void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools) {
+// ctx.window requests applied, real state recorded; with expand the scene sees the new size.
+void sync_window(SDL_Window* window, alpha::script::Host& host, const alpha::render::Renderer& renderer) {
+  alpha::platform::sync_window(window, host.window());
+  host.resize_view(renderer.logical_size());
+}
+
+void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools, SDL_Window* window) {
   alpha::platform::AudioOut audio;
   if (!audio.ok()) SDL_Log("no audio device (%s); running silent", SDL_GetError());
   Devices d;
@@ -199,6 +209,7 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
     const int steps = control.steps(steps_for_frame(o, clock, tools, elapsed));
     for (int s = 0; s < steps; ++s) control.step();
     d.pads.rumble(host.take_rumble());
+    sync_window(window, host, renderer);
     audio.pump(host.mixer());
     draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps}, blend_for(o, clock, tools, control));
     hot_reload.poll(host, static_cast<double>(SDL_GetTicksNS()) / 1e9);
@@ -210,31 +221,6 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
   report_render(o, renderer);
 }
 
-#if ALPHA_DEBUG_TOOLS
-// Error text indented under its FAIL line, without trailing blank lines.
-std::string indented(const std::string& text) {
-  std::string out;
-  for (const char c : text.substr(0, text.find_last_not_of("\r\n") + 1)) {
-    out += c == '\n' ? std::string("\n    ") : std::string(1, c);
-  }
-  return out;
-}
-
-int run_tests(const std::string& path, const std::string& asset_dir) {
-  alpha::script::Host host([](const std::string&) { return std::string(); });
-  const auto results = host.test(path, asset_dir);
-  std::size_t failed = 0;
-  for (const auto& r : results) {
-    failed += r.passed() ? 0U : 1U;
-    if (r.passed()) std::printf("PASS %s\n", r.name.c_str());
-    else std::printf("FAIL %s\n    %s\n", r.name.c_str(), indented(r.error).c_str());
-  }
-  if (results.empty()) std::printf("no tests: %s exports no functions\n", path.c_str());
-  std::printf("%zu passed, %zu failed\n", results.size() - failed, failed);
-  return failed == 0 && !results.empty() ? 0 : 1;
-}
-
-#endif
 
 // No game argument and no fused pack: tell the developer (usage) or the player.
 int no_game() {
@@ -267,7 +253,7 @@ int main(int argc, char** argv) {
   const std::vector<std::string_view> args(argv + 1, argv + argc);
   const Options options = alpha::core::parse_cli(args);
 #if ALPHA_DEBUG_TOOLS
-  if (!options.test_file.empty()) return run_tests(options.test_file, options.test_assets);
+  if (!options.test_file.empty()) return alpha::script::run_test_file(options.test_file, options.test_assets);
 #endif
   const std::string game = options.game.empty() ? fused_pack() : options.game;
   if (game.empty()) return no_game();
@@ -280,17 +266,14 @@ int main(int argc, char** argv) {
   SDL_Log("alpha-star %s", alpha::core::version().data());
   SDL_Window* window = nullptr;
   SDL_Renderer* sdl = nullptr;
-  const auto w = static_cast<int>(static_cast<float>(info.width) * kWindowScale);
-  const auto h = static_cast<int>(static_cast<float>(info.height) * kWindowScale);
-  if (!SDL_CreateWindowAndRenderer(info.title.c_str(), w, h, SDL_WINDOW_RESIZABLE | (options.hidden ? SDL_WINDOW_HIDDEN : 0), &window, &sdl)) {
-    return fail("SDL_CreateWindowAndRenderer");
-  }
+  const alpha::core::Vec2 size{static_cast<float>(info.width), static_cast<float>(info.height)};
+  if (!alpha::platform::open_window({info.title, size, info.window, options.hidden}, &window, &sdl)) return fail("SDL_CreateWindowAndRenderer");
   limit_latency(sdl);
-  alpha::render::Renderer renderer(sdl, info.width, info.height);
+  alpha::render::Renderer renderer(sdl, info.width, info.height, info.window.scaling);
   {
     Tools tools(window, sdl);  // gone before its renderer
     if (options.devtools) tools.toggle();
-    run(options, host, renderer, tools);
+    run(options, host, renderer, tools, window);
   }
   host.release_ui();
   SDL_DestroyRenderer(sdl);

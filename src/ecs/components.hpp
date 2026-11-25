@@ -6,6 +6,7 @@
 #include <string>
 
 #include "core/entity_spec.hpp"
+#include "core/particles.hpp"
 
 // ECS components. Data only; World owns all logic.
 namespace alpha::ecs {
@@ -41,6 +42,16 @@ struct Animator {
   core::SheetPtr sheet;
   std::string name;
   float time = 0.0f;  // seconds since this animation started
+};
+
+// The draw layer the entity was spawned on (every entity has one).
+struct Layered {
+  core::Layer layer;
+};
+
+// A particle emitter riding on the entity (particles in world space).
+struct Emission {
+  core::Emitter emitter;
 };
 
 struct PhysicsBody {

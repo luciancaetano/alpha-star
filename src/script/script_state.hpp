@@ -5,9 +5,12 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "core/image.hpp"
 #include "core/controls.hpp"
+#include "core/glyph_layout.hpp"
+#include "core/window.hpp"
 #include "core/mixer.hpp"
 #include "core/random.hpp"
 #include "core/sheet.hpp"
@@ -38,6 +41,14 @@ struct ScriptState {
   core::SheetTable sheets;
   // Decoded image files by full path: an atlas page or tileset is decoded once.
   std::map<std::string, core::ImagePtr, std::less<>> decoded;
+  // assets.fonts files by name (RmlUi loads them too) and world-text atlases
+  // rasterized from them, per (font, pixel size).
+  std::map<std::string, std::filesystem::path, std::less<>> fonts;
+  std::map<std::pair<std::string, int>, core::FontAtlasPtr> font_atlases;
+  // config.layers by name.
+  std::map<std::string, core::Layer, std::less<>> layers;
+  // ctx.window: written by the engine every frame (headless: as scripts set it).
+  core::WindowState window;
   core::Mixer mixer;
   // Game UI (assets.ui documents), created at boot with config.size.
   std::unique_ptr<ui::Ui> ui;

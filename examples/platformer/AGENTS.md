@@ -29,6 +29,7 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 | `src/types.ts` | Every name: actions, axes, sounds, tags, **sheets -> animation names**, **maps**, UI ids, scenes. Edit first. |
 | `src/tuning.ts` | Speeds, jump, gravity, camera lerp/deadzone/shake. Change feel here. |
 | `src/prefabs/player.ts`, `coin.ts` | `EntitySpec`s using sheets (`shape: { sheet, animation }`). |
+| `src/prefabs/effects.ts` | Landing dust (one-shot `emitter`), the "+1" world text, parallax hills (`layer: "far"`). |
 | `src/scenes/play.ts` | Spawns the map, the player at the `player` spawn point, coins at `coin` points; movement, animation choice, landing shake. |
 | `src/scenes/won.ts` | All coins collected. |
 | `assets/img/*.png` | Sprite sheets (16x16 hero frames: 0 idle, 1-4 run, 5 jump, 6 fall; 8x8 coin spin). |
@@ -49,7 +50,12 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 - **Camera:** `ctx.camera.follow(entity, { lerp, deadzone })`, `ctx.camera.bounds([x, y, w, h])`
   (here the map size), `ctx.camera.shake(px, seconds)`, `zoom`, `rotation`, `pos.x/y`.
   `ctx.camera.toWorld(ctx.input.mouse())` turns the pointer into world coordinates. The HUD never moves.
-- **Tests:** `expect.animation("player").equals("run")`, `expect.count("coin")`, held movement with
+- **Effects:** `config.layers` in `main.ts` (`far` scrolls at 0.2 of the camera, `fx` draws on top);
+  `layer: "far"` on a spec puts it there. Dust is `emitter: { burst, oneShot: true, ... }` (its entity
+  goes away with the last particle); `entity.emit(n)` bursts on demand. World text:
+  `shape: { text, font: "pixel", size, color }`, `entity.text = "..."`, fade with `entity.alpha`.
+  `config.window.scaling: "integer"` keeps pixels square (Alt+Enter: fullscreen).
+- **Tests:** `expect.animation("player").equals("run")`, `expect.particles().atLeast(n)`, `expect.count("coin")`, held movement with
   `inputs: { axes: { moveX: [[0, 1]] } }` (value held from that frame on). Same inputs, same run.
 
 Errors are written for you: a misspelled sheet, animation, map or layer names what exists.

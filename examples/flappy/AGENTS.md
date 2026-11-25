@@ -82,6 +82,14 @@ the export copies each declared file into the pack and fails naming any missing 
   controller user should land on. Fonts: `assets.fonts` name = `font-family`. Files a document links
   (`<link href>`, `src=`, `url()`) are packed automatically. A UI click/press the UI used never also
   triggers the game action (no double flap).
+- **Particles:** `emitter: { rate, burst, lifetime, speed, angle, gravity, size, color, shape, max, oneShot }`
+  on a spec; `entity.emit(n)` bursts (the bird throws 8 feathers per flap). Deterministic (game seed).
+  `expect.particles().equals(n)` in tests.
+- **Look:** `tint`, `alpha` (0..1), `blend: "alpha" | "add" | "multiply"` on any shape, also settable at
+  runtime (`entity.alpha = 0.5`); the game-over screen fades a black rect's alpha in `update`.
+  World text: `shape: { text, font?, size, color, align }`. Layers: `config.layers` + `layer:` on specs.
+- **Window:** `config.window: { fullscreen?, scaling: "letterbox" | "integer" | "stretch" | "expand" }`,
+  `ctx.window.fullscreen = true`; Alt+Enter toggles (opt out: `altEnter: false`).
 - **Collision:** in `enter`, `ctx.onHit("a", "b", fn)` (solid) or `ctx.onEnter("a", "b", fn)` (sensor).
 - **Timed event:** `ctx.every(seconds, fn)` / `ctx.after(seconds, fn)`. Never `setTimeout`.
 - **Debug output:** `console.log(...)` / `console.warn` / `console.error` print to stderr and to the

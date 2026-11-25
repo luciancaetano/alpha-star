@@ -1,6 +1,7 @@
 #include "render/tessellate.hpp"
 
 #include "core/camera.hpp"
+#include "core/particles.hpp"
 
 #include <array>
 #include <cmath>
@@ -18,15 +19,7 @@ struct Placement {
 
 
 void circle(float radius, const Placement& p, core::Color color, std::vector<Vertex>& out) {
-  const float r = radius + p.grow;
-  const float step = 2.0f * std::numbers::pi_v<float> / kCircleSegments;
-  for (int i = 0; i < kCircleSegments; ++i) {
-    const float a0 = step * static_cast<float>(i);
-    const float a1 = step * static_cast<float>(i + 1);
-    out.push_back({p.pos, color, {}});
-    out.push_back({p.pos + core::Vec2{std::cos(a0) * r, std::sin(a0) * r}, color, {}});
-    out.push_back({p.pos + core::Vec2{std::cos(a1) * r, std::sin(a1) * r}, color, {}});
-  }
+  fan(p.pos, radius + p.grow, kCircleSegments, color, out);
 }
 
 void rect(core::Vec2 size, const Placement& p, core::Color color, std::vector<Vertex>& out) {
@@ -51,11 +44,23 @@ void shape(const core::Geometry& g, const Placement& p, core::Color color,
 
 }  // namespace
 
-void tessellate(const core::DrawItem& item, std::vector<Vertex>& out) {
-  if (item.shape.outline) {
-    shape(item.shape.geometry, {item.pos, item.rotation, kOutlineWidth}, *item.shape.outline, out);
+void fan(core::Vec2 center, float radius, int segments, core::Color color, std::vector<Vertex>& out) {
+  const float step = 2.0f * std::numbers::pi_v<float> / static_cast<float>(segments);
+  for (int i = 0; i < segments; ++i) {
+    const float a0 = step * static_cast<float>(i);
+    const float a1 = a0 + step;
+    out.push_back({center, color, {}});
+    out.push_back({center + core::Vec2{std::cos(a0) * radius, std::sin(a0) * radius}, color, {}});
+    out.push_back({center + core::Vec2{std::cos(a1) * radius, std::sin(a1) * radius}, color, {}});
   }
-  shape(item.shape.geometry, {item.pos, item.rotation, 0.0f}, item.shape.fill, out);
+}
+
+void tessellate(const core::DrawItem& item, std::vector<Vertex>& out) {
+  const core::ShapeSpec& s = item.shape;
+  if (s.outline) {
+    shape(s.geometry, {item.pos, item.rotation, kOutlineWidth}, core::shade(*s.outline, s.tint, s.alpha), out);
+  }
+  shape(s.geometry, {item.pos, item.rotation, 0.0f}, core::shade(s.fill, s.tint, s.alpha), out);
 }
 
 std::vector<Vertex> tessellate(std::span<const core::DrawItem> items) {

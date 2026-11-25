@@ -19,6 +19,10 @@ struct EntityView {
   std::vector<std::string> tags;
   std::optional<core::Vec2> velocity;  // only entities with a body
   std::string animation{};             // playing sheet animation, "" for none
+  std::string layer{};                 // config.layers name, "" for the default layer
+  float alpha = 1.0f;                  // the look's alpha (1 without a look)
+  std::optional<std::string> text{};   // world text
+  int particles = 0;                   // live particles of its emitter
 };
 
 // Living entities, oldest first; with a filter, only those having a tag whose

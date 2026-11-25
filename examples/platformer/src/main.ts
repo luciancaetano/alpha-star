@@ -16,6 +16,10 @@ export default game({
       restart: ["R", "GamepadStart"],
     },
     axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"] },
+    // Far hills scroll at a fifth of the camera's speed; effects draw over the level.
+    layers: { far: { z: -100, parallax: 0.2 }, fx: { z: 100 } },
+    // Pixel art: whole-number scaling only (nearest filtering), so every pixel stays square.
+    window: { scaling: "integer" },
   },
   start: "play",
   scenes: { play, won },

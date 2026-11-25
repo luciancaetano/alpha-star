@@ -3,7 +3,7 @@ import { scene } from "../alpha";
 import { bird } from "../prefabs/bird";
 import { ground } from "../prefabs/ground";
 import { pipePair } from "../prefabs/pipes";
-import { BIRD, PIPE } from "../tuning";
+import { BIRD, FEATHERS, PIPE } from "../tuning";
 import type { Flappy } from "../types";
 
 type Play = Context<Flappy, { score: number }>;
@@ -36,6 +36,7 @@ export default scene("play", {
     const b = ctx.find("bird");
     if (ctx.input.pressed("flap")) {
       b.body.velocity = [0, BIRD.flap];
+      b.emit(FEATHERS.count);
       ctx.audio.play("flap");
     }
     b.rotation = Math.min(BIRD.maxTilt, Math.max(-30, b.body.velocity.y * 0.15));

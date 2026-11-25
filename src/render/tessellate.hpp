@@ -19,6 +19,8 @@ inline constexpr float kOutlineWidth = 2.0f;
 // Turns shapes into a triangle list (3 vertices per triangle), in order.
 // Outlined shapes emit the outline (grown by kOutlineWidth) before the fill.
 std::vector<Vertex> tessellate(std::span<const core::DrawItem> items);
+// Appends a filled circle of `segments` triangles around `center`.
+void fan(core::Vec2 center, float radius, int segments, core::Color color, std::vector<Vertex>& out);
 // Appends one plain shape's triangles.
 void tessellate(const core::DrawItem& item, std::vector<Vertex>& out);
 

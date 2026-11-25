@@ -30,12 +30,12 @@ core::Vec2 xy_args(JSContext* ctx, JSValueConst* argv, const std::string& what) 
 }
 
 JSValue reset_world(JSContext*, ScriptState& s, JSValueConst*) {
-  s.world = std::make_unique<ecs::World>(s.gravity, s.view_size);
+  s.world = std::make_unique<ecs::World>(s.gravity, s.view_size, &s.random);
   return JS_UNDEFINED;
 }
 
 JSValue spawn(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  return JS_NewUint32(ctx, world(s).spawn(parse_entity_spec(ctx, argv[0], s.tags, {s.images, s.sheets})));
+  return JS_NewUint32(ctx, world(s).spawn(parse_entity_spec(ctx, argv[0], s)));
 }
 
 JSValue destroy(JSContext* ctx, ScriptState& s, JSValueConst* argv) {

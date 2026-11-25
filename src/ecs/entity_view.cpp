@@ -21,9 +21,20 @@ bool matches(const std::vector<std::string>& names, std::string_view filter) {
 }
 
 EntityView view_of(const World& world, EntityId id, const core::TagRegistry& tags) {
-  EntityView v{id, world.position(id), world.rotation(id), world.z(id), tag_names(world.tags(id), tags), {}, {}};
+  EntityView v;
+  v.id = id;
+  v.pos = world.position(id);
+  v.rotation = world.rotation(id);
+  v.z = world.z(id);
+  v.tags = tag_names(world.tags(id), tags);
   if (world.has_body(id)) v.velocity = world.velocity(id);
   v.animation = world.animation(id);
+  v.layer = world.layer(id).name;
+  if (const core::ShapeSpec* look = world.try_look(id)) {
+    v.alpha = look->alpha;
+    if (look->text) v.text = look->text->text;
+  }
+  v.particles = world.has_emitter(id) ? world.emitter(id).count() : 0;
   return v;
 }
 

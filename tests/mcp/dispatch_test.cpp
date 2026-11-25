@@ -24,7 +24,7 @@ struct FakeSession final : Session {
     s.paused = paused;
     s.frame = 42;
     s.fps = 60;
-    s.entities.push_back({7, {1.5f, 2}, 90, 1, {"bird"}, alpha::core::Vec2{0, -3}});
+    s.entities.push_back({7, {1.5f, 2}, 90, 1, {"bird"}, alpha::core::Vec2{0, -3}, "", "", 1.0f, std::nullopt, 0});
     s.ui["hud"] = {true, {{"score", "3"}}};
     return s;
   }
@@ -93,7 +93,7 @@ TEST_CASE("control: state reports scene, pause, entities and UI") {
   CHECK(line.find(R"("scene":"title")") != std::string::npos);
   CHECK(line.find(R"("error":null)") != std::string::npos);
   CHECK(line.find(R"("frame":42)") != std::string::npos);
-  CHECK(line.find(R"({"id":7,"tags":["bird"],"pos":[1.5,2],"rotation":90,"z":1,"velocity":[0,-3],"animation":null})") !=
+  CHECK(line.find(R"({"id":7,"tags":["bird"],"pos":[1.5,2],"rotation":90,"z":1,"velocity":[0,-3],"animation":null,"layer":null,"alpha":1,"text":null,"particles":0})") !=
         std::string::npos);
   CHECK(line.find(R"("ui":{"hud":{"shown":true,"texts":{"score":"3"}}})") != std::string::npos);
 }

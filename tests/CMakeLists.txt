@@ -4,6 +4,9 @@ set(ALPHA_TEST_SOURCES
   core/cli_test.cpp
   core/axes_test.cpp
   core/camera_test.cpp
+  core/glyph_layout_test.cpp
+  core/window_test.cpp
+  core/particles_test.cpp
   core/input_test.cpp
   core/log_ring_test.cpp
   core/pack_watch_test.cpp
@@ -24,6 +27,8 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     platform/gamepads_test.cpp
     platform/log_file_test.cpp
     platform/sdl_input_test.cpp
+    platform/window_test.cpp
+    render/effects_render_test.cpp
     render/renderer_test.cpp
     render/tessellate_test.cpp
     script/error_overlay_test.cpp
@@ -34,7 +39,9 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/reload_test.cpp
     script/map_script_test.cpp
     script/simulate_test.cpp
+    script/effects_script_test.cpp
     script/sprite_script_test.cpp
+    script/test_report_test.cpp
     script/console_test.cpp
     script/host_fixture.cpp
     script/ui_script_test.cpp
@@ -67,6 +74,7 @@ endif()
 add_executable(alpha_tests ${ALPHA_TEST_SOURCES})
 target_link_libraries(alpha_tests PRIVATE ${ALPHA_TEST_LIBS} doctest::doctest)
 target_include_directories(alpha_tests PRIVATE script)
-target_compile_definitions(alpha_tests PRIVATE DOCTEST_CONFIG_USE_STD_HEADERS)
+target_compile_definitions(alpha_tests PRIVATE DOCTEST_CONFIG_USE_STD_HEADERS
+  ALPHA_TEST_FONT="${PROJECT_SOURCE_DIR}/examples/flappy/assets/fonts/PressStart2P-Regular.ttf")
 alpha_set_warnings(alpha_tests)
 add_test(NAME alpha_tests COMMAND alpha_tests)

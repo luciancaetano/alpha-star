@@ -214,4 +214,6 @@ void Ui::render(SDL_Renderer* sdl) {
   renderer_.end();
 }
 
+void Ui::resize(int width, int height) { context_->SetDimensions({width, height}); }
+
 }  // namespace alpha::ui

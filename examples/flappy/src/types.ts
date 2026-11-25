@@ -3,7 +3,7 @@ export interface Flappy {
   actions: "flap" | "restart";
   sounds: "flap" | "point";
   images: never;
-  tags: "bird" | "solid" | "goal" | "scrolls";
+  tags: "bird" | "solid" | "goal" | "scrolls" | "fade";
   /** UI documents (assets/ui/*.rml) -> ids of the elements scripts touch. */
   ui: {
     title: never;
