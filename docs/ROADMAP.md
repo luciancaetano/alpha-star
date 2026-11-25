@@ -16,7 +16,8 @@ build/gate/container at a time, `podman machine start` only for the Linux gate a
 | 3 | Dear ImGui dev tools (F1) | done d17227e |
 | - | Render interpolation (frame pacing) | done 69d5ea1 |
 | - | Low latency: D3D11 frame queue 1, short audio buffer | branch fix/latency 588c3af — merge after step 4 |
-| 4 | RmlUi game UI (old ctx.ui dropped) + UI gamepad navigation | in progress |
+| 4 | RmlUi game UI (old ctx.ui dropped) + UI gamepad navigation | done (this commit; LOG 101-113) |
+| 4b | Build flavors via compile flags (#if): ALPHA_DEVTOOLS (exists), ALPHA_MCP, ALPHA_DEBUG_TOOLS (headless CLI flags, --test runner/alpha/test, diagnostics), umbrella ALPHA_SHIPPING (forces all off, LTO, stripped, WIN32 subsystem/no console, asserts off); presets dev/release/shipping; `alpha export --standalone` ships the shipping engine; CI/test asserts the shipping binary has no devtools/MCP/test-runner symbols or strings; AGENTS.md rule: every dev/debug feature lands behind its flag | todo |
 | 5 | Gameplay joystick: axes, triggers, deadzone, players, rumble, hot-plug, simulate axes | todo |
 | 6 | MCP server (agent drives the game: start, input, state, screenshots, errors) | todo |
 | 7 | Hot reload (pack re-export -> running engine reloads) | todo |

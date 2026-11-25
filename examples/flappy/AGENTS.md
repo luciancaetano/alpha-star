@@ -26,12 +26,13 @@ the export copies each declared file into the pack and fails naming any missing 
 
 | File | Holds |
 |---|---|
-| `src/types.ts` | Every name: actions, sounds, tags, scenes + their params. **Edit first.** |
+| `src/types.ts` | Every name: actions, sounds, tags, scenes + their params, UI documents + element ids. **Edit first.** |
 | `src/alpha.ts` | `define<Flappy>()` → typed `scene` / `game`. Never edit. |
 | `src/tuning.ts` | Gameplay numbers (sizes, speeds, timings). Change feel here, not in scenes. |
 | `src/prefabs/*.ts` | Pure functions returning `EntitySpec` (plain data). |
 | `src/scenes/*.ts` | One scene per file: `export default scene("name", {...})`. |
-| `src/ui.ts` | Small UI helpers. |
+| `assets/ui/*.rml` | UI screens (RmlUi: HTML-like). `flappy.rcss` = shared CSS-like style. |
+| `assets/fonts/` | Press Start 2P (OFL, license in `OFL.txt`), `font-family: pixel`. |
 | `src/main.ts` | `game({ config, start, scenes, assets })`. Registers every scene. |
 | `test/main.test.ts` | Headless `simulate()` tests. |
 
@@ -47,6 +48,16 @@ the export copies each declared file into the pack and fails naming any missing 
 - **New entity kind:** add its tag to `tags`, write a prefab in `src/prefabs/`, `ctx.spawn(prefab())`.
 - **New scene:** add `name: Params | undefined` to `scenes`, create `src/scenes/name.ts`,
   register it in `main.ts` `scenes`. The compiler lists what is missing.
+- **UI (RmlUi):** screens are `.rml` documents styled with `.rcss` in `assets/ui/`. Declare each in
+  `main.ts` `assets.ui` and its scripted element ids in `types.ts` `ui` (`never` = only shown/hidden).
+  In a scene: `ctx.ui.show("hud")`, `ctx.ui.hide("hud")`, `ctx.ui.set("hud", "score", n)` (plain text),
+  `ctx.ui.on("over", "again", "click", fn)` (mouse, touch, Enter/Space or gamepad A on focus) and
+  `"back"` (Escape / gamepad B while shown). Scene change hides every document, reloads it and drops
+  its handlers. RmlUi has no default stylesheet: give `div`/`p`/`h1` `display: block`; buttons need
+  `tab-index: auto` (focusable by D-pad/stick/Tab) and a `:focus` style; `autofocus` on the button a
+  controller user should land on. Fonts: `assets.fonts` name = `font-family`. Files a document links
+  (`<link href>`, `src=`, `url()`) are packed automatically. A UI click/press the UI used never also
+  triggers the game action (no double flap).
 - **Collision:** in `enter`, `ctx.onHit("a", "b", fn)` (solid) or `ctx.onEnter("a", "b", fn)` (sensor).
 - **Timed event:** `ctx.every(seconds, fn)` / `ctx.after(seconds, fn)`. Never `setTimeout`.
 - **Debug output:** `console.log(...)` / `console.warn` / `console.error` print to stderr and to the
@@ -75,9 +86,10 @@ the SDK is a release build and has no dev tools; nothing in a game can depend on
 
 ## Tests
 
-Write a `simulate(game, { scene, seconds, inputs })` test for each behavior you
-add. Inputs are action → frame numbers, so runs are reproducible. Assert outcomes
-(`expect.scene`, `expect.count`, `expect.noErrors`), not internals.
+Write a `simulate(game, { scene, seconds, inputs, clicks })` test for each behavior you
+add. Inputs are action → frame numbers, clicks are `"document#elementId"` → frame numbers, so
+runs are reproducible. Assert outcomes (`expect.scene`, `expect.count`, `expect.noErrors`,
+`expect.shown("hud")`, `expect.text("hud", "score").equals("3")`), not internals.
 
 - Every exported function in `test/main.test.ts` is one test; `npm test` (= `alpha test`)
   prints `PASS name` / `FAIL name` + the error with `src/...ts:line:col`, exit code 1 on any failure.

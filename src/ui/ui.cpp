@@ -8,6 +8,8 @@
 #include <RmlUi/Core/Input.h>
 #include <RmlUi/Core/StringUtilities.h>
 
+#include <filesystem>
+
 #include "core/error.hpp"
 
 namespace alpha::ui {
@@ -60,7 +62,8 @@ Ui::~Ui() {
 
 Rml::ElementDocument* Ui::load(const std::string& path) {
   take_messages();
-  Rml::ElementDocument* doc = context_->LoadDocument(path);
+  // Forward slashes: RmlUi parses the document path as a URL to resolve its references.
+  Rml::ElementDocument* doc = context_->LoadDocument(std::filesystem::path(path).generic_string());
   if (!doc) throw core::Error("cannot load " + path + ": " + take_messages());
   doc->AddEventListener(Rml::EventId::Click, &listener_);
   return doc;

@@ -11,7 +11,8 @@ namespace alpha::ui {
 // geometry, textures (images through our image loader, premultiplied) and
 // scissor. No transforms, filters or shaders. Coordinates are the game's
 // logical pixels: the engine's renderer sets the logical presentation.
-// Until a renderer is attached (headless runs) nothing is drawn or uploaded.
+// Until a renderer is attached (headless runs) nothing is drawn or uploaded;
+// textures are decoded anyway (layout needs their size) and uploaded on first draw.
 class RmlRenderer final : public Rml::RenderInterface {
  public:
   RmlRenderer();
@@ -33,7 +34,8 @@ class RmlRenderer final : public Rml::RenderInterface {
   void SetScissorRegion(Rml::Rectanglei region) override;
 
  private:
-  SDL_Texture* upload(const Rml::byte* rgba, Rml::Vector2i dimensions);
+  // The SDL texture for a handle, uploaded on first use; null for no texture.
+  SDL_Texture* uploaded(Rml::TextureHandle handle);
 
   SDL_Renderer* sdl_ = nullptr;
   SDL_BlendMode premultiplied_;

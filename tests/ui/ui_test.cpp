@@ -169,6 +169,7 @@ TEST_CASE("ui: held D-pad repeats focus moves on tick") {
 
 TEST_CASE("ui renderer draws styled elements into an SDL renderer") {
   Menu m;
+  m.ui.reset();  // a scene change reloads documents; they still draw
   m.ui.show("menu");
   SDL_Surface* surface = SDL_CreateSurface(100, 100, SDL_PIXELFORMAT_RGBA32);
   SDL_Renderer* sdl = SDL_CreateSoftwareRenderer(surface);

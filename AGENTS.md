@@ -22,7 +22,7 @@ QuickJS-ng scripts that AI agents write for vibecoder users.
 ## Layout
 
 ```
-src/<module>/   engine code; one module per folder (core, ecs, physics, render, platform, script, devtools, mcp)
+src/<module>/   engine code; one module per folder (core, ecs, physics, render, platform, script, ui, devtools, mcp)
 tests/<module>/ doctest tests mirroring src/
 alpha-sdk/      npm package: script API types + `alpha` CLI (check/export/run) + bundled engines
 tools/          harness levers (limits, crapper, dryer, mutator)
@@ -48,6 +48,10 @@ python tools/crapper.py [cov.xml]  # CRAP per function (Cobertura coverage)
 python tools/dryer.py              # duplication report
 python tools/mutator.py            # mutation testing over src/
 ```
+
+Game UI is RmlUi (`src/ui/`, `.rml`/`.rcss` in `assets.ui`); Dear ImGui is engine dev tools only.
+Input order: dev tools → game UI (`ui::consumes`) → game actions; what the UI consumed never drives actions.
+Builds and gates: `CMAKE_BUILD_PARALLEL_LEVEL=8` (the Linux gate also runs with `--cpus 8`); one build at a time.
 
 Dev tools (Dear ImGui, F1; `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`
 (ON in preset dev, OFF in release): never put game-facing features in `src/devtools/`.

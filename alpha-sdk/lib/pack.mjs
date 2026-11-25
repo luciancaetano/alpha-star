@@ -1,6 +1,8 @@
 // Exporter: compiles a game and assembles a self-contained pack directory
 //   <out>/main.js        the bundled game
-//   <out>/<asset paths>  every file declared in game.assets, same relative paths
+//   <out>/<asset paths>  every file declared in game.assets, plus the files UI
+//                        documents reference (<link href>, src=, url(), image()),
+//                        same relative paths
 // The engine runs a pack with: alpha_star <out>
 import fs from "node:fs";
 import os from "node:os";

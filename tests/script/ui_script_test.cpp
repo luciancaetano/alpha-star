@@ -155,7 +155,7 @@ TEST_CASE("simulate: clicks by document#id and text expectations") {
 
 TEST_CASE("script ui: drawn over the game; release frees its textures") {
   Sandbox box;
-  box.write("menu.rml", "<rml><head><style>body { width: 100%; height: 100%; } #start { width: 100px; height: 100px; "
+  box.write("menu.rml", "<rml><head><style>body { width: 100%; height: 100%; } #start { display: block; width: 100px; height: 100px; "
             "background-color: #ff0000; }</style></head><body><div id=\"start\"></div></body></rml>");
   box.write("hud.rml", alpha::test::rml({"score"}));
   Host host(box.save());

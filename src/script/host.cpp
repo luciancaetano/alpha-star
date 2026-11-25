@@ -138,7 +138,7 @@ std::vector<TestResult> Host::test(const std::string& path, const std::string& a
 
 std::vector<TestResult> Host::run_tests(const std::string& path, const std::string& asset_dir) {
   JSContext* ctx = engine_->ctx();
-  instances_.main().asset_dir = asset_dir.empty() ? std::filesystem::path(path).parent_path() : asset_dir;
+  instances_.main().asset_dir = asset_dir.empty() ? std::filesystem::path(path).parent_path() : std::filesystem::path(asset_dir);
   const Value names_fn = engine_->import("alpha/test").prop("testNames");
   const Value tests = import_bundle(path);
   std::array<JSValueConst, 1> args{tests.get()};

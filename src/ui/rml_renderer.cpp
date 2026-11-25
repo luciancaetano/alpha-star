@@ -17,6 +17,15 @@ struct Mesh {
   std::vector<int> indices;
 };
 
+// A texture: premultiplied pixels kept on the CPU, uploaded on first draw.
+// RmlUi loads textures during layout, which also happens headless or before
+// the window exists; a handle without pixels would be cached as a failure.
+struct Texture {
+  Rml::Vector2i size;
+  std::vector<Rml::byte> rgba;
+  SDL_Texture* uploaded = nullptr;
+};
+
 SDL_Vertex to_sdl(const Rml::Vertex& v) {
   constexpr float k = 1.0f / 255.0f;
   const Rml::ColourbPremultiplied& c = v.colour;
@@ -68,7 +77,7 @@ void RmlRenderer::RenderGeometry(Rml::CompiledGeometryHandle geometry, Rml::Vect
     v.position.x += translation.x;
     v.position.y += translation.y;
   }
-  SDL_RenderGeometry(sdl_, reinterpret_cast<SDL_Texture*>(texture), scratch_.data(),
+  SDL_RenderGeometry(sdl_, uploaded(texture), scratch_.data(),
                      static_cast<int>(scratch_.size()), mesh->indices.data(),
                      static_cast<int>(mesh->indices.size()));
 }
@@ -77,23 +86,22 @@ void RmlRenderer::ReleaseGeometry(Rml::CompiledGeometryHandle geometry) {
   delete reinterpret_cast<Mesh*>(geometry);
 }
 
-SDL_Texture* RmlRenderer::upload(const Rml::byte* rgba, Rml::Vector2i dimensions) {
-  SDL_Texture* tex = SDL_CreateTexture(sdl_, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC,
-                                       dimensions.x, dimensions.y);
-  if (!tex) return nullptr;
-  SDL_UpdateTexture(tex, nullptr, rgba, dimensions.x * 4);
-  SDL_SetTextureBlendMode(tex, premultiplied_);
-  return tex;
+SDL_Texture* RmlRenderer::uploaded(Rml::TextureHandle handle) {
+  auto* tex = reinterpret_cast<Texture*>(handle);
+  if (!tex || tex->uploaded) return tex ? tex->uploaded : nullptr;
+  tex->uploaded = SDL_CreateTexture(sdl_, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, tex->size.x, tex->size.y);
+  SDL_UpdateTexture(tex->uploaded, nullptr, tex->rgba.data(), tex->size.x * 4);
+  SDL_SetTextureBlendMode(tex->uploaded, premultiplied_);
+  return tex->uploaded;
 }
 
 // `source` is already resolved by RmlUi against the document's own path.
 Rml::TextureHandle RmlRenderer::LoadTexture(Rml::Vector2i& dimensions, const Rml::String& source) {
-  if (!sdl_) return {};
   try {
     core::Image image = platform::load_image(source);
     premultiply(image.rgba);
     dimensions = {image.width, image.height};
-    return reinterpret_cast<Rml::TextureHandle>(upload(image.rgba.data(), dimensions));
+    return reinterpret_cast<Rml::TextureHandle>(new Texture{dimensions, std::move(image.rgba)});
   } catch (const std::exception& e) {
     Rml::Log::Message(Rml::Log::LT_WARNING, "%s", e.what());
     return {};
@@ -101,12 +109,15 @@ Rml::TextureHandle RmlRenderer::LoadTexture(Rml::Vector2i& dimensions, const Rml
 }
 
 Rml::TextureHandle RmlRenderer::GenerateTexture(Rml::Span<const Rml::byte> source, Rml::Vector2i dimensions) {
-  if (!sdl_) return {};
-  return reinterpret_cast<Rml::TextureHandle>(upload(source.data(), dimensions));
+  return reinterpret_cast<Rml::TextureHandle>(new Texture{dimensions, {source.begin(), source.end()}});
 }
 
+// Uploaded textures belong to the attached renderer (Ui::attach releases all
+// textures before switching), so they are destroyed while it still exists.
 void RmlRenderer::ReleaseTexture(Rml::TextureHandle texture) {
-  SDL_DestroyTexture(reinterpret_cast<SDL_Texture*>(texture));
+  auto* tex = reinterpret_cast<Texture*>(texture);
+  if (tex->uploaded) SDL_DestroyTexture(tex->uploaded);
+  delete tex;
 }
 
 void RmlRenderer::EnableScissorRegion(bool enable) {

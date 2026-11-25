@@ -70,8 +70,10 @@ JSValue ui_set(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 }
 
 JSValue ui_on(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  const std::string event = arg(ctx, argv, 2, "event");
   const auto [doc, id] = target(ctx, argv);
-  return JS_NewUint32(ctx, ui_of(s).on(doc, id, arg(ctx, argv, 2, "event")));
+  const std::uint32_t handler = ui_of(s).on(doc, id, event);
+  return JS_NewUint32(ctx, handler);
 }
 
 JSValue ui_click(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
