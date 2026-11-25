@@ -18,6 +18,7 @@ struct InputState {
   std::array<core::InputSet, core::kMaxPlayers> down;
   std::array<core::InputSet, core::kMaxPlayers> pressed;
   std::array<core::AnalogValues, core::kMaxPlayers> analog{};
+  core::Vec2 mouse{};  // from the last motion event (already in game pixels)
 };
 
 // Maps SDL devices to core input codes; nullopt for unmapped buttons/keys.

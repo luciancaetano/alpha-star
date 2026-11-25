@@ -128,3 +128,15 @@ TEST_CASE("held inputs stay down across steps; repeats and unrelated events are 
   apply_event(s, pad(SDL_GAMEPAD_BUTTON_SOUTH, false), slots);
   CHECK(held1(s, slots).none());
 }
+
+TEST_CASE("mouse motion sets the pointer position every later step reports") {
+  InputState s;
+  const alpha::core::PadSlots slots;
+  SDL_Event e{};
+  e.type = SDL_EVENT_MOUSE_MOTION;
+  e.motion.x = 12.5f;
+  e.motion.y = 40.0f;
+  apply_event(s, e, slots);
+  CHECK(consume(s, slots).mouse == alpha::core::Vec2{12.5f, 40.0f});
+  CHECK(consume(s, slots).mouse == alpha::core::Vec2{12.5f, 40.0f});
+}

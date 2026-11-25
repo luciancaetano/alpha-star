@@ -41,7 +41,21 @@ declare module "alpha" {
      * `never` for a document scripts only show/hide.
      */
     ui: UiTypes;
+    /**
+     * Sprite sheet name (assets.sheets) -> its animation names,
+     * e.g. `{ hero: "idle" | "run" | "jump" }`. Optional: omit if the game has none.
+     */
+    sheets?: { [sheet: string]: string };
+    /** Tiled map names (assets.maps), e.g. "level1". Optional. */
+    maps?: string;
   }
+
+  /** The game's sheets (`{}` when GameTypes has no `sheets`). */
+  export type SheetsOf<G extends GameTypes> = G extends { sheets: infer S extends { [k: string]: string } } ? S : {};
+  /** Every animation name of every sheet. */
+  export type AnimationOf<G extends GameTypes> = SheetsOf<G>[keyof SheetsOf<G>] & string;
+  /** The game's map names (`never` without `maps`). */
+  export type MapOf<G extends GameTypes> = G extends { maps: infer M extends string } ? M : never;
 
   export type UiTypes = { [doc: string]: string };
 
@@ -67,11 +81,23 @@ declare module "alpha" {
     | { circle: number; sensor?: boolean }
     | { rect: Vec2; sensor?: boolean };
 
-  /** A filled shape, or an image (`size` defaults to the image's pixel size). */
-  export type Shape<I extends string = never> =
+  /** Mirroring of an image or sheet sprite. */
+  export interface Flips {
+    flipX?: boolean;
+    flipY?: boolean;
+  }
+
+  /** A sprite from a sheet: starts at frame 0, playing `animation` if given; `size` defaults to the frame size. */
+  export type SheetShape<S extends { [k: string]: string } = {}> = {
+    [K in keyof S & string]: { sheet: K; animation?: S[K]; size?: Vec2 } & Flips;
+  }[keyof S & string];
+
+  /** A filled shape, an image (`size` defaults to the image's pixel size), or a sheet sprite. */
+  export type Shape<I extends string = never, S extends { [k: string]: string } = {}> =
     | { circle: number; color: Color; outline?: Color }
     | { rect: Vec2; color: Color; outline?: Color }
-    | { image: I; size?: Vec2 };
+    | ({ image: I; size?: Vec2 } & Flips)
+    | SheetShape<S>;
 
   export interface BodySpec {
     type: "static" | "kinematic" | "dynamic";
@@ -80,10 +106,10 @@ declare module "alpha" {
   }
 
   /** Plain data describing an entity. Build it with functions, not classes. */
-  export interface EntitySpec<T extends string = string, I extends string = never> {
+  export interface EntitySpec<T extends string = string, I extends string = never, S extends { [k: string]: string } = {}> {
     tags: T[];
     pos: Vec2;
-    shape?: Shape<I>;
+    shape?: Shape<I, S>;
     body?: BodySpec;
     rotation?: number;
     z?: number;
@@ -94,7 +120,7 @@ declare module "alpha" {
     set velocity(v: Vec2);
   }
 
-  export interface Entity<T extends string = string> {
+  export interface Entity<T extends string = string, A extends string = string> {
     readonly id: number;
     readonly tags: readonly T[];
     pos: Vec2Ref;
@@ -104,6 +130,84 @@ declare module "alpha" {
     readonly body: Body;
     /** False after destroy(); stale references are safe to check. */
     readonly alive: boolean;
+    /**
+     * Sheet sprites: the playing animation ("" before any). Setting a different name
+     * switches to it from its first frame; setting the same name keeps it going.
+     * Advances on the fixed step. Throws (listing the sheet's animations) for unknown names.
+     */
+    animation: A | "";
+    /** Plays `name` from its first frame, even if it is already playing. */
+    play(name: A): void;
+    /** Mirror the shape horizontally / vertically (images and sheets). */
+    flipX: boolean;
+    flipY: boolean;
+  }
+
+  /**
+   * ctx.camera: which part of the world the screen shows. Each scene starts with the
+   * identity camera (pos = center of config.size, zoom 1): world pixels = screen pixels.
+   * Moves on the fixed step (deterministic); the UI and overlays never move with it.
+   */
+  export interface Camera {
+    /** World point at the screen center. */
+    pos: Vec2Ref;
+    /** > 0; 2 = everything twice as big. */
+    zoom: number;
+    /** Degrees; the world turns the other way on screen. */
+    rotation: number;
+    /**
+     * Keeps `entity` in view, or stops following (null). `lerp`: fraction of the remaining
+     * distance covered per fixed step, (0, 1], default 1 (locked). `deadzone`: [w, h] box
+     * around the center inside which the entity moves without moving the camera.
+     */
+    follow(entity: Entity<any, any> | null, opts?: { lerp?: number; deadzone?: Vec2 }): void;
+    /** Shakes by up to `intensity` pixels, fading out over `seconds` (deterministic). */
+    shake(intensity: number, seconds: number): void;
+    /** Keeps the visible area inside [x, y, width, height] (e.g. the map's size); null removes them. */
+    bounds(rect: [x: number, y: number, width: number, height: number] | null): void;
+    /** Screen point (game pixels, e.g. ctx.input.mouse()) -> world point. */
+    toWorld(screen: Vec2): Vec2;
+  }
+
+  /** One object of a Tiled object layer, as plain data. */
+  export interface MapObject {
+    id: number;
+    name: string;
+    /** Tiled's class / type field. */
+    type: string;
+    /** Top-left in map pixels (point objects: the point). */
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number;
+    point: boolean;
+    properties: { [name: string]: string | number | boolean };
+  }
+
+  /** A loaded Tiled map (ctx.map / ctx.spawnMap). */
+  export interface TileMap {
+    readonly name: string;
+    /** In tiles. */
+    readonly width: number;
+    readonly height: number;
+    readonly tileSize: Vec2;
+    /** In pixels. */
+    readonly size: Vec2;
+    readonly properties: { [name: string]: string | number | boolean };
+    /** Layer names in draw order. */
+    readonly layers: string[];
+    /** A copy of an object layer's objects; throws listing the object layers. */
+    objects(layer: string): MapObject[];
+  }
+
+  export interface SpawnMapOptions<T extends string> {
+    /** Tile layers that become static colliders (merged rects) tagged with the layer name. */
+    collide?: T[];
+    /** z of every tile layer (default 0; later layers draw over earlier ones). */
+    z?: number;
+    /** Where the map's top-left goes (default [0, 0]). */
+    pos?: Vec2;
   }
 
   // ---- services -------------------------------------------------------------
@@ -133,6 +237,8 @@ declare module "alpha" {
   export interface Input<A extends string, X extends string = never> extends PlayerInput<A, X> {
     /** Gamepads get players in connection order; a reconnected pad gets its slot back. */
     player(n: Player): PlayerInput<A, X>;
+    /** Mouse pointer in game pixels (screen space; ctx.camera.toWorld for the world). */
+    mouse(): Vec2;
     /** Players with a device: 1 (keyboard) up to the highest connected gamepad's player. */
     players(): number;
     /** Vibrates gamepads: strength 0..1 for 0..10 seconds (0 stops); every player if omitted. No-op without a pad. */
@@ -225,7 +331,7 @@ declare module "alpha" {
 
   type ParamArgs<P> = [P] extends [undefined] ? [] : [params: P];
 
-  export type HitHandler<T extends string> = (a: Entity<T>, b: Entity<T>) => void;
+  export type HitHandler<T extends string> = (a: Entity<T, any>, b: Entity<T, any>) => void;
 
   /** Everything a scene can touch. Scene-scoped: cleared on scene change. */
   export interface Context<G extends GameTypes, S> {
@@ -241,13 +347,22 @@ declare module "alpha" {
     readonly save: Save;
     readonly ui: UI<G["ui"]>;
     readonly audio: Audio<G["sounds"]>;
+    readonly camera: Camera;
 
-    spawn(spec: EntitySpec<G["tags"], G["images"]>): Entity<G["tags"]>;
+    spawn(spec: EntitySpec<G["tags"], G["images"], SheetsOf<G>>): Entity<G["tags"], AnimationOf<G>>;
     /** Removed at the end of the step. Destroying twice is a no-op. */
-    destroy(entity: Entity<G["tags"]>): void;
+    destroy(entity: Entity<G["tags"], any>): void;
     /** Throws if no entity has the tag. */
-    find(tag: G["tags"]): Entity<G["tags"]>;
-    findAll(tag: G["tags"]): Entity<G["tags"]>[];
+    find(tag: G["tags"]): Entity<G["tags"], AnimationOf<G>>;
+    findAll(tag: G["tags"]): Entity<G["tags"], AnimationOf<G>>[];
+
+    /**
+     * Draws the map's visible tile layers (one batched, culled entity per layer and
+     * tileset) and makes `collide` layers solid. Scene-scoped like spawn: call it in enter.
+     */
+    spawnMap(name: MapOf<G>, opts?: SpawnMapOptions<G["tags"]>): TileMap;
+    /** A map's data (sizes, object layers) without spawning anything. */
+    map(name: MapOf<G>): TileMap;
 
     /** Solid contact between tags starts. `a` has tagA, `b` has tagB. */
     onHit(tagA: G["tags"], tagB: G["tags"], fn: HitHandler<G["tags"]>): void;
@@ -320,7 +435,30 @@ declare module "alpha" {
       fonts?: Record<string, string>;
       /** Document name -> .rml file. Files it links (`<link href>`, `src=`, rcss `url()`) are packed too. */
       ui?: Record<keyof G["ui"] & string, string>;
+      /**
+       * Sprite sheets: a grid of `frame`-sized cells in `image` (row-major, frame 0 top-left)
+       * and named animations over frame indices, e.g.
+       * `{ hero: { image: "img/hero.png", frame: [16, 16], animations: { run: { frames: [0, 1, 2, 3], fps: 10 } } } }`.
+       */
+      sheets?: { [K in keyof SheetsOf<G>]: SheetAsset<SheetsOf<G>[K] & string> };
+      /** Map name -> Tiled map (.tmj JSON; tilesets embedded or .tsj; CSV tile layers). */
+      maps?: Record<MapOf<G>, string>;
     };
+  }
+
+  export interface AnimationDef {
+    /** Frame indices into the sheet. */
+    frames: number[];
+    /** Frames per second, default 10. */
+    fps?: number;
+    /** Default true; a one-shot holds its last frame. */
+    loop?: boolean;
+  }
+
+  export interface SheetAsset<A extends string> {
+    image: string;
+    frame: Vec2;
+    animations?: Record<A, AnimationDef>;
   }
 
   export interface Game<G extends GameTypes> {
@@ -340,7 +478,7 @@ declare module "alpha" {
 }
 
 declare module "alpha/test" {
-  import type { AxisOf, Game, GameTypes } from "alpha";
+  import type { AnimationOf, AxisOf, Game, GameTypes } from "alpha";
 
   /**
    * One player's simulated input: action -> frames (pressed for one step each),
@@ -374,6 +512,8 @@ declare module "alpha/test" {
     count(tag: G["tags"]): { equals(n: number): void; atLeast(n: number): void };
     /** Plain text of a UI element at the end of the run. */
     text<D extends keyof G["ui"] & string>(doc: D, id: G["ui"][D]): { equals(text: string): void };
+    /** Animation of the oldest living entity with the tag at the end of the run ("" = none). */
+    animation(tag: G["tags"]): { equals(name: AnimationOf<G> | ""): void };
     /** The UI document is shown at the end of the run. */
     shown(doc: keyof G["ui"] & string): void;
   }

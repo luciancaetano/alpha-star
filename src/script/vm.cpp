@@ -2,9 +2,12 @@
 
 #include "script/asset_bindings.hpp"
 #include "script/bundle_map.hpp"
+#include "script/camera_bindings.hpp"
 #include "script/embedded_js.hpp"
 #include "script/input_bindings.hpp"
 #include "script/instance_bindings.hpp"
+#include "script/map_bindings.hpp"
+#include "script/sprite_bindings.hpp"
 #include "script/system_bindings.hpp"
 #include "script/ui_bindings.hpp"
 #include "script/world_bindings.hpp"
@@ -19,6 +22,7 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
 #if ALPHA_DEBUG_TOOLS  // test runner only; importing it elsewhere lists the builtins that exist
   engine->add_builtin("alpha/test", embedded::kAlphaTest);
 #endif
+  engine->add_builtin("alpha:maps", embedded::kMaps);
   engine->add_builtin("alpha:runtime", embedded::kRuntime);
   const Value global(ctx, JS_GetGlobalObject(ctx));
   Value natives(ctx, JS_NewObject(ctx));
@@ -28,6 +32,9 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
   install_asset_bindings(ctx, natives.get());
   install_instance_bindings(ctx, natives.get());
   install_ui_bindings(ctx, natives.get());
+  install_sprite_bindings(ctx, natives.get());
+  install_camera_bindings(ctx, natives.get());
+  install_map_bindings(ctx, natives.get());
   JS_SetPropertyStr(ctx, global.get(), "__native", natives.release());
 }
 

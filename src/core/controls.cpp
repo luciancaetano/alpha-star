@@ -10,6 +10,7 @@ void Controls::update(const InputFrame& frame) {
   actions.update(frame);
   axes.update(frame);
   players = frame.connected;
+  mouse = frame.mouse;
 }
 
 void Controls::request_rumble(float strength, float seconds, std::size_t player) {

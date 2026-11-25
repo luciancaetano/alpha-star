@@ -88,16 +88,32 @@ std::optional<core::InputCode> from_mouse(Uint8 button) { return lookup(kMouse, 
 
 std::optional<core::InputCode> from_gamepad(Uint8 button) { return lookup(kGamepad, static_cast<SDL_GamepadButton>(button)); }
 
-void apply_event(InputState& state, const SDL_Event& event, const core::PadSlots& slots) {
+namespace {
+
+// Keyboard and mouse (always player 1); false for any other event.
+bool desktop(InputState& state, const SDL_Event& event) {
   switch (event.type) {
     case SDL_EVENT_KEY_DOWN:
     case SDL_EVENT_KEY_UP:
       if (!event.key.repeat) set(state, 0, from_scancode(event.key.scancode), event.key.down);
-      break;
+      return true;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
     case SDL_EVENT_MOUSE_BUTTON_UP:
       set(state, 0, from_mouse(event.button.button), event.button.down);
-      break;
+      return true;
+    case SDL_EVENT_MOUSE_MOTION:
+      state.mouse = {event.motion.x, event.motion.y};
+      return true;
+    default:
+      return false;
+  }
+}
+
+}  // namespace
+
+void apply_event(InputState& state, const SDL_Event& event, const core::PadSlots& slots) {
+  if (desktop(state, event)) return;
+  switch (event.type) {
     case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
     case SDL_EVENT_GAMEPAD_BUTTON_UP:
       pad_button(state, event.gbutton, slots);
@@ -122,6 +138,7 @@ core::InputFrame consume(InputState& state, const core::PadSlots& slots) {
     state.pressed[p].reset();
   }
   frame.connected = slots.players();
+  frame.mouse = state.mouse;
   return frame;
 }
 

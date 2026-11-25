@@ -3,6 +3,7 @@
 #include <box2d/box2d.h>
 
 #include <cstdint>
+#include <string>
 
 #include "core/entity_spec.hpp"
 
@@ -33,6 +34,13 @@ struct Tags {
 
 struct Visual {
   core::ShapeSpec shape;
+};
+
+// Plays a sheet animation into the entity's Visual (src) on every fixed step.
+struct Animator {
+  core::SheetPtr sheet;
+  std::string name;
+  float time = 0.0f;  // seconds since this animation started
 };
 
 struct PhysicsBody {

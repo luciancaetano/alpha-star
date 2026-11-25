@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "core/error.hpp"
+#include "core/index_of.hpp"
 #include "platform/assets.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
@@ -19,8 +20,7 @@ std::string asset_path(ScriptState& s, const std::string& file) {
 
 template <typename Map>
 std::string names(const Map& map) {
-  std::string out;
-  for (const auto& [name, value] : map) out += (out.empty() ? "" : ", ") + name;
+  const std::string out = core::keys_of(map, ", ");
   return out.empty() ? "(none)" : out;
 }
 
@@ -40,12 +40,7 @@ core::SoundPtr decode_sound(const std::string& path) {
   return std::make_shared<const std::vector<float>>(platform::load_wav(path));
 }
 
-core::ImagePtr decode_image(const std::string& path) {
-  return std::make_shared<const core::Image>(platform::load_image(path));
-}
-
 constexpr char kSounds[] = "sounds";
-constexpr char kImages[] = "images";
 
 // Native loading file asset assets.<Kind>.<name> (argv = name, file) into s.*Table.
 template <auto Table, auto Decode, const char* Kind>
@@ -97,9 +92,8 @@ JSValue set_volume(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 9> kNatives{{
+constexpr std::array<Native, 8> kNatives{{
     {"loadSound", guarded<load_file<&ScriptState::sounds, decode_sound, kSounds>>, 2},
-    {"loadImage", guarded<load_file<&ScriptState::images, decode_image, kImages>>, 2},
     {"synthSound", guarded<synth_sound>, 2},   {"playSound", guarded<play_sound>, 4},
     {"playTone", guarded<play_tone>, 4},     {"stopVoice", guarded<stop_voice>, 1},
     {"voicePlaying", guarded<voice_playing>, 1}, {"stopAll", guarded<stop_all>, 0},

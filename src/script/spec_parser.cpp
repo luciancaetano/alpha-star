@@ -1,8 +1,10 @@
 #include "script/spec_parser.hpp"
 
 #include <string>
+#include <utility>
 
 #include "core/error.hpp"
+#include "core/index_of.hpp"
 #include "script/js_value.hpp"
 
 namespace alpha::script {
@@ -40,23 +42,52 @@ core::Geometry geometry(JSContext* ctx, JSValueConst obj, const std::string& pat
   throw core::Error(kPrefix + path + " needs { circle: radius } or { rect: [width, height] }");
 }
 
-// { image: name, size?: [w, h] }; size defaults to the image's own size.
-core::ShapeSpec sprite(JSContext* ctx, JSValueConst obj, const ImageTable& images) {
-  const std::string name = string_arg(ctx, field(ctx, obj, "image").get(), kPrefix + "shape.image");
-  const auto it = images.find(name);
-  if (it == images.end()) {
-    std::string known;
-    for (const auto& [key, img] : images) known += " " + key;
-    throw core::Error(kPrefix + "shape.image \"" + name + "\" is not in assets.images; have:" +
-                      (known.empty() ? " (none)" : known));
-  }
-  core::Vec2 size{static_cast<float>(it->second->width), static_cast<float>(it->second->height)};
-  if (has(ctx, obj, "size")) size = vec2_arg(ctx, field(ctx, obj, "size").get(), kPrefix + "shape.size");
-  return {core::Rect{size}, {}, {}, it->second};
+// assets.<kind>[name], or an error listing what the game declared.
+template <typename Table>
+const typename Table::mapped_type& named(const Table& table, const std::string& name, const std::string& field,
+                                         const char* kind) {
+  const auto it = table.find(name);
+  if (it != table.end()) return it->second;
+  const std::string known = core::keys_of(table, " ");
+  throw core::Error(kPrefix + field + " \"" + name + "\" is not in assets." + kind + "; have: " +
+                    (known.empty() ? "(none)" : known));
 }
 
-core::ShapeSpec shape(JSContext* ctx, JSValueConst obj, const ImageTable& images) {
-  if (has(ctx, obj, "image")) return sprite(ctx, obj, images);
+bool flag(JSContext* ctx, JSValueConst obj, const char* name) {
+  return JS_ToBool(ctx, field(ctx, obj, name).get()) == 1;
+}
+
+// Shared by images and sheets: size (default: the source rect's size) and flips.
+core::ShapeSpec picture_shape(JSContext* ctx, JSValueConst obj, const core::ImagePtr& image, core::Region src) {
+  core::Vec2 size{static_cast<float>(src.w), static_cast<float>(src.h)};
+  if (has(ctx, obj, "size")) size = vec2_arg(ctx, field(ctx, obj, "size").get(), kPrefix + "shape.size");
+  core::ShapeSpec out{core::Rect{size}, {}, {}, image};
+  out.src = src;
+  out.flip_x = flag(ctx, obj, "flipX");
+  out.flip_y = flag(ctx, obj, "flipY");
+  return out;
+}
+
+// { image: name, size?, flipX?, flipY? }
+core::ShapeSpec image(JSContext* ctx, JSValueConst obj, const SpriteAssets& assets) {
+  const std::string name = string_arg(ctx, field(ctx, obj, "image").get(), kPrefix + "shape.image");
+  const core::Picture pic = named(assets.images, name, "shape.image", "images");
+  return picture_shape(ctx, obj, pic.image, pic.region);
+}
+
+// { sheet: name, animation?: name, size?, flipX?, flipY? }: starts at frame 0.
+std::pair<core::ShapeSpec, core::AnimationSpec> sheet(JSContext* ctx, JSValueConst obj, const SpriteAssets& assets) {
+  const std::string name = string_arg(ctx, field(ctx, obj, "sheet").get(), kPrefix + "shape.sheet");
+  const core::SheetPtr sheet = named(assets.sheets, name, "shape.sheet", "sheets");
+  std::string anim;
+  if (has(ctx, obj, "animation")) {
+    anim = string_arg(ctx, field(ctx, obj, "animation").get(), kPrefix + "shape.animation");
+    named(sheet->animations, anim, "shape.animation", ("sheets." + name + ".animations").c_str());
+  }
+  return {picture_shape(ctx, obj, sheet->picture.image, sheet->frame(0)), {sheet, anim}};
+}
+
+core::ShapeSpec filled(JSContext* ctx, JSValueConst obj) {
   core::ShapeSpec out{geometry(ctx, obj, "shape"), {}, {}, {}};
   const Value fill = field(ctx, obj, "color");
   out.fill = color(ctx, fill.get(), "shape.color");
@@ -65,6 +96,19 @@ core::ShapeSpec shape(JSContext* ctx, JSValueConst obj, const ImageTable& images
     out.outline = color(ctx, outline.get(), "shape.outline");
   }
   return out;
+}
+
+void shape(JSContext* ctx, JSValueConst obj, const SpriteAssets& assets, core::EntitySpec& out) {
+  if (!JS_IsObject(obj)) throw core::Error(kPrefix + "shape must be an object");
+  if (has(ctx, obj, "sheet")) {
+    auto [look, anim] = sheet(ctx, obj, assets);
+    look.animation = std::move(anim);
+    out.shape = std::move(look);
+  } else if (has(ctx, obj, "image")) {
+    out.shape = image(ctx, obj, assets);
+  } else {
+    out.shape = filled(ctx, obj);
+  }
 }
 
 core::BodyType body_type(JSContext* ctx, JSValueConst obj) {
@@ -109,7 +153,7 @@ double optional_number(JSContext* ctx, JSValueConst obj, const char* name) {
 }  // namespace
 
 core::EntitySpec parse_entity_spec(JSContext* ctx, JSValueConst spec, core::TagRegistry& tags,
-                                   const ImageTable& images) {
+                                   const SpriteAssets& assets) {
   if (!JS_IsObject(spec)) throw core::Error(kPrefix + "expected an entity spec object");
   core::EntitySpec out;
   out.tags = tag_set(ctx, spec, tags);
@@ -117,7 +161,7 @@ core::EntitySpec parse_entity_spec(JSContext* ctx, JSValueConst spec, core::TagR
   out.pos = vec2_arg(ctx, pos.get(), kPrefix + "pos");
   out.rotation = static_cast<float>(optional_number(ctx, spec, "rotation"));
   out.z = static_cast<int>(optional_number(ctx, spec, "z"));
-  if (has(ctx, spec, "shape")) out.shape = shape(ctx, field(ctx, spec, "shape").get(), images);
+  if (has(ctx, spec, "shape")) shape(ctx, field(ctx, spec, "shape").get(), assets, out);
   if (has(ctx, spec, "body")) out.body = body(ctx, field(ctx, spec, "body").get());
   return out;
 }

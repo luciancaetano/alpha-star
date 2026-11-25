@@ -127,7 +127,7 @@ bool pump(Devices& d, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl
     if (!tools.handle(event)) continue;
     SDL_Event logical = event;
     SDL_ConvertEventToRenderCoordinates(sdl, &logical);
-    if (host.reaches_game(logical)) alpha::platform::apply_event(d.input, event, d.pads.slots());
+    if (host.reaches_game(logical)) alpha::platform::apply_event(d.input, logical, d.pads.slots());
   }
   return true;
 }
@@ -173,6 +173,14 @@ void report_error(const alpha::script::Host& host, std::string& reported) {
   std::fprintf(stderr, "%s\n", reported.c_str());
 }
 
+// --frames runs (dev/release): what the last frame drew, for measuring culling and batching.
+void report_render([[maybe_unused]] const Options& o, [[maybe_unused]] const alpha::render::Renderer& renderer) {
+#if ALPHA_DEBUG_TOOLS  // diagnostics
+  const alpha::render::RenderStats& st = renderer.stats();
+  if (o.frames > 0) SDL_Log("render: %d drawn, %d culled, %d draw calls (last frame)", st.drawn, st.culled, st.draw_calls);
+#endif
+}
+
 void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools) {
   alpha::platform::AudioOut audio;
   if (!audio.ok()) SDL_Log("no audio device (%s); running silent", SDL_GetError());
@@ -199,6 +207,7 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
     running = control.poll(elapsed * 1000.0);  // agent requests see this frame drawn, before present
     renderer.present();
   }
+  report_render(o, renderer);
 }
 
 #if ALPHA_DEBUG_TOOLS

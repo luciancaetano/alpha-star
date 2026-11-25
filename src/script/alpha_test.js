@@ -108,6 +108,16 @@ function describe(error) {
   return error ? `${error.message}\n${error.stack ?? ""}`.trimEnd() : "";
 }
 
+// Tag -> animation of its oldest living entity ("" when it has no sheet).
+function animationsOf(counts) {
+  const out = {};
+  for (const tag of Object.keys(counts)) {
+    const ids = N.findAll(tag);
+    if (ids.length) out[tag] = N.animation(ids[0]);
+  }
+  return out;
+}
+
 // Runs the game in a fresh instance and returns what tests may inspect.
 function runGame(game, opts) {
   const frames = framesOf(opts.seconds);
@@ -128,7 +138,8 @@ function runGame(game, opts) {
         error = e;  // the game pauses here, as it would in the engine
       }
     }
-    return { frames, scene: sim.scene(), counts: sim.within(() => N.tagCounts()), ui: sim.within(() => N.uiView()), error };
+    const counts = sim.within(() => N.tagCounts());
+    return { frames, scene: sim.scene(), counts, animations: sim.within(() => animationsOf(counts)), ui: sim.within(() => N.uiView()), error };
   } finally {
     N.instanceDestroy(id);
   }
@@ -153,6 +164,13 @@ function expectations(r) {
         const got = d.texts[id];
         const hidden = d.shown ? "" : ` (document "${doc}" is hidden)`;
         if (got !== text) fail(`expected ${doc}#${id} text "${text}" ${after}, got "${got}"${hidden}${paused}`);
+      },
+    }),
+    animation: (tag) => ({
+      equals(name) {
+        if (!Object.hasOwn(r.animations, tag)) fail(`expect.animation("${tag}"): no living entity has this tag ${after}${paused}`);
+        const got = r.animations[tag];
+        if (got !== name) fail(`expected "${tag}" playing animation "${name}" ${after}, got ${got ? `"${got}"` : "no animation (not a sheet sprite)"}${paused}`);
       },
     }),
     shown(doc) {

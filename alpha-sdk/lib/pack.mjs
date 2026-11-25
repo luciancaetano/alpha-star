@@ -9,7 +9,9 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import * as esbuild from "esbuild";
+import { buildAtlas } from "./atlas.mjs";
 import { build } from "./build.mjs";
+import { mapReferences } from "./maps.mjs";
 import { describeTargets, engineFile, shippingEngine } from "./engine.mjs";
 
 const SHIM = path.join(path.dirname(fileURLToPath(import.meta.url)), "alpha-shim.mjs");
@@ -47,7 +49,10 @@ export function assetFiles(def) {
   for (const [name, image] of Object.entries(assets.images ?? {})) {
     files.push({ key: `assets.images.${name}`, file: image });
   }
-  for (const kind of ["fonts", "ui"]) {
+  for (const [name, sheet] of Object.entries(assets.sheets ?? {})) {
+    files.push({ key: `assets.sheets.${name}.image`, file: sheet?.image ?? "" });
+  }
+  for (const kind of ["fonts", "ui", "maps"]) {
     for (const [name, file] of Object.entries(assets[kind] ?? {})) files.push({ key: `assets.${kind}.${name}`, file });
   }
   return files;
@@ -94,6 +99,11 @@ function packFiles(root, def) {
     if (p) return { files, problems: [p] };
     files.push(...found);
   }
+  for (const f of files.filter((x) => /^assets\.maps\.[^.]+$/.test(x.key))) {
+    const { found, problem: p } = mapReferences(root, f);
+    if (p) return { files, problems: [p] };
+    files.push(...found);
+  }
   return { files, problems: [] };
 }
 
@@ -107,6 +117,21 @@ function checkAsset(root, { key, file }) {
     return problem(`${key}: file "${file}" not found (paths are relative to ${root})`);
   }
   return null;
+}
+
+const posix = (file) => path.posix.normalize(file.split("\\").join("/"));
+const isSprite = (key) => key.startsWith("assets.images.") || key.startsWith("assets.sheets.");
+
+// Packs the images and sheet images into alpha-atlas pages + alpha-atlas.json; returns
+// the files still to copy (packed images are dropped unless something else needs the file).
+function writeAtlas(root, out, files) {
+  const sprites = [...new Set(files.filter((f) => isSprite(f.key)).map((f) => posix(f.file)))];
+  const { pages, manifest, packed } = buildAtlas(new Map(sprites.map((f) => [f, fs.readFileSync(path.join(root, f))])));
+  if (!packed.length) return files;
+  for (const p of pages) fs.writeFileSync(path.join(out, p.file), p.png);
+  fs.writeFileSync(path.join(out, "alpha-atlas.json"), JSON.stringify(manifest));
+  const needed = new Set(files.filter((f) => !isSprite(f.key)).map((f) => posix(f.file)));
+  return files.filter((f) => !packed.includes(posix(f.file)) || needed.has(posix(f.file)));
 }
 
 function copyAssets(root, out, files) {
@@ -128,9 +153,10 @@ function engineFor(target) {
 }
 
 // root: project directory (asset paths are relative to it). target: null for
-// a plain pack, or "<platform>-<arch>" to include that engine binary.
+// a plain pack, or "<platform>-<arch>" to include that engine binary. atlas: pack
+// images and sheet images into texture pages (default; transparent to game code).
 // Returns { ok, problems, files }. Writes nothing unless everything checks out.
-export async function exportPack({ root, entry, out, target = null }) {
+export async function exportPack({ root, entry, out, target = null, atlas = true }) {
   const standalone = target ? engineFor(target) : {};
   if (standalone.problem) return { ok: false, problems: [standalone.problem], files: [] };
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-pack-"));
@@ -144,7 +170,7 @@ export async function exportPack({ root, entry, out, target = null }) {
     fs.rmSync(out, { recursive: true, force: true });
     fs.mkdirSync(out, { recursive: true });
     fs.copyFileSync(path.join(staging, "main.js"), path.join(out, "main.js"));
-    copyAssets(root, out, files);
+    copyAssets(root, out, atlas ? writeAtlas(root, out, files) : files);
     if (standalone.engine) {
       const dest = path.join(out, engineFile(target));
       fs.copyFileSync(standalone.engine, dest);

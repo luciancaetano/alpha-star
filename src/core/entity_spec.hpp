@@ -2,10 +2,13 @@
 
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
+#include <vector>
 
 #include "core/color.hpp"
 #include "core/image.hpp"
+#include "core/sheet.hpp"
 #include "core/tags.hpp"
 #include "core/vec2.hpp"
 
@@ -33,13 +36,44 @@ struct BodySpec {
   Vec2 velocity;
 };
 
-// Visual of an entity. With `image`, the image is drawn stretched to the
-// geometry's Rect size (fill/outline unused); otherwise a filled shape.
+// One cell of a tile layer: where it goes (top-left, relative to the layer's
+// top-left) and which part of the tileset image it shows.
+struct TileQuad {
+  Vec2 pos;
+  Region src;
+};
+
+// A whole tile layer drawn as one entity (one batch, culled per tile).
+struct TileGrid {
+  Vec2 tile;  // cell size in pixels
+  std::vector<TileQuad> tiles;
+};
+using TileGridPtr = std::shared_ptr<const TileGrid>;
+
+// A sprite-sheet animation to start the entity with ("" = show frame 0, play later).
+struct AnimationSpec {
+  SheetPtr sheet;
+  std::string name;
+};
+
+// Visual of an entity. With `image`, the `src` part of the image (empty =
+// all of it) is drawn stretched to the geometry's Rect size, optionally
+// mirrored (fill/outline unused); with `tiles` too, the image is a tileset and
+// the Rect is the layer's size; with `animation`, a sheet plays into `src`.
+// Otherwise a filled shape. The constructor takes the four basic fields in
+// order; the sprite fields are set by name.
 struct ShapeSpec {
+  ShapeSpec(Geometry g = Circle{}, Color f = {}, std::optional<Color> o = {}, ImagePtr img = {});
+
   Geometry geometry;
   Color fill;
   std::optional<Color> outline;
   ImagePtr image;
+  Region src;
+  bool flip_x = false;
+  bool flip_y = false;
+  TileGridPtr tiles;
+  std::optional<AnimationSpec> animation;
 };
 
 struct EntitySpec {

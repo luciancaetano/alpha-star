@@ -12,9 +12,13 @@ namespace alpha::script {
 
 // Parses a script entity spec { tags, pos, rotation?, z?, shape?, body? }.
 // Throws core::Error naming the bad field, e.g. `spawn: shape.color must be ...`.
-// Tag names are interned into `tags`; `shape.image` names come from `images`.
-using ImageTable = std::map<std::string, core::ImagePtr, std::less<>>;
+// Tag names are interned into `tags`; `shape.image` / `shape.sheet` names
+// come from the game's assets.
+struct SpriteAssets {
+  const core::PictureTable& images;
+  const core::SheetTable& sheets;
+};
 core::EntitySpec parse_entity_spec(JSContext* ctx, JSValueConst spec, core::TagRegistry& tags,
-                                   const ImageTable& images);
+                                   const SpriteAssets& assets);
 
 }  // namespace alpha::script

@@ -10,9 +10,7 @@
 
 namespace alpha::script {
 
-namespace {
-
-ecs::World& world(ScriptState& s) {
+ecs::World& world_of(ScriptState& s) {
   if (!s.world) throw core::Error("no active scene world");
   return *s.world;
 }
@@ -21,6 +19,10 @@ ecs::EntityId id_arg(JSContext* ctx, JSValueConst v) {
   return static_cast<ecs::EntityId>(number_arg(ctx, v, "entity id"));
 }
 
+namespace {
+
+ecs::World& world(ScriptState& s) { return world_of(s); }
+
 // argv[1], argv[2] as a vector; `what` names it in errors.
 core::Vec2 xy_args(JSContext* ctx, JSValueConst* argv, const std::string& what) {
   return {static_cast<float>(number_arg(ctx, argv[1], what + "[0]")),
@@ -28,12 +30,12 @@ core::Vec2 xy_args(JSContext* ctx, JSValueConst* argv, const std::string& what) 
 }
 
 JSValue reset_world(JSContext*, ScriptState& s, JSValueConst*) {
-  s.world = std::make_unique<ecs::World>(s.gravity);
+  s.world = std::make_unique<ecs::World>(s.gravity, s.view_size);
   return JS_UNDEFINED;
 }
 
 JSValue spawn(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  return JS_NewUint32(ctx, world(s).spawn(parse_entity_spec(ctx, argv[0], s.tags, s.images)));
+  return JS_NewUint32(ctx, world(s).spawn(parse_entity_spec(ctx, argv[0], s.tags, {s.images, s.sheets})));
 }
 
 JSValue destroy(JSContext* ctx, ScriptState& s, JSValueConst* argv) {

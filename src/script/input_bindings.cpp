@@ -63,7 +63,10 @@ JSValue rumble(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 6> kNatives{{
+JSValue mouse(JSContext* ctx, ScriptState& s, JSValueConst*) { return new_vec2(ctx, s.controls.mouse); }
+
+constexpr std::array<Native, 7> kNatives{{
+    {"mouse", guarded<mouse>, 0},
     {"bind", guarded<bind>, 3},
     {"deadzone", guarded<deadzone>, 1},      {"action", guarded<action>, 3},
     {"axis", guarded<axis>, 2},              {"players", guarded<players>, 0},

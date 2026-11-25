@@ -17,6 +17,8 @@ JSValue configure(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   s.random = core::Random(static_cast<std::uint64_t>(number_arg(ctx, argv[0], "config.seed")));
   s.gravity = {static_cast<float>(number_arg(ctx, argv[1], "config.gravity[0]")),
                static_cast<float>(number_arg(ctx, argv[2], "config.gravity[1]"))};
+  s.view_size = {static_cast<float>(number_arg(ctx, argv[3], "config.size[0]")),
+                 static_cast<float>(number_arg(ctx, argv[4], "config.size[1]"))};
   return JS_UNDEFINED;
 }
 
@@ -76,7 +78,7 @@ JSValue log(JSContext* ctx, ScriptState&, JSValueConst* argv) {
 }
 
 constexpr std::array<Native, 9> kNatives{{
-    {"configure", guarded<configure>, 3},     {"random", guarded<random>, 3},
+    {"configure", guarded<configure>, 5},     {"random", guarded<random>, 3},
     {"timerEvery", guarded<timer_every>, 1},
     {"timerAfter", guarded<timer_after>, 1},  {"clearTimers", guarded<clear_timers>, 0},
     {"advanceTimers", guarded<advance_timers>, 1}, {"saveRead", guarded<save_read>, 1},

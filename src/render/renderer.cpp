@@ -1,5 +1,8 @@
 #include "render/renderer.hpp"
 
+#include <utility>
+
+#include "render/quads.hpp"
 #include "render/text_layout.hpp"
 
 namespace alpha::render {
@@ -13,7 +16,11 @@ SDL_FColor to_sdl(core::Color c) {
 
 }  // namespace
 
-Renderer::Renderer(SDL_Renderer* sdl, int width, int height) : sdl_(sdl) {
+Frame::Frame(core::Color bg, std::vector<core::DrawItem> s, std::vector<core::TextItem> t)
+    : background(bg), shapes(std::move(s)), texts(std::move(t)) {}
+
+Renderer::Renderer(SDL_Renderer* sdl, int width, int height)
+    : sdl_(sdl), size_{static_cast<float>(width), static_cast<float>(height)} {
   SDL_SetRenderLogicalPresentation(sdl_, width, height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
   SDL_SetRenderDrawBlendMode(sdl_, SDL_BLENDMODE_BLEND);
 }
@@ -26,22 +33,46 @@ void Renderer::draw(const Frame& frame) {
   const core::Color bg = frame.background;
   SDL_SetRenderDrawColor(sdl_, bg.r, bg.g, bg.b, bg.a);
   SDL_RenderClear(sdl_);
-  draw_shapes(frame.shapes);
+  stats_ = {};
+  draw_shapes(frame.shapes, frame.view.value_or(core::View{size_ * 0.5f, 1.0f, 0.0f, size_}));
   for (const core::TextItem& text : frame.texts) draw_text(text);
 }
 
-// Consecutive plain shapes go out as one geometry batch; images break the
-// batch so z order holds.
-void Renderer::draw_shapes(const std::vector<core::DrawItem>& shapes) {
-  const std::span<const core::DrawItem> all(shapes);
-  std::size_t start = 0;
-  for (std::size_t i = 0; i < all.size(); ++i) {
-    if (!all[i].shape.image) continue;
-    draw_geometry(all.subspan(start, i - start));
-    draw_image(all[i]);
-    start = i + 1;
+// Items off screen are skipped; the rest go out in z order as batches of
+// consecutive items sharing a texture (plain shapes share "no texture").
+void Renderer::draw_shapes(const std::vector<core::DrawItem>& shapes, const core::View& view) {
+  const core::Box area = core::visible_area(view);
+  batch_.clear();
+  batch_texture_ = nullptr;
+  for (const core::DrawItem& item : shapes) {
+    if (core::overlaps(bounds_of(item), area)) add(item, area, view);
+    else ++stats_.culled;
   }
-  draw_geometry(all.subspan(start));
+  flush(view);
+}
+
+void Renderer::add(const core::DrawItem& item, const core::Box& area, const core::View& view) {
+  SDL_Texture* tex = item.shape.image ? texture(item.shape.image) : nullptr;
+  if (tex != batch_texture_) {
+    flush(view);
+    batch_texture_ = tex;
+  }
+  if (tex) image_triangles(item, area, batch_);
+  else tessellate(item, batch_);
+  ++stats_.drawn;
+}
+
+// The batch through the camera, as one SDL_RenderGeometry call.
+void Renderer::flush(const core::View& view) {
+  if (batch_.empty()) return;
+  vertices_.clear();
+  for (const Vertex& v : batch_) {
+    const core::Vec2 p = core::to_screen(view, v.pos);
+    vertices_.push_back({{p.x, p.y}, to_sdl(v.color), {v.uv.x, v.uv.y}});
+  }
+  SDL_RenderGeometry(sdl_, batch_texture_, vertices_.data(), static_cast<int>(vertices_.size()), nullptr, 0);
+  ++stats_.draw_calls;
+  batch_.clear();
 }
 
 SDL_Texture* Renderer::texture(const core::ImagePtr& image) {
@@ -53,23 +84,6 @@ SDL_Texture* Renderer::texture(const core::ImagePtr& image) {
   SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);  // crisp pixel art
   textures_[image.get()] = tex;
   return tex;
-}
-
-void Renderer::draw_image(const core::DrawItem& item) {
-  const core::Vec2 size = std::get<core::Rect>(item.shape.geometry).size;
-  const SDL_FRect dst{item.pos.x - size.x / 2, item.pos.y - size.y / 2, size.x, size.y};
-  SDL_RenderTextureRotated(sdl_, texture(item.shape.image), nullptr, &dst, item.rotation, nullptr,
-                           SDL_FLIP_NONE);
-}
-
-void Renderer::draw_geometry(std::span<const core::DrawItem> items) {
-  if (items.empty()) return;
-  vertices_.clear();
-  for (const Vertex& v : tessellate(items)) {
-    vertices_.push_back({{v.pos.x, v.pos.y}, to_sdl(v.color), {0.0f, 0.0f}});
-  }
-  SDL_RenderGeometry(sdl_, nullptr, vertices_.data(), static_cast<int>(vertices_.size()),
-                     nullptr, 0);
 }
 
 void Renderer::draw_text(const core::TextItem& text) {

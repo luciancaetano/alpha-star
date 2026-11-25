@@ -6,6 +6,7 @@
 #include <tuple>
 
 #include "core/error.hpp"
+#include "core/index_of.hpp"
 #include "ecs/components.hpp"
 
 namespace alpha::ecs {
@@ -27,9 +28,16 @@ EntityId to_id(entt::entity e) { return static_cast<EntityId>(entt::to_integral(
 
 entt::entity to_entity(EntityId id) { return static_cast<entt::entity>(id); }
 
+// Puts the animation's current frame into the shape.
+void show(const Animator& a, core::ShapeSpec& shape) {
+  const core::Animation& anim = a.sheet->animations.at(a.name);
+  shape.src = a.sheet->frame(anim.frames[core::frame_at(anim, a.time)]);
+}
+
 }  // namespace
 
-World::World(core::Vec2 gravity) : physics_(gravity) {}
+World::World(core::Vec2 gravity, core::Vec2 view_size)
+    : physics_(gravity), camera_(core::make_camera(view_size)), previous_view_(core::view_of(camera_)) {}
 
 EntityId World::spawn(const core::EntitySpec& spec) {
   const entt::entity e = registry_.create();
@@ -41,6 +49,11 @@ EntityId World::spawn(const core::EntitySpec& spec) {
   if (spec.body) {
     registry_.emplace<PhysicsBody>(e, physics_.create(to_id(e), *spec.body, spec.pos, spec.rotation));
     registry_.emplace<Collider>(e, spec.body->collider);
+  }
+  if (spec.shape && spec.shape->animation) {
+    const core::AnimationSpec& anim = *spec.shape->animation;
+    registry_.emplace<Animator>(e, anim.sheet, "", 0.0f);
+    if (!anim.name.empty()) play(to_id(e), anim.name, true);
   }
   return to_id(e);
 }
@@ -146,15 +159,68 @@ std::vector<Contact> World::living_pairs(const std::vector<physics::Pair>& pairs
   return out;
 }
 
+core::ShapeSpec& World::visual(EntityId id) {
+  auto* v = registry_.try_get<Visual>(living(id));
+  if (!v) throw core::Error("entity " + std::to_string(id) + " has no shape; spawn it with `shape`");
+  return v->shape;
+}
+
+std::string World::animation(EntityId id) const {
+  const auto* a = registry_.try_get<Animator>(living(id));
+  return a ? a->name : std::string();
+}
+
+void World::play(EntityId id, const std::string& name, bool restart) {
+  auto* a = registry_.try_get<Animator>(living(id));
+  if (!a) {
+    throw core::Error("entity " + std::to_string(id) + " has no sprite sheet; spawn it with shape { sheet, animation }");
+  }
+  if (!a->sheet->animations.contains(name)) {
+    throw core::Error("animation \"" + name + "\" is not in the entity's sheet; animations: " + core::keys_of(a->sheet->animations, ", "));
+  }
+  if (restart || a->name != name) *a = {a->sheet, name, 0.0f};
+  show(*a, visual(id));
+}
+
+std::pair<bool, bool> World::flip(EntityId id) const {
+  const auto* v = registry_.try_get<Visual>(living(id));
+  return v ? std::pair{v->shape.flip_x, v->shape.flip_y} : std::pair{false, false};
+}
+
+void World::set_flip(EntityId id, bool x, bool y) {
+  core::ShapeSpec& shape = visual(id);
+  shape.flip_x = x;
+  shape.flip_y = y;
+}
+
+void World::animate(float dt) {
+  for (auto [e, a, v] : registry_.view<Animator, Visual>().each()) {
+    a.time += dt;
+    if (!a.name.empty()) show(a, v.shape);  // a sheet sprite without animation keeps frame 0
+  }
+}
+
+void World::step_view(float dt) {
+  std::optional<core::Vec2> target;
+  if (target_ && alive(*target_)) target = position(*target_);
+  else target_.reset();
+  core::step_camera(camera_, target, dt);
+}
+
+core::View World::view(float blend) const { return core::blend(previous_view_, core::view_of(camera_), blend); }
+
 StepEvents World::step(float dt) {
   free_doomed();
   const physics::StepContacts contacts = physics_.step(dt);
   sync_bodies();
+  animate(dt);
+  step_view(dt);
   return {living_pairs(contacts.hits), living_pairs(contacts.sensor_enters)};
 }
 
 void World::snapshot() {
   for (auto [e, t, p] : registry_.view<const Transform, Previous>().each()) p = {t.pos, t.rotation};
+  previous_view_ = core::view_of(camera_);
 }
 
 std::vector<core::DrawItem> World::draw_items(float blend) const {

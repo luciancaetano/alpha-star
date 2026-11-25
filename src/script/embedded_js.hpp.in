@@ -5,10 +5,11 @@
 
 namespace alpha::script::embedded {
 
-inline constexpr std::string_view kAlpha = R"__alpha_js__(@ALPHA_JS_alpha@)__alpha_js__";
+inline constexpr std::string_view kAlpha = @ALPHA_JS_alpha@;
 #if ALPHA_DEBUG_TOOLS  // the alpha/test module is absent from other builds
-inline constexpr std::string_view kAlphaTest = R"__alpha_js__(@ALPHA_JS_alpha_test@)__alpha_js__";
+inline constexpr std::string_view kAlphaTest = @ALPHA_JS_alpha_test@;
 #endif
-inline constexpr std::string_view kRuntime = R"__alpha_js__(@ALPHA_JS_runtime@)__alpha_js__";
+inline constexpr std::string_view kMaps = @ALPHA_JS_maps@;
+inline constexpr std::string_view kRuntime = @ALPHA_JS_runtime@;
 
 }  // namespace alpha::script::embedded

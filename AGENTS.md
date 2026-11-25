@@ -35,6 +35,7 @@ cmake/          dependency + warnings config
 ```
 make build-debug | build-prod | run-debug | debug   # debug = run under VS/lldb/gdb (GAME=path/to/pack)
 make flappy                                         # build engine + examples/flappy, then play
+                                                    # examples/platformer: sheets, Tiled map, camera
 make sdk-engine | sdk-engine-linux                  # stage release engine into alpha-sdk/engine/
 make linux-gate                                     # full gate inside the Linux container
 ```

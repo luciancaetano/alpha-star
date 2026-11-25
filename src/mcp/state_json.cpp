@@ -16,7 +16,8 @@ std::string entity(const ecs::EntityView& e) {
                        {"pos", vec(e.pos)},
                        {"rotation", json::num(e.rotation)},
                        {"z", json::num(e.z)},
-                       {"velocity", e.velocity ? vec(*e.velocity) : "null"}});
+                       {"velocity", e.velocity ? vec(*e.velocity) : "null"},
+                       {"animation", e.animation.empty() ? "null" : json::str(e.animation)}});
 }
 
 std::string document(const ui::DocumentView& d) {

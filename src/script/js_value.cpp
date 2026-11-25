@@ -57,16 +57,30 @@ std::string string_arg(JSContext* ctx, JSValueConst v, const std::string& what) 
   return to_string(ctx, v);
 }
 
-std::vector<std::string> strings_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
-  if (!JS_IsArray(v)) throw core::Error(what + " must be an array of strings");
+namespace {
+
+// Every item of a JS array read by `read(ctx, item, what[i])`.
+template <typename T, typename Read>
+std::vector<T> array_of(JSContext* ctx, JSValueConst v, const std::string& what, const char* kind, Read read) {
+  if (!JS_IsArray(v)) throw core::Error(what + " must be an array of " + kind + ", got " + to_string(ctx, v));
   int64_t length = 0;
   JS_GetLength(ctx, v, &length);
-  std::vector<std::string> out;
+  std::vector<T> out;
   for (int64_t i = 0; i < length; ++i) {
     const Value item(ctx, JS_GetPropertyUint32(ctx, v, static_cast<std::uint32_t>(i)));
-    out.push_back(string_arg(ctx, item.get(), what + "[" + std::to_string(i) + "]"));
+    out.push_back(read(ctx, item.get(), what + "[" + std::to_string(i) + "]"));
   }
   return out;
+}
+
+}  // namespace
+
+std::vector<std::string> strings_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
+  return array_of<std::string>(ctx, v, what, "strings", string_arg);
+}
+
+std::vector<double> numbers_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
+  return array_of<double>(ctx, v, what, "numbers", number_arg);
 }
 
 core::Vec2 vec2_arg(JSContext* ctx, JSValueConst v, const std::string& what) {

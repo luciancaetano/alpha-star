@@ -80,7 +80,10 @@ void Host::pause(const std::exception& e) {
 
 render::Frame Host::frame(float blend) {
   render::Frame f{info_.background, {}, {}};
-  if (vm_->main().world) f.shapes = vm_->main().world->draw_items(blend);
+  if (const ecs::World* world = vm_->main().world.get()) {
+    f.shapes = world->draw_items(blend);
+    f.view = world->view(blend);
+  }
   if (paused()) f.texts = error_overlay(error_, static_cast<float>(info_.width));
 #if ALPHA_DEBUG_TOOLS
   else if (!reload_error_.empty()) f.texts = error_overlay(reload_error_, static_cast<float>(info_.width));

@@ -18,6 +18,7 @@ struct EntityView {
   int z = 0;
   std::vector<std::string> tags;
   std::optional<core::Vec2> velocity;  // only entities with a body
+  std::string animation{};             // playing sheet animation, "" for none
 };
 
 // Living entities, oldest first; with a filter, only those having a tag whose

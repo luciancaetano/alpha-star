@@ -7,6 +7,7 @@ module the engine runs). Run every command from the game project folder.
 alpha check                         type-check only
 alpha export [--out dist]           type-check, bundle, copy assets into a pack
 alpha export --standalone           ... plus the player engine (runs by itself)
+alpha export --no-atlas             ... without packing images into atlas pages
 alpha run [-- engine args]          export, then open the pack in the engine
 alpha run --watch                   ... and re-export on every change: the game hot-reloads
 alpha test                          run test/main.test.ts headlessly (simulate + expect)
@@ -16,6 +17,31 @@ alpha mcp                           MCP server for AI agents (below)
 Engines are bundled per platform in `engine/<platform>-<arch>/` (release:
 `run`/`test`/`mcp`) and `engine/<platform>-<arch>/shipping/` (players). Override
 with `--engine <path>` or `$ALPHA_STAR`.
+
+## Sprites, camera and tilemaps
+
+```ts
+assets: {
+  sheets: { hero: { image: "img/hero.png", frame: [16, 16],
+                    animations: { run: { frames: [1, 2, 3, 4], fps: 12 }, jump: { frames: [5], loop: false } } } },
+  maps: { level1: "maps/level1.tmj" },   // Tiled JSON; .tsj or embedded tilesets; CSV layers
+}
+const hero = ctx.spawn({ tags: ["player"], pos: [40, 100], shape: { sheet: "hero", animation: "run" } });
+hero.animation = "jump";          // switch (same name keeps playing); hero.play("run") restarts
+hero.flipX = true;
+const map = ctx.spawnMap("level1", { collide: ["walls"] });   // colliders tagged "walls"
+ctx.map("level1").objects("spawns");                           // object layer as plain data
+ctx.camera.follow(hero, { lerp: 0.15, deadzone: [48, 32] });
+ctx.camera.bounds([0, 0, ...map.size]);
+ctx.camera.shake(3, 0.25);
+ctx.camera.toWorld(ctx.input.mouse());
+```
+
+Declare the names in `GameTypes`: `sheets: { hero: "run" | "jump" }`, `maps: "level1"`
+(both optional). Animations and the camera advance on the fixed step, so `simulate`
+runs stay deterministic; `expect.animation("player").equals("run")` checks one.
+`alpha export` packs PNG images and sheets into `alpha-atlas-N.png` pages (fewer draw
+calls; transparent to game code) and copies maps with their tilesets and images.
 
 ## Using alpha-star with an AI agent (MCP)
 

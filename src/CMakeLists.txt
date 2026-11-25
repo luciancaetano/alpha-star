@@ -1,18 +1,22 @@
 # core: pure, dependency-free domain code. Tested by the fast harness preset.
 add_library(alpha_core
   core/axes.cpp
+  core/camera.cpp
   core/cli.cpp
   core/color.cpp
   core/controls.cpp
+  core/entity_spec.cpp
   core/fixed_step.cpp
   core/input.cpp
   core/log_ring.cpp
   core/mixer.cpp
   core/pad_slots.cpp
   core/random.cpp
+  core/sheet.cpp
   core/source_map.cpp
   core/synth.cpp
   core/tags.cpp
+  core/tilemap.cpp
   core/timers.cpp
   core/version.cpp)
 if(ALPHA_DEBUG_TOOLS)  # hot reload's file watch: dev/release only
@@ -28,9 +32,21 @@ if(NOT ALPHA_WITH_RUNTIME_DEPS)
 endif()
 
 # Script runtime JS is embedded in the binary: the player ships one executable.
-set(ALPHA_JS_FILES alpha alpha_test runtime)
+set(ALPHA_JS_FILES alpha alpha_test maps runtime)
+# Each file becomes adjacent raw literals of <= 8000 chars: MSVC rejects a single
+# literal over ~16 KB (C2026), while concatenated ones may reach 64 KB.
 foreach(js ${ALPHA_JS_FILES})
-  file(READ script/${js}.js ALPHA_JS_${js})
+  file(READ script/${js}.js source)
+  string(LENGTH "${source}" left)
+  set(literal "")
+  set(at 0)
+  while(left GREATER 0)
+    string(SUBSTRING "${source}" ${at} 8000 chunk)
+    string(APPEND literal "R\"__alpha_js__(${chunk})__alpha_js__\"\n")
+    math(EXPR at "${at} + 8000")
+    math(EXPR left "${left} - 8000")
+  endwhile()
+  set(ALPHA_JS_${js} "${literal}")
   set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS script/${js}.js)
 endforeach()
 configure_file(script/embedded_js.hpp.in
@@ -47,6 +63,7 @@ add_library(alpha_engine
   platform/gamepads.cpp
   platform/log_file.cpp
   platform/sdl_input.cpp
+  render/quads.cpp
   render/renderer.cpp
   render/tessellate.cpp
   render/text_layout.cpp
@@ -55,12 +72,15 @@ add_library(alpha_engine
   script/host.cpp
   script/vm.cpp
   script/bundle_map.cpp
+  script/camera_bindings.cpp
   script/input_bindings.cpp
   script/instance_bindings.cpp
   script/instances.cpp
   script/js_engine.cpp
   script/js_value.cpp
+  script/map_bindings.cpp
   script/spec_parser.cpp
+  script/sprite_bindings.cpp
   script/synth_parser.cpp
   script/system_bindings.cpp
   script/ui_bindings.cpp

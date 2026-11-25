@@ -24,6 +24,7 @@ class Controls {
   Actions actions;
   Axes axes;
   std::size_t players = 1;
+  Vec2 mouse{};  // game pixels, as of this step
 
   void update(const InputFrame& frame);
   // player 0..kMaxPlayers-1 or kAnyPlayer (all). Throws Error unless

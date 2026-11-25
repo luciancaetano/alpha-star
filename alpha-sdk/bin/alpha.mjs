@@ -2,8 +2,9 @@
 // alpha: the one CLI for alpha-star games. Run from the game project directory.
 //
 //   alpha check                  type-check only
-//   alpha export [--out dist] [--standalone [--target win32-x64|linux-x64]]
-//                                type-check, bundle and copy assets into a pack;
+//   alpha export [--out dist] [--standalone [--target win32-x64|linux-x64]] [--no-atlas]
+//                                type-check, bundle and copy assets into a pack (PNG images and
+//                                sprite sheets packed into alpha-atlas-N.png pages unless --no-atlas);
 //                                --standalone also copies the shipping engine in,
 //                                so the pack runs by itself (default target: this machine)
 //   alpha run [--watch] [--out dist] [--engine path] [-- engine args]
@@ -27,7 +28,7 @@ import { exportPack } from "../lib/pack.mjs";
 import { buildTests, testArgs } from "../lib/test.mjs";
 import { watchProject } from "../lib/watch.mjs";
 
-const USAGE = `usage: alpha <check|export|run|test|mcp> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>] [--watch] [--engine path] [-- engine args]`;
+const USAGE = `usage: alpha <check|export|run|test|mcp> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
 
 const VERSION = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
@@ -45,6 +46,7 @@ function parse(argv) {
     engine: resolveEngine(opt("engine", "")),
     target: own.includes("--standalone") ? opt("target", hostTarget()) : null,
     watch: own.includes("--watch"),
+    atlas: !own.includes("--no-atlas"),
     engineArgs: dash >= 0 ? argv.slice(dash + 1) : [],
   };
 }
@@ -57,7 +59,7 @@ function report(problems, verb) {
 
 async function exportCmd(args) {
   const { ok, problems, files } = await exportPack({ root: process.cwd(), entry: args.entry, out: args.out,
-                                                    target: args.target });
+                                                    target: args.target, atlas: args.atlas });
   if (!ok) return report(problems, "export");
   const engine = args.target ? `, engine ${args.target}` : "";
   console.log(`exported ${path.relative(process.cwd(), args.out) || "."} (main.js + ${files.length} asset file(s)${engine})`);

@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <optional>
 #include <string>
+#include <vector>
 #include <string_view>
 
 namespace alpha::core {
@@ -32,6 +33,14 @@ std::string join(const Range& parts, std::string_view sep) {
   std::string out;
   for (const auto& p : parts) out += (out.empty() ? std::string() : std::string(sep)) + p;
   return out;
+}
+
+// A map's keys with `sep` between them (for error messages listing what exists).
+template <typename Map>
+std::string keys_of(const Map& map, std::string_view sep) {
+  std::vector<std::string> keys;
+  for (const auto& entry : map) keys.push_back(entry.first);
+  return join(keys, sep);
 }
 
 // Every element's `.name`, space separated (for error messages).

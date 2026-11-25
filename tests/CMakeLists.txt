@@ -3,10 +3,12 @@ set(ALPHA_TEST_SOURCES
   core/audio_test.cpp
   core/cli_test.cpp
   core/axes_test.cpp
+  core/camera_test.cpp
   core/input_test.cpp
   core/log_ring_test.cpp
   core/pack_watch_test.cpp
   core/source_map_test.cpp
+  core/sprite_test.cpp
   core/time_test.cpp
   core/values_test.cpp
   core/version_test.cpp)
@@ -14,6 +16,7 @@ set(ALPHA_TEST_LIBS alpha_core)
 
 if(ALPHA_WITH_RUNTIME_DEPS)
   list(APPEND ALPHA_TEST_SOURCES
+    ecs/sprite_world_test.cpp
     ecs/world_test.cpp
     physics/physics_world_test.cpp
     platform/assets_test.cpp
@@ -29,7 +32,9 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/input_script_test.cpp
     script/hot_reload_test.cpp
     script/reload_test.cpp
+    script/map_script_test.cpp
     script/simulate_test.cpp
+    script/sprite_script_test.cpp
     script/console_test.cpp
     script/host_fixture.cpp
     script/ui_script_test.cpp

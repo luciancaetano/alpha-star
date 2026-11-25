@@ -10,6 +10,7 @@
 using namespace alpha::core;
 using alpha::render::Frame;
 using alpha::render::Renderer;
+using alpha::render::RenderStats;
 
 namespace {
 
@@ -86,4 +87,106 @@ TEST_CASE("save_bmp writes the drawn frame") {
   SDL_DestroySurface(loaded);
   std::filesystem::remove(path);
   CHECK_FALSE(c.renderer.save_bmp("Z:/no/such/dir/x.bmp"));
+}
+
+namespace {
+
+// 2x1 image: left pixel red, right pixel blue.
+ImagePtr two_pixels() {
+  return std::make_shared<Image>(Image{2, 1, {255, 0, 0, 255, 0, 0, 255, 255}});
+}
+
+DrawItem sprite(const ImagePtr& img, Vec2 pos, Vec2 size, Region src = {}) {
+  DrawItem item{{Rect{size}, {}, {}, img}, pos, 0};
+  item.shape.src = src;
+  return item;
+}
+
+const Color kRed{255, 0, 0, 255};
+const Color kBlue{0, 0, 255, 255};
+
+}  // namespace
+
+TEST_CASE("sprites draw their source rect, mirrored by flip") {
+  Canvas c;
+  Frame f{kBg, {}, {}};
+  f.shapes.push_back(sprite(two_pixels(), {8, 8}, {16, 16}, {1, 0, 1, 1}));
+  f.shapes.push_back(sprite(two_pixels(), {40, 16}, {16, 16}));
+  f.shapes.back().shape.flip_x = true;
+  c.renderer.draw(f);
+  CHECK(c.pixel(8, 8) == kBlue);    // only the right pixel, stretched
+  CHECK(c.pixel(36, 16) == kBlue);  // mirrored: blue on the left half
+  CHECK(c.pixel(44, 16) == kRed);
+}
+
+TEST_CASE("the camera view moves and zooms the world; texts stay on screen") {
+  Canvas c;
+  Frame f{kBg, {}, {{"#", {4, 4}, 8, kWhite, Align::Left}}};
+  f.shapes.push_back({{Rect{{4, 4}}, kGreen, {}, {}}, {1000, 500}, 0});
+  f.view = View{{1000, 500}, 2.0f, 0.0f, {64, 32}};  // centered on the rect, 2x
+  c.renderer.draw(f);
+  CHECK(c.pixel(32, 16) == kGreen);
+  CHECK(c.pixel(35, 16) == kGreen);  // 4 px wide at 2x = 8 px on screen
+  CHECK(c.pixel(38, 16) == kBg);
+  int lit = 0;
+  for (int y = 0; y < 12; ++y) {
+    for (int x = 0; x < 12; ++x) lit += c.pixel(x, y) == kWhite;
+  }
+  CHECK(lit > 4);  // the text is not moved by the camera
+}
+
+TEST_CASE("items outside the view are culled; same-texture neighbours share one draw call") {
+  Canvas c;
+  const ImagePtr img = two_pixels();
+  Frame f{kBg, {}, {}};
+  for (int i = 0; i < 10; ++i) f.shapes.push_back(sprite(img, {static_cast<float>(i) * 4, 8}, {4, 4}));
+  for (int i = 0; i < 50; ++i) f.shapes.push_back(sprite(img, {500.0f + static_cast<float>(i), 8}, {4, 4}));
+  f.shapes.push_back({{Circle{3}, kGreen, {}, {}}, {50, 20}, 0});
+  c.renderer.draw(f);
+  CHECK(c.renderer.stats().drawn == 11);
+  CHECK(c.renderer.stats().culled == 50);
+  CHECK(c.renderer.stats().draw_calls == 2);  // sprites, then the plain circle
+}
+
+TEST_CASE("tile layers draw every visible cell from the tileset in one call") {
+  Canvas c;
+  auto grid = std::make_shared<TileGrid>();
+  grid->tile = {8, 8};
+  grid->tiles = {{{0, 0}, {0, 0, 1, 1}}, {{8, 0}, {1, 0, 1, 1}}, {{800, 0}, {0, 0, 1, 1}}};
+  DrawItem layer{{Rect{{808, 8}}, {}, {}, two_pixels()}, {404, 4}, 0};
+  layer.shape.tiles = grid;
+  c.renderer.draw({kBg, {layer}, {}});
+  CHECK(c.pixel(4, 4) == kRed);
+  CHECK(c.pixel(12, 4) == kBlue);
+  CHECK(c.pixel(20, 4) == kBg);
+  CHECK(c.renderer.stats().draw_calls == 1);
+}
+
+// Measurement, not a check: run with alpha_tests -tc="*culling bench*" --no-skip.
+TEST_CASE("culling bench: 20000 sprites, 1/20 of them on screen" * doctest::skip()) {
+  SDL_Surface* surface = SDL_CreateSurface(320, 180, SDL_PIXELFORMAT_RGBA32);
+  SDL_Renderer* sdl = SDL_CreateSoftwareRenderer(surface);
+  {
+    Renderer renderer{sdl, 320, 180};
+    Frame f{kBg, {}, {}};
+    const ImagePtr img = two_pixels();
+    for (int i = 0; i < 20000; ++i) {
+      f.shapes.push_back(sprite(img, {static_cast<float>(i % 400) * 16, static_cast<float>(i / 400) * 18}, {12, 12}));
+    }
+    const auto time = [&](View v) {
+      f.view = v;
+      const Uint64 start = SDL_GetTicksNS();
+      for (int k = 0; k < 20; ++k) renderer.draw(f);
+      SDL_FlushRenderer(sdl);
+      return static_cast<double>(SDL_GetTicksNS() - start) / 20e6;
+    };
+    const double culled = time(View{{160, 450}, 1.0f, 0.0f, {320, 180}});
+    const RenderStats on_screen = renderer.stats();
+    const double all = time(View{{3200, 450}, 0.05f, 0.0f, {320, 180}});
+    MESSAGE("on screen: " << on_screen.drawn << " drawn, " << on_screen.culled << " culled -> " << culled
+                          << " ms/frame; everything visible (" << renderer.stats().drawn << " drawn) -> " << all
+                          << " ms/frame");
+  }
+  SDL_DestroyRenderer(sdl);
+  SDL_DestroySurface(surface);
 }

@@ -7,6 +7,8 @@
 // in the engine under the same instance id. The engine's own game is instance
 // 0; every headless test run is a fresh instance, so runs never see
 // each other. Every call into an instance selects it natively first.
+import { joinPath, loadMap, mapView, spawnLayers } from "alpha:maps";
+
 const N = globalThis.__native;
 
 // console.* goes to stderr and the dev tools console (levels 0 log, 1 warn, 2 error).
@@ -44,13 +46,30 @@ function validate(g) {
   return def;
 }
 
+// `alpha export` may pack images into atlas pages: alpha-atlas.json maps each image
+// file to [page file, [x, y, w, h]]. Without it (tests, raw files) every image is its own file.
+function atlasOf() {
+  const text = N.readText("alpha-atlas.json", true);
+  return text === null ? {} : JSON.parse(text).images;
+}
+
+function sheetArgs(name, sheet, atlas) {
+  if (!sheet || typeof sheet.image !== "string") fail(`assets.sheets.${name}.image must be an image file path`);
+  const anims = sheet.animations ?? {};
+  if (typeof anims !== "object") fail(`assets.sheets.${name}.animations must be { name: { frames, fps?, loop? } }`);
+  return [name, ...(atlas[joinPath("", sheet.image)] ?? [sheet.image, undefined]), sheet.frame, Object.entries(anims)];
+}
+
 // Every asset is loaded (or synthesized) before the first scene starts.
-function preload(assets) {
+function preload(s, assets) {
   for (const [name, sound] of Object.entries(assets.sounds ?? {})) {
     if (typeof sound === "string") N.loadSound(name, sound);
     else N.synthSound(name, sound);
   }
-  for (const [name, file] of Object.entries(assets.images ?? {})) N.loadImage(name, file);
+  const atlas = atlasOf();
+  for (const [name, file] of Object.entries(assets.images ?? {})) N.loadImage(name, ...(atlas[joinPath("", file)] ?? [file, undefined]));
+  for (const [name, sheet] of Object.entries(assets.sheets ?? {})) N.loadSheet(...sheetArgs(name, sheet, atlas));
+  s.maps = new Map(Object.entries(assets.maps ?? {}).map(([name, file]) => [name, loadMap(name, file)]));
   for (const [name, file] of Object.entries(assets.fonts ?? {})) N.loadFont(name, file);
   for (const [name, file] of Object.entries(assets.ui ?? {})) N.loadUi(name, file);
 }
@@ -93,6 +112,13 @@ function makeEntities() {
       set rotation(v) { N.setRotation(id, v); },
       get z() { return N.z(id); },
       set z(v) { N.setZ(id, v); },
+      get animation() { return N.animation(id); },
+      set animation(name) { N.play(id, name, false); },
+      play: (name) => N.play(id, name, true),
+      get flipX() { return N.flip(id)[0]; },
+      set flipX(v) { N.flip(id, Boolean(v), N.flip(id)[1]); },
+      get flipY() { return N.flip(id)[1]; },
+      set flipY(v) { N.flip(id, N.flip(id)[0], Boolean(v)); },
       body: {
         get velocity() {
           const [x, y] = N.velocity(id);
@@ -140,11 +166,58 @@ function makeInput() {
   const players = [1, 2, 3, 4].map(playerInput);
   return {
     ...playerInput(0),
+    mouse: () => N.mouse(),
     player: (n) => players[checkPlayer(n, `input.player(${n})`) - 1],
     players: () => N.players(),
     rumble: (strength, seconds, player) =>
       N.rumble(strength, seconds, player === undefined ? 0 : checkPlayer(player, "input.rumble")),
   };
+}
+
+function pair(v, what) {
+  if (!Array.isArray(v) || v.length !== 2) fail(`${what} must be [x, y], got ${JSON.stringify(v)}`);
+  return v;
+}
+
+// ctx.camera: the current scene's camera (each scene starts with the identity one).
+function makeCamera() {
+  const get = () => N.cameraGet();
+  const set = (i, v) => {
+    const c = get();
+    c[i] = v;
+    N.cameraSet(...c);
+  };
+  return {
+    pos: {
+      get x() { return get()[0]; },
+      set x(v) { set(0, v); },
+      get y() { return get()[1]; },
+      set y(v) { set(1, v); },
+    },
+    get zoom() { return get()[2]; },
+    set zoom(v) { set(2, v); },
+    get rotation() { return get()[3]; },
+    set rotation(v) { set(3, v); },
+    follow(entity, opts = {}) {
+      if (entity === null) return N.cameraFollow(null, 1, 0, 0);
+      if (!entity || typeof entity.id !== "number") fail("camera.follow(entity, opts?): entity must be an entity from ctx.spawn/find, or null to stop");
+      const dz = pair(opts.deadzone ?? [0, 0], "camera.follow deadzone");
+      N.cameraFollow(entity.id, opts.lerp ?? 1, dz[0], dz[1]);
+    },
+    shake: (intensity, seconds) => N.cameraShake(intensity, seconds),
+    bounds(rect) {
+      if (rect === null) return N.cameraBounds(null, 0, 0, 0);
+      if (!Array.isArray(rect) || rect.length !== 4) fail(`camera.bounds must be [x, y, width, height] or null, got ${JSON.stringify(rect)}`);
+      N.cameraBounds(...rect);
+    },
+    toWorld: (p) => N.toWorld(...pair(p, "camera.toWorld point")),
+  };
+}
+
+function mapOf(s, name, what) {
+  const map = s.maps.get(name);
+  if (!map) fail(`${what}("${name}"): not in assets.maps; have: ${[...s.maps.keys()].join(", ") || "(none)"}`);
+  return map;
 }
 
 // The ctx object a game's scenes see. `s` is the instance's mutable state.
@@ -190,7 +263,14 @@ function makeCtx(s) {
         s.masterVolume = v;
       },
     },
+    camera: makeCamera(),
     spawn: (spec) => s.entities.entity(N.spawn(spec)),
+    map: (name) => mapView(mapOf(s, name, "map")),
+    spawnMap(name, opts = {}) {
+      const map = mapOf(s, name, "spawnMap");
+      spawnLayers(map, opts, (spec) => N.spawn(spec));
+      return mapView(map);
+    },
     destroy: (e) => N.destroy(e.id),
     find(tag) {
       const ids = N.findAll(tag);
@@ -286,12 +366,12 @@ function startOf(s, start, what, from) {
 function bootGame(s, ctx, g, start, what, from) {
   s.game = validate(g);
   const c = s.game.config;
-  N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]));
+  N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]), c.size[0], c.size[1]);
   N.uiCreate(c.size[0], c.size[1]);
   for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bind("actions", action, inputs);
   if (c.deadzone !== undefined) N.deadzone(c.deadzone);
   for (const [axis, sources] of Object.entries(c.axes ?? {})) N.bind("axes", axis, sources);
-  preload(s.game.assets ?? {});
+  preload(s, s.game.assets ?? {});
   s.saveData = s.save.read(c.title ?? "alpha-star");
   const at = startOf(s, start, what, from);
   enter(s, ctx, at.scene, at.params, at);
@@ -329,7 +409,7 @@ export function createInstance(id, save) {
   const s = {
     game: null, current: null, currentName: null, currentParams: undefined, pending: null, handlers: [], uiHandlers: new Map(),
     saveData: {}, save, sceneTime: 0, stepDt: 1 / 60, masterVolume: 1,
-    timers: new Map(), entities: makeEntities(),
+    timers: new Map(), entities: makeEntities(), maps: new Map(),
   };
   const ctx = makeCtx(s);
   return {

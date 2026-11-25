@@ -4,8 +4,11 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
+#include <utility>
 #include <vector>
 
+#include "core/camera.hpp"
 #include "core/entity_spec.hpp"
 #include "physics/physics_world.hpp"
 
@@ -35,7 +38,8 @@ struct StepEvents {
 // One scene's entities. Every accessor throws core::Error for a dead id.
 class World {
  public:
-  explicit World(core::Vec2 gravity);
+  // view_size: the screen in game pixels (the camera starts showing exactly it).
+  explicit World(core::Vec2 gravity, core::Vec2 view_size = {});
   World(const World&) = delete;
   World& operator=(const World&) = delete;
 
@@ -62,7 +66,22 @@ class World {
   core::Vec2 velocity(EntityId id) const;
   void set_velocity(EntityId id, core::Vec2 velocity);
 
-  // Frees destroyed entities, advances physics, syncs transforms.
+  // Sprite sheets. Name of the playing animation ("" without a sheet).
+  std::string animation(EntityId id) const;
+  // Switches to animation `name`; the same name keeps its time unless `restart`.
+  // Throws listing the sheet's animations, or when the entity has no sheet.
+  void play(EntityId id, const std::string& name, bool restart);
+  std::pair<bool, bool> flip(EntityId id) const;
+  void set_flip(EntityId id, bool x, bool y);
+
+  // Camera: moved on the step (follow, bounds, shake); `follow` a living entity or none.
+  core::Camera& camera() { return camera_; }
+  void follow(std::optional<EntityId> target) { target_ = target; }
+  bool following() const { return target_.has_value(); }
+  // The camera between the previous and the current step, like draw_items.
+  core::View view(float blend = 1.0f) const;
+
+  // Frees destroyed entities, advances physics, syncs transforms, animations and the camera.
   StepEvents step(float dt);
   // Living bodies' colliders, oldest first.
   std::vector<PlacedCollider> colliders() const;
@@ -78,11 +97,17 @@ class World {
   void place(EntityId id, core::Vec2 pos, float degrees);
   void free_doomed();
   void sync_bodies();
+  void animate(float dt);
+  void step_view(float dt);
+  core::ShapeSpec& visual(EntityId id);
   std::vector<Contact> living_pairs(const std::vector<physics::Pair>& pairs) const;
 
   entt::registry registry_;
   physics::PhysicsWorld physics_;
   std::uint64_t next_sequence_ = 0;
+  core::Camera camera_;
+  core::View previous_view_;
+  std::optional<EntityId> target_;
 };
 
 }  // namespace alpha::ecs

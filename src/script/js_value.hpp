@@ -42,6 +42,7 @@ double number_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 std::string string_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 std::vector<std::string> strings_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 core::Vec2 vec2_arg(JSContext* ctx, JSValueConst v, const std::string& what);
+std::vector<double> numbers_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 
 JSValue new_vec2(JSContext* ctx, core::Vec2 v);
 JSValue new_ids(JSContext* ctx, std::span<const std::uint32_t> ids);

@@ -9,6 +9,8 @@
 #include <string_view>
 #include <vector>
 
+#include "core/vec2.hpp"
+
 namespace alpha::core {
 
 // Device-independent input code: index into input_names().
@@ -49,6 +51,7 @@ struct PlayerInput {
 struct InputFrame {
   std::array<PlayerInput, kMaxPlayers> players{};
   std::size_t connected = 1;
+  Vec2 mouse{};  // pointer position in game pixels (screen, not world)
 };
 
 using ActionId = std::uint16_t;
