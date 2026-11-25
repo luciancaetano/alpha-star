@@ -46,3 +46,5 @@ Condensed summary of the project's history. The full per-action log (326 entries
 - flappy: player uses `filter: "sharp"` at 48/132 px (square pixels, clean when tilted); checked by screenshot.
 - AGENTS.md: test only on the OS you are on (no Linux gate from Windows and vice versa).
 - Gate: PASS (Windows). SDK pack/atlas tests 20/20, flappy tests 15/15.
+- Examples failed on `npm run start`: staged SDK engine predated the `filter` image option; restaged via stage_engine.py. Added BUILDING.md (linked from README) explaining presets and that alpha run uses alpha-sdk/engine, not build/.
+- alpha-harness skill (skills/alpha-harness/alpha-harness.md + scripts/harness.mjs): copies alpha-sdk/llm/*.md (new per-feature LLM API docs, shipped in the npm package) into a game's docs/llm and writes a managed AGENTS.md block (docs index + quality limits: params 10, fn 50 lines, file 300 lines, complexity 10, nesting 4). AGENTS.md: features update docs + LLM docs. GitHub Pages workflow (.github/workflows/pages.yml) publishes docs/site; Pages enabled (build_type workflow). SDK README: per-image filter replaces pixelMode.

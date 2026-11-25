@@ -12,7 +12,7 @@ assets: { sheets: { hero: { image: "assets/img/hero.png", frame: [16, 16],
 <pre><code>const hero = ctx.spawn({ tags: ["player"], pos, shape: { sheet: "hero", animation: "idle" } });
 hero.animation = "run";   // switches; setting the playing name again keeps it going
 hero.play("run");         // restarts</code></pre>
-<p>A sheet with one-frame animations is a tile set (<code>examples/puzzle</code>). <code>alpha export</code> packs images into atlas pages. <code>pixelMode</code> (config or per asset) picks crisp or smooth filtering.</p>
+<p>A sheet with one-frame animations is a tile set (<code>examples/puzzle</code>). <code>alpha export</code> packs images into atlas pages. <code>config.pixelMode</code> picks the default filtering; a map overrides it with <code>{ file, filter: "nearest" | "linear" | "sharp" }</code>.</p>
 <h2 id="camera">Camera</h2>
 <pre><code>ctx.camera.follow(hero, { lerp: 0.15, deadzone: [48, 32] });
 ctx.camera.bounds([0, 0, map.size[0], map.size[1]]);

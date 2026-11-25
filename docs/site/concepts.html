@@ -24,4 +24,19 @@
 <p>A script error pauses the game and shows a source-mapped message; it never crashes the engine. Messages are written for the agent that will fix them: what failed and what exists (e.g. an unknown animation lists the sheet's animations).</p>
 <h2 id="build-flavors">Build flavors</h2>
 <table><thead><tr><th>Flavor</th><th>Has</th><th>Used by</th></tr></thead><tbody><tr><td>dev</td><td>everything, debug build</td><td>engine development</td></tr><tr><td>release</td><td>dev tools (F12), MCP control channel, headless flags, test runner</td><td><code>alpha run</code>, <code>alpha test</code>, <code>alpha mcp</code></td></tr><tr><td>shipping</td><td>none of those; LTO, stripped, no console</td><td><code>alpha export --standalone</code> (players)</td></tr></tbody></table>
-<p>Nothing in a game can depend on dev features: they are absent from the shipping engine.</p></main></body></html>
+<p>Nothing in a game can depend on dev features: they are absent from the shipping engine.</p>
+<h2 id="image-filtering-and-window-scaling">Image filtering and window scaling</h2>
+<p>Each image, sheet or map picks how it is sampled when drawn scaled or rotated:</p>
+<pre><code>assets: { images: {
+  hero:  { file: "img/hero.png", filter: "sharp" },   // pixel art at any size/angle: square pixels, soft edges
+  tiles: { file: "img/tiles.png", filter: "nearest" },// crisp; best at whole-number scales, jagged when rotated
+  sky:   { file: "img/sky.png", filter: "linear" },   // smooth art and photos
+} }</code></pre>
+<p>Without <code>filter</code>, <code>config.pixelMode</code> decides (<code>true</code>: nearest, <code>false</code>: linear). <code>"sharp"</code> costs 16x the texture memory of that image.</p>
+<p><code>config.window</code> sets how the game's <code>size</code> fits the window and how the window opens:</p>
+<pre><code>window: {
+  scaling: "integer",   // letterbox (default) | integer | stretch | expand | crop
+  borderless: false, alwaysOnTop: false, maximized: false,
+  vsync: true, resizable: true, fullscreen: false, altEnter: true,
+}</code></pre>
+<p><code>integer</code> keeps pixel art exact (whole multiples, bars around); <code>crop</code> fills the window and cuts the edges that do not fit.</p></main></body></html>

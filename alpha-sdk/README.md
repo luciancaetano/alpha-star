@@ -76,9 +76,10 @@ ctx.spawn({ tags: ["popup"], pos, shape: { text: "+1", font: "pixel", size: 8, c
 ## Texture filtering (pixelMode)
 
 `config.pixelMode` (default `true`) is the game-wide filtering of images when scaled: `true` =
-crisp pixel art (nearest), `false` = smooth (linear). Override per asset: `images: { logo: {
-file: "img/logo.png", pixelMode: false } }`, `sheets.hero.pixelMode`, `maps.level1: { file,
-pixelMode }` (its tilesets), `fonts.title: { file, pixelMode }` (world-text glyph atlas).
+crisp pixel art (nearest), `false` = smooth (linear). Images, sheets and maps override it with
+`filter: "nearest" | "linear" | "sharp"` (`images: { logo: { file: "img/logo.png", filter: "linear" } }`,
+`sheets.hero.filter`, `maps.level1: { file, filter }` for its tilesets); `pixelMode` on them is an
+error. Fonts keep `fonts.title: { file, pixelMode }` (world-text glyph atlas).
 Particles with an image or sheet shape use their source's mode. `alpha export` puts crisp
 and smooth images on separate atlas pages (`alpha-atlas-N.png`, `alpha-atlas-smooth-N.png`).
 

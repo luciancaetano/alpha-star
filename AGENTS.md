@@ -173,6 +173,12 @@ the platform package, then `alpha-sdk/engine/`) into `dist/release/` and never p
 - Refactoring: pin behavior, change structure, prove behavior unchanged.
 
 ### Practice
+- **Docs follow features:** every change that creates or alters a feature (script API, config,
+  CLI, asset option) updates, in the same change, the docs (`docs/guide/`, `alpha-sdk/README.md`,
+  `alpha.d.ts` comments, `docs/GLOSSARY.md`) **and** the LLM docs in `alpha-sdk/llm/` (keep each
+  file's `> summary:` line accurate; add a file for a new feature area). Games pull those through
+  the `alpha-harness` skill (`skills/alpha-harness/alpha-harness.md`; skills live in
+  `skills/<name>/<name>.md`, versioned here).
 - **Git:** work on `main`; never create a branch (or worktree branch) unless the user explicitly asks for one
   (do not infer it from tooling, workflows or conventions).
 - **Keep a log:** append every action and its reason to `docs/LOG.md`; report it on completion.

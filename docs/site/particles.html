@@ -24,6 +24,6 @@ stars.write();</code></pre>
 <p>Several times cheaper than <code>entity.pos</code> per entity when thousands move every frame (<code>examples/shmup</code>).</p>
 <h2 id="world-text-and-the-window">World text and the window</h2>
 <pre><code>ctx.spawn({ tags: ["label"], pos, shape: { text: "+1", size: 8, color: "#ffe14d" } });  // built-in font without `font`
-config: { window: { scaling: "integer" }, pixelMode: true }   // letterbox | integer | stretch | expand
+config: { window: { scaling: "integer" }, pixelMode: true }   // letterbox | integer | stretch | expand | crop
 ctx.window.fullscreen = true;   // Alt+Enter too</code></pre>
 <p>Full-screen effects (bloom, CRT, ...) and 2D lights: see <a href="shaders.html">Shaders and lighting</a>.</p></main></body></html>

@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="./logo.png" alt="Alpha Star Engine" width="320" />
 </p>
 
@@ -45,7 +45,7 @@ npm --prefix alpha-sdk ci
 python tools/stage_engine.py
 ```
 
-The last command builds and stages the `release` and `shipping` engines in `alpha-sdk/engine/`. It already limits resource usage. Run one build at a time.
+The last command builds and stages the `release` and `shipping` engines in `alpha-sdk/engine/`. It already limits resource usage. Run one build at a time. Rerun it after every engine change: `npm run start` in a game uses this staged copy, not `build/`. Full build instructions: [BUILDING.md](BUILDING.md).
 
 ### Play and test an example
 
@@ -150,6 +150,8 @@ Android export uses `alpha export --target android-arm64` and requires the Andro
 See [Exporting](docs/guide/exporting.md), [Android](docs/guide/android.md) and the [version limitations](docs/RELEASE_0.2.0.md#known-limitations). The existing map integration is with **Tiled**; LDtk is not a delivered integration. The current visual effects act on the world, not on the RmlUi UI.
 
 ## Developing the engine
+
+How to build each preset, restage the SDK engine and run the gate: [BUILDING.md](BUILDING.md).
 
 | Directory | Responsibility |
 |---|---|

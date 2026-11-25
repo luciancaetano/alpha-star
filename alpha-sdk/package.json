@@ -22,6 +22,7 @@
     "types",
     "notices",
     "templates",
+    "llm",
     "tsconfig.game.json"
   ],
   "scripts": {
