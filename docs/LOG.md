@@ -382,3 +382,9 @@
 | 325 | Resized logo.png from 1536 x 1024 to 640 x 427 with Lanczos and optimized PNG encoding, retaining RGBA transparency. Size dropped from 1,770,872 to 245,625 bytes (86.1%); visually inspected the output | Serve a smaller image while keeping 2x resolution for the README's 320 px display width |
 
 - flappy: player sprite (32x32 pixel art, nearest) was drawn at 44/132 px (1.375x/4.125x), so pixels came out uneven; now 32/128 (1x/4x) in src/tuning.ts. Hitbox (BIRD.radius 12) unchanged. flappy tests 15/15.
+
+### 2026-11-25 ? English README
+
+| # | Action | Reason |
+|---|---|---|
+| 326 | Translated README.md from Brazilian Portuguese to English, keeping structure, tables, commands, code blocks and all links | User asked for the README in English |
