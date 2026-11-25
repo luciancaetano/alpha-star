@@ -167,6 +167,8 @@ the platform package, then `alpha-sdk/engine/`) into `dist/release/` and never p
 - Refactoring: pin behavior, change structure, prove behavior unchanged.
 
 ### Practice
+- **Git:** work on `main`; never create a branch (or worktree branch) unless the user explicitly asks for one
+  (do not infer it from tooling, workflows or conventions).
 - **Keep a log:** append every action and its reason to `docs/LOG.md`; report it on completion.
 - **Guard the context window:** keep the main thread small; send bulk work to subagents and keep summaries.
 
