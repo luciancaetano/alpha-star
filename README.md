@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <img src="./logo.png" alt="Alpha Star Engine" width="320" />
 </p>
 

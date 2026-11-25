@@ -7,7 +7,7 @@ FLAPPY := examples/flappy
 # Game pack the run/debug targets open (override: make run-debug GAME=path/to/pack).
 GAME ?= $(FLAPPY)/dist
 
-.PHONY: build-debug build-prod run-debug debug flappy flappy-build sdk-engine sdk-engine-linux linux-gate gate test
+.PHONY: build-debug build-prod run-debug debug flappy flappy-build sdk-engine sdk-engine-linux deploy-engine linux-gate gate test
 
 # Full Windows gate (build, tests, coverage, limits, file access, CRAP, duplication); resource-guarded.
 gate:
@@ -45,6 +45,17 @@ sdk-engine:
 
 sdk-engine-linux:
 	$(PYTHON) tools/stage_engine.py --linux
+
+# Prepare alpha-sdk/ for use and release in one step: build + stage the release/shipping engines,
+# mirror the examples into templates, copy skills/ in, regenerate the docs site, check the
+# third-party notices, then run the SDK tests (they verify templates and docs are in sync).
+deploy-engine: sdk-engine
+	npm --prefix alpha-sdk ci
+	npm --prefix alpha-sdk run templates
+	npm --prefix alpha-sdk run prepack
+	npm --prefix alpha-sdk run docs
+	$(PYTHON) tools/make_notices.py --check
+	npm --prefix alpha-sdk test
 
 # Full gate on Linux (podman/docker container): for the dedicated Linux PC, not the Windows dev PC.
 linux-gate:

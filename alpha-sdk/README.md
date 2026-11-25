@@ -14,6 +14,8 @@ alpha run [-- engine args]          export, then open the pack in the engine
 alpha run --watch                   ... and re-export on every change: the game hot-reloads
 alpha test                          run test/main.test.ts headlessly (simulate + expect)
 alpha mcp                           MCP server for AI agents (below)
+alpha skills [--agents a,b] [--list] install/update the SDK's agent skills (asks which agents;
+                                    Enter = .claude/skills + .agents/skills)
 ```
 
 `alpha init my-game --template shmup && cd my-game && npm install && npm test && npm start`:

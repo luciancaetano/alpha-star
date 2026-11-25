@@ -22,7 +22,11 @@
 //                                test function headlessly in the engine; exit 1 on failure
 //   alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup] [--sdk <npm spec>]
 //                                new project from a template: then npm install, npm test, npm start
-//   alpha --version              the SDK version (the bundled engines are built from the same version)
+//   alpha skills [--agents claude,agents,...] [--list]
+//                                install or update the SDK's agent skills (e.g. alpha-harness) in
+//                                each chosen agent's project folder (.claude/skills, .agents/skills, ...);
+//                                without --agents it asks (Enter = claude + agents)
+//   alpha --version             the SDK version (the bundled engines are built from the same version)
 //   alpha mcp [--engine path]    MCP server on stdio for AI agents: check/export/test the game,
 //                                start it and drive/observe it (input, step, state, screenshots, logs)
 //
@@ -39,7 +43,7 @@ import { exportPack } from "../lib/pack.mjs";
 import { buildTests, testArgs } from "../lib/test.mjs";
 import { watchProject } from "../lib/watch.mjs";
 
-const USAGE = `usage: alpha <init|check|export|run|test|mcp|--version> [--entry src/main.ts] [--out dist] [--standalone [--sign]] [--no-bytecode] [--target <platform-arch>|android-arm64] [--engine-src dir] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
+const USAGE = `usage: alpha <init|check|export|run|test|mcp|skills|--version> [--entry src/main.ts] [--out dist] [--standalone [--sign]] [--no-bytecode] [--target <platform-arch>|android-arm64] [--engine-src dir] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
 
 import { initProject, VERSION } from "../lib/init.mjs";
 
@@ -163,9 +167,30 @@ function initCmd(argv) {
   return 0;
 }
 
+async function skillsCmd(argv) {
+  const sk = await import("../lib/skills.mjs");
+  const source = sk.skillsSource();
+  if (!source) return report([{ file: "", line: 0, column: 0, message: "this SDK ships no skills folder" }], "skills");
+  if (argv.includes("--list")) {
+    console.log(`skills: ${sk.listSkills(source).join(", ")}\nagents:`);
+    for (const a of sk.AGENTS) console.log(`  ${a.id.padEnd(8)} ${a.dir.padEnd(16)} ${a.label}${a.default ? " (default)" : ""}`);
+    return 0;
+  }
+  const i = argv.indexOf("--agents");
+  try {
+    const agents = i >= 0 ? sk.parsePick(argv[i + 1] ?? "") : process.stdin.isTTY ? await sk.askAgents()
+      : sk.parsePick("");
+    for (const d of sk.installSkills({ root: process.cwd(), agents, source })) console.log(`${d.action} ${d.dir}`);
+    return 0;
+  } catch (e) {
+    return report([{ file: "", line: 0, column: 0, message: e.message }], "skills");
+  }
+}
+
 async function main(argv) {
   if (argv[0] === "--version" || argv[0] === "-v") return void console.log(VERSION) ?? 0;
   if (argv[0] === "init") return initCmd(argv);
+  if (argv[0] === "skills") return skillsCmd(argv);
   const args = parse(argv);
   if (args.command === "check") return report(typecheck(args.entry), "check");
   if (args.command === "export") return exportCmd(args);

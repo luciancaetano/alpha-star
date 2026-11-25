@@ -48,3 +48,10 @@ A change is done only when `npm run check` is clean and `npm test` passes.
 Give the agent the MCP server (`npx alpha mcp`, see [MCP for agents](mcp.md)) so it can play
 what it builds: start the game hidden, step it, read the state, take screenshots. Determinism
 makes its tests exact, and script errors pause the game with messages written for it to fix.
+
+Install the SDK's agent skills with `npx alpha skills`. It lists the agents and asks which ones to
+set up; press Enter for the defaults, Claude Code (`.claude/skills`) and the shared `.agents/skills`
+folder (Codex, Gemini CLI, Cursor, Copilot, OpenCode, Amp). `--agents claude,cursor` skips the
+question, `--list` shows what is available. Rerun it after updating the SDK to update the skills.
+Then ask the agent to run the `alpha-harness` skill: it copies the API docs for LLMs into
+`docs/llm/` and writes an index of them, plus code-size rules, into the game's `AGENTS.md`.

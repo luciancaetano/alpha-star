@@ -95,6 +95,7 @@ alpha test               run test/main.test.ts headless  (npm test)
 alpha export [--out dist] [--standalone] [--no-atlas]
 alpha run [--watch] [-- engine args]   export then play; --watch hot-reloads
 alpha mcp                MCP server for agents (mcp.md)
+alpha skills             install/update agent skills (.claude/skills, .agents/skills, ...); --agents, --list
 ```
 Done = `npm run check` clean and `npm test` passing.
 

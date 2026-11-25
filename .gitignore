@@ -22,3 +22,6 @@ __pycache__/
 # Claude Code local settings
 .claude/settings.local.json
 *.gcov
+
+# copied from skills/ by alpha-sdk prepack
+/alpha-sdk/skills/
