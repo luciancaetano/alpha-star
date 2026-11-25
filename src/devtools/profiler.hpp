@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "core/perf.hpp"
+#include "devtools/layout.hpp"
 #include "render/renderer.hpp"
 #include "script/host.hpp"
 
@@ -14,6 +15,6 @@ std::vector<float> frame_totals(const core::PerfHistory& perf);
 // "Profiler" window: per-section ms (last frame, p50, p95, max), a frame
 // time graph, the JS heap and the last frame's draw calls and vertices.
 // Must run between ImGui::NewFrame and ImGui::Render.
-void profiler_window(const script::Host& host, const render::RenderStats& drawn);
+void profiler_window(const script::Host& host, const render::RenderStats& drawn, const Rect& at);
 
 }  // namespace alpha::devtools

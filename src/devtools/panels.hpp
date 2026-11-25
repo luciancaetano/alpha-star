@@ -3,6 +3,7 @@
 #include <array>
 #include <optional>
 
+#include "devtools/layout.hpp"
 #include "devtools/snapshot.hpp"
 #include "devtools/time_control.hpp"
 #include "script/host.hpp"
@@ -18,6 +19,9 @@ struct Panels {
 
 // One ImGui frame's windows: overlay, time controls, inspector, console.
 // Must run between ImGui::NewFrame and ImGui::Render.
-void draw_panels(Panels& panels, TimeControl& time, script::Host& host, const DevSnapshot& snap);
+void draw_panels(Panels& panels, TimeControl& time, script::Host& host, const DevSnapshot& snap,
+                 const PanelLayout& layout);
+// The next window opens at `r` (again each time the tools open: moved windows come back).
+void place_next(const Rect& r);
 
 }  // namespace alpha::devtools

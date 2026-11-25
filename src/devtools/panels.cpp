@@ -17,9 +17,9 @@ constexpr std::array<ImVec4, 3> kLevelColors{{{0.85f, 0.85f, 0.85f, 1.0f}, {1.0f
 
 std::string joined(const std::vector<std::string>& tags) { return core::join(tags, ", "); }
 
-void overlay_window(const DevSnapshot& s) {
-  ImGui::SetNextWindowPos({8, 8}, ImGuiCond_FirstUseEver);
-  ImGui::Begin("Overlay", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+void overlay_window(const DevSnapshot& s, const Rect& at) {
+  place_next(at);
+  ImGui::Begin("Overlay");
   ImGui::Text("%.0f fps  %.2f ms  %d steps", s.fps, s.frame_ms, s.steps);
   ImGui::Text("script call %.2f / %.0f ms", s.call_ms, s.budget_ms);
   ImGui::Text("entities %zu  voices %zu", s.entities, s.voices);
@@ -27,9 +27,9 @@ void overlay_window(const DevSnapshot& s) {
   ImGui::End();
 }
 
-void time_window(Panels& p, TimeControl& time) {
-  ImGui::SetNextWindowPos({8, 112}, ImGuiCond_FirstUseEver);
-  ImGui::Begin("Time", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+void time_window(Panels& p, TimeControl& time, const Rect& at) {
+  place_next(at);
+  ImGui::Begin("Time");
   if (ImGui::Button(time.paused() ? "Resume" : "Pause")) time.toggle_pause();
   ImGui::SameLine();
   ImGui::BeginDisabled(!time.paused());
@@ -61,19 +61,16 @@ void entity_list(Panels& p, ecs::World& world, const core::TagRegistry& tags) {
   }
 }
 
-void inspector_window(Panels& p, script::Host& host) {
-  ImGui::SetNextWindowPos({8, 190}, ImGuiCond_FirstUseEver);
-  ImGui::SetNextWindowSize({300, 300}, ImGuiCond_FirstUseEver);
+void inspector_window(Panels& p, script::Host& host, const Rect& at) {
+  place_next(at);
   ImGui::Begin("Entities");
   ImGui::InputText("tag filter", p.filter.data(), p.filter.size());
   if (ecs::World* world = host.world()) entity_list(p, *world, host.tags());
   ImGui::End();
 }
 
-void console_window(const script::Host& host) {
-  const ImVec2 screen = ImGui::GetIO().DisplaySize;  // bottom strip: fits narrow windows too
-  ImGui::SetNextWindowPos({8, screen.y - 208}, ImGuiCond_FirstUseEver);
-  ImGui::SetNextWindowSize({screen.x - 16, 200}, ImGuiCond_FirstUseEver);
+void console_window(const script::Host& host, const Rect& at) {
+  place_next(at);
   ImGui::Begin("Console");
   if (host.paused()) ImGui::TextColored(kErrorColor, "paused: %s", host.error().c_str());
   ImGui::BeginChild("log");
@@ -89,11 +86,17 @@ void console_window(const script::Host& host) {
 
 }  // namespace
 
-void draw_panels(Panels& panels, TimeControl& time, script::Host& host, const DevSnapshot& snap) {
-  overlay_window(snap);
-  time_window(panels, time);
-  inspector_window(panels, host);
-  console_window(host);
+void place_next(const Rect& r) {
+  ImGui::SetNextWindowPos({r.x, r.y}, ImGuiCond_Appearing);
+  ImGui::SetNextWindowSize({r.w, r.h}, ImGuiCond_Appearing);
+}
+
+void draw_panels(Panels& panels, TimeControl& time, script::Host& host, const DevSnapshot& snap,
+                 const PanelLayout& layout) {
+  overlay_window(snap, layout.overlay);
+  time_window(panels, time, layout.time);
+  inspector_window(panels, host, layout.entities);
+  console_window(host, layout.console);
 }
 
 }  // namespace alpha::devtools

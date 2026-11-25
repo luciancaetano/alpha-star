@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <string>
 
+#include "devtools/panels.hpp"
+
 namespace alpha::devtools {
 
 std::vector<float> frame_totals(const core::PerfHistory& perf) {
@@ -41,9 +43,9 @@ void section_table(const core::PerfHistory& perf) {
 
 }  // namespace
 
-void profiler_window(const script::Host& host, const render::RenderStats& drawn) {
-  ImGui::SetNextWindowPos({320, 8}, ImGuiCond_FirstUseEver);
-  ImGui::Begin("Profiler", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+void profiler_window(const script::Host& host, const render::RenderStats& drawn, const Rect& at) {
+  place_next(at);
+  ImGui::Begin("Profiler");
   const core::PerfHistory& perf = host.perf();
   const std::vector<float> totals = frame_totals(perf);
   const float top = std::max(16.7f, totals.empty() ? 0.0f : *std::max_element(totals.begin(), totals.end()));

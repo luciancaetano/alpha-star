@@ -38,8 +38,11 @@ class DevTools {
  private:
   bool toggle_requested(const SDL_Event& event) const;
   bool shaken(const SDL_Event& event);
+  void rescale();
 
+  SDL_Window* window_;
   SDL_Renderer* sdl_;
+  float scale_ = 0.0f;  // applied tools_scale (0: none yet)
   bool open_ = false;
   Panels panels_;
   TimeControl time_;

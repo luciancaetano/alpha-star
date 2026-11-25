@@ -5,8 +5,11 @@
 #include <imgui_impl_sdlrenderer3.h>
 
 #include "devtools/inspector.hpp"
+#include "devtools/layout.hpp"
+#include "devtools/panels.hpp"
 #include "devtools/profiler.hpp"
 #include "devtools/routing.hpp"
+#include "devtools/scale.hpp"
 
 namespace alpha::devtools {
 
@@ -26,13 +29,20 @@ SDL_Sensor* open_accelerometer() {
   return found;
 }
 
+// The window's part no status bar, notch or rounded corner covers, in ImGui's coordinates.
+Rect safe_area(SDL_Window* window) {
+  SDL_Rect r{};
+  if (!SDL_GetWindowSafeArea(window, &r)) SDL_GetWindowSize(window, &r.w, &r.h);
+  return {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)};
+}
+
 }  // namespace
 
-DevTools::DevTools(SDL_Window* window, SDL_Renderer* sdl) : sdl_(sdl) {
+DevTools::DevTools(SDL_Window* window, SDL_Renderer* sdl) : window_(window), sdl_(sdl) {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui::GetIO().IniFilename = nullptr;  // never write imgui.ini next to a game
-  ImGui::StyleColorsDark();
+  rescale();
   ImGui_ImplSDL3_InitForSDLRenderer(window, sdl);
   ImGui_ImplSDLRenderer3_Init(sdl);
   accelerometer_ = open_accelerometer();
@@ -46,6 +56,22 @@ DevTools::~DevTools() {
   ImGui_ImplSDLRenderer3_Shutdown();
   ImGui_ImplSDL3_Shutdown();
   ImGui::DestroyContext();
+}
+
+// Sizes and font for the screen the window is on (devtools/scale); again when it changes.
+void DevTools::rescale() {
+  const SDL_DisplayID display = SDL_GetDisplayForWindow(window_);
+  const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(display);
+  const float density = mode ? mode->pixel_density : 1.0f;
+  const auto pixels = [density](int points) { return static_cast<int>(static_cast<float>(points) * density); };
+  const float scale = tools_scale(mode ? pixels(mode->w) : 0, mode ? pixels(mode->h) : 0, SDL_GetDisplayContentScale(display));
+  if (scale == scale_) return;
+  scale_ = scale;
+  ImGuiStyle style;
+  ImGui::StyleColorsDark(&style);
+  style.ScaleAllSizes(scale);
+  style.FontScaleDpi = scale;  // ImGui 1.92 rasterizes the font at this size: crisp, not stretched
+  ImGui::GetStyle() = style;
 }
 
 bool DevTools::toggle_requested(const SDL_Event& event) const {
@@ -65,6 +91,10 @@ bool DevTools::shaken(const SDL_Event& event) {
 }
 
 bool DevTools::handle(const SDL_Event& event) {
+  if (event.type == SDL_EVENT_WINDOW_DISPLAY_CHANGED || event.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED ||
+      event.type == SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED) {
+    rescale();
+  }
   if (toggle_requested(event) || shaken(event)) {
     toggle();
     return false;
@@ -85,8 +115,9 @@ void DevTools::draw(script::Host& host, FrameStats stats) {
   ImGui_ImplSDLRenderer3_NewFrame();
   ImGui_ImplSDL3_NewFrame();
   ImGui::NewFrame();
-  draw_panels(panels_, time_, host, snapshot(host, stats));
-  profiler_window(host, stats.drawn);
+  const PanelLayout layout = layout_panels(safe_area(window_), scale_);
+  draw_panels(panels_, time_, host, snapshot(host, stats), layout);
+  profiler_window(host, stats.drawn, layout.profiler);
   ImGui::Render();
   // ImGui draws in window pixels, not in the game's letterboxed logical size.
   int w = 0;

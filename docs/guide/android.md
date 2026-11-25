@@ -125,7 +125,8 @@ The debug variant carries the engine dev tools (Dear ImGui). Open and close them
 Native opens its dev menu: **shake the phone**, or send the Menu key from the computer with
 `adb shell input keyevent 82` (Ctrl+M in the emulator). A gamepad's Back+Start works too. Release
 APKs and AABs have no dev tools at all. The debug APK has no MCP channel (`alpha mcp` drives desktop
-engines); its panels are still drawn at desktop size on a phone screen.
+engines); its panels scale with the screen (the larger of the OS content scale and the shorter side / 1080) and
+open tiled inside the safe area, below the status bar.
 
 ## Hints per platform
 

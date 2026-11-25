@@ -81,7 +81,9 @@ if(ALPHA_WITH_RUNTIME_DEPS AND ALPHA_DEVTOOLS)
   list(APPEND ALPHA_TEST_SOURCES
     devtools/dev_tools_test.cpp
     devtools/inspector_test.cpp
+    devtools/layout_test.cpp
     devtools/routing_test.cpp
+    devtools/scale_test.cpp
     devtools/snapshot_test.cpp
     devtools/time_control_test.cpp
     devtools/shake_toggle_test.cpp)

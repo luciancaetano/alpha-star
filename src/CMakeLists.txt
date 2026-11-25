@@ -163,9 +163,11 @@ if(ALPHA_DEVTOOLS)
   add_library(alpha_devtools
     devtools/dev_tools.cpp
     devtools/inspector.cpp
+    devtools/layout.cpp
     devtools/panels.cpp
     devtools/profiler.cpp
     devtools/routing.cpp
+    devtools/scale.cpp
     devtools/snapshot.cpp
     devtools/time_control.cpp
     devtools/shake_toggle.cpp)
