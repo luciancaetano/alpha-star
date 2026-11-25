@@ -105,6 +105,8 @@ the export copies each declared file into the pack and fails naming any missing 
 - **Look:** `tint`, `alpha` (0..1), `blend: "alpha" | "add" | "multiply"` on any shape, also settable at
   runtime (`entity.alpha = 0.5`); the game-over screen fades a black rect's alpha in `update`.
   World text: `shape: { text, font?, size, color, align }`. Layers: `config.layers` + `layer:` on specs.
+  This game uses `config.pixelMode: false` (antialiased circles/rects, smooth images); a shape opts
+  out with `smooth: false`, an asset with `{ file, pixelMode: true }` (the pixel font does).
 - **Window:** `config.window: { fullscreen?, scaling: "letterbox" | "integer" | "stretch" | "expand" }`,
   `ctx.window.fullscreen = true`; Alt+Enter toggles (opt out: `altEnter: false`).
 - **Collision:** in `enter`, `ctx.onHit("a", "b", fn)` (solid) or `ctx.onEnter("a", "b", fn)` (sensor).
@@ -112,13 +114,13 @@ the export copies each declared file into the pack and fails naming any missing 
 - **Debug output:** `console.log(...)` / `console.warn` / `console.error` print to stderr and to the
   dev tools console. Remove them when done.
 
-## Dev tools (dev engine builds only)
+## F12 dev tools
 
-Press **F1** (gamepad Back+Start) in a dev build of the engine (`build/dev`, `make run-debug`)
+Press **F12** (gamepad Back+Start) while the game runs (`npm start`, `alpha run`, `--watch`)
 for the built-in tools: FPS/frame/script-call overlay, entity inspector (filter by tag, edit
 pos/rotation/velocity), console (current error + `console.*` log), pause/step one fixed frame,
 and a physics view of collider outlines. `--devtools` opens them at start. The engine bundled in
-the SDK is a release build and has no dev tools; nothing in a game can depend on them.
+exported standalone games (shipping engine) have no dev tools; nothing in a game can depend on them.
 
 ## Rules
 

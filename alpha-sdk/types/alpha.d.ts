@@ -153,8 +153,8 @@ declare module "alpha" {
 
   /** A filled shape, an image (`size` defaults to the image's pixel size), a sheet sprite, or world text. */
   export type Shape<I extends string = never, S extends { [k: string]: string } = {}, F extends string = never> = (
-    | { circle: number; color: Color; outline?: Color }
-    | { rect: Vec2; color: Color; outline?: Color }
+    | { circle: number; color: Color; outline?: Color; smooth?: boolean }
+    | { rect: Vec2; color: Color; outline?: Color; smooth?: boolean }
     | ({ image: I; size?: Vec2 } & Flips)
     | SheetShape<S>
     | TextShape<F>
@@ -835,8 +835,9 @@ declare module "alpha" {
      */
     collision?: { categories: CategoryOf<G>[] };
     /**
-     * Texture filtering default: true (default) = crisp pixel art (nearest), false = smooth
-     * (linear). Assets override it with `{ file, pixelMode }` / sheet `pixelMode`.
+     * Look default: true (default) = crisp pixel art (nearest image filtering, hard shape
+     * edges), false = smooth (linear filtering, antialiased circle/rect edges). Assets override
+     * it with `{ file, pixelMode }` / sheet `pixelMode`; filled shapes with `smooth`.
      */
     pixelMode?: boolean;
     /** Named draw layers, e.g. `{ bg: { z: -100, parallax: 0.2 }, fx: { z: 100 } }`. */

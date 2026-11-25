@@ -2,7 +2,7 @@
 # Every dev/debug/agent-only feature sits behind one of these flags and is
 # absent from shipping builds (checked by tools/check_shipping.py).
 #
-#   ALPHA_DEVTOOLS     Dear ImGui engine dev tools (F1, --devtools)
+#   ALPHA_DEVTOOLS     Dear ImGui engine dev tools (F12, --devtools); dev and release presets
 #   ALPHA_MCP          agent control channel (src/mcp/, --control PORT --hidden)
 #                      that `alpha mcp` drives; dev and release presets
 #   ALPHA_DEBUG_TOOLS  headless/debug CLI flags (--frames --screenshot --tap

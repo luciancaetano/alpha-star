@@ -123,6 +123,8 @@ struct ShapeSpec {
   float alpha = 1.0f;  // 0..1, multiplies tint.a
   Blend blend = Blend::Alpha;
   std::optional<TextLook> text;
+  // Filled shapes only: a 1 px alpha-feathered edge (pixelMode false) instead of a hard one.
+  bool smooth = false;
 };
 
 // A named draw layer from config.layers: drawn in `z` order (then entity z),

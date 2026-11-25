@@ -88,6 +88,7 @@ function fileEntry(entry, what, fallback) {
 // Every asset is loaded (or synthesized) before the first scene starts.
 function preload(s, assets, pixel) {
   loadAudio(assets);
+  N.shapePixelMode(pixel);
   const atlas = atlasOf();
   const images = Object.entries(assets.images ?? {}).map(([name, e]) => [name, fileEntry(e, `assets.images.${name}`, pixel)]);
   for (const [name, e] of images) N.loadImage(name, ...atlas(e.file, e.pixelMode), e.pixelMode);

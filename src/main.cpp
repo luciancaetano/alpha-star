@@ -43,7 +43,7 @@
 //   --screenshot PATH save the last frame as BMP (with --frames)
 //   --tap INPUT       input name to tap headlessly, e.g. Space
 //   --tap-every K     tap it every K frames
-//   --devtools        open the dev tools (F1) at start; dev builds only
+//   --devtools        open the dev tools (F12) at start; dev builds only
 // With ALPHA_MCP (dev, release): agent control channel, see src/mcp/dispatch.hpp
 //   --control PORT    serve the alpha-control protocol on 127.0.0.1:PORT
 //   --hidden          no visible window (agent runs)
@@ -122,7 +122,7 @@ void hot_plug(Devices& d, const SDL_Event& event) {
   if (const auto gone = d.pads.handle(event)) alpha::platform::release_player(d.input, *gone);
 }
 
-// Routing: dev tools first (F1, their windows), then the game UI (in game
+// Routing: dev tools first (F12, their windows), then the game UI (in game
 // pixels), and only what neither consumed drives game actions.
 bool pump(Devices& d, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl, alpha::script::AppEvents& app) {
   SDL_Event event;

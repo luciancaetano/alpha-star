@@ -9,7 +9,7 @@
 
 namespace alpha::devtools {
 
-// Built-in engine dev tools (Dear ImGui), toggled with F1 or gamepad
+// Built-in engine dev tools (Dear ImGui), toggled with F12 or gamepad
 // Back+Start. Only in ALPHA_DEVTOOLS builds; never visible to game scripts.
 // Owns the ImGui context for one window/renderer pair.
 class DevTools {

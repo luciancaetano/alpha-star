@@ -62,3 +62,42 @@ TEST_CASE("pixelMode: config default, per-image and per-sheet overrides") {
   missing.load(box.write("m.js", game("", "{ images: { crisp: { path: 'p.bmp' } } }")));
   CHECK(missing.error().find("assets.images.crisp must be a file path or { file, pixelMode? }") != std::string::npos);
 }
+
+namespace {
+
+// Three filled shapes: no override, smooth: true, smooth: false.
+std::string shapes_game(const std::string& pixel_config, const std::string& extra = "") {
+  return "import { define } from 'alpha'; const { scene, game } = define();\n"
+         "const play = scene('play', { enter(ctx) {\n"
+         "  ctx.spawn({ tags: ['a'], pos: [0, 0], shape: { circle: 4, color: '#fff' } });\n"
+         "  ctx.spawn({ tags: ['b'], pos: [0, 0], shape: { rect: [4, 4], color: '#fff', smooth: true } });\n"
+         "  ctx.spawn({ tags: ['c'], pos: [0, 0], shape: { circle: 4, color: '#fff', smooth: false" + extra + " } });\n"
+         "} });\n"
+         "export default game({ config: { title: 't', size: [100, 100], seed: 1, actions: {} " + pixel_config + " },\n"
+         "  start: 'play', scenes: { play } });\n";
+}
+
+std::string shape_flags(Host& host) {
+  std::string out;
+  for (const auto& item : host.world()->draw_items()) out += item.shape.smooth ? "S" : "P";
+  return out;
+}
+
+}  // namespace
+
+TEST_CASE("pixelMode: filled shapes are crisp by default, smooth with pixelMode false, shape.smooth overrides") {
+  Sandbox box;
+  Host pixel(box.save());
+  pixel.load(box.write("g.js", shapes_game("")));
+  REQUIRE_MESSAGE(!pixel.paused(), pixel.error());
+  CHECK(shape_flags(pixel) == "PSP");
+
+  Host smooth(box.save());
+  smooth.load(box.write("h.js", shapes_game(", pixelMode: false")));
+  REQUIRE_MESSAGE(!smooth.paused(), smooth.error());
+  CHECK(shape_flags(smooth) == "SSP");
+
+  Host bad(box.save());
+  bad.load(box.write("b.js", shapes_game("", ", smooth: 1")));
+  CHECK(bad.error().find("shape.smooth must be true (antialiased edges) or false (crisp), got 1") != std::string::npos);
+}

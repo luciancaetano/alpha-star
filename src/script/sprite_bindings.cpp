@@ -57,6 +57,12 @@ JSValue load_image(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
+// shapePixelMode(pixelMode): config.pixelMode for filled shapes (false = smooth edges).
+JSValue shape_pixel_mode(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  s.smooth_shapes = smooth_arg(ctx, argv[0]);
+  return JS_UNDEFINED;
+}
+
 core::Animation animation(JSContext* ctx, const Value& spec, int frames, const std::string& what) {
   core::Animation a;
   for (const double f : numbers_arg(ctx, spec.prop("frames").get(), what + ".frames")) {
@@ -128,7 +134,8 @@ JSValue flip(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return out;
 }
 
-constexpr std::array<Native, 5> kNatives{{
+constexpr std::array<Native, 6> kNatives{{
+    {"shapePixelMode", guarded<shape_pixel_mode>, 1},
     {"loadImage", guarded<load_image>, 4}, {"loadSheet", guarded<load_sheet>, 6},
     {"play", guarded<play>, 3},            {"animation", guarded<animation_of>, 1},
     {"flip", guarded<flip>, 3},

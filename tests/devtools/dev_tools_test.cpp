@@ -47,7 +47,7 @@ struct Screen {
 SDL_Event f1() {
   SDL_Event e{};
   e.type = SDL_EVENT_KEY_DOWN;
-  e.key.scancode = SDL_SCANCODE_F1;
+  e.key.scancode = SDL_SCANCODE_F12;
   e.key.down = true;
   return e;
 }
@@ -63,7 +63,7 @@ const char* kGame = "ctx.spawn({ tags: ['ball'], pos: [10, 10], shape: { circle:
 
 }  // namespace
 
-TEST_CASE("dev tools start closed, F1 toggles them and never reaches the game") {
+TEST_CASE("dev tools start closed, F12 toggles them and never reaches the game") {
   Screen screen;
   REQUIRE(screen.video);
   DevTools tools(screen.window, screen.sdl);

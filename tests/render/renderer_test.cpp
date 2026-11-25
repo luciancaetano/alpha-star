@@ -208,3 +208,24 @@ TEST_CASE("pixelMode: a scaled 2x2 checker stays crisp with nearest and blends w
   CHECK(linear.r > 40);
   CHECK(linear.r < 215);
 }
+
+TEST_CASE("smooth shapes: edge pixels are partially covered; crisp edges are fill or background") {
+  Canvas c;
+  Frame f{kBg, {}, {}};
+  ShapeSpec smooth{Circle{7.6f}, kGreen, {}, {}};
+  smooth.smooth = true;
+  f.shapes.push_back({{Circle{7.6f}, kGreen, {}, {}}, {16, 16.5f}, 0});
+  f.shapes.push_back({smooth, {48, 16.5f}, 0});
+  c.renderer.draw(f);
+  const auto partial = [](Color p) { return p.g > kBg.g + 20 && p.g < kGreen.g - 20; };
+  int crisp_partial = 0;
+  int smooth_partial = 0;
+  for (int x = 0; x < 32; ++x) {
+    crisp_partial += partial(c.pixel(x, 16));
+    smooth_partial += partial(c.pixel(32 + x, 16));
+  }
+  CHECK(crisp_partial == 0);
+  CHECK(smooth_partial >= 2);  // both sides of the row
+  CHECK(c.pixel(16, 16) == kGreen);
+  CHECK(c.pixel(48, 16) == kGreen);
+}

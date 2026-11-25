@@ -61,4 +61,10 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 - **Tests:** `expect.animation("player").equals("run")`, `expect.particles().atLeast(n)`, `expect.count("coin")`, held movement with
   `inputs: { axes: { moveX: [[0, 1]] } }` (value held from that frame on). Same inputs, same run.
 
+## F12 dev tools
+
+Press **F12** (gamepad Back+Start) while the game runs (`npm start`, `alpha run`, `--watch`): FPS
+overlay, entity inspector, console, pause/step, physics view. `--devtools` opens them at start.
+Exported standalone games have none; nothing in a game can depend on them.
+
 Errors are written for you: a misspelled sheet, animation, map or layer names what exists.

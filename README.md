@@ -152,6 +152,10 @@ The following is a proposed roadmap, not a release schedule.
 
 ## Getting started
 
+While a game runs from the SDK (`npm start`, `alpha run`, `--watch`), press **F12** (or gamepad
+Back+Start) for the built-in dev tools: overlay, entity inspector, console, pause/step and a physics
+view. Exported standalone games ship without them.
+
 Installation instructions, build prerequisites, example projects and API documentation will be published as the engine's development workflow stabilizes.
 
 ## Technology

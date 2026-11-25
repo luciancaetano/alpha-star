@@ -31,10 +31,11 @@ SDL_Event of_type(SDL_EventType type) {
 
 }  // namespace
 
-TEST_CASE("F1 or gamepad Back+Start toggles the dev tools") {
-  CHECK(is_toggle(key(SDL_SCANCODE_F1), false));
-  CHECK_FALSE(is_toggle(key(SDL_SCANCODE_F1, true), false));
+TEST_CASE("F12 (not F1) or gamepad Back+Start toggles the dev tools") {
+  CHECK(is_toggle(key(SDL_SCANCODE_F12), false));
+  CHECK_FALSE(is_toggle(key(SDL_SCANCODE_F12, true), false));
   CHECK_FALSE(is_toggle(key(SDL_SCANCODE_F2), false));
+  CHECK_FALSE(is_toggle(key(SDL_SCANCODE_F1), false));  // F1 belongs to the game
   CHECK(is_toggle(button(SDL_GAMEPAD_BUTTON_START), true));
   CHECK(is_toggle(button(SDL_GAMEPAD_BUTTON_BACK), true));
   CHECK_FALSE(is_toggle(button(SDL_GAMEPAD_BUTTON_START), false));
@@ -56,5 +57,6 @@ TEST_CASE("events ImGui captures do not reach the game") {
 }
 
 TEST_CASE("the toggle key never reaches the game") {
-  CHECK_FALSE(reaches_game(key(SDL_SCANCODE_F1), Capture{false, false}));
+  CHECK_FALSE(reaches_game(key(SDL_SCANCODE_F12), Capture{false, false}));
+  CHECK(reaches_game(key(SDL_SCANCODE_F1), Capture{false, false}));
 }

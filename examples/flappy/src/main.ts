@@ -12,6 +12,8 @@ export default game({
     size: [WORLD.width, WORLD.height],
     background: "#70c5ce",
     seed: 42,
+    // Smooth look: antialiased shapes and linear image filtering (the pixel font opts back in).
+    pixelMode: false,
     gravity: [0, 900],
     // Any face button or the right trigger flaps, on any player's gamepad.
     actions: {
@@ -37,7 +39,7 @@ export default game({
     // ctx.t(key) and data-t="key" in the .rml documents.
     locales: { en: "assets/locales/en.json", pt: "assets/locales/pt.json" },
     // Fonts are used by name in the .rcss (font-family: pixel). OFL, see assets/fonts/OFL.txt.
-    fonts: { pixel: "assets/fonts/PressStart2P-Regular.ttf" },
+    fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", pixelMode: true } },
     // Each document's own <link>/src files (flappy.rcss) are packed with it.
     ui: {
       title: "assets/ui/title.rml",

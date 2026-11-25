@@ -124,7 +124,7 @@ target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnT
   RmlUi::Core alpha_rmlui_sdl Freetype::Freetype alpha_codecs)
 alpha_set_warnings(alpha_engine)
 
-# devtools: Dear ImGui engine dev tools (F1). Only with ALPHA_DEVTOOLS; a
+# devtools: Dear ImGui engine dev tools (F12). Only with ALPHA_DEVTOOLS; a
 # release build compiles and links nothing of it.
 if(ALPHA_DEVTOOLS)
   add_library(alpha_devtools

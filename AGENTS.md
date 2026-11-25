@@ -70,7 +70,7 @@ outside `src/platform/vfs.cpp`. App lifecycle: `core::AppLifecycle` (pure) <- `p
 background pause steps + audio, resume resets the fixed-step clock, hooks `ctx.onPause/onResume/onLowMemory`.
 Builds and gates: `CMAKE_BUILD_PARALLEL_LEVEL=8` (the Linux gate also runs with `--cpus 8`); one build at a time.
 
-Dev tools (Dear ImGui, F1; `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:
+Dev tools (Dear ImGui, F12 or gamepad Back+Start; `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:
 never put game-facing features in `src/devtools/`.
 
 ### Build flavors (`cmake/Flavors.cmake`)
@@ -81,7 +81,7 @@ embedded JS (comments included) end up in the binary too.
 
 | Flag | Gates | dev | release | shipping |
 |---|---|---|---|---|
-| `ALPHA_DEVTOOLS` | Dear ImGui dev tools (`src/devtools/`, `--devtools`) | ON | OFF | OFF |
+| `ALPHA_DEVTOOLS` | Dear ImGui dev tools (`src/devtools/`, F12, `--devtools`) | ON | ON | OFF |
 | `ALPHA_MCP` | agent control channel `src/mcp/` (`--control PORT`, `--hidden`) driven by `alpha mcp` | ON | ON | OFF |
 | `ALPHA_DEBUG_TOOLS` | CLI `--frames --screenshot --tap --tap-every --devtools`, `--test` runner, `alpha/test` + its natives, diagnostic logs | ON | ON | OFF |
 | `ALPHA_SHIPPING` | forces the three OFF; IPO/LTO, stripped / no PDB, Windows GUI subsystem (no console), asserts off; unknown flags ignored; logs only to `<pref dir>/log.txt` | OFF | OFF | ON |

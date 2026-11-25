@@ -57,6 +57,8 @@ struct ScriptState {
   std::vector<std::string> categories;
   // assets.fonts whose world-text atlases filter smoothly (pixelMode: false).
   std::set<std::string, std::less<>> smooth_fonts;
+  // config.pixelMode false: filled shapes get antialiased edges unless shape.smooth says otherwise.
+  bool smooth_shapes = false;
   // config.layers by name.
   std::map<std::string, core::Layer, std::less<>> layers;
   // ctx.window: written by the engine every frame (headless: as scripts set it).

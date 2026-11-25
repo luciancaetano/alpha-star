@@ -55,6 +55,13 @@ void Renderer::present_logical() {
   SDL_SetRenderLogicalPresentation(sdl_, static_cast<int>(size_.x), static_cast<int>(size_.y), sdl_presentation(scaling_));
 }
 
+// Output pixels per game pixel (logical presentation), so feathers stay 1 output pixel wide.
+float Renderer::output_scale() const {
+  SDL_FRect shown{};
+  if (!SDL_GetRenderLogicalPresentationRect(sdl_, &shown) || shown.w <= 0) return 1.0f;
+  return shown.w / size_.x;
+}
+
 Renderer::~Renderer() {
   for (const auto& [image, tex] : textures_) SDL_DestroyTexture(tex);
 }
@@ -65,6 +72,7 @@ void Renderer::draw(const Frame& frame) {
   SDL_SetRenderDrawColor(sdl_, bg.r, bg.g, bg.b, bg.a);
   SDL_RenderClear(sdl_);
   stats_ = {};
+  window_scale_ = output_scale();
   core::View view = frame.view.value_or(core::View{size_ * 0.5f, 1.0f, 0.0f, size_});
   view.size = size_;
   draw_shapes(frame.shapes, view);
@@ -97,7 +105,7 @@ void Renderer::add(const core::DrawItem& item, const core::View& view) {
   }
   if (!item.particles.empty()) particle_triangles(item, area, batch_);
   else if (key.texture) image_triangles(item, area, batch_);
-  else tessellate(item, batch_);
+  else tessellate(item, batch_, 1.0f / (core::parallax_view(view, item.parallax).zoom * window_scale_));
   ++stats_.drawn;
 }
 

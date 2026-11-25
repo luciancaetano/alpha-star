@@ -64,6 +64,7 @@ class Renderer {
   };
 
   void present_logical();
+  float output_scale() const;
   void draw_shapes(const std::vector<core::DrawItem>& shapes, const core::View& view);
   void add(const core::DrawItem& item, const core::View& view);
   void flush(const core::View& view);
@@ -75,6 +76,7 @@ class Renderer {
   core::Vec2 game_size_;
   core::Vec2 size_;
   core::Scaling scaling_;
+  float window_scale_ = 1.0f;  // output pixels per game pixel
   RenderStats stats_;
   // The batch being built: world-space triangles sharing one key.
   std::vector<Vertex> batch_;

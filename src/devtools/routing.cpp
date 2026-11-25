@@ -19,13 +19,13 @@ bool is_mouse(Uint32 type) {
 }  // namespace
 
 bool is_toggle(const SDL_Event& event, bool other_button_held) {
-  if (event.type == SDL_EVENT_KEY_DOWN) return event.key.scancode == SDL_SCANCODE_F1 && !event.key.repeat;
+  if (event.type == SDL_EVENT_KEY_DOWN) return event.key.scancode == SDL_SCANCODE_F12 && !event.key.repeat;
   if (event.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) return is_gamepad_toggle(event, other_button_held);
   return false;
 }
 
 bool reaches_game(const SDL_Event& event, Capture capture) {
-  if (is_key(event.type) && event.key.scancode == SDL_SCANCODE_F1) return false;
+  if (is_key(event.type) && event.key.scancode == SDL_SCANCODE_F12) return false;
   const bool keyboard = is_key(event.type) || event.type == SDL_EVENT_TEXT_INPUT;
   if (keyboard && capture.keyboard) return false;
   return !(is_mouse(event.type) && capture.mouse);
