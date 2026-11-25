@@ -16,7 +16,7 @@ constexpr float kDt = 1.0f / 60.0f;
 // 4 frames of 8x8 in a 32x8 image: run = 0,1,2 at 10 fps (looping), jump = 3 once.
 SheetPtr hero_sheet() {
   auto s = std::make_shared<Sheet>();
-  s->picture = {std::make_shared<Image>(Image{32, 8, std::vector<std::uint8_t>(32 * 8 * 4), false}), {0, 0, 32, 8}};
+  s->picture = {std::make_shared<Image>(Image{32, 8, std::vector<std::uint8_t>(32 * 8 * 4)}), {0, 0, 32, 8}};
   s->frame_w = 8;
   s->frame_h = 8;
   s->animations["run"] = {{0, 1, 2}, 10.0f, true};

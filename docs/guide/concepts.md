@@ -60,3 +60,31 @@ unknown animation lists the sheet's animations).
 | shipping | none of those; LTO, stripped, no console | `alpha export --standalone` (players) |
 
 Nothing in a game can depend on dev features: they are absent from the shipping engine.
+
+## Image filtering and window scaling
+
+Each image, sheet or map picks how it is sampled when drawn scaled or rotated:
+
+```js
+assets: { images: {
+  hero:  { file: "img/hero.png", filter: "sharp" },   // pixel art at any size/angle: square pixels, soft edges
+  tiles: { file: "img/tiles.png", filter: "nearest" },// crisp; best at whole-number scales, jagged when rotated
+  sky:   { file: "img/sky.png", filter: "linear" },   // smooth art and photos
+} }
+```
+
+Without `filter`, `config.pixelMode` decides (`true`: nearest, `false`: linear). `"sharp"` costs
+16x the texture memory of that image.
+
+`config.window` sets how the game's `size` fits the window and how the window opens:
+
+```js
+window: {
+  scaling: "integer",   // letterbox (default) | integer | stretch | expand | crop
+  borderless: false, alwaysOnTop: false, maximized: false,
+  vsync: true, resizable: true, fullscreen: false, altEnter: true,
+}
+```
+
+`integer` keeps pixel art exact (whole multiples, bars around); `crop` fills the window and cuts
+the edges that do not fit.

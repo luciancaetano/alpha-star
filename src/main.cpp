@@ -247,9 +247,9 @@ int no_game() {
   return 2;
 }
 
-// VSync with the shortest frame queue the driver allows (input latency).
-void limit_latency(SDL_Renderer* sdl) {
-  SDL_SetRenderVSync(sdl, 1);
+// VSync (config.window.vsync) with the shortest frame queue the driver allows (input latency).
+void limit_latency(SDL_Renderer* sdl, bool vsync) {
+  SDL_SetRenderVSync(sdl, vsync ? 1 : SDL_RENDERER_VSYNC_DISABLED);
   [[maybe_unused]] const bool short_queue = alpha::platform::limit_frame_queue(sdl);
 #if ALPHA_DEBUG_TOOLS  // diagnostics
   SDL_Log("renderer %s, frame queue: %s", SDL_GetRendererName(sdl), short_queue ? "1 frame" : "driver default");
@@ -280,7 +280,7 @@ int main(int argc, char** argv) {
   alpha::platform::prepare_mobile(info.width, info.height);
   const alpha::core::Vec2 size{static_cast<float>(info.width), static_cast<float>(info.height)};
   if (!alpha::platform::open_window({info.title, size, info.window, options.hidden}, &window, &sdl)) return fail("SDL_CreateWindowAndRenderer");
-  limit_latency(sdl);
+  limit_latency(sdl, info.window.vsync);
   alpha::render::Renderer renderer(sdl, info.width, info.height, info.window.scaling);
   {
     Tools tools(window, sdl);  // gone before its renderer

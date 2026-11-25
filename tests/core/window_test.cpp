@@ -10,6 +10,7 @@ TEST_CASE("scaling names parse; anything else is rejected") {
   CHECK(alpha::core::parse_scaling("integer") == Scaling::Integer);
   CHECK(alpha::core::parse_scaling("stretch") == Scaling::Stretch);
   CHECK(alpha::core::parse_scaling("expand") == Scaling::Expand);
+  CHECK(alpha::core::parse_scaling("crop") == Scaling::Crop);
   CHECK_FALSE(alpha::core::parse_scaling("fit").has_value());
 }
 

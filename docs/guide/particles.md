@@ -45,7 +45,7 @@ Several times cheaper than `entity.pos` per entity when thousands move every fra
 
 ```ts
 ctx.spawn({ tags: ["label"], pos, shape: { text: "+1", size: 8, color: "#ffe14d" } });  // built-in font without `font`
-config: { window: { scaling: "integer" }, pixelMode: true }   // letterbox | integer | stretch | expand
+config: { window: { scaling: "integer" }, pixelMode: true }   // letterbox | integer | stretch | expand | crop
 ctx.window.fullscreen = true;   // Alt+Enter too
 ```
 

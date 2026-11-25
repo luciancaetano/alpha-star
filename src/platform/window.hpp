@@ -20,8 +20,8 @@ struct WindowSetup {
   bool hidden = false;  // agent runs
 };
 
-// Creates the window (sized for the scaling mode; fullscreen and resizable
-// from config.window) and its renderer. False on failure (SDL_GetError).
+// Creates the window (sized for the scaling mode; fullscreen, resizable,
+// borderless, alwaysOnTop and maximized from config.window) and its renderer. False on failure (SDL_GetError).
 bool open_window(const WindowSetup& setup, SDL_Window** window, SDL_Renderer** renderer);
 // Alt+Enter (unless config.window.altEnter is false) asks for the other
 // fullscreen state. Returns true when it consumed the event.

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <utility>
 
+#include "core/image_filter.hpp"
 #include "core/particles.hpp"
 #include "platform/fonts.hpp"
 #include "platform/vfs.hpp"
@@ -28,6 +29,7 @@ SDL_BlendMode sdl_blend(core::Blend b) {
 SDL_RendererLogicalPresentation sdl_presentation(core::Scaling s) {
   if (s == core::Scaling::Integer) return SDL_LOGICAL_PRESENTATION_INTEGER_SCALE;
   if (s == core::Scaling::Stretch) return SDL_LOGICAL_PRESENTATION_STRETCH;
+  if (s == core::Scaling::Crop) return SDL_LOGICAL_PRESENTATION_OVERSCAN;
   return SDL_LOGICAL_PRESENTATION_LETTERBOX;  // expand: letterbox of a size with the window's aspect
 }
 
@@ -164,11 +166,16 @@ void Renderer::flush(const core::View& view) {
 
 SDL_Texture* Renderer::texture(const core::ImagePtr& image) {
   if (const auto it = textures_.find(image.get()); it != textures_.end()) return it->second;
+  // Sharp: upload the image grown by a whole factor and sample it linearly; UVs are
+  // normalized, so every source rect still maps to the same texels.
+  const bool sharp = image->filter == core::Filter::sharp;
+  const core::Image grown = sharp ? core::upscaled(*image, core::sharp_factor(image->width, image->height)) : core::Image{};
+  const core::Image& pixels = sharp ? grown : *image;
   SDL_Texture* tex = SDL_CreateTexture(sdl_, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC,
-                                       image->width, image->height);
-  SDL_UpdateTexture(tex, nullptr, image->rgba.data(), image->width * 4);
+                                       pixels.width, pixels.height);
+  SDL_UpdateTexture(tex, nullptr, pixels.rgba.data(), pixels.width * 4);
   SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-  SDL_SetTextureScaleMode(tex, image->smooth ? SDL_SCALEMODE_LINEAR : SDL_SCALEMODE_NEAREST);  // pixelMode
+  SDL_SetTextureScaleMode(tex, image->filter == core::Filter::nearest ? SDL_SCALEMODE_NEAREST : SDL_SCALEMODE_LINEAR);
   textures_[image.get()] = tex;
   return tex;
 }

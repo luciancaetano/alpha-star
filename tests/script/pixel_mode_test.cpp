@@ -29,38 +29,41 @@ std::string game(const std::string& pixel_config, const std::string& assets) {
          "  start: 'play', scenes: { play }, assets: " + assets + " });\n";
 }
 
-// smooth flag of each drawn sprite, in spawn order.
+// Filter of each drawn sprite, in spawn order: N(earest), L(inear), S(harp).
 std::string flags(Host& host) {
   std::string out;
-  for (const auto& item : host.world()->draw_items()) out += item.shape.image->smooth ? "S" : "P";
+  for (const auto& item : host.world()->draw_items()) out += "NLS"[static_cast<int>(item.shape.image->filter)];
   return out;
 }
 
 }  // namespace
 
-TEST_CASE("pixelMode: config default, per-image and per-sheet overrides") {
+TEST_CASE("image filter: config.pixelMode default, per-image and per-sheet overrides") {
   Sandbox box;
   write_bmp(box, "p.bmp");
   const std::string assets =
-      "{ images: { crisp: 'p.bmp', soft: { file: 'p.bmp', pixelMode: false } }, sheets: { run: { image: 'p.bmp', frame: [8, 8] } } }";
+      "{ images: { crisp: 'p.bmp', soft: { file: 'p.bmp', filter: 'linear' } }, sheets: { run: { image: 'p.bmp', frame: [8, 8], filter: 'sharp' } } }";
   Host pixel(box.save());
   pixel.load(box.write("g.js", game("", assets)));
   REQUIRE_MESSAGE(!pixel.paused(), pixel.error());
-  CHECK(flags(pixel) == "PSP");
+  CHECK(flags(pixel) == "NLS");
 
   const std::string overrides =
-      "{ images: { crisp: { file: 'p.bmp', pixelMode: true }, soft: 'p.bmp' }, sheets: { run: { image: 'p.bmp', frame: [8, 8], pixelMode: true } } }";
+      "{ images: { crisp: { file: 'p.bmp', filter: 'sharp' }, soft: 'p.bmp' }, sheets: { run: { image: 'p.bmp', frame: [8, 8], filter: 'nearest' } } }";
   Host smooth(box.save());
   smooth.load(box.write("h.js", game(", pixelMode: false", overrides)));
   REQUIRE_MESSAGE(!smooth.paused(), smooth.error());
-  CHECK(flags(smooth) == "PSP");
+  CHECK(flags(smooth) == "SLN");
 
   Host bad(box.save());
-  bad.load(box.write("b.js", game("", "{ images: { crisp: { file: 'p.bmp', pixelMode: 'yes' } } }")));
-  CHECK(bad.error().find("assets.images.crisp.pixelMode must be true (crisp pixel art) or false (smooth)") != std::string::npos);
+  bad.load(box.write("b.js", game("", "{ images: { crisp: { file: 'p.bmp', filter: 'blur' } } }")));
+  CHECK(bad.error().find("assets.images.crisp.filter must be \"nearest\" (crisp), \"linear\" (smooth) or \"sharp\"") != std::string::npos);
+  Host old(box.save());
+  old.load(box.write("o.js", game("", "{ images: { crisp: { file: 'p.bmp', pixelMode: true } } }")));
+  CHECK(old.error().find("assets.images.crisp.pixelMode is not an image option; use filter:") != std::string::npos);
   Host missing(box.save());
   missing.load(box.write("m.js", game("", "{ images: { crisp: { path: 'p.bmp' } } }")));
-  CHECK(missing.error().find("assets.images.crisp must be a file path or { file, pixelMode? }") != std::string::npos);
+  CHECK(missing.error().find("assets.images.crisp must be a file path or { file, filter? }") != std::string::npos);
 }
 
 namespace {

@@ -131,8 +131,8 @@ test("export packs images and sheet images into an atlas page the engine maps by
   assert.deepEqual(problems, []);
   assert.ok(ok);
   const manifest = JSON.parse(fs.readFileSync(path.join(p.out, "alpha-atlas.json"), "utf8"));
-  assert.deepEqual(Object.keys(manifest.images).sort(), ["img/coin.png", "img/hero.png"]);
-  const [page, [x, y, w, h]] = manifest.images["img/coin.png"];
+  assert.deepEqual(Object.keys(manifest.filters.nearest).sort(), ["img/coin.png", "img/hero.png"]);
+  const [page, [x, y, w, h]] = manifest.filters.nearest["img/coin.png"];
   assert.equal(page, "alpha-atlas-0.png");
   assert.deepEqual([w, h], [3, 3]);
   const atlas = decodePng(fs.readFileSync(path.join(p.out, page)));
@@ -140,20 +140,24 @@ test("export packs images and sheet images into an atlas page the engine maps by
   assert.equal(fs.existsSync(path.join(p.out, "img/coin.png")), false, "packed images are not copied");
 });
 
-test("export puts crisp (pixelMode) and smooth images on separate atlas pages", async () => {
+test("export puts each image filter (nearest, linear, sharp) on its own atlas pages", async () => {
   const assets = `{ sounds: { a: "assets/a.wav", b: "assets/a.wav" },
-    images: { coin: "img/coin.png", glow: { file: "img/glow.png", pixelMode: false }, coinSoft: { file: "img/coin.png", pixelMode: false } },
-    sheets: { hero: { image: "img/hero.png", frame: [4, 4], pixelMode: false } } }`;
-  const p = project(assets, { ...SPRITE_FILES(), "img/glow.png": solidPng(2, 2, [0, 255, 0, 255]) }, `"coin" | "glow" | "coinSoft"`);
+    images: { coin: "img/coin.png", glow: { file: "img/glow.png", filter: "linear" }, coinSoft: { file: "img/coin.png", filter: "linear" },
+              coinSharp: { file: "img/coin.png", filter: "sharp" } },
+    sheets: { hero: { image: "img/hero.png", frame: [4, 4], filter: "linear" } } }`;
+  const p = project(assets, { ...SPRITE_FILES(), "img/glow.png": solidPng(2, 2, [0, 255, 0, 255]) }, `"coin" | "glow" | "coinSoft" | "coinSharp"`);
   const { ok, problems } = await exportPack(p);
   assert.deepEqual(problems, []);
   assert.ok(ok);
   const manifest = JSON.parse(fs.readFileSync(path.join(p.out, "alpha-atlas.json"), "utf8"));
-  assert.deepEqual(Object.keys(manifest.images), ["img/coin.png"]);
-  assert.deepEqual(Object.keys(manifest.smooth).sort(), ["img/coin.png", "img/glow.png", "img/hero.png"]);
-  assert.equal(manifest.images["img/coin.png"][0], "alpha-atlas-0.png");
-  assert.equal(manifest.smooth["img/glow.png"][0], "alpha-atlas-smooth-0.png");
-  assert.deepEqual(manifest.pages, { "alpha-atlas-0.png": { pixelMode: true }, "alpha-atlas-smooth-0.png": { pixelMode: false } });
+  assert.deepEqual(Object.keys(manifest.filters.nearest), ["img/coin.png"]);
+  assert.deepEqual(Object.keys(manifest.filters.linear).sort(), ["img/coin.png", "img/glow.png", "img/hero.png"]);
+  assert.deepEqual(Object.keys(manifest.filters.sharp), ["img/coin.png"]);
+  assert.equal(manifest.filters.nearest["img/coin.png"][0], "alpha-atlas-0.png");
+  assert.equal(manifest.filters.linear["img/glow.png"][0], "alpha-atlas-linear-0.png");
+  assert.equal(manifest.filters.sharp["img/coin.png"][0], "alpha-atlas-sharp-0.png");
+  assert.deepEqual(manifest.pages, { "alpha-atlas-0.png": { filter: "nearest" }, "alpha-atlas-linear-0.png": { filter: "linear" },
+                                     "alpha-atlas-sharp-0.png": { filter: "sharp" } });
 });
 
 test("export with atlas: false copies images as they are", async () => {

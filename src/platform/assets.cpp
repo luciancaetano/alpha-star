@@ -27,7 +27,7 @@ core::Image load_image(const std::string& path) {
   SDL_Surface* rgba = SDL_ConvertSurface(loaded, SDL_PIXELFORMAT_RGBA32);
   SDL_DestroySurface(loaded);
   if (!rgba) fail("cannot convert image", path);
-  core::Image image{rgba->w, rgba->h, {}, false};
+  core::Image image{rgba->w, rgba->h, {}, core::Filter::nearest};
   const auto row = static_cast<std::size_t>(rgba->w) * 4;
   image.rgba.resize(row * static_cast<std::size_t>(rgba->h));
   for (int y = 0; y < rgba->h; ++y) {

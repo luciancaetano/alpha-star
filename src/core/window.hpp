@@ -11,10 +11,11 @@ namespace alpha::core {
 // letterbox: largest fit keeping the aspect, bars around; integer: largest
 // whole-number scale (pixel art), bars around; stretch: fills the window,
 // aspect lost; expand: fills the window keeping the aspect by showing more
-// world (the logical size grows along one axis).
-enum class Scaling { Letterbox, Integer, Stretch, Expand };
+// world (the logical size grows along one axis); crop: fills the window
+// keeping the aspect, the edges that do not fit are cut off.
+enum class Scaling { Letterbox, Integer, Stretch, Expand, Crop };
 
-// "letterbox" | "integer" | "stretch" | "expand"; nullopt otherwise.
+// "letterbox" | "integer" | "stretch" | "expand" | "crop"; nullopt otherwise.
 std::optional<Scaling> parse_scaling(std::string_view name);
 
 // config.window, fixed at boot.
@@ -23,6 +24,10 @@ struct WindowConfig {
   Scaling scaling = Scaling::Letterbox;
   bool resizable = true;
   bool alt_enter = true;  // Alt+Enter toggles fullscreen
+  bool borderless = false;     // no title bar or frame
+  bool always_on_top = false;
+  bool maximized = false;      // starts maximized (resizable windows)
+  bool vsync = true;           // wait for the display refresh (false: as fast as possible)
 };
 
 // What scripts see and ask for (ctx.window). The engine writes `fullscreen`

@@ -40,26 +40,28 @@ export async function readGameDef(entry) {
   }
 }
 
-// "file" or { file, pixelMode? } (images, maps, fonts): the file and its pixel mode.
+// "file" or { file, filter? / pixelMode? } (images, maps, fonts): the file and its filtering.
 const entryFile = (entry) => (typeof entry === "string" ? entry : entry?.file ?? "");
 const entryPixel = (entry, fallback) => (typeof entry?.pixelMode === "boolean" ? entry.pixelMode : fallback);
+const FILTERS = ["nearest", "linear", "sharp"];
+const entryFilter = (entry, fallback) => (FILTERS.includes(entry?.filter) ? entry.filter : fallback);
 
 // Files the pack must contain: every sound file, image, font, music, locale and UI document
 // (the files a document references are found by uiReferences once it exists).
-// Images and sheets carry `pixelMode` (config.pixelMode, default true, or their own).
+// Images and sheets carry `filter` (their own, or config.pixelMode: true = nearest, false = linear).
 export function assetFiles(def) {
   const assets = def?.assets ?? {};
-  const pixel = entryPixel(def?.config, true);
+  const pixel = entryPixel(def?.config, true) ? "nearest" : "linear";
   const files = [];
   for (const [name, sound] of Object.entries(assets.sounds ?? {})) {
     const file = typeof sound === "string" ? sound : sound?.file;
     if (typeof file === "string") files.push({ key: `assets.sounds.${name}`, file });
   }
   for (const [name, image] of Object.entries(assets.images ?? {})) {
-    files.push({ key: `assets.images.${name}`, file: entryFile(image), pixelMode: entryPixel(image, pixel) });
+    files.push({ key: `assets.images.${name}`, file: entryFile(image), filter: entryFilter(image, pixel) });
   }
   for (const [name, sheet] of Object.entries(assets.sheets ?? {})) {
-    files.push({ key: `assets.sheets.${name}.image`, file: sheet?.image ?? "", pixelMode: entryPixel(sheet, pixel) });
+    files.push({ key: `assets.sheets.${name}.image`, file: sheet?.image ?? "", filter: entryFilter(sheet, pixel) });
   }
   for (const kind of ["fonts", "ui", "maps", "music", "locales"]) {
     for (const [name, entry] of Object.entries(assets[kind] ?? {})) files.push({ key: `assets.${kind}.${name}`, file: entryFile(entry) });
@@ -175,22 +177,30 @@ const isSprite = (key) => key.startsWith("assets.images.") || key.startsWith("as
 
 // Packs the images and sheet images into alpha-atlas pages + alpha-atlas.json; returns
 // the files still to copy (packed images are dropped unless something else needs the file).
-// Filtering is per texture: crisp (pixelMode) and smooth images go on separate pages;
-// the manifest maps files to pages in `images` (crisp) and `smooth`.
+// Filtering is per texture: each filter's images go on their own pages ("alpha-atlas-N",
+// "alpha-atlas-linear-N", "alpha-atlas-sharp-N"); the manifest maps files under `filters.<filter>`.
+// Sharp pages are at most SHARP_PAGE wide: the engine grows them 4x (core::kSharpScale).
+const SHARP_PAGE = 1024;
 function writeAtlas(root, out, files) {
-  const group = (pixel) => [...new Set(files.filter((f) => isSprite(f.key) && f.pixelMode === pixel).map((f) => posix(f.file)))];
+  const group = (filter) => [...new Set(files.filter((f) => isSprite(f.key) && f.filter === filter).map((f) => posix(f.file)))];
   const read = (list) => new Map(list.map((f) => [f, fs.readFileSync(path.join(root, f))]));
-  const crisp = buildAtlas(read(group(true)));
-  const smooth = buildAtlas(read(group(false)), "alpha-atlas-smooth");
-  const packedBoth = new Set([...crisp.packed, ...smooth.packed]);
-  if (!packedBoth.size) return files;
-  const pages = [...crisp.pages, ...smooth.pages];
-  for (const p of pages) fs.writeFileSync(path.join(out, p.file), p.png);
-  const modes = Object.fromEntries(pages.map((p) => [p.file, { pixelMode: !p.file.startsWith("alpha-atlas-smooth") }]));
-  fs.writeFileSync(path.join(out, "alpha-atlas.json"), JSON.stringify({ images: crisp.manifest.images, smooth: smooth.manifest.images, pages: modes }));
-  const packed = (f) => (f.pixelMode === false ? smooth.packed : crisp.packed).includes(posix(f.file));
+  const prefix = (filter) => (filter === "nearest" ? "alpha-atlas" : `alpha-atlas-${filter}`);
+  const atlases = Object.fromEntries(FILTERS.map((filter) =>
+    [filter, buildAtlas(read(group(filter)), prefix(filter), filter === "sharp" ? SHARP_PAGE : undefined)]));
+  const packedAll = new Set(FILTERS.flatMap((filter) => atlases[filter].packed));
+  if (!packedAll.size) return files;
+  const pages = {};
+  for (const filter of FILTERS) {
+    for (const p of atlases[filter].pages) {
+      fs.writeFileSync(path.join(out, p.file), p.png);
+      pages[p.file] = { filter };
+    }
+  }
+  const filters = Object.fromEntries(FILTERS.map((filter) => [filter, atlases[filter].manifest.images]));
+  fs.writeFileSync(path.join(out, "alpha-atlas.json"), JSON.stringify({ filters, pages }));
+  const packed = (f) => atlases[f.filter].packed.includes(posix(f.file));
   const needed = new Set(files.filter((f) => !isSprite(f.key) || !packed(f)).map((f) => posix(f.file)));
-  return files.filter((f) => !packedBoth.has(posix(f.file)) || needed.has(posix(f.file)));
+  return files.filter((f) => !packedAll.has(posix(f.file)) || needed.has(posix(f.file)));
 }
 
 function copyAssets(root, out, files) {

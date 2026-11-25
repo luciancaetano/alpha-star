@@ -106,7 +106,7 @@ the export copies each declared file into the pack and fails naming any missing 
   runtime (`entity.alpha = 0.5`); the game-over screen fades a black rect's alpha in `update`.
   World text: `shape: { text, font?, size, color, align }`. Layers: `config.layers` + `layer:` on specs.
   This game uses `config.pixelMode: false` (antialiased circles/rects, smooth images); a shape opts
-  out with `smooth: false`, an asset with `{ file, pixelMode: true }` (the pixel font does).
+  out with `smooth: false`, an image with `{ file, filter }` (the player is `"sharp"`: square pixels at any size or tilt), a font with `{ file, pixelMode: true }`.
 - **Window:** `config.window: { fullscreen?, scaling: "letterbox" | "integer" | "stretch" | "expand" }`,
   `ctx.window.fullscreen = true`; Alt+Enter toggles (opt out: `altEnter: false`).
 - **Collision:** in `enter`, `ctx.onHit("a", "b", fn)` (solid) or `ctx.onEnter("a", "b", fn)` (sensor).

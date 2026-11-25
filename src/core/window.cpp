@@ -7,6 +7,7 @@ std::optional<Scaling> parse_scaling(std::string_view name) {
   if (name == "integer") return Scaling::Integer;
   if (name == "stretch") return Scaling::Stretch;
   if (name == "expand") return Scaling::Expand;
+  if (name == "crop") return Scaling::Crop;
   return std::nullopt;
 }
 

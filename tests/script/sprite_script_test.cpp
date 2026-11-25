@@ -89,8 +89,8 @@ TEST_CASE("sheet mistakes name the sheet and list what exists") {
 TEST_CASE("an exported pack's alpha-atlas.json is transparent: images and sheets become regions of a page") {
   Sandbox box;
   bmp(box, "atlas-0.bmp", 64, 64);
-  box.write("alpha-atlas.json", R"({ "images": { "img/coin.png": ["atlas-0.bmp", [32, 0, 4, 4]],
-                                            "img/hero.png": ["atlas-0.bmp", [0, 16, 32, 8]] } })");
+  box.write("alpha-atlas.json", R"({ "filters": { "nearest": { "img/coin.png": ["atlas-0.bmp", [32, 0, 4, 4]],
+                                            "img/hero.png": ["atlas-0.bmp", [0, 16, 32, 8]] } } })");
   Host host(box.save());
   host.load(box.write("g.js", game(
       "{ images: { coin: 'img/coin.png' }, sheets: { hero: { image: 'img/hero.png', frame: [8, 8] } } }",

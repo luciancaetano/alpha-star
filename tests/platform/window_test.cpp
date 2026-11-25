@@ -48,8 +48,12 @@ TEST_CASE("open_window sizes for the scaling mode; sync_window applies requests 
   WindowConfig config;
   config.scaling = Scaling::Integer;
   config.resizable = false;
+  config.borderless = true;
+  config.always_on_top = true;
   REQUIRE(alpha::platform::open_window({"t", {160, 90}, config, true}, &window, &renderer));
   CHECK((SDL_GetWindowFlags(window) & SDL_WINDOW_RESIZABLE) == 0);
+  CHECK((SDL_GetWindowFlags(window) & SDL_WINDOW_BORDERLESS) != 0);
+  CHECK((SDL_GetWindowFlags(window) & SDL_WINDOW_ALWAYS_ON_TOP) != 0);
   WindowState state;
   alpha::platform::sync_window(window, state);
   CHECK(state.size == Vec2{320, 180});

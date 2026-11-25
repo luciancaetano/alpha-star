@@ -39,7 +39,7 @@ std::vector<core::TileQuad> cells(JSContext* ctx, const Value& spec, core::Vec2 
   return out;
 }
 
-// tileLayer({image, tile: [w, h], size: [w, h], pos: [x, y], z, cells, layer?, pixelMode?}) -> entity id.
+// tileLayer({image, tile: [w, h], size: [w, h], pos: [x, y], z, cells, layer?, filter?}) -> entity id.
 // One entity draws the whole layer (one batch, culled per cell); `pos` is its top-left.
 JSValue tile_layer(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const Value spec(ctx, JS_DupValue(ctx, argv[0]));
@@ -51,7 +51,7 @@ JSValue tile_layer(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   e.pos = vec2_arg(ctx, spec.prop("pos").get(), "tile layer pos") + size * 0.5f;
   e.z = static_cast<int>(number_arg(ctx, spec.prop("z").get(), "tile layer z"));
   e.layer = parse_layer(ctx, spec.get(), s);
-  e.shape = core::ShapeSpec{core::Rect{size}, {}, {}, decoded_image(s, string_arg(ctx, spec.prop("image").get(), "tileset image"), smooth_arg(ctx, spec.prop("pixelMode").get()))};
+  e.shape = core::ShapeSpec{core::Rect{size}, {}, {}, decoded_image(s, string_arg(ctx, spec.prop("image").get(), "tileset image"), filter_arg(ctx, spec.prop("filter").get()))};
   e.shape->tiles = std::move(grid);
   return JS_NewUint32(ctx, world_of(s).spawn(e));
 }

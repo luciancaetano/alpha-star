@@ -82,7 +82,7 @@ int pack(std::vector<Bitmap>& bitmaps, core::FontAtlas& atlas) {
 }
 
 std::shared_ptr<core::Image> paint(const std::vector<Bitmap>& bitmaps, const core::FontAtlas& atlas, int height) {
-  auto image = std::make_shared<core::Image>(core::Image{kAtlasWidth, height, {}, false});
+  auto image = std::make_shared<core::Image>(core::Image{kAtlasWidth, height, {}, core::Filter::nearest});
   image->rgba.assign(static_cast<std::size_t>(kAtlasWidth) * static_cast<std::size_t>(height) * 4, 255);
   for (std::size_t p = 3; p < image->rgba.size(); p += 4) image->rgba[p] = 0;
   for (std::size_t i = 0; i < bitmaps.size(); ++i) {
@@ -117,7 +117,7 @@ core::FontAtlasPtr rasterize_font(const vfs::Bytes& bytes, const std::filesystem
     bitmaps.push_back(render(face.get(), core::glyph_code(i), atlas->glyphs[i], atlas->ascent, crisp));
   }
   auto image = paint(bitmaps, *atlas, pack(bitmaps, *atlas));
-  image->smooth = !crisp;
+  image->filter = crisp ? core::Filter::nearest : core::Filter::linear;
   atlas->image = std::move(image);
   return atlas;
 }

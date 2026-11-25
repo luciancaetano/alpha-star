@@ -444,15 +444,24 @@ declare module "alpha" {
   /**
    * config.window. scaling: "letterbox" (default; largest fit, bars), "integer" (whole
    * multiples only: crisp pixel art, bars), "stretch" (fills, aspect lost), "expand"
-   * (fills keeping pixels square by showing more world; ctx.window.size grows the view).
+   * (fills keeping pixels square by showing more world; ctx.window.size grows the view),
+   * "crop" (fills keeping the aspect; the edges that do not fit are cut off).
    */
   export interface WindowConfig {
     fullscreen?: boolean;
-    scaling?: "letterbox" | "integer" | "stretch" | "expand";
+    scaling?: "letterbox" | "integer" | "stretch" | "expand" | "crop";
     /** Default true. */
     resizable?: boolean;
     /** Alt+Enter toggles fullscreen (default true). */
     altEnter?: boolean;
+    /** No title bar or frame (default false). */
+    borderless?: boolean;
+    /** Stays above other windows (default false). */
+    alwaysOnTop?: boolean;
+    /** Starts maximized (default false). */
+    maximized?: boolean;
+    /** Wait for the display refresh (default true); false draws as fast as possible (more CPU/GPU). */
+    vsync?: boolean;
   }
 
   /** config.layers entry: drawn in `z` order (then entity z); parallax 0 = fixed to the screen, 1 = world (default). */
@@ -912,8 +921,8 @@ declare module "alpha" {
     collision?: { categories: CategoryOf<G>[] };
     /**
      * Look default: true (default) = crisp pixel art (nearest image filtering, hard shape
-     * edges), false = smooth (linear filtering, antialiased circle/rect edges). Assets override
-     * it with `{ file, pixelMode }` / sheet `pixelMode`; filled shapes with `smooth`.
+     * edges), false = smooth (linear filtering, antialiased circle/rect edges). Images, sheets
+     * and maps override it with `filter`; fonts with `{ file, pixelMode }`; filled shapes with `smooth`.
      */
     pixelMode?: boolean;
     /** Named draw layers, e.g. `{ bg: { z: -100, parallax: 0.2 }, fx: { z: 100 } }`. */
@@ -954,8 +963,8 @@ declare module "alpha" {
        * Texts are UTF-8; world text draws ASCII + Latin-1, RmlUi whatever its fonts have.
        */
       locales?: Record<LocaleOf<G>, string>;
-      /** Image name -> file, or `{ file, pixelMode }` to override config.pixelMode for it. */
-      images?: Record<G["images"], FileAsset>;
+      /** Image name -> file, or `{ file, filter }` to override config.pixelMode for it. */
+      images?: Record<G["images"], ImageAsset>;
       /**
        * Font name -> .ttf/.otf file or AngelCode BMFont .fnt (text or XML; its PNG pages are
        * packed too); the name is the `font-family` used in .rcss and `font` of world text.
@@ -974,18 +983,23 @@ declare module "alpha" {
        */
       sheets?: { [K in keyof SheetsOf<G>]: SheetAsset<SheetsOf<G>[K] & string> };
       /** Map name -> Tiled map (.tmj JSON; tilesets embedded or .tsj; CSV tile layers). */
-      maps?: Record<MapOf<G>, FileAsset>;
+      maps?: Record<MapOf<G>, ImageAsset>;
     };
   }
 
   /**
-   * An asset file: "path", or `{ file, pixelMode }`. pixelMode true = crisp pixel art
-   * (nearest filtering when scaled), false = smooth (linear). Default: config.pixelMode.
-   * Fonts: the world-text glyph atlas; maps: their tilesets.
+   * How an image is sampled when drawn scaled or rotated:
+   * - "nearest": crisp pixel art; at non-whole scales or rotated, pixels come out uneven/jagged.
+   * - "linear": smooth (photos, painted art); pixel art gets blurry.
+   * - "sharp": pixel art at any size or angle: square pixels with soft ~1 screen-pixel edges
+   *   (the texture is grown 4x with nearest, then drawn linear; 16x the texture memory).
+   * Default: config.pixelMode (true = "nearest", false = "linear").
    */
-  export type FileAsset = string | { file: string; pixelMode?: boolean };
+  export type ImageFilter = "nearest" | "linear" | "sharp";
+  /** An image (or a map's tilesets): "path", or `{ file, filter }`. */
+  export type ImageAsset = string | { file: string; filter?: ImageFilter };
   /**
-   * A font: like FileAsset, plus `license` (its license file, credited in the pack).
+   * A font: "path" or `{ file, pixelMode, license }`; `license` is its license file, credited in the pack.
    * Text is rasterized at the screen's real resolution, so it stays sharp at any window
    * scale; bitmap fonts draw at whole multiples of their size. pixelMode true: TrueType
    * glyphs are rendered monochrome (pixel fonts stay crisp).
@@ -1005,8 +1019,8 @@ declare module "alpha" {
     image: string;
     frame: Vec2;
     animations?: Record<A, AnimationDef>;
-    /** Texture filtering of the sheet (default: config.pixelMode). */
-    pixelMode?: boolean;
+    /** Texture filtering of the sheet (see ImageFilter; default: config.pixelMode). */
+    filter?: ImageFilter;
   }
 
   export interface Game<G extends GameTypes> {

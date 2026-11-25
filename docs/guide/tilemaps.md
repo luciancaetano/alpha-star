@@ -17,7 +17,7 @@ hero.play("run");         // restarts
 ```
 
 A sheet with one-frame animations is a tile set (`examples/puzzle`). `alpha export` packs images
-into atlas pages. `pixelMode` (config or per asset) picks crisp or smooth filtering.
+into atlas pages. `config.pixelMode` picks the default filtering; a map overrides it with `{ file, filter: "nearest" | "linear" | "sharp" }`.
 
 ## Camera
 

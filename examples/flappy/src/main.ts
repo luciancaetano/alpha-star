@@ -12,7 +12,7 @@ export default game({
     size: [WORLD.width, WORLD.height],
     background: "#090d26",
     seed: 42,
-    // Smooth scenery; the player sprite and pixel font opt into nearest-neighbor filtering.
+    // Smooth scenery; the player sprite is "sharp" (square pixels at any size/tilt), the pixel font crisp.
     pixelMode: false,
     gravity: [0, 900],
     // Any face button or the right trigger flaps, on any player's gamepad.
@@ -27,7 +27,7 @@ export default game({
   scenes: { title, play, over, settings },
   assets: {
     images: {
-      player: { file: "assets/images/player-pixel.png", pixelMode: true },
+      player: { file: "assets/images/player-pixel.png", filter: "sharp" },
       nebula: "assets/images/nebula.png",
       column: "assets/images/column.png",
       deck: "assets/images/deck.png",

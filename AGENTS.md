@@ -45,6 +45,12 @@ make test                                           # tests only (ctest --preset
 make linux-gate                                     # full gate in the Linux container: run on the dedicated Linux PC, not this one
 ```
 
+**Test only on the OS you are on:** on Windows run only the Windows build/tests/gate (never `make linux-gate`
+or the Linux container); on Linux run only the Linux ones. Cross-OS runs waste time and tokens.
+
+```
+```
+
 ```
 cmake --preset dev                 # configure (MSVC, Ninja-free VS generator)
 cmake --build --preset dev         # build

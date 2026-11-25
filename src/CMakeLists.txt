@@ -10,6 +10,7 @@ add_library(alpha_core
   core/entity_spec.cpp
   core/fixed_step.cpp
   core/glyph_layout.cpp
+  core/image_filter.cpp
   core/bmfont.cpp
   core/pixel_grid.cpp
   core/input.cpp

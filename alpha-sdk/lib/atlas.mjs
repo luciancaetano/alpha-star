@@ -1,9 +1,9 @@
 // Atlas packing for `alpha export`: the game's PNG images and sprite sheets go
 // into few RGBA pages so sprites of different images share one texture (one
 // draw call per run of same-texture sprites). The engine reads alpha-atlas.json:
-//   { "images": { "<file as written in assets>": ["alpha-atlas-0.png", [x, y, w, h]] },
-//     "smooth": { ...same, pixelMode: false images on "alpha-atlas-smooth-N.png" pages },
-//     "pages": { "<page file>": { "pixelMode": true | false } } }
+//   { "filters": { "nearest": { "<file as written in assets>": ["alpha-atlas-0.png", [x, y, w, h]] },
+//                  "linear": { ...same, on "alpha-atlas-linear-N.png" pages }, "sharp": { ... } },
+//     "pages": { "<page file>": { "filter": "nearest" | "linear" | "sharp" } } }
 // Tilesets of maps are not packed (they already are atlases).
 import { decodePng, encodePng } from "./png.mjs";
 
@@ -64,14 +64,14 @@ function blit(dst, src, at) {
  * images: Map(file -> PNG bytes). Returns { pages: [{ file, png }], manifest, packed: [file] };
  * files that are not decodable 8-bit PNGs (or too big) stay out and keep their own file.
  */
-export function buildAtlas(images, prefix = "alpha-atlas") {
+export function buildAtlas(images, prefix = "alpha-atlas", max = MAX_PAGE) {
   const decoded = new Map();
   for (const [file, bytes] of images) {
     const img = decodePng(bytes);
     if (img) decoded.set(file, img);
   }
   const rects = [...decoded].map(([key, img]) => ({ key, width: img.width, height: img.height }));
-  const { placed, pages } = packRects(rects);
+  const { placed, pages } = packRects(rects, max);
   const canvases = pages.map(({ width, height }) => ({ width, height, rgba: Buffer.alloc(width * height * 4) }));
   const manifest = { images: {} };
   for (const p of placed) {

@@ -2,7 +2,7 @@
 
 `player.png` is the user's original image, moved unchanged from the game root.
 `player-pixel.png` is its pixel-art adaptation, generated with built-in `image_gen`
-and used in-game with per-image `pixelMode: true` for crisp sampling.
+and used in-game with per-image `filter: "sharp"` (square pixels with soft edges at any size or rotation).
 The three environment textures were generated with the built-in `image_gen`
 tool, then copied here. No API/CLI fallback was used. Images are preloaded by
 `src/main.ts`; UI text and panels remain native RmlUi for localization and focus.

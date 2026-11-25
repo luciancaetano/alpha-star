@@ -15,7 +15,7 @@ const KEYS = ['pos', 'shape', 'rect', 'circle', 'outline', 'parallax', 'shake', 
   'anchor', 'length', 'motor', 'limits', 'wave', 'freq', 'duration', 'volume', 'pitch', 'loop', 'pan', 'attack',
   'decay', 'sustain', 'release', 'slide', 'smooth', 'alpha', 'blend', 'tint', 'scale', 'rotation', 'velocity',
   'width', 'height', 'points', 'offset', 'fadeIn', 'colors', 'sizes', 'frame', 'frames', 'fps', 'image', 'file',
-  'pixelMode', 'bus', 'from', 'to', 'ease'];
+  'pixelMode', 'filter', 'bus', 'from', 'to', 'ease'];
 const WORDS = ['rect', 'circle', 'text', 'dynamic', 'static', 'kinematic', 'add', 'multiply', 'alpha', 'square',
   'sine', 'noise', 'triangle', 'saw', 'master', 'sfx', 'music', 'hud', 'x', 'a', '', '#fff', '#00000000', 'red',
   'weld', 'revolute', 'distance', 'prismatic', 'wheel', 'mouse', 'Space', 'KeyA', 'jump', 'main', '..', '/', '\u0000'];

@@ -9,12 +9,17 @@
 
 namespace alpha::core {
 
+// How a texture is sampled when drawn scaled or rotated: nearest (crisp
+// pixel art), linear (smooth), sharp (pixel art grown by a whole factor, then
+// linear: square texels with soft borders; core/image_filter).
+enum class Filter : std::uint8_t { nearest, linear, sharp };
+
 // Decoded image: tightly packed RGBA8, row-major, top row first.
 struct Image {
   int width = 0;
   int height = 0;
   std::vector<std::uint8_t> rgba;
-  bool smooth = false;  // linear filtering when scaled (pixelMode: false); nearest otherwise
+  Filter filter = Filter::nearest;  // assets.images.<name>.filter
 };
 
 using ImagePtr = std::shared_ptr<const Image>;

@@ -41,3 +41,8 @@ Condensed summary of the project's history. The full per-action log (326 entries
 - macOS: experimental CI build only.
 - Not yet: custom shaders, world text beyond Latin-1, antialiased particles.
 - MCP `game_reload` test failed once in a full run (cause not captured); not reproduced since.
+- assets: image filtering is now `filter: "nearest" | "linear" | "sharp"` on images, sheets and maps (replaces their `pixelMode`; config.pixelMode stays the default, fonts keep `pixelMode`). `core::Filter` on `core::Image`; "sharp" = sharp bilinear without shaders (SDL 3.2): renderer uploads the image grown up to 4x with nearest (`core/image_filter`, max side 4096) and samples linear. `alpha export` atlases per filter (`alpha-atlas.json` -> `filters.<filter>`, sharp pages <= 1024). Old `pixelMode` on an image errors with the fix.
+- window: `config.window.scaling: "crop"` (SDL overscan) and `borderless`, `alwaysOnTop`, `maximized`, `vsync` flags.
+- flappy: player uses `filter: "sharp"` at 48/132 px (square pixels, clean when tilted); checked by screenshot.
+- AGENTS.md: test only on the OS you are on (no Linux gate from Windows and vice versa).
+- Gate: PASS (Windows). SDK pack/atlas tests 20/20, flappy tests 15/15.

@@ -1,7 +1,7 @@
 // All tunable numbers in one place.
 export const WORLD = { width: 288, height: 512, groundHeight: 40 };
 export const BIRD = { x: 80, startY: 240, radius: 12, flap: -320, maxTilt: 90 };
-export const ART = { playerSize: 44, titleSize: 132, titleY: 244 };
+export const ART = { playerSize: 48, titleSize: 132, titleY: 244 };
 // Stardust thrown on every flap; the game-over screen darkens to FADE.alpha in FADE.seconds.
 export const FEATHERS = { count: 8 };
 export const FADE = { alpha: 0.55, seconds: 0.6 };

@@ -12,12 +12,12 @@
 
 namespace alpha::script {
 
-core::ImagePtr decoded_image(ScriptState& s, const std::string& file, bool smooth) {
+core::ImagePtr decoded_image(ScriptState& s, const std::string& file, core::Filter filter) {
   const std::string path = platform::vfs::in_pack(s.asset_dir, file).string();
-  core::ImagePtr& slot = s.decoded[smooth ? path + "|smooth" : path];  // one texture per filtering
+  core::ImagePtr& slot = s.decoded[path + "|" + std::to_string(static_cast<int>(filter))];  // one texture per filter
   if (slot) return slot;
   core::Image image = platform::load_image(path);
-  image.smooth = smooth;
+  image.filter = filter;
   slot = std::make_shared<const core::Image>(std::move(image));
   return slot;
 }
@@ -26,6 +26,15 @@ bool smooth_arg(JSContext* ctx, JSValueConst v) {
   if (JS_IsUndefined(v)) return false;
   if (!JS_IsBool(v)) throw core::Error("pixelMode must be true or false, got " + describe(ctx, v));
   return JS_ToBool(ctx, v) == 0;
+}
+
+core::Filter filter_arg(JSContext* ctx, JSValueConst v) {
+  if (JS_IsUndefined(v)) return core::Filter::nearest;
+  const std::string name = JS_IsString(v) ? to_string(ctx, v) : "";
+  if (name == "nearest") return core::Filter::nearest;
+  if (name == "linear") return core::Filter::linear;
+  if (name == "sharp") return core::Filter::sharp;
+  throw core::Error("filter must be \"nearest\", \"linear\" or \"sharp\", got " + describe(ctx, v));
 }
 
 namespace {
@@ -38,9 +47,9 @@ int whole(double v, const std::string& what) {
 }
 
 // file, and its [x, y, w, h] place in it (an atlas page) or undefined = all of it.
-core::Picture picture(JSContext* ctx, ScriptState& s, JSValueConst* argv, const std::string& what, bool smooth) {
+core::Picture picture(JSContext* ctx, ScriptState& s, JSValueConst* argv, const std::string& what, core::Filter filter) {
   const std::string file = string_arg(ctx, argv[1], what);
-  const core::ImagePtr image = decoded_image(s, file, smooth);
+  const core::ImagePtr image = decoded_image(s, file, filter);
   core::Region r{0, 0, image->width, image->height};
   if (JS_IsUndefined(argv[2])) return {image, r};
   const auto n = numbers_arg(ctx, argv[2], what + " (atlas region)");
@@ -50,9 +59,9 @@ core::Picture picture(JSContext* ctx, ScriptState& s, JSValueConst* argv, const 
   return {image, r};
 }
 
-// loadImage(name, file, region?, pixelMode?)
+// loadImage(name, file, region?, filter?)
 JSValue load_image(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  core::Picture pic = picture(ctx, s, argv, "assets.images." + string_arg(ctx, argv[0], "image name"), smooth_arg(ctx, argv[3]));
+  core::Picture pic = picture(ctx, s, argv, "assets.images." + string_arg(ctx, argv[0], "image name"), filter_arg(ctx, argv[3]));
   s.images.insert_or_assign(to_string(ctx, argv[0]), std::move(pic));
   return JS_UNDEFINED;
 }
@@ -93,11 +102,11 @@ void frame_size(JSContext* ctx, core::Sheet& sheet, JSValueConst v, const std::s
   }
 }
 
-// loadSheet(name, file, region?, frame, [[animation, {frames, fps?, loop?}], ...], pixelMode?)
+// loadSheet(name, file, region?, frame, [[animation, {frames, fps?, loop?}], ...], filter?)
 JSValue load_sheet(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const std::string what = "assets.sheets." + string_arg(ctx, argv[0], "sheet name");
   auto sheet = std::make_shared<core::Sheet>();
-  sheet->picture = picture(ctx, s, argv, what + ".image", smooth_arg(ctx, argv[5]));
+  sheet->picture = picture(ctx, s, argv, what + ".image", filter_arg(ctx, argv[5]));
   frame_size(ctx, *sheet, argv[3], what);
   const Value list(ctx, JS_DupValue(ctx, argv[4]));
   int64_t n = 0;

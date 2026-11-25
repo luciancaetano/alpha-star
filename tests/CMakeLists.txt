@@ -8,6 +8,7 @@ set(ALPHA_TEST_SOURCES
   core/bytecode_test.cpp
   core/camera_test.cpp
   core/glyph_layout_test.cpp
+  core/image_filter_test.cpp
   core/bmfont_test.cpp
   core/pixel_grid_test.cpp
   core/window_test.cpp

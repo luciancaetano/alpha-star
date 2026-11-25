@@ -26,21 +26,29 @@ bool flag_or(JSContext* ctx, const Value& obj, const char* name, bool fallback) 
   return JS_IsUndefined(v.get()) ? fallback : JS_ToBool(ctx, v.get()) == 1;
 }
 
-// config.window: { fullscreen?, scaling?, resizable?, altEnter? }
+core::Scaling scaling_of(JSContext* ctx, const Value& w) {
+  const Value scaling = w.prop("scaling");
+  if (JS_IsUndefined(scaling.get())) return core::Scaling::Letterbox;
+  const std::string name = string_arg(ctx, scaling.get(), "config.window.scaling");
+  const auto parsed = core::parse_scaling(name);
+  if (!parsed) throw core::Error("config.window.scaling must be \"letterbox\", \"integer\", \"stretch\", \"expand\" or \"crop\", got \"" + name + "\"");
+  return *parsed;
+}
+
+// config.window: { fullscreen?, scaling?, resizable?, altEnter?, borderless?, alwaysOnTop?, maximized?, vsync? }
 core::WindowConfig window_config(JSContext* ctx, const Value& info) {
   const Value w = info.prop("window");
   core::WindowConfig c;
   if (JS_IsUndefined(w.get())) return c;
-  if (!JS_IsObject(w.get())) throw core::Error("config.window must be { fullscreen?, scaling?, resizable?, altEnter? }");
+  if (!JS_IsObject(w.get())) throw core::Error("config.window must be { fullscreen?, scaling?, resizable?, altEnter?, borderless?, alwaysOnTop?, maximized?, vsync? }");
   c.fullscreen = flag_or(ctx, w, "fullscreen", false);
   c.resizable = flag_or(ctx, w, "resizable", true);
   c.alt_enter = flag_or(ctx, w, "altEnter", true);
-  const Value scaling = w.prop("scaling");
-  if (JS_IsUndefined(scaling.get())) return c;
-  const std::string name = string_arg(ctx, scaling.get(), "config.window.scaling");
-  const auto parsed = core::parse_scaling(name);
-  if (!parsed) throw core::Error("config.window.scaling must be \"letterbox\", \"integer\", \"stretch\" or \"expand\", got \"" + name + "\"");
-  c.scaling = *parsed;
+  c.borderless = flag_or(ctx, w, "borderless", false);
+  c.always_on_top = flag_or(ctx, w, "alwaysOnTop", false);
+  c.maximized = flag_or(ctx, w, "maximized", false);
+  c.vsync = flag_or(ctx, w, "vsync", true);
+  c.scaling = scaling_of(ctx, w);
   return c;
 }
 

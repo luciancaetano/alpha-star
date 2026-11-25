@@ -66,7 +66,7 @@ std::shared_ptr<core::Image> stack(const std::vector<core::Image>& pages, std::v
     width = std::max(width, p.width);
     height += p.height;
   }
-  auto image = std::make_shared<core::Image>(core::Image{width, height, {}, false});
+  auto image = std::make_shared<core::Image>(core::Image{width, height, {}, core::Filter::nearest});
   image->rgba.assign(static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4, 0);
   for (std::size_t i = 0; i < pages.size(); ++i) {
     const auto row = static_cast<std::size_t>(pages[i].width) * 4;
@@ -90,7 +90,7 @@ core::FontSourcePtr load_bitmap(const std::filesystem::path& file, bool pixel_mo
   for (const std::string& page : font.pages) pages.push_back(load_image((file.parent_path() / page).string()));
   std::vector<int> page_top;
   auto image = stack(pages, page_top);
-  image->smooth = !pixel_mode;
+  image->filter = pixel_mode ? core::Filter::nearest : core::Filter::linear;
   auto atlas = std::make_shared<core::FontAtlas>(core::bitmap_atlas(font, page_top));
   atlas->image = std::move(image);
   return std::make_shared<Bitmap>(std::move(atlas), font.size);
@@ -111,7 +111,7 @@ void paint_cell(core::Image& image, int i, const core::Region& at) {
 core::FontSourcePtr make_default() {
   constexpr int kPitch = kCell + 1;
   const int rows = (kDefaultFontCells + kColumns - 1) / kColumns;
-  core::Image image{kColumns * kPitch + 1, rows * kPitch + 1, {}, false};
+  core::Image image{kColumns * kPitch + 1, rows * kPitch + 1, {}, core::Filter::nearest};
   image.rgba.assign(static_cast<std::size_t>(image.width) * static_cast<std::size_t>(image.height) * 4, 255);
   for (std::size_t p = 3; p < image.rgba.size(); p += 4) image.rgba[p] = 0;
   auto atlas = std::make_shared<core::FontAtlas>();

@@ -17,6 +17,9 @@ bool open_window(const WindowSetup& setup, SDL_Window** window, SDL_Renderer** r
   SDL_WindowFlags flags = 0;
   if (c.resizable) flags |= SDL_WINDOW_RESIZABLE;
   if (c.fullscreen) flags |= SDL_WINDOW_FULLSCREEN;
+  if (c.borderless) flags |= SDL_WINDOW_BORDERLESS;
+  if (c.always_on_top) flags |= SDL_WINDOW_ALWAYS_ON_TOP;
+  if (c.maximized) flags |= SDL_WINDOW_MAXIMIZED;
   if (setup.hidden) flags |= SDL_WINDOW_HIDDEN;
   flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;  // output in real pixels on high-DPI screens; text is made at that size
   const core::Vec2 size = core::initial_window_size(setup.game, c.scaling);

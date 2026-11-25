@@ -52,20 +52,20 @@ function validate(g) {
 }
 
 // `alpha export` may pack images into atlas pages: alpha-atlas.json maps each image
-// file to [page file, [x, y, w, h]], crisp images in `images` and smooth ones
-// (pixelMode false) in `smooth`, on separate pages. Without it (tests, raw files)
-// every image is its own file. Returns (file, pixelMode) -> [file, region?].
+// file to [page file, [x, y, w, h]] under its filter (`filters.nearest`, `.linear`,
+// `.sharp`; each filter has its own pages). Without it (tests, raw files) every
+// image is its own file. Returns (file, filter) -> [file, region?].
 function atlasOf() {
   const text = N.readText("alpha-atlas.json", true);
   const m = text === null ? {} : JSON.parse(text);
-  return (file, pixel) => (pixel ? m.images : m.smooth)?.[joinPath("", file)] ?? [file, undefined];
+  return (file, filter) => m.filters?.[filter]?.[joinPath("", file)] ?? [file, undefined];
 }
 
-function sheetArgs(name, sheet, atlas, pixel) {
+function sheetArgs(name, sheet, atlas, filter) {
   if (!sheet || typeof sheet.image !== "string") fail(`assets.sheets.${name}.image must be an image file path`);
   const anims = sheet.animations ?? {};
   if (typeof anims !== "object") fail(`assets.sheets.${name}.animations must be { name: { frames, fps?, loop? } }`);
-  return [name, ...atlas(sheet.image, pixel), sheet.frame, Object.entries(anims)];
+  return [name, ...atlas(sheet.image, filter), sheet.frame, Object.entries(anims)];
 }
 
 // obj.pixelMode (true = crisp nearest filtering, false = smooth linear), or `fallback`.
@@ -76,13 +76,24 @@ function pixelOf(obj, what, fallback) {
   return p;
 }
 
-// An asset entry: "file" or { file, pixelMode? } -> { file, pixelMode }.
-function fileEntry(entry, what, fallback) {
-  if (typeof entry === "string") return { file: entry, pixelMode: fallback };
+const FILTERS = ["nearest", "linear", "sharp"];
+
+// obj.filter of an image, sheet or map, or `fallback` (config.pixelMode: nearest / linear).
+function filterOf(obj, what, fallback) {
+  if (obj?.pixelMode !== undefined) fail(`${what}.pixelMode is not an image option; use filter: "nearest" (crisp), "linear" (smooth) or "sharp" (crisp pixels, soft edges)`);
+  const f = obj?.filter;
+  if (f === undefined) return fallback;
+  if (!FILTERS.includes(f)) fail(`${what}.filter must be "nearest" (crisp), "linear" (smooth) or "sharp" (crisp pixels, soft edges), got ${show(f)}`);
+  return f;
+}
+
+// An asset entry: "file" or { file, <option>? } -> { file, obj } (obj: the entry or undefined).
+function fileEntry(entry, what, option) {
+  if (typeof entry === "string") return { file: entry, obj: undefined };
   if (!entry || typeof entry !== "object" || typeof entry.file !== "string") {
-    fail(`${what} must be a file path or { file, pixelMode? }, got ${show(entry)}`);
+    fail(`${what} must be a file path or { file, ${option}? }, got ${show(entry)}`);
   }
-  return { file: entry.file, pixelMode: pixelOf(entry, what, fallback) };
+  return { file: entry.file, obj: entry };
 }
 
 // Every asset is loaded (or synthesized) before the first scene starts.
@@ -90,22 +101,27 @@ function preload(s, assets, pixel) {
   loadAudio(assets);
   N.shapePixelMode(pixel);
   const atlas = atlasOf();
-  const images = Object.entries(assets.images ?? {}).map(([name, e]) => [name, fileEntry(e, `assets.images.${name}`, pixel)]);
-  for (const [name, e] of images) N.loadImage(name, ...atlas(e.file, e.pixelMode), e.pixelMode);
+  const fallback = pixel ? "nearest" : "linear";
+  for (const [name, entry] of Object.entries(assets.images ?? {})) {
+    const what = `assets.images.${name}`;
+    const e = fileEntry(entry, what, "filter");
+    const filter = filterOf(e.obj, what, fallback);
+    N.loadImage(name, ...atlas(e.file, filter), filter);
+  }
   for (const [name, sheet] of Object.entries(assets.sheets ?? {})) {
-    const p = pixelOf(sheet, `assets.sheets.${name}`, pixel);
-    N.loadSheet(...sheetArgs(name, sheet, atlas, p), p);
+    const filter = filterOf(sheet, `assets.sheets.${name}`, fallback);
+    N.loadSheet(...sheetArgs(name, sheet, atlas, filter), filter);
   }
   s.maps = new Map(Object.entries(assets.maps ?? {}).map(([name, m]) => {
-    const e = fileEntry(m, `assets.maps.${name}`, pixel);
+    const e = fileEntry(m, `assets.maps.${name}`, "filter");
     const map = loadMap(name, e.file);
-    map.pixelMode = e.pixelMode;  // its tilesets filter like this
+    map.filter = filterOf(e.obj, `assets.maps.${name}`, fallback);  // its tilesets filter like this
     return [name, map];
   }));
   for (const [name, f] of Object.entries(assets.fonts ?? {})) {
-    const e = fileEntry(f, `assets.fonts.${name}`, pixel);
+    const e = fileEntry(f, `assets.fonts.${name}`, "pixelMode");
     if (f?.license !== undefined && typeof f.license !== "string") fail(`assets.fonts.${name}.license must be a file path (the font's license, credited by alpha export), got ${show(f.license)}`);
-    N.loadFont(name, e.file, e.pixelMode);
+    N.loadFont(name, e.file, pixelOf(e.obj, `assets.fonts.${name}`, pixel));
   }
   for (const [name, file] of Object.entries(assets.ui ?? {})) N.loadUi(name, file);
   s.i18n.load(assets.locales, s.game.config.locale);
