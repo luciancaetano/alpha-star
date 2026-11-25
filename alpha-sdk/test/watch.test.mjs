@@ -28,7 +28,16 @@ function watching(p) {
   const waiters = [];
   const w = watchProject({ ...p, debounceMs: 100, onExport: (r) => (waiters.shift() ?? ((x) => results.push(x)))(r) });
   const next = () => (results.length ? Promise.resolve(results.shift()) : new Promise((r) => waiters.push(r)));
-  return { next, close: () => w.close() };
+  // Windows may report the fixture's own creation late (an extra export of the old source):
+  // skip exports until one reflects what the test just wrote (at most a few).
+  const until = async (seen) => {
+    for (let i = 0; i < 4; i++) {
+      const r = await next();
+      if (seen(r)) return r;
+    }
+    throw new Error("no export reflected the change");
+  };
+  return { next, until, close: () => w.close() };
 }
 
 test("watch re-exports the pack when a source file changes; a type error leaves the pack untouched", async () => {
@@ -39,12 +48,12 @@ test("watch re-exports the pack when a source file changes; a type error leaves 
     const main = path.join(p.out, "main.js");
     assert.match(fs.readFileSync(main, "utf8"), /111/);
     fs.writeFileSync(p.entry, source(222));
-    const ok = await w.next();
+    const ok = await w.until((r) => !r.ok || /222/.test(fs.readFileSync(main, "utf8")));
     assert.deepEqual(ok.problems, []);
     assert.match(fs.readFileSync(main, "utf8"), /222/);
     const before = fs.readFileSync(main, "utf8");
     fs.writeFileSync(p.entry, source(`"fast"`));
-    const bad = await w.next();
+    const bad = await w.until((r) => !r.ok);
     assert.equal(bad.ok, false);
     assert.match(bad.problems[0].message, /string.*number|number/);
     assert.equal(fs.readFileSync(main, "utf8"), before);
