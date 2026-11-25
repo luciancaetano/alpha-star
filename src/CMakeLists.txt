@@ -35,7 +35,7 @@ if(NOT ALPHA_WITH_RUNTIME_DEPS)
 endif()
 
 # Script runtime JS is embedded in the binary: the player ships one executable.
-set(ALPHA_JS_FILES alpha alpha_test maps runtime)
+set(ALPHA_JS_FILES alpha alpha_test maps physics runtime tween)
 # Each file becomes adjacent raw literals of <= 8000 chars: MSVC rejects a single
 # literal over ~16 KB (C2026), while concatenated ones may reach 64 KB.
 foreach(js ${ALPHA_JS_FILES})
@@ -59,8 +59,11 @@ configure_file(script/embedded_js.hpp.in
 add_library(alpha_engine
   ecs/effects.cpp
   ecs/entity_view.cpp
+  ecs/hierarchy.cpp
   ecs/world.cpp
+  physics/joints.cpp
   physics/physics_world.cpp
+  physics/queries.cpp
   platform/assets.cpp
   platform/audio_out.cpp
   platform/frame_latency.cpp
@@ -77,11 +80,14 @@ add_library(alpha_engine
   script/error_overlay.cpp
   script/host.cpp
   script/vm.cpp
+  script/body_parser.cpp
   script/bundle_map.cpp
   script/camera_bindings.cpp
   script/effect_bindings.cpp
   script/effect_parser.cpp
   script/input_bindings.cpp
+  script/joint_bindings.cpp
+  script/physics_bindings.cpp
   script/instance_bindings.cpp
   script/instances.cpp
   script/js_engine.cpp

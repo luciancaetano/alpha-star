@@ -21,7 +21,8 @@ std::string entity(const ecs::EntityView& e) {
                        {"layer", e.layer.empty() ? "null" : json::str(e.layer)},
                        {"alpha", json::num(e.alpha)},
                        {"text", e.text ? json::str(*e.text) : "null"},
-                       {"particles", json::num(e.particles)}});
+                       {"particles", json::num(e.particles)},
+                       {"data", e.data.empty() ? "null" : e.data}});
 }
 
 std::string document(const ui::DocumentView& d) {
@@ -43,6 +44,7 @@ Fields state_fields(const GameState& s) {
           {"frame", json::num(static_cast<double>(s.frame))},
           {"fps", json::num(s.fps)},
           {"entities", json::array(entities)},
+          {"joints", json::num(s.joints)},
           {"ui", json::object(docs)}};
 }
 

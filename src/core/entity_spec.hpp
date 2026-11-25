@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
@@ -25,15 +26,40 @@ using Geometry = std::variant<Circle, Rect>;
 
 enum class BodyType { Static, Kinematic, Dynamic };
 
+// Surface of a collider (Box2D defaults). density in kg per square meter (50 px = 1 m).
+struct Material {
+  float friction = 0.6f;
+  float restitution = 0.0f;  // bounciness 0..1
+  float density = 1.0f;
+};
+
+// `one_way`: solid only for bodies coming from above (smaller y); they pass up through it.
 struct ColliderSpec {
+  ColliderSpec(Geometry g = Circle{}, bool is_sensor = false);
+
   Geometry geometry;
   bool sensor = false;
+  Material material;
+  bool one_way = false;
+};
+
+// Collision filter bits (config.collision.categories). Two bodies collide when
+// each one's category is in the other's mask. Bit 0 = bodies without a category.
+struct CollisionFilter {
+  std::uint64_t category = 1;
+  std::uint64_t mask = ~std::uint64_t{0};
 };
 
 struct BodySpec {
+  BodySpec(BodyType t = BodyType::Static, ColliderSpec c = {}, Vec2 v = {});
+
   BodyType type = BodyType::Static;
   ColliderSpec collider;
   Vec2 velocity;
+  bool fixed_rotation = false;
+  float gravity_scale = 1.0f;
+  bool bullet = false;  // continuous collision against other moving bodies (fast projectiles)
+  CollisionFilter filter;
 };
 
 // One cell of a tile layer: where it goes (top-left, relative to the layer's

@@ -1,7 +1,9 @@
 // Atlas packing for `alpha export`: the game's PNG images and sprite sheets go
 // into few RGBA pages so sprites of different images share one texture (one
 // draw call per run of same-texture sprites). The engine reads alpha-atlas.json:
-//   { "images": { "<file as written in assets>": ["alpha-atlas-0.png", [x, y, w, h]] } }
+//   { "images": { "<file as written in assets>": ["alpha-atlas-0.png", [x, y, w, h]] },
+//     "smooth": { ...same, pixelMode: false images on "alpha-atlas-smooth-N.png" pages },
+//     "pages": { "<page file>": { "pixelMode": true | false } } }
 // Tilesets of maps are not packed (they already are atlases).
 import { decodePng, encodePng } from "./png.mjs";
 

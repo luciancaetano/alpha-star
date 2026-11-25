@@ -47,6 +47,7 @@ std::vector<double> numbers_arg(JSContext* ctx, JSValueConst v, const std::strin
 JSValue new_vec2(JSContext* ctx, core::Vec2 v);
 JSValue new_ids(JSContext* ctx, std::span<const std::uint32_t> ids);
 JSValue new_strings(JSContext* ctx, std::span<const std::string> items);
+JSValue new_numbers(JSContext* ctx, std::span<const double> items);
 
 // A native function exposed on an object.
 struct Native {

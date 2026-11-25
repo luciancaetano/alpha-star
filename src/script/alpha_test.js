@@ -140,7 +140,8 @@ function runGame(game, opts) {
     }
     const counts = sim.within(() => N.tagCounts());
     return { frames, scene: sim.scene(), counts, animations: sim.within(() => animationsOf(counts)), ui: sim.within(() => N.uiView()),
-      particles: sim.within(() => N.particles()), error };
+      particles: sim.within(() => N.particles()), error,
+      snapshots: Object.fromEntries(Object.keys(counts).map((tag) => [tag, sim.entities(tag)])), state: sim.state() };
   } finally {
     N.instanceDestroy(id);
   }
@@ -199,7 +200,7 @@ function expectations(r) {
 export function simulate(game, opts) {
   if (!opts || typeof opts !== "object") fail("simulate(game, { seconds, scene?, inputs?, clicks? }): options are required");
   const r = runGame(game, opts);
-  return { frames: r.frames, expect: expectations(r) };
+  return { frames: r.frames, expect: expectations(r), state: r.state, entities: (tag) => r.snapshots[tag] ?? [] };
 }
 
 // Test runner support: names of the exported test functions, sorted.

@@ -11,11 +11,20 @@
 
 namespace alpha::script {
 
-core::ImagePtr decoded_image(ScriptState& s, const std::string& file) {
+core::ImagePtr decoded_image(ScriptState& s, const std::string& file, bool smooth) {
   const std::string path = (s.asset_dir / file).string();
-  core::ImagePtr& slot = s.decoded[path];
-  if (!slot) slot = std::make_shared<const core::Image>(platform::load_image(path));
+  core::ImagePtr& slot = s.decoded[smooth ? path + "|smooth" : path];  // one texture per filtering
+  if (slot) return slot;
+  core::Image image = platform::load_image(path);
+  image.smooth = smooth;
+  slot = std::make_shared<const core::Image>(std::move(image));
   return slot;
+}
+
+bool smooth_arg(JSContext* ctx, JSValueConst v) {
+  if (JS_IsUndefined(v)) return false;
+  if (!JS_IsBool(v)) throw core::Error("pixelMode must be true or false, got " + to_string(ctx, v));
+  return JS_ToBool(ctx, v) == 0;
 }
 
 namespace {
@@ -28,9 +37,9 @@ int whole(double v, const std::string& what) {
 }
 
 // file, and its [x, y, w, h] place in it (an atlas page) or undefined = all of it.
-core::Picture picture(JSContext* ctx, ScriptState& s, JSValueConst* argv, const std::string& what) {
+core::Picture picture(JSContext* ctx, ScriptState& s, JSValueConst* argv, const std::string& what, bool smooth) {
   const std::string file = string_arg(ctx, argv[1], what);
-  const core::ImagePtr image = decoded_image(s, file);
+  const core::ImagePtr image = decoded_image(s, file, smooth);
   core::Region r{0, 0, image->width, image->height};
   if (JS_IsUndefined(argv[2])) return {image, r};
   const auto n = numbers_arg(ctx, argv[2], what + " (atlas region)");
@@ -40,9 +49,9 @@ core::Picture picture(JSContext* ctx, ScriptState& s, JSValueConst* argv, const 
   return {image, r};
 }
 
-// loadImage(name, file, region?)
+// loadImage(name, file, region?, pixelMode?)
 JSValue load_image(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  core::Picture pic = picture(ctx, s, argv, "assets.images." + string_arg(ctx, argv[0], "image name"));
+  core::Picture pic = picture(ctx, s, argv, "assets.images." + string_arg(ctx, argv[0], "image name"), smooth_arg(ctx, argv[3]));
   s.images.insert_or_assign(to_string(ctx, argv[0]), std::move(pic));
   return JS_UNDEFINED;
 }
@@ -77,11 +86,11 @@ void frame_size(JSContext* ctx, core::Sheet& sheet, JSValueConst v, const std::s
   }
 }
 
-// loadSheet(name, file, region?, frame, [[animation, {frames, fps?, loop?}], ...])
+// loadSheet(name, file, region?, frame, [[animation, {frames, fps?, loop?}], ...], pixelMode?)
 JSValue load_sheet(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const std::string what = "assets.sheets." + string_arg(ctx, argv[0], "sheet name");
   auto sheet = std::make_shared<core::Sheet>();
-  sheet->picture = picture(ctx, s, argv, what + ".image");
+  sheet->picture = picture(ctx, s, argv, what + ".image", smooth_arg(ctx, argv[5]));
   frame_size(ctx, *sheet, argv[3], what);
   const Value list(ctx, JS_DupValue(ctx, argv[4]));
   int64_t n = 0;
@@ -119,7 +128,7 @@ JSValue flip(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 }
 
 constexpr std::array<Native, 5> kNatives{{
-    {"loadImage", guarded<load_image>, 3}, {"loadSheet", guarded<load_sheet>, 5},
+    {"loadImage", guarded<load_image>, 4}, {"loadSheet", guarded<load_sheet>, 6},
     {"play", guarded<play>, 3},            {"animation", guarded<animation_of>, 1},
     {"flip", guarded<flip>, 3},
 }};

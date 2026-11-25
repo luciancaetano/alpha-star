@@ -35,6 +35,7 @@ EntityView view_of(const World& world, EntityId id, const core::TagRegistry& tag
     if (look->text) v.text = look->text->text;
   }
   v.particles = world.has_emitter(id) ? world.emitter(id).count() : 0;
+  v.data = world.data(id);
   return v;
 }
 

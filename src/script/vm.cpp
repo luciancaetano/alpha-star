@@ -4,6 +4,8 @@
 #include "script/bundle_map.hpp"
 #include "script/camera_bindings.hpp"
 #include "script/effect_bindings.hpp"
+#include "script/joint_bindings.hpp"
+#include "script/physics_bindings.hpp"
 #include "script/embedded_js.hpp"
 #include "script/input_bindings.hpp"
 #include "script/instance_bindings.hpp"
@@ -24,6 +26,8 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
   engine->add_builtin("alpha/test", embedded::kAlphaTest);
 #endif
   engine->add_builtin("alpha:maps", embedded::kMaps);
+  engine->add_builtin("alpha:tween", embedded::kTween);
+  engine->add_builtin("alpha:physics", embedded::kPhysics);
   engine->add_builtin("alpha:runtime", embedded::kRuntime);
   const Value global(ctx, JS_GetGlobalObject(ctx));
   Value natives(ctx, JS_NewObject(ctx));
@@ -37,6 +41,8 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
   install_camera_bindings(ctx, natives.get());
   install_map_bindings(ctx, natives.get());
   install_effect_bindings(ctx, natives.get());
+  install_physics_bindings(ctx, natives.get());
+  install_joint_bindings(ctx, natives.get());
   JS_SetPropertyStr(ctx, global.get(), "__native", natives.release());
 }
 

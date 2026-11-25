@@ -131,7 +131,7 @@ function cellsByTileset(map, layer) {
 
 function drawLayer(map, layer, pos, z, target) {
   for (const [ts, cells] of cellsByTileset(map, layer)) {
-    N.tileLayer({ image: ts.image, tile: ts.tile, size: map.size, pos: [pos[0] + layer.offset[0], pos[1] + layer.offset[1]], z, cells, layer: target });
+    N.tileLayer({ image: ts.image, tile: ts.tile, size: map.size, pos: [pos[0] + layer.offset[0], pos[1] + layer.offset[1]], z, cells, layer: target, pixelMode: map.pixelMode });
   }
 }
 

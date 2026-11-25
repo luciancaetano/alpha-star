@@ -52,6 +52,8 @@ declare module "alpha" {
     layers?: string;
     /** Font names (assets.fonts), used by world text and .rcss. Optional (any name). */
     fonts?: string;
+    /** Collision category names (config.collision.categories), e.g. "player" | "enemy". Optional. */
+    categories?: string;
   }
 
   /** The game's layer names (`never` without `layers`). */
@@ -86,9 +88,18 @@ declare module "alpha" {
 
   // ---- entities -------------------------------------------------------------
 
-  export type Collider =
-    | { circle: number; sensor?: boolean }
-    | { rect: Vec2; sensor?: boolean };
+  /** Surface of a collider. Defaults: friction 0.6, restitution 0, density 1 (kg per m², 50 px = 1 m). */
+  export interface ColliderMaterial {
+    sensor?: boolean;
+    friction?: number;
+    /** Bounciness 0..1. */
+    restitution?: number;
+    density?: number;
+    /** Solid only for bodies coming from above (smaller y); they jump up through it. */
+    oneWay?: boolean;
+  }
+
+  export type Collider = ({ circle: number } | { rect: Vec2 }) & ColliderMaterial;
 
   /** Mirroring of an image or sheet sprite. */
   export interface Flips {
@@ -170,30 +181,142 @@ declare module "alpha" {
     oneShot?: boolean;
   }
 
-  export interface BodySpec {
+  export interface BodySpec<C extends string = string> {
     type: "static" | "kinematic" | "dynamic";
     collider: Collider;
     velocity?: Vec2;
+    /** Never rotates (platformer heroes). */
+    fixedRotation?: boolean;
+    /** Multiplies config.gravity for this body (0 = floats). Default 1. */
+    gravityScale?: number;
+    /** Continuous collision against moving bodies too (fast projectiles). */
+    bullet?: boolean;
+    /** A config.collision.categories name (default: the implicit "no category"). */
+    category?: C;
+    /** Categories it collides with (default: all). Both bodies must accept each other. */
+    collidesWith?: C[];
   }
 
   /** Plain data describing an entity. Build it with functions, not classes. */
   export interface EntitySpec<T extends string = string, I extends string = never, S extends { [k: string]: string } = {},
-    L extends string = never, F extends string = never> {
+    L extends string = never, F extends string = never, C extends string = string> {
     tags: T[];
     pos: Vec2;
     shape?: Shape<I, S, F>;
-    body?: BodySpec;
+    body?: BodySpec<C>;
     emitter?: EmitterSpec<I, keyof S & string>;
     rotation?: number;
     /** Order inside the entity's layer (default 0). */
     z?: number;
     /** A config.layers name (default: the unnamed layer, z 0, parallax 1). */
     layer?: L;
+    /**
+     * Makes it a child: `pos` and `rotation` are then local to the parent, it follows the
+     * parent every step and is destroyed with it.
+     */
+    parent?: Entity<T, any>;
+    /** Game data (JSON-safe plain object), copied; read and change it as `entity.data`. */
+    data?: EntityData;
   }
+
+  export type EntityData = { [k: string]: SaveValue };
 
   export interface Body {
     get velocity(): Vec2Ref;
     set velocity(v: Vec2);
+    /** Degrees per second (positive = clockwise on screen). */
+    angularVelocity: number;
+    /** kg (0 for static and kinematic bodies). */
+    readonly mass: number;
+    readonly type: "static" | "kinematic" | "dynamic";
+    /** For this step, at the center. A force of mass * a accelerates by a px/s². */
+    applyForce(force: Vec2): void;
+    /** Instant: an impulse of mass * dv changes the velocity by dv px/s. */
+    applyImpulse(impulse: Vec2): void;
+    applyTorque(torque: number): void;
+  }
+
+  /** A solid contact as an onHit handler sees it. */
+  export interface Contact {
+    /** Unit normal from the handler's first entity toward the second. */
+    normal: Vec2;
+    /** Where they touch. */
+    point: Vec2;
+    /** How fast they approached along the normal (px/s); 0 when they slid into contact. */
+    speed: number;
+  }
+
+  export interface RayHit<T extends string = string> {
+    entity: Entity<T, any>;
+    point: Vec2;
+    /** Out of the hit surface. */
+    normal: Vec2;
+    /** 0..1 along from -> to. */
+    fraction: number;
+  }
+
+  /** What a raycast or area query considers (default: every body). */
+  export interface QueryFilter<T extends string = string, C extends string = string> {
+    /** Only entities having any of these tags. */
+    tags?: T[];
+    /** Only bodies in these config.collision categories. */
+    categories?: C[];
+  }
+
+  /**
+   * ctx.joint options. Anchors are world points at creation: `anchor` for revolute, weld and
+   * prismatic (default: b's position); `anchors` [onA, onB] for distance and rope (default:
+   * the bodies' positions). limits: degrees (revolute), px along the axis (prismatic),
+   * [min, max] length (distance). motor: speed in degrees/s or px/s, max torque/force in
+   * kg-pixel units (keep it near what the job needs: a huge max overpowers the limits).
+   */
+  export interface JointSpec<T extends string = string> {
+    type: "revolute" | "distance" | "rope" | "weld" | "prismatic";
+    a: Entity<T, any>;
+    b: Entity<T, any>;
+    anchor?: Vec2;
+    anchors?: [Vec2, Vec2];
+    /** Prismatic slide direction. Default [1, 0]. */
+    axis?: Vec2;
+    /** Distance and rope (rope: the most it stretches). Default: the anchors' distance. */
+    length?: number;
+    limits?: [lower: number, upper: number];
+    motor?: { speed: number; max: number };
+    /** The two bodies still collide with each other. Default false. */
+    collide?: boolean;
+  }
+
+  export interface Joint {
+    /** False once destroyed, or when either body was destroyed. */
+    readonly alive: boolean;
+    destroy(): void;
+  }
+
+  export type Ease =
+    | "linear"
+    | `${"quad" | "cubic" | "quart" | "quint" | "sine" | "expo" | "circ" | "back" | "elastic" | "bounce"}${"In" | "Out" | "InOut"}`;
+
+  /** Entity keys a tween can drive. */
+  export type EntityTweenKeys = "x" | "y" | "rotation" | "alpha" | "scale";
+
+  export interface TweenOptions<K extends string> {
+    to: Partial<Record<K, number>>;
+    seconds: number;
+    /** Default "linear". */
+    ease?: Ease;
+    /** Seconds before it starts (values are read when it starts). */
+    delay?: number;
+    /** Goes back to the start values after reaching `to` (one cycle = there and back). */
+    yoyo?: boolean;
+    /** Extra cycles: an integer >= 0, or Infinity. Default 0. */
+    repeat?: number;
+    onDone?: () => void;
+  }
+
+  export interface Tween {
+    readonly done: boolean;
+    readonly active: boolean;
+    cancel(): void;
   }
 
   export interface Entity<T extends string = string, A extends string = string> {
@@ -235,6 +358,17 @@ declare module "alpha" {
     emitting: boolean;
     /** Live particles of the entity's emitter (0 without one). */
     readonly particles: number;
+    /** Size multiplier of the shape (1 = as spawned; text scales its size). Must be > 0. */
+    scale: number;
+    /** The entity it was spawned under (`spawn({ parent })`), or null. */
+    readonly parent: Entity<T, A> | null;
+    /** Living children, oldest first. */
+    readonly children: Entity<T, A>[];
+    /**
+     * Game data: a JSON-safe plain object (spawn's `data`, or {}), changed in place
+     * (`e.data.hp -= 1`) or replaced. Tools (MCP state) see it after each step.
+     */
+    data: EntityData;
   }
 
   /** ctx.window: the game window. Ignored by headless runs except for reading back. */
@@ -457,7 +591,9 @@ declare module "alpha" {
 
   type ParamArgs<P> = [P] extends [undefined] ? [] : [params: P];
 
-  export type HitHandler<T extends string> = (a: Entity<T, any>, b: Entity<T, any>) => void;
+  export type HitHandler<T extends string> = (a: Entity<T, any>, b: Entity<T, any>, contact: Contact) => void;
+  export type PairHandler<T extends string> = (a: Entity<T, any>, b: Entity<T, any>) => void;
+  export type CategoryOf<G extends GameTypes> = G extends { categories: infer C extends string } ? C : string;
 
   /** Everything a scene can touch. Scene-scoped: cleared on scene change. */
   export interface Context<G extends GameTypes, S> {
@@ -476,7 +612,7 @@ declare module "alpha" {
     readonly camera: Camera;
     readonly window: GameWindow;
 
-    spawn(spec: EntitySpec<G["tags"], G["images"], SheetsOf<G>, LayerOf<G>, FontOf<G>>): Entity<G["tags"], AnimationOf<G>>;
+    spawn(spec: EntitySpec<G["tags"], G["images"], SheetsOf<G>, LayerOf<G>, FontOf<G>, CategoryOf<G>>): Entity<G["tags"], AnimationOf<G>>;
     /** Removed at the end of the step. Destroying twice is a no-op. */
     destroy(entity: Entity<G["tags"], any>): void;
     /** Throws if no entity has the tag. */
@@ -491,10 +627,32 @@ declare module "alpha" {
     /** A map's data (sizes, object layers) without spawning anything. */
     map(name: MapOf<G>): TileMap;
 
-    /** Solid contact between tags starts. `a` has tagA, `b` has tagB. */
+    /** Solid contact between tags starts. `a` has tagA, `b` has tagB; `contact` normal points a -> b. */
     onHit(tagA: G["tags"], tagB: G["tags"], fn: HitHandler<G["tags"]>): void;
+    /** Solid contact between tags ends (both still alive). */
+    onHitEnd(tagA: G["tags"], tagB: G["tags"], fn: PairHandler<G["tags"]>): void;
     /** Overlap with a sensor starts. */
-    onEnter(tagA: G["tags"], tagB: G["tags"], fn: HitHandler<G["tags"]>): void;
+    onEnter(tagA: G["tags"], tagB: G["tags"], fn: PairHandler<G["tags"]>): void;
+    /** Overlap with a sensor ends (both still alive). */
+    onExit(tagA: G["tags"], tagB: G["tags"], fn: PairHandler<G["tags"]>): void;
+
+    /** First solid collider on the segment (sensors ignored), or null. */
+    raycast(from: Vec2, to: Vec2, opts?: QueryFilter<G["tags"], CategoryOf<G>>): RayHit<G["tags"]> | null;
+    /** Every solid collider on the segment, nearest first. */
+    raycastAll(from: Vec2, to: Vec2, opts?: QueryFilter<G["tags"], CategoryOf<G>>): RayHit<G["tags"]>[];
+    /** Entities whose colliders (sensors too) overlap the circle, oldest first. */
+    queryCircle(center: Vec2, radius: number, opts?: QueryFilter<G["tags"], CategoryOf<G>>): Entity<G["tags"], AnimationOf<G>>[];
+    /** Entities whose colliders overlap [x, y, width, height] (top-left), oldest first. */
+    queryRect(rect: [x: number, y: number, width: number, height: number], opts?: QueryFilter<G["tags"], CategoryOf<G>>): Entity<G["tags"], AnimationOf<G>>[];
+    /** Connects two bodies. Scene-scoped; goes away with either body. */
+    joint(spec: JointSpec<G["tags"]>): Joint;
+    /**
+     * Eases numbers on the fixed step (deterministic, scene-scoped). An entity tweens
+     * x, y, rotation, alpha, scale (a kinematic body's x/y moves by velocity, so riders are
+     * carried); a plain object tweens its number keys.
+     */
+    tween(target: Entity<G["tags"], any>, opts: TweenOptions<EntityTweenKeys>): Tween;
+    tween<O extends object>(target: O, opts: TweenOptions<{ [K in keyof O]: O[K] extends number ? K : never }[keyof O] & string>): Tween;
 
     /** Repeats every `seconds` of game time, first call after `seconds`. */
     every(seconds: number, fn: () => void): void;
@@ -542,6 +700,16 @@ declare module "alpha" {
     axes?: Record<AxisOf<G>, string[]>;
     /** Stick (radial) and trigger deadzone, 0 <= d < 1. Default 0.2. */
     deadzone?: number;
+    /**
+     * Collision categories (at most 63) for body `category` / `collidesWith` and query
+     * filters, e.g. `{ categories: ["player", "enemy", "world"] }`.
+     */
+    collision?: { categories: CategoryOf<G>[] };
+    /**
+     * Texture filtering default: true (default) = crisp pixel art (nearest), false = smooth
+     * (linear). Assets override it with `{ file, pixelMode }` / sheet `pixelMode`.
+     */
+    pixelMode?: boolean;
     /** Named draw layers, e.g. `{ bg: { z: -100, parallax: 0.2 }, fx: { z: 100 } }`. */
     layers?: Record<LayerOf<G>, LayerDef>;
     window?: WindowConfig;
@@ -560,9 +728,10 @@ declare module "alpha" {
     /** Every asset is loaded before the start scene; a missing file stops boot with its name. */
     assets: {
       sounds: Record<G["sounds"], SoundAsset>;
-      images?: Record<G["images"], string>;
+      /** Image name -> file, or `{ file, pixelMode }` to override config.pixelMode for it. */
+      images?: Record<G["images"], FileAsset>;
       /** Font name -> .ttf/.otf file; the name is the `font-family` used in .rcss. */
-      fonts?: Record<FontOf<G>, string>;
+      fonts?: Record<FontOf<G>, FileAsset>;
       /** Document name -> .rml file. Files it links (`<link href>`, `src=`, rcss `url()`) are packed too. */
       ui?: Record<keyof G["ui"] & string, string>;
       /**
@@ -572,9 +741,16 @@ declare module "alpha" {
        */
       sheets?: { [K in keyof SheetsOf<G>]: SheetAsset<SheetsOf<G>[K] & string> };
       /** Map name -> Tiled map (.tmj JSON; tilesets embedded or .tsj; CSV tile layers). */
-      maps?: Record<MapOf<G>, string>;
+      maps?: Record<MapOf<G>, FileAsset>;
     };
   }
+
+  /**
+   * An asset file: "path", or `{ file, pixelMode }`. pixelMode true = crisp pixel art
+   * (nearest filtering when scaled), false = smooth (linear). Default: config.pixelMode.
+   * Fonts: the world-text glyph atlas; maps: their tilesets.
+   */
+  export type FileAsset = string | { file: string; pixelMode?: boolean };
 
   export interface AnimationDef {
     /** Frame indices into the sheet. */
@@ -589,6 +765,8 @@ declare module "alpha" {
     image: string;
     frame: Vec2;
     animations?: Record<A, AnimationDef>;
+    /** Texture filtering of the sheet (default: config.pixelMode). */
+    pixelMode?: boolean;
   }
 
   export interface Game<G extends GameTypes> {
@@ -605,6 +783,21 @@ declare module "alpha" {
 
   /** Binds the builders to the game's types. Call once, re-export. */
   export function define<G extends GameTypes>(): Builders<G>;
+
+  /** Vector math on plain [x, y] arrays: pure, returns new arrays. Angles in degrees (0 = right, 90 = down). */
+  export const vec: {
+    add(a: Vec2, b: Vec2): Vec2;
+    sub(a: Vec2, b: Vec2): Vec2;
+    scale(a: Vec2, s: number): Vec2;
+    len(a: Vec2): number;
+    /** Unit length, or [0, 0] for the zero vector. */
+    norm(a: Vec2): Vec2;
+    dot(a: Vec2, b: Vec2): number;
+    lerp(a: Vec2, b: Vec2, t: number): Vec2;
+    angle(a: Vec2): number;
+    fromAngle(degrees: number, length?: number): Vec2;
+    dist(a: Vec2, b: Vec2): number;
+  };
 }
 
 declare module "alpha/test" {
@@ -650,9 +843,24 @@ declare module "alpha/test" {
     particles(): { equals(n: number): void; atLeast(n: number): void };
   }
 
+  export interface EntitySnapshot {
+    id: number;
+    pos: [number, number];
+    rotation: number;
+    scale: number;
+    alpha: number;
+    data: { [k: string]: unknown };
+    /** null without a body. */
+    velocity: [number, number] | null;
+  }
+
   export interface Run<G extends GameTypes> {
     readonly frames: number;
     readonly expect: Expect<G>;
+    /** Scene state at the end of the run (JSON copy; undefined when not JSON-safe). */
+    readonly state: unknown;
+    /** Living entities with the tag at the end of the run, oldest first (plain data). */
+    entities(tag: G["tags"]): EntitySnapshot[];
   }
 
   /**

@@ -23,6 +23,7 @@ struct GameState {
   double fps = 0.0;
   std::vector<ecs::EntityView> entities;
   std::map<std::string, ui::DocumentView> ui;  // every document: shown or not, element texts
+  int joints = 0;                              // living physics joints in the scene
 };
 
 // Inject an action like a device would: a one-step tap, or held until released.

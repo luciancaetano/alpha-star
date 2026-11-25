@@ -5,6 +5,7 @@
 
 #include "core/error.hpp"
 #include "core/index_of.hpp"
+#include "script/body_parser.hpp"
 #include "script/effect_parser.hpp"
 #include "script/js_value.hpp"
 #include "script/spec_fields.hpp"
@@ -16,19 +17,6 @@ namespace {
 const std::string& kPrefix = kSpawn;
 
 core::Color color(JSContext* ctx, JSValueConst obj, const std::string& path) { return color_arg(ctx, obj, path); }
-
-// { circle: r } or { rect: [w, h] }
-core::Geometry geometry(JSContext* ctx, JSValueConst obj, const std::string& path) {
-  if (has(ctx, obj, "circle")) {
-    const Value r = field(ctx, obj, "circle");
-    return core::Circle{static_cast<float>(number_arg(ctx, r.get(), kPrefix + path + ".circle"))};
-  }
-  if (has(ctx, obj, "rect")) {
-    const Value size = field(ctx, obj, "rect");
-    return core::Rect{vec2_arg(ctx, size.get(), kPrefix + path + ".rect")};
-  }
-  throw core::Error(kPrefix + path + " needs { circle: radius } or { rect: [width, height] }");
-}
 
 bool flag(JSContext* ctx, JSValueConst obj, const char* name) {
   return JS_ToBool(ctx, field(ctx, obj, name).get()) == 1;
@@ -65,7 +53,7 @@ std::pair<core::ShapeSpec, core::AnimationSpec> sheet(JSContext* ctx, JSValueCon
 }
 
 core::ShapeSpec filled(JSContext* ctx, JSValueConst obj) {
-  core::ShapeSpec out{geometry(ctx, obj, "shape"), {}, {}, {}};
+  core::ShapeSpec out{parse_geometry(ctx, obj, "shape"), {}, {}, {}};
   const Value fill = field(ctx, obj, "color");
   out.fill = color(ctx, fill.get(), "shape.color");
   if (has(ctx, obj, "outline")) {
@@ -89,30 +77,6 @@ void shape(JSContext* ctx, JSValueConst obj, ScriptState& assets, core::EntitySp
     out.shape = filled(ctx, obj);
   }
   parse_look(ctx, obj, "shape.", *out.shape);
-}
-
-core::BodyType body_type(JSContext* ctx, JSValueConst obj) {
-  const Value type = field(ctx, obj, "type");
-  const std::string name = string_arg(ctx, type.get(), kPrefix + "body.type");
-  if (name == "static") return core::BodyType::Static;
-  if (name == "kinematic") return core::BodyType::Kinematic;
-  if (name == "dynamic") return core::BodyType::Dynamic;
-  throw core::Error(kPrefix + "body.type must be \"static\", \"kinematic\" or \"dynamic\", got \"" + name + "\"");
-}
-
-core::BodySpec body(JSContext* ctx, JSValueConst obj) {
-  core::BodySpec out;
-  out.type = body_type(ctx, obj);
-  const Value collider = field(ctx, obj, "collider");
-  if (!JS_IsObject(collider.get())) throw core::Error(kPrefix + "body.collider is required");
-  out.collider.geometry = geometry(ctx, collider.get(), "body.collider");
-  const Value sensor = field(ctx, collider.get(), "sensor");
-  out.collider.sensor = JS_ToBool(ctx, sensor.get()) == 1;
-  if (has(ctx, obj, "velocity")) {
-    const Value v = field(ctx, obj, "velocity");
-    out.velocity = vec2_arg(ctx, v.get(), kPrefix + "body.velocity");
-  }
-  return out;
 }
 
 core::TagSet tag_set(JSContext* ctx, JSValueConst obj, core::TagRegistry& tags) {
@@ -142,7 +106,7 @@ core::EntitySpec parse_entity_spec(JSContext* ctx, JSValueConst spec, ScriptStat
   out.z = static_cast<int>(optional_number(ctx, spec, "z"));
   out.layer = parse_layer(ctx, spec, s);
   if (has(ctx, spec, "shape")) shape(ctx, field(ctx, spec, "shape").get(), s, out);
-  if (has(ctx, spec, "body")) out.body = body(ctx, field(ctx, spec, "body").get());
+  if (has(ctx, spec, "body")) out.body = parse_body(ctx, field(ctx, spec, "body").get(), s);
   if (has(ctx, spec, "emitter")) out.emitter = parse_emitter(ctx, field(ctx, spec, "emitter").get(), s);
   return out;
 }

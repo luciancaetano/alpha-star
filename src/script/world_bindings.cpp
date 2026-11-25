@@ -114,11 +114,24 @@ JSValue pairs(JSContext* ctx, const std::vector<ecs::Contact>& contacts) {
   return array;
 }
 
+// [[a, b, normalX, normalY, pointX, pointY, speed], ...]
+JSValue hits(JSContext* ctx, const std::vector<physics::Hit>& list) {
+  JSValue array = JS_NewArray(ctx);
+  for (std::uint32_t i = 0; i < list.size(); ++i) {
+    const physics::Hit& h = list[i];
+    const std::array<double, 7> row{static_cast<double>(h.a), static_cast<double>(h.b), h.normal.x, h.normal.y, h.point.x, h.point.y, h.speed};
+    JS_SetPropertyUint32(ctx, array, i, new_numbers(ctx, row));
+  }
+  return array;
+}
+
 JSValue step_world(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const ecs::StepEvents events = world(s).step(static_cast<float>(number_arg(ctx, argv[0], "dt")));
   JSValue out = JS_NewObject(ctx);
-  JS_SetPropertyStr(ctx, out, "hits", pairs(ctx, events.hits));
+  JS_SetPropertyStr(ctx, out, "hits", hits(ctx, events.hits));
+  JS_SetPropertyStr(ctx, out, "hitEnds", pairs(ctx, events.hit_ends));
   JS_SetPropertyStr(ctx, out, "enters", pairs(ctx, events.enters));
+  JS_SetPropertyStr(ctx, out, "exits", pairs(ctx, events.exits));
   return out;
 }
 

@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string>
 #include <tuple>
 #include <utility>
 
+#include "core/error.hpp"
 #include "core/particles.hpp"
 #include "ecs/components.hpp"
 
@@ -71,6 +73,16 @@ std::vector<core::DrawItem> draw_list(const entt::registry& registry, float blen
   items.reserve(keyed.size());
   for (auto& k : keyed) items.push_back(std::move(std::get<3>(k)));
   return items;
+}
+
+void rescale(core::ShapeSpec& shape, Scaled& base, float scale) {
+  if (!(scale > 0.0f) || !std::isfinite(scale)) {
+    throw core::Error("entity.scale must be a number > 0, got " + std::to_string(scale));
+  }
+  base.scale = scale;
+  if (const auto* c = std::get_if<core::Circle>(&base.base)) shape.geometry = core::Circle{c->radius * scale};
+  else shape.geometry = core::Rect{std::get<core::Rect>(base.base).size * scale};
+  if (shape.text) shape.text->size = base.text_size * scale;
 }
 
 }  // namespace alpha::ecs

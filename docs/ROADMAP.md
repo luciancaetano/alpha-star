@@ -23,13 +23,14 @@ build/gate/container at a time, `podman machine start` only for the Linux gate a
 | 7 | Hot reload (pack re-export -> running engine reloads) | done (this commit; LOG 153-162) |
 | 8 | Camera (follow/zoom/shake/bounds) + sprite sheets & animation + atlas packing + tilemaps (Tiled import) | done (this commit; LOG 163-176) |
 | 9 | Particles, tint/alpha/blend, layers/parallax, world text, fullscreen & scaling modes | done (this commit; LOG 177-190) |
-| 10 | Physics: end events, raycasts/queries, layers/filters, materials, joints, one-way, CCD; tween/easing, vector math, parent/child, entity data, prefabs | todo |
+| 10 | Physics: end events, raycasts/queries, layers/filters, materials, joints, one-way, CCD; tween/easing, vector math, parent/child, entity data, prefabs; per-asset pixelMode filtering | done (this commit; LOG 191-205) |
 | 11 | Audio: OGG/MP3, streaming music, buses, crossfade, pan; save slots/versioning, settings; localization; accessibility | todo |
 | 12 | Portable IO (SDL_IOStream everywhere) + app lifecycle (suspend/resume, focus pause) | todo |
 | 13 | Performance: benchmarks, batch API, profiler in dev tools; fuzz JS/C++ boundary, soak tests, leak fixes | todo |
 | 14 | `alpha init` templates, docs site + API reference + agent docs, 5+ examples, LICENSE/semver/CHANGELOG/CONTRIBUTING | todo |
 | 15 | Android target (`alpha export --target android-arm64`, APK, touch) | todo |
 | 16 | Shaders / post-processing / 2D lighting (SDL_GPU) | todo |
+| 17a | Shipping bytecode + single file: `alpha export --standalone` ships `main.jsbc` (QuickJS bytecode via JS_WriteObject, compiled by the same-version release engine `alpha_star --compile`, debug info stripped) instead of main.js; engine accepts only bytecode stamped with its own version/build (clear error otherwise) and never from outside the pack; `--single-file` appends bytecode + assets as an archive to the shipping exe (engine reads itself, LOVE-fused style); dev/test/hot reload keep JS + source maps; check_shipping asserts no readable JS in shipped packs; measure boot time JS vs bytecode | todo |
 | 17 | Release prep: npm per-platform engine packages, signing hooks, final verification | todo |
 
 Out of reach here: macOS verification (no Mac), Xbox (needs GDK access), running CI on

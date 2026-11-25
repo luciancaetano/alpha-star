@@ -63,6 +63,26 @@ struct Collider {
   core::ColliderSpec spec;
 };
 
+// A child entity: placed every step at its parent's transform composed with
+// `local` (offset rotated by the parent) and `local_rotation`.
+struct Parent {
+  std::uint32_t id = 0;
+  core::Vec2 local;
+  float local_rotation = 0.0f;  // degrees
+};
+
+// The look as spawned, before entity.scale (added on the first scale change).
+struct Scaled {
+  core::Geometry base;
+  float text_size = 0.0f;
+  float scale = 1.0f;
+};
+
+// Game data of the entity as JSON text (entity.data, mirrored for tools).
+struct Data {
+  std::string json;
+};
+
 // Destroyed by script this step; removed at the start of the next step.
 struct Doomed {};
 

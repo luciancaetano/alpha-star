@@ -51,6 +51,10 @@ python tools/mutator.py            # mutation testing over src/
 ```
 
 Game UI is RmlUi (`src/ui/`, `.rml`/`.rcss` in `assets.ui`); Dear ImGui is engine dev tools only.
+Physics lives in `src/physics/` (Box2D v3: `physics_world` bodies/contacts/pre-solve one-way,
+`queries` rays/overlaps, `joints`); script glue in `script/physics_bindings`, `joint_bindings`
+and the embedded `physics.js` / `tween.js` modules. Texture filtering is per image
+(`core::Image::smooth`, from `pixelMode`); never set a global scale mode.
 Input order: dev tools → game UI (`ui::consumes`) → game actions; what the UI consumed never drives actions.
 Builds and gates: `CMAKE_BUILD_PARALLEL_LEVEL=8` (the Linux gate also runs with `--cpus 8`); one build at a time.
 

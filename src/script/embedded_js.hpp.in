@@ -11,5 +11,7 @@ inline constexpr std::string_view kAlphaTest = @ALPHA_JS_alpha_test@;
 #endif
 inline constexpr std::string_view kMaps = @ALPHA_JS_maps@;
 inline constexpr std::string_view kRuntime = @ALPHA_JS_runtime@;
+inline constexpr std::string_view kTween = @ALPHA_JS_tween@;
+inline constexpr std::string_view kPhysics = @ALPHA_JS_physics@;
 
 }  // namespace alpha::script::embedded

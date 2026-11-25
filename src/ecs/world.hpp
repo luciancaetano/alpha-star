@@ -20,10 +20,7 @@ namespace alpha::ecs {
 // handle to a recycled slot is detected as dead.
 using EntityId = std::uint32_t;
 
-struct Contact {
-  EntityId a;
-  EntityId b;
-};
+using Contact = physics::Pair;
 
 // A body's collider where the body is now (dev tools physics view).
 struct PlacedCollider {
@@ -32,9 +29,13 @@ struct PlacedCollider {
   float rotation = 0.0f;  // degrees
 };
 
+// Contacts of one step between entities alive after it. Hits carry the
+// contact (normal from a to b, point, approach speed).
 struct StepEvents {
-  std::vector<Contact> hits;    // solid contacts that began
-  std::vector<Contact> enters;  // a = visitor, b = sensor
+  std::vector<physics::Hit> hits;  // solid contacts that began
+  std::vector<Contact> hit_ends;   // solid contacts that ended
+  std::vector<Contact> enters;     // a = visitor, b = sensor
+  std::vector<Contact> exits;      // a = visitor, b = sensor
 };
 
 // One scene's entities. Every accessor throws core::Error for a dead id.
@@ -47,7 +48,8 @@ class World {
   World& operator=(const World&) = delete;
 
   EntityId spawn(const core::EntitySpec& spec);
-  // Immediately not alive; physics and storage are freed at the next step.
+  // Immediately not alive, with all its descendants; physics and storage are
+  // freed at the next step.
   void destroy(EntityId id);
   bool alive(EntityId id) const;
 
@@ -66,6 +68,10 @@ class World {
   int z(EntityId id) const;
   void set_z(EntityId id, int z);
   bool has_body(EntityId id) const;
+  // The entity's body; throws when it was spawned without one.
+  b2BodyId body(EntityId id) const;
+  physics::PhysicsWorld& physics() { return physics_; }
+  const physics::PhysicsWorld& physics() const { return physics_; }
   core::Vec2 velocity(EntityId id) const;
   void set_velocity(EntityId id, core::Vec2 velocity);
 
@@ -83,6 +89,20 @@ class World {
   const core::ShapeSpec& look(EntityId id) const;
   const core::ShapeSpec* try_look(EntityId id) const;  // null when it has neither
   const core::Layer& layer(EntityId id) const;
+  // Size multiplier of the shape (1 = as spawned). Throws without a shape.
+  float scale(EntityId id) const;
+  void set_scale(EntityId id, float scale);
+  // entity.data as JSON text ("" = none).
+  const std::string& data(EntityId id) const;
+  void set_data(EntityId id, std::string json);
+
+  // Parent/child: the child keeps `local` (offset in the parent's frame) and
+  // its rotation relative to the parent; setting its position or rotation
+  // changes them. Throws for a dead parent or a cycle.
+  void adopt(EntityId child, EntityId parent, core::Vec2 local);
+  std::optional<EntityId> parent(EntityId id) const;
+  std::vector<EntityId> children(EntityId id) const;
+
   // Particles. Throws when the entity was not spawned with `emitter`.
   core::Emitter& emitter(EntityId id);
   const core::Emitter& emitter(EntityId id) const;
@@ -112,15 +132,19 @@ class World {
 
  private:
   entt::entity living(EntityId id) const;
-  b2BodyId body_of(EntityId id) const;
   void place(EntityId id, core::Vec2 pos, float degrees);
+  void put(entt::entity e, core::Vec2 pos, float degrees);  // transform + body, no relink
+  void follow(entt::entity child);  // to its place under its parent
+  void carry(entt::entity parent);  // every descendant follows
+  void follow_parents();
   void free_doomed();
   void sync_bodies();
   void animate(float dt);
   void step_view(float dt);
   core::ShapeSpec& visual(EntityId id);
   void attach(entt::entity e, const core::EntitySpec& spec);
-  std::vector<Contact> living_pairs(const std::vector<physics::Pair>& pairs) const;
+  template <typename T>
+  std::vector<T> living_only(const std::vector<T>& pairs) const;
 
   entt::registry registry_;
   physics::PhysicsWorld physics_;

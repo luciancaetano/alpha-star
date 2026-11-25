@@ -91,7 +91,7 @@ TEST_CASE("step syncs physics and reports hits between living entities") {
   World w({0, 900});
   const EntityId ground = w.spawn(solid_box({100, 200}, {200, 20}));
   const EntityId bird = w.spawn(falling_bird({100, 100}));
-  std::vector<alpha::ecs::Contact> hits;
+  std::vector<alpha::physics::Hit> hits;
   for (int i = 0; i < 120 && hits.empty(); ++i) hits = w.step(1.0f / 60).hits;
   REQUIRE(hits.size() == 1);
   CHECK(((hits[0].a == bird && hits[0].b == ground) || (hits[0].a == ground && hits[0].b == bird)));

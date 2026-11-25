@@ -123,7 +123,7 @@ SDL_Texture* Renderer::texture(const core::ImagePtr& image) {
                                        image->width, image->height);
   SDL_UpdateTexture(tex, nullptr, image->rgba.data(), image->width * 4);
   SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-  SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);  // crisp pixel art
+  SDL_SetTextureScaleMode(tex, image->smooth ? SDL_SCALEMODE_LINEAR : SDL_SCALEMODE_NEAREST);  // pixelMode
   textures_[image.get()] = tex;
   return tex;
 }

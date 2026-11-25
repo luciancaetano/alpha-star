@@ -116,6 +116,10 @@ JSValue new_ids(JSContext* ctx, std::span<const std::uint32_t> ids) {
   return new_array(ctx, ids, [ctx](std::uint32_t id) { return JS_NewUint32(ctx, id); });
 }
 
+JSValue new_numbers(JSContext* ctx, std::span<const double> items) {
+  return new_array(ctx, items, [ctx](double v) { return JS_NewFloat64(ctx, v); });
+}
+
 JSValue new_strings(JSContext* ctx, std::span<const std::string> items) {
   return new_array(ctx, items, [ctx](const std::string& s) { return JS_NewString(ctx, s.c_str()); });
 }

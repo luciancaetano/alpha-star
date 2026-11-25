@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <vector>
 
 #include "render/renderer.hpp"
 
@@ -51,7 +52,7 @@ TEST_CASE("renderer clears to background and fills shapes, later z on top") {
 
 TEST_CASE("images draw stretched to their rect, between shapes in z order") {
   Canvas c;
-  auto img = std::make_shared<Image>(Image{1, 1, {200, 0, 200, 255}});
+  auto img = std::make_shared<Image>(Image{1, 1, {200, 0, 200, 255}, false});
   Frame f{kBg, {}, {}};
   f.shapes.push_back({{Rect{{30, 30}}, kWhite, {}, {}}, {16, 16}, 0});
   f.shapes.push_back({{Rect{{20, 10}}, {}, {}, img}, {16, 16}, 0});
@@ -93,7 +94,7 @@ namespace {
 
 // 2x1 image: left pixel red, right pixel blue.
 ImagePtr two_pixels() {
-  return std::make_shared<Image>(Image{2, 1, {255, 0, 0, 255, 0, 0, 255, 255}});
+  return std::make_shared<Image>(Image{2, 1, {255, 0, 0, 255, 0, 0, 255, 255}, false});
 }
 
 DrawItem sprite(const ImagePtr& img, Vec2 pos, Vec2 size, Region src = {}) {
@@ -189,4 +190,21 @@ TEST_CASE("culling bench: 20000 sprites, 1/20 of them on screen" * doctest::skip
   }
   SDL_DestroyRenderer(sdl);
   SDL_DestroySurface(surface);
+}
+
+TEST_CASE("pixelMode: a scaled 2x2 checker stays crisp with nearest and blends with linear") {
+  const std::vector<std::uint8_t> checker{0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 255};
+  auto crisp = std::make_shared<Image>(Image{2, 2, checker, false});
+  auto smooth = std::make_shared<Image>(Image{2, 2, checker, true});
+  Canvas c;
+  Frame f{kBg, {}, {}};
+  f.shapes.push_back({{Rect{{32, 32}}, {}, {}, crisp}, {16, 16}, 0});
+  f.shapes.push_back({{Rect{{32, 32}}, {}, {}, smooth}, {48, 16}, 0});
+  c.renderer.draw(f);
+  // Just left of the middle of the top-left cell's edge: nearest = pure black, linear = gray.
+  const Color nearest = c.pixel(14, 8);
+  const Color linear = c.pixel(32 + 14, 8);
+  CHECK(nearest.r == 0);
+  CHECK(linear.r > 40);
+  CHECK(linear.r < 215);
 }

@@ -1,19 +1,19 @@
 #include "physics/physics_world.hpp"
 
-#include <numbers>
+#include <algorithm>
 #include <variant>
+
+#include "physics/queries.hpp"
+#include "physics/units.hpp"
 
 namespace alpha::physics {
 
 namespace {
 
-// Box2D is tuned for 0.1..10 m objects; game objects are ~5..500 px.
-constexpr float kPixelsPerMeter = 50.0f;
 constexpr int kSubSteps = 4;
-constexpr float kDegToRad = std::numbers::pi_v<float> / 180.0f;
 
-b2Vec2 to_meters(core::Vec2 v) { return {v.x / kPixelsPerMeter, v.y / kPixelsPerMeter}; }
-core::Vec2 to_pixels(b2Vec2 v) { return {v.x * kPixelsPerMeter, v.y * kPixelsPerMeter}; }
+// Shape user data marking a one-way collider (compared by address).
+constexpr char kOneWay = 0;
 
 b2BodyType body_type(core::BodyType type) {
   switch (type) {
@@ -24,24 +24,93 @@ b2BodyType body_type(core::BodyType type) {
   return b2_staticBody;
 }
 
-void add_collider(b2BodyId body, const core::ColliderSpec& collider) {
+b2ShapeDef shape_def(const core::ColliderSpec& collider, core::CollisionFilter filter) {
   b2ShapeDef def = b2DefaultShapeDef();
   def.isSensor = collider.sensor;
   def.enableSensorEvents = true;
   def.enableContactEvents = true;
-  if (const auto* circle = std::get_if<core::Circle>(&collider.geometry)) {
+  def.enableHitEvents = true;
+  def.material.friction = collider.material.friction;
+  def.material.restitution = collider.material.restitution;
+  def.density = collider.material.density;
+  def.filter.categoryBits = filter.category;
+  def.filter.maskBits = filter.mask;
+  def.enablePreSolveEvents = collider.one_way;
+  def.userData = collider.one_way ? const_cast<char*>(&kOneWay) : nullptr;
+  return def;
+}
+
+void add_collider(b2BodyId body, const core::BodySpec& spec) {
+  const b2ShapeDef def = shape_def(spec.collider, spec.filter);
+  if (const auto* circle = std::get_if<core::Circle>(&spec.collider.geometry)) {
     const b2Circle shape{{0.0f, 0.0f}, circle->radius / kPixelsPerMeter};
     b2CreateCircleShape(body, &def, &shape);
     return;
   }
-  const core::Vec2 half = std::get<core::Rect>(collider.geometry).size * 0.5f;
+  const core::Vec2 half = std::get<core::Rect>(spec.collider.geometry).size * 0.5f;
   const b2Polygon box = b2MakeBox(half.x / kPixelsPerMeter, half.y / kPixelsPerMeter);
   b2CreatePolygonShape(body, &def, &box);
 }
 
-std::uint32_t owner_of(b2ShapeId shape) {
-  const void* data = b2Body_GetUserData(b2Shape_GetBody(shape));
-  return static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(data));
+bool one_way(b2ShapeId shape) { return b2Shape_GetUserData(shape) == &kOneWay; }
+
+// A one-way collider only holds what comes from above: the normal from it to
+// the other body points up (-y). Pure: Box2D may call it from its solver.
+bool pre_solve(b2ShapeId a, b2ShapeId b, b2Manifold* manifold, void*) {
+  if (one_way(a)) return manifold->normal.y < -0.5f;
+  if (one_way(b)) return manifold->normal.y > 0.5f;
+  return true;
+}
+
+Hit hit_of(const b2ContactBeginTouchEvent& e) {
+  const b2Manifold& m = e.manifold;
+  Hit hit{owner_of(e.shapeIdA), owner_of(e.shapeIdB), {m.normal.x, m.normal.y}, {}, 0.0f};
+  for (int i = 0; i < m.pointCount; ++i) {
+    hit.point = hit.point + to_pixels(m.points[i].point) * (1.0f / static_cast<float>(m.pointCount));
+  }
+  return hit;
+}
+
+bool same_pair(const b2ContactHitEvent& h, b2ShapeId a, b2ShapeId b) {
+  return (B2_ID_EQUALS(h.shapeIdA, a) && B2_ID_EQUALS(h.shapeIdB, b)) ||
+         (B2_ID_EQUALS(h.shapeIdA, b) && B2_ID_EQUALS(h.shapeIdB, a));
+}
+
+// Approach speed of the pair from the step's hit events (0 when it only slid into contact).
+float approach_speed(const b2ContactEvents& contacts, b2ShapeId a, b2ShapeId b) {
+  for (int i = 0; i < contacts.hitCount; ++i) {
+    if (same_pair(contacts.hitEvents[i], a, b)) return contacts.hitEvents[i].approachSpeed * kPixelsPerMeter;
+  }
+  return 0.0f;
+}
+
+bool both_valid(b2ShapeId a, b2ShapeId b) { return b2Shape_IsValid(a) && b2Shape_IsValid(b); }
+
+void contact_events(b2WorldId world, StepContacts& out) {
+  const b2ContactEvents contacts = b2World_GetContactEvents(world);
+  for (int i = 0; i < contacts.beginCount; ++i) {
+    const b2ContactBeginTouchEvent& e = contacts.beginEvents[i];
+    out.hits.push_back(hit_of(e));
+    out.hits.back().speed = approach_speed(contacts, e.shapeIdA, e.shapeIdB);
+  }
+  for (int i = 0; i < contacts.endCount; ++i) {
+    const b2ContactEndTouchEvent& e = contacts.endEvents[i];
+    if (both_valid(e.shapeIdA, e.shapeIdB)) out.hit_ends.push_back({owner_of(e.shapeIdA), owner_of(e.shapeIdB)});
+  }
+}
+
+void sensor_events(b2WorldId world, StepContacts& out) {
+  const b2SensorEvents sensors = b2World_GetSensorEvents(world);
+  for (int i = 0; i < sensors.beginCount; ++i) {
+    const b2SensorBeginTouchEvent& e = sensors.beginEvents[i];
+    out.sensor_enters.push_back({owner_of(e.visitorShapeId), owner_of(e.sensorShapeId)});
+  }
+  for (int i = 0; i < sensors.endCount; ++i) {
+    const b2SensorEndTouchEvent& e = sensors.endEvents[i];
+    if (both_valid(e.visitorShapeId, e.sensorShapeId)) {
+      out.sensor_exits.push_back({owner_of(e.visitorShapeId), owner_of(e.sensorShapeId)});
+    }
+  }
 }
 
 }  // namespace
@@ -49,7 +118,9 @@ std::uint32_t owner_of(b2ShapeId shape) {
 PhysicsWorld::PhysicsWorld(core::Vec2 gravity) {
   b2WorldDef def = b2DefaultWorldDef();
   def.gravity = to_meters(gravity);
+  def.hitEventThreshold = 0.0f;  // every approach reports its speed
   world_ = b2CreateWorld(&def);
+  b2World_SetPreSolveCallback(world_, pre_solve, nullptr);
 }
 
 PhysicsWorld::~PhysicsWorld() { b2DestroyWorld(world_); }
@@ -61,9 +132,12 @@ b2BodyId PhysicsWorld::create(std::uint32_t owner, const core::BodySpec& spec, c
   def.position = to_meters(pos);
   def.rotation = b2MakeRot(rotation * kDegToRad);
   def.linearVelocity = to_meters(spec.velocity);
+  def.fixedRotation = spec.fixed_rotation;
+  def.gravityScale = spec.gravity_scale;
+  def.isBullet = spec.bullet;
   def.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(owner));
   const b2BodyId body = b2CreateBody(world_, &def);
-  add_collider(body, spec.collider);
+  add_collider(body, spec);
   return body;
 }
 
@@ -72,16 +146,8 @@ void PhysicsWorld::destroy(b2BodyId body) { b2DestroyBody(body); }
 StepContacts PhysicsWorld::step(float dt) {
   b2World_Step(world_, dt, kSubSteps);
   StepContacts out;
-  const b2ContactEvents contacts = b2World_GetContactEvents(world_);
-  for (int i = 0; i < contacts.beginCount; ++i) {
-    const b2ContactBeginTouchEvent& e = contacts.beginEvents[i];
-    out.hits.push_back({owner_of(e.shapeIdA), owner_of(e.shapeIdB)});
-  }
-  const b2SensorEvents sensors = b2World_GetSensorEvents(world_);
-  for (int i = 0; i < sensors.beginCount; ++i) {
-    const b2SensorBeginTouchEvent& e = sensors.beginEvents[i];
-    out.sensor_enters.push_back({owner_of(e.visitorShapeId), owner_of(e.sensorShapeId)});
-  }
+  contact_events(world_, out);
+  sensor_events(world_, out);
   return out;
 }
 
@@ -101,6 +167,26 @@ core::Vec2 PhysicsWorld::velocity(b2BodyId body) {
 
 void PhysicsWorld::set_velocity(b2BodyId body, core::Vec2 velocity) {
   b2Body_SetLinearVelocity(body, to_meters(velocity));
+}
+
+float PhysicsWorld::angular_velocity(b2BodyId body) { return b2Body_GetAngularVelocity(body) / kDegToRad; }
+
+void PhysicsWorld::set_angular_velocity(b2BodyId body, float degrees_per_second) {
+  b2Body_SetAngularVelocity(body, degrees_per_second * kDegToRad);
+}
+
+float PhysicsWorld::mass(b2BodyId body) { return b2Body_GetMass(body); }
+
+void PhysicsWorld::apply_force(b2BodyId body, core::Vec2 force) {
+  b2Body_ApplyForceToCenter(body, to_meters(force), true);
+}
+
+void PhysicsWorld::apply_impulse(b2BodyId body, core::Vec2 impulse) {
+  b2Body_ApplyLinearImpulseToCenter(body, to_meters(impulse), true);
+}
+
+void PhysicsWorld::apply_torque(b2BodyId body, float torque) {
+  b2Body_ApplyTorque(body, torque / (kPixelsPerMeter * kPixelsPerMeter), true);
 }
 
 }  // namespace alpha::physics

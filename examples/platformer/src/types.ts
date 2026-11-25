@@ -5,7 +5,7 @@ export interface Platformer {
   sounds: "jump" | "coin" | "land";
   images: never;
   /** "walls" is the Tiled layer whose tiles become colliders (spawnMap collide). */
-  tags: "player" | "coin" | "walls" | "dust" | "popup" | "scenery";
+  tags: "player" | "coin" | "walls" | "dust" | "popup" | "scenery" | "ledge" | "lift";
   /** Sheet -> its animation names (assets.sheets in main.ts). */
   sheets: { hero: "idle" | "run" | "jump" | "fall"; coin: "spin" };
   maps: "level1";

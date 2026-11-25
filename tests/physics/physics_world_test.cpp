@@ -39,7 +39,8 @@ TEST_CASE("falling body reports a hit with the ground's owner") {
   world.create(3, {BodyType::Dynamic, {Circle{10}, false}, {}}, {100, 100}, 0);
   const auto c = step_until(world, 120, [](const StepContacts& s) { return !s.hits.empty(); });
   REQUIRE(c.hits.size() == 1);
-  const auto [a, b] = c.hits[0];
+  const auto a = c.hits[0].a;
+  const auto b = c.hits[0].b;
   CHECK(((a == 3 && b == 7) || (a == 7 && b == 3)));
 }
 

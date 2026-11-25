@@ -30,5 +30,8 @@ std::string ui_text(script::Host& host, const std::string& id);
 std::string rml(const std::vector<std::string>& ids);
 // A game whose `play` scene runs `body` in update (or enter).
 std::string tiny(const std::string& hook, const std::string& body);
+// A 400 x 300 game whose `play` scene is `{ <scene> }` (enter, update, state), with
+// `config` appended to its config, `vec` imported, check(ok, what) and near(a, b, eps?).
+std::string game_with(const std::string& config, const std::string& scene);
 
 }  // namespace alpha::test

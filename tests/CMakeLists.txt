@@ -21,7 +21,9 @@ if(ALPHA_WITH_RUNTIME_DEPS)
   list(APPEND ALPHA_TEST_SOURCES
     ecs/sprite_world_test.cpp
     ecs/world_test.cpp
+    physics/contacts_test.cpp
     physics/physics_world_test.cpp
+    physics/queries_joints_test.cpp
     platform/assets_test.cpp
     platform/frame_latency_test.cpp
     platform/gamepads_test.cpp
@@ -40,6 +42,9 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/map_script_test.cpp
     script/simulate_test.cpp
     script/effects_script_test.cpp
+    script/entity_links_test.cpp
+    script/physics_script_test.cpp
+    script/pixel_mode_test.cpp
     script/sprite_script_test.cpp
     script/test_report_test.cpp
     script/console_test.cpp

@@ -7,12 +7,12 @@ import { exportPack } from "../lib/pack.mjs";
 import { decodePng, encodePng } from "../lib/png.mjs";
 
 // A throwaway game project: src/main.ts plus the given files.
-function project(assets, files) {
+function project(assets, files, images = `"i"`) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-proj-"));
   fs.mkdirSync(path.join(root, "src"));
   fs.writeFileSync(path.join(root, "src", "main.ts"), `
 import { define } from "alpha";
-interface T { actions: never; sounds: "a" | "b"; images: "i"; tags: never; scenes: { play: undefined }; ui: { hud: "score" } }
+interface T { actions: never; sounds: "a" | "b"; images: ${images}; tags: never; scenes: { play: undefined }; ui: { hud: "score" } }
 const { scene, game } = define<T>();
 const play = scene("play", {});
 export default game({
@@ -138,6 +138,22 @@ test("export packs images and sheet images into an atlas page the engine maps by
   const atlas = decodePng(fs.readFileSync(path.join(p.out, page)));
   assert.deepEqual([...atlas.rgba.subarray(((y + 1) * atlas.width + x + 1) * 4, ((y + 1) * atlas.width + x + 2) * 4)], [255, 0, 0, 255]);
   assert.equal(fs.existsSync(path.join(p.out, "img/coin.png")), false, "packed images are not copied");
+});
+
+test("export puts crisp (pixelMode) and smooth images on separate atlas pages", async () => {
+  const assets = `{ sounds: { a: "assets/a.wav", b: "assets/a.wav" },
+    images: { coin: "img/coin.png", glow: { file: "img/glow.png", pixelMode: false }, coinSoft: { file: "img/coin.png", pixelMode: false } },
+    sheets: { hero: { image: "img/hero.png", frame: [4, 4], pixelMode: false } } }`;
+  const p = project(assets, { ...SPRITE_FILES(), "img/glow.png": solidPng(2, 2, [0, 255, 0, 255]) }, `"coin" | "glow" | "coinSoft"`);
+  const { ok, problems } = await exportPack(p);
+  assert.deepEqual(problems, []);
+  assert.ok(ok);
+  const manifest = JSON.parse(fs.readFileSync(path.join(p.out, "alpha-atlas.json"), "utf8"));
+  assert.deepEqual(Object.keys(manifest.images), ["img/coin.png"]);
+  assert.deepEqual(Object.keys(manifest.smooth).sort(), ["img/coin.png", "img/glow.png", "img/hero.png"]);
+  assert.equal(manifest.images["img/coin.png"][0], "alpha-atlas-0.png");
+  assert.equal(manifest.smooth["img/glow.png"][0], "alpha-atlas-smooth-0.png");
+  assert.deepEqual(manifest.pages, { "alpha-atlas-0.png": { pixelMode: true }, "alpha-atlas-smooth-0.png": { pixelMode: false } });
 });
 
 test("export with atlas: false copies images as they are", async () => {

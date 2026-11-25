@@ -7,6 +7,7 @@
 #include "core/error.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
+#include "script/sprite_bindings.hpp"
 
 namespace alpha::script {
 
@@ -46,6 +47,8 @@ JSValue load_font(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const auto [name, path] = asset(ctx, s, argv, "fonts");
   ui::load_font(path, name);
   s.fonts[name] = path;  // world text rasterizes it too
+  if (smooth_arg(ctx, argv[2])) s.smooth_fonts.insert(name);
+  else s.smooth_fonts.erase(name);
   return JS_UNDEFINED;
 }
 
@@ -114,7 +117,7 @@ constexpr std::array<Native, 2> kTestNatives{{
 
 constexpr std::array<Native, 9> kNatives{{
     {"uiCreate", guarded<ui_create>, 2}, {"loadUi", guarded<load_ui>, 2},
-    {"loadFont", guarded<load_font>, 2}, {"uiShow", guarded<ui_show>, 1},
+    {"loadFont", guarded<load_font>, 3}, {"uiShow", guarded<ui_show>, 1},
     {"uiHide", guarded<ui_hide>, 1},     {"uiSet", guarded<ui_set>, 3},
     {"uiOn", guarded<ui_on>, 3},         {"uiEvents", guarded<ui_events>, 0},
     {"uiReset", guarded<ui_reset>, 0},

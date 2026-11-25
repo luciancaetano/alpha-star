@@ -48,8 +48,16 @@ double GameSession::fps() const {
 }
 
 GameState GameSession::state() {
-  GameState s{host_.scene(), paused_, host_.error(), frame_, fps(), {}, {}};
-  if (const ecs::World* world = host_.world()) s.entities = ecs::list_entities(*world, host_.tags(), "");
+  GameState s;
+  s.scene = host_.scene();
+  s.paused = paused_;
+  s.error = host_.error();
+  s.frame = frame_;
+  s.fps = fps();
+  if (const ecs::World* world = host_.world()) {
+    s.entities = ecs::list_entities(*world, host_.tags(), "");
+    s.joints = world->physics().joints().count();
+  }
   if (const ui::Ui* game_ui = host_.ui()) s.ui = game_ui->view();
   return s;
 }

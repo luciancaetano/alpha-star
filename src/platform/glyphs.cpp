@@ -80,7 +80,7 @@ int pack(std::vector<Bitmap>& bitmaps, core::FontAtlas& atlas) {
 }
 
 core::ImagePtr paint(const std::vector<Bitmap>& bitmaps, const core::FontAtlas& atlas, int height) {
-  auto image = std::make_shared<core::Image>(core::Image{kAtlasWidth, height, {}});
+  auto image = std::make_shared<core::Image>(core::Image{kAtlasWidth, height, {}, false});
   image->rgba.assign(static_cast<std::size_t>(kAtlasWidth) * static_cast<std::size_t>(height) * 4, 255);
   for (std::size_t p = 3; p < image->rgba.size(); p += 4) image->rgba[p] = 0;
   for (std::size_t i = 0; i < bitmaps.size(); ++i) {

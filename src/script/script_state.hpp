@@ -4,8 +4,10 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "core/image.hpp"
 #include "core/controls.hpp"
@@ -45,6 +47,10 @@ struct ScriptState {
   // rasterized from them, per (font, pixel size).
   std::map<std::string, std::filesystem::path, std::less<>> fonts;
   std::map<std::pair<std::string, int>, core::FontAtlasPtr> font_atlases;
+  // config.collision.categories, in order (category i has bit i + 1).
+  std::vector<std::string> categories;
+  // assets.fonts whose world-text atlases filter smoothly (pixelMode: false).
+  std::set<std::string, std::less<>> smooth_fonts;
   // config.layers by name.
   std::map<std::string, core::Layer, std::less<>> layers;
   // ctx.window: written by the engine every frame (headless: as scripts set it).

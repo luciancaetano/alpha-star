@@ -9,6 +9,7 @@
 #include "core/index_of.hpp"
 #include "ecs/components.hpp"
 #include "ecs/effects.hpp"
+#include "ecs/hierarchy.hpp"
 
 namespace alpha::ecs {
 
@@ -69,8 +70,9 @@ void World::attach(entt::entity e, const core::EntitySpec& spec) {
 }
 
 void World::destroy(EntityId id) {
-  const entt::entity e = to_entity(id);
-  if (registry_.valid(e)) registry_.emplace_or_replace<Doomed>(e);
+  if (!alive(id)) return;
+  for (const entt::entity child : children_of(registry_, id)) destroy(to_id(child));
+  registry_.emplace<Doomed>(to_entity(id));
 }
 
 bool World::alive(EntityId id) const {
@@ -92,14 +94,7 @@ std::vector<EntityId> World::find_all(core::TagId tag) const {
 }
 
 std::vector<EntityId> World::entities() const {
-  std::vector<std::pair<std::uint64_t, EntityId>> found;
-  for (auto [e, seq] : registry_.view<const Sequence>(entt::exclude<Doomed>).each()) {
-    found.emplace_back(seq.value, to_id(e));
-  }
-  std::sort(found.begin(), found.end());
-  std::vector<EntityId> ids;
-  for (const auto& [seq, id] : found) ids.push_back(id);
-  return ids;
+  return ids_of(oldest_first(registry_, [](entt::entity) { return true; }));
 }
 
 std::optional<EntityId> World::find(core::TagId tag) const {
@@ -119,10 +114,10 @@ void World::set_position(EntityId id, core::Vec2 pos) { place(id, pos, rotation(
 void World::set_rotation(EntityId id, float degrees) { place(id, position(id), degrees); }
 
 void World::place(EntityId id, core::Vec2 pos, float degrees) {
-  Transform& t = registry_.get<Transform>(living(id));
-  t.pos = pos;
-  t.rotation = degrees;
-  if (has_body(id)) physics::PhysicsWorld::set_transform(body_of(id), pos, degrees);
+  const entt::entity e = living(id);
+  if (auto* link = registry_.try_get<Parent>(e)) relink(*link, registry_.get<Transform>(to_entity(link->id)), pos, degrees);
+  put(e, pos, degrees);
+  carry(e);
 }
 
 int World::z(EntityId id) const { return registry_.get<Transform>(living(id)).z; }
@@ -131,20 +126,16 @@ void World::set_z(EntityId id, int z) { registry_.get<Transform>(living(id)).z =
 
 bool World::has_body(EntityId id) const { return registry_.all_of<PhysicsBody>(living(id)); }
 
-b2BodyId World::body_of(EntityId id) const {
+b2BodyId World::body(EntityId id) const {
   if (!has_body(id)) {
     throw core::Error("entity " + std::to_string(id) + " has no body; spawn it with `body`");
   }
   return registry_.get<PhysicsBody>(to_entity(id)).id;
 }
 
-core::Vec2 World::velocity(EntityId id) const {
-  return physics::PhysicsWorld::velocity(body_of(id));
-}
+core::Vec2 World::velocity(EntityId id) const { return physics::PhysicsWorld::velocity(body(id)); }
 
-void World::set_velocity(EntityId id, core::Vec2 velocity) {
-  physics::PhysicsWorld::set_velocity(body_of(id), velocity);
-}
+void World::set_velocity(EntityId id, core::Vec2 velocity) { physics::PhysicsWorld::set_velocity(body(id), velocity); }
 
 void World::free_doomed() {
   const auto doomed = registry_.view<Doomed>();
@@ -161,10 +152,11 @@ void World::sync_bodies() {
   }
 }
 
-std::vector<Contact> World::living_pairs(const std::vector<physics::Pair>& pairs) const {
-  std::vector<Contact> out;
-  for (const auto& p : pairs) {
-    if (alive(p.a) && alive(p.b)) out.push_back({p.a, p.b});
+template <typename T>
+std::vector<T> World::living_only(const std::vector<T>& pairs) const {
+  std::vector<T> out;
+  for (const T& p : pairs) {
+    if (alive(p.a) && alive(p.b)) out.push_back(p);
   }
   return out;
 }
@@ -220,6 +212,17 @@ void World::play(EntityId id, const std::string& name, bool restart) {
   show(*a, visual(id));
 }
 
+float World::scale(EntityId id) const {
+  const auto* s = registry_.try_get<Scaled>(living(id));
+  return s ? s->scale : 1.0f;
+}
+
+void World::set_scale(EntityId id, float scale) {
+  core::ShapeSpec& shape = visual(id);
+  const float text_size = shape.text ? shape.text->size : 0.0f;
+  rescale(shape, registry_.get_or_emplace<Scaled>(to_entity(id), shape.geometry, text_size, 1.0f), scale);
+}
+
 std::pair<bool, bool> World::flip(EntityId id) const {
   const auto* v = registry_.try_get<Visual>(living(id));
   return v ? std::pair{v->shape.flip_x, v->shape.flip_y} : std::pair{false, false};
@@ -256,10 +259,12 @@ StepEvents World::step(float dt) {
   free_doomed();
   const physics::StepContacts contacts = physics_.step(dt);
   sync_bodies();
+  follow_parents();
   animate(dt);
   step_emitters(registry_, dt, *random_);
   step_view(dt);
-  return {living_pairs(contacts.hits), living_pairs(contacts.sensor_enters)};
+  return {living_only(contacts.hits), living_only(contacts.hit_ends), living_only(contacts.sensor_enters),
+          living_only(contacts.sensor_exits)};
 }
 
 void World::snapshot() {

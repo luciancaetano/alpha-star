@@ -4,13 +4,14 @@ import type { Platformer } from "../types";
 
 type Spec = EntitySpec<Platformer["tags"], never, Platformer["sheets"]>;
 
-// A dynamic box drawn with the hero sheet (16x16 frames).
+// A dynamic box drawn with the hero sheet (16x16 frames) that never rotates.
 export function player(pos: Vec2): Spec {
   return {
     tags: ["player"],
     pos,
     z: 2,
     shape: { sheet: "hero", animation: "idle" },
-    body: { type: "dynamic", collider: { rect: PLAYER.size } },
+    // fixedRotation: the box never tips over.
+    body: { type: "dynamic", fixedRotation: true, collider: { rect: PLAYER.size } },
   };
 }

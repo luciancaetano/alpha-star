@@ -14,6 +14,7 @@ struct Image {
   int width = 0;
   int height = 0;
   std::vector<std::uint8_t> rgba;
+  bool smooth = false;  // linear filtering when scaled (pixelMode: false); nearest otherwise
 };
 
 using ImagePtr = std::shared_ptr<const Image>;

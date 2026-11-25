@@ -62,6 +62,54 @@ ctx.spawn({ tags: ["popup"], pos, shape: { text: "+1", font: "pixel", size: 8, c
 `simulate(...).expect.particles().equals(n)` is exact. MCP `game_state` entities carry `layer`,
 `alpha`, `text` and `particles`.
 
+## Texture filtering (pixelMode)
+
+`config.pixelMode` (default `true`) is the game-wide filtering of images when scaled: `true` =
+crisp pixel art (nearest), `false` = smooth (linear). Override per asset: `images: { logo: {
+file: "img/logo.png", pixelMode: false } }`, `sheets.hero.pixelMode`, `maps.level1: { file,
+pixelMode }` (its tilesets), `fonts.title: { file, pixelMode }` (world-text glyph atlas).
+Particles with an image or sheet shape use their source's mode. `alpha export` puts crisp
+and smooth images on separate atlas pages (`alpha-atlas-N.png`, `alpha-atlas-smooth-N.png`).
+
+## Physics
+
+```ts
+config: { gravity: [0, 900], collision: { categories: ["hero", "enemy", "world"] } }
+ctx.spawn({ tags: ["hero"], pos, body: { type: "dynamic", fixedRotation: true, gravityScale: 1,
+  bullet: false, category: "hero", collidesWith: ["world", "enemy"],
+  collider: { rect: [12, 16], friction: 0.6, restitution: 0, density: 1 } } });
+ctx.spawn({ tags: ["plank"], pos, body: { type: "static", collider: { rect: [48, 6], oneWay: true } } });
+ctx.onHit("hero", "enemy", (h, e, contact) => contact.speed > 300 && hurt(h));  // normal h -> e, point
+ctx.onHitEnd("hero", "world", (h, w) => {}); ctx.onExit("hero", "zone", (h, z) => {});
+const hit = ctx.raycast([x, y], [x, y + 12], { tags: ["walls"] });  // { entity, point, normal, fraction } | null
+ctx.raycastAll(from, to, { categories: ["enemy"] }); ctx.queryCircle(c, r); ctx.queryRect([x, y, w, h]);
+const rope = ctx.joint({ type: "rope", a: hook, b: crate, length: 80 });  // revolute | distance | weld | prismatic
+rope.destroy();
+hero.body.applyImpulse([0, -hero.body.mass * 300]); hero.body.angularVelocity = 90;
+```
+
+Raycasts ignore sensors; area queries include them. Joints and queries are scene-scoped.
+Units are pixels, degrees and kg (an impulse of `mass * dv` changes the velocity by `dv` px/s).
+
+## Tweens, vectors, parent/child, entity data, prefabs
+
+```ts
+import { vec } from "alpha";  // add sub scale len norm dot lerp angle fromAngle dist on [x, y]
+ctx.tween(lift, { to: { x: 470 }, seconds: 2.5, ease: "sineInOut", yoyo: true, repeat: Infinity });
+ctx.tween(coin, { to: { scale: 2.5, alpha: 0 }, seconds: 0.25, onDone: () => ctx.destroy(coin) });
+const sword = ctx.spawn({ tags: ["sword"], pos: [8, 0], parent: hero });  // pos local; follows; dies with hero
+const e = ctx.spawn({ ...enemy(at), data: { hp: 3 } }); e.data.hp -= 1;       // JSON-safe, seen by MCP
+```
+
+Tweens run on the fixed step (deterministic), cleared on scene change; entities tween
+`x y rotation alpha scale` (a kinematic body's x/y moves by velocity so riders are carried),
+plain objects tween their number keys. Eases: `linear` and `quad cubic quart quint sine expo circ
+back elastic bounce` + `In | Out | InOut`. Prefabs stay plain functions returning a spawn spec
+(see `examples/platformer/src/prefabs`). Entity data is re-created by the scene's `enter` on hot
+reload (like every entity); keep long-lived values in `ctx.state`. Tests read
+`simulate(...).entities(tag)` (pos, rotation, scale, alpha, data, velocity) and `.state`.
+MCP `game_state` adds `data` per entity and `joints`.
+
 ## Using alpha-star with an AI agent (MCP)
 
 `alpha mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server

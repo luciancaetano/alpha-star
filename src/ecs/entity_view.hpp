@@ -23,6 +23,7 @@ struct EntityView {
   float alpha = 1.0f;                  // the look's alpha (1 without a look)
   std::optional<std::string> text{};   // world text
   int particles = 0;                   // live particles of its emitter
+  std::string data{};                  // entity.data as JSON text, "" for none
 };
 
 // Living entities, oldest first; with a filter, only those having a tag whose

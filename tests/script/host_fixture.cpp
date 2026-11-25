@@ -52,4 +52,13 @@ std::string tiny(const std::string& hook, const std::string& body) {
          "  assets: { sounds: {} } });\n";
 }
 
+std::string game_with(const std::string& config, const std::string& scene) {
+  return "import { define, vec } from 'alpha'; const { scene, game } = define();\n"
+         "const check = (ok, what) => { if (!ok) throw new Error('failed: ' + what); };\n"
+         "const near = (a, b, eps = 0.5) => Math.abs(a - b) <= eps;\n"
+         "const play = scene('play', { " + scene + " });\n"
+         "export default game({ config: { title: 't', size: [400, 300], seed: 1, actions: {} " + config + " },\n"
+         "  start: 'play', scenes: { play } });\n";
+}
+
 }  // namespace alpha::test
