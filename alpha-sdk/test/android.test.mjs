@@ -94,7 +94,10 @@ test("the Java glue is SDL's own, version-matched with the engine's SDL", { skip
   const sdl = path.join(REPO, "build", "dev", "_deps", "sdl3-src", "android-project", "app", "src", "main", "java", "org", "libsdl", "app");
   const ours = path.join(TEMPLATE, "app", "src", "main", "java", "org", "libsdl", "app");
   assert.deepEqual(fs.readdirSync(ours).sort(), fs.readdirSync(sdl).sort());
-  for (const f of fs.readdirSync(sdl)) assert.equal(read(ours, f), read(sdl, f), f);
+  const lf = (s) => s.replace(/
+/g, "
+");  // git may check either copy out with other line endings
+  for (const f of fs.readdirSync(sdl)) assert.equal(lf(read(ours, f)), lf(read(sdl, f)), f);
   assert.match(fs.readFileSync(path.join(REPO, "cmake", "Dependencies.cmake"), "utf8"), /release-3\.2\.10/);
   assert.match(read(ours, "SDLActivity.java"), /SDL_MICRO_VERSION = 10;/);
 });
