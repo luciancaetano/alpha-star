@@ -15,6 +15,8 @@
 
 // Composition root: alpha_star <pack-dir | game.js> [options]  (pack = `alpha export` output)
 // With no arguments it runs the pack it sits in (standalone export).
+// alpha_star --test <tests.js>: runs every exported test function headlessly
+// (no window, no audio), one PASS/FAIL line each; exit code 0 iff all pass.
 //   --frames N        run exactly N frames, one fixed step each (deterministic)
 //   --screenshot PATH save the last frame as BMP (with --frames)
 //   --tap INPUT       input name to tap headlessly, e.g. Space
@@ -114,9 +116,33 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
   }
 }
 
+// Error text indented under its FAIL line, without trailing blank lines.
+std::string indented(const std::string& text) {
+  std::string out;
+  for (const char c : text.substr(0, text.find_last_not_of("\r\n") + 1)) {
+    out += c == '\n' ? std::string("\n    ") : std::string(1, c);
+  }
+  return out;
+}
+
+int run_tests(const char* path) {
+  alpha::script::Host host([](const std::string&) { return std::string(); });
+  const auto results = host.test(path);
+  std::size_t failed = 0;
+  for (const auto& r : results) {
+    failed += r.passed() ? 0U : 1U;
+    if (r.passed()) std::printf("PASS %s\n", r.name.c_str());
+    else std::printf("FAIL %s\n    %s\n", r.name.c_str(), indented(r.error).c_str());
+  }
+  if (results.empty()) std::printf("no tests: %s exports no functions\n", path);
+  std::printf("%zu passed, %zu failed\n", results.size() - failed, failed);
+  return failed == 0 && !results.empty() ? 0 : 1;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 3 && std::string_view(argv[1]) == "--test") return run_tests(argv[2]);
   const Options options = parse(argc, argv);
   if (options.game.empty()) {
     std::fprintf(stderr, "usage: alpha_star <pack-dir | game.js> [--frames N] [--screenshot out.bmp]\n");

@@ -63,3 +63,12 @@ test("export stops on type errors before touching assets", async () => {
   assert.match(problems[0].message, /'c'|"c"|images/);
   assert.equal(fs.existsSync(p.out), false);
 });
+
+test("the pack's source map names sources relative to the pack, so errors show src/...", async () => {
+  const p = project(ASSETS, { "assets/sfx/a.wav": "WAV", "assets/img/i.png": "PNG" });
+  await exportPack(p);
+  const js = fs.readFileSync(path.join(p.out, "main.js"), "utf8");
+  const b64 = js.match(/sourceMappingURL=data:application\/json;base64,(\S+)/)[1];
+  const map = JSON.parse(Buffer.from(b64, "base64").toString("utf8"));
+  assert.deepEqual(map.sources, ["../src/main.ts"]);
+});

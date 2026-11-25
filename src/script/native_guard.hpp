@@ -4,14 +4,15 @@
 
 #include <exception>
 
-#include "script/script_state.hpp"
+#include "script/instances.hpp"
 
 namespace alpha::script {
 
 using NativeImpl = JSValue (*)(JSContext*, ScriptState&, JSValueConst*);
 
 // Adapts a native to QuickJS: any C++ exception becomes a JS TypeError with
-// the same message, so a script can never crash the engine.
+// the same message, so a script can never crash the engine. Natives act on
+// the active game instance.
 template <NativeImpl F>
 JSValue guarded(JSContext* ctx, JSValueConst, int, JSValueConst* argv) {
   try {

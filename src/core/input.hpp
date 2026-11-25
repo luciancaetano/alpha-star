@@ -34,6 +34,8 @@ class Actions {
   bool down(ActionId id) const { return actions_[id].now; }
   bool pressed(ActionId id) const { return actions_[id].now && !actions_[id].before; }
   bool released(ActionId id) const { return !actions_[id].now && actions_[id].before; }
+  // The device inputs bound to an action (to press it without a device).
+  const InputSet& inputs(ActionId id) const { return actions_[id].inputs; }
 
  private:
   struct Action {

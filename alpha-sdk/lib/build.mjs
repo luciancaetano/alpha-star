@@ -1,5 +1,6 @@
 // Compiles an alpha-star game: type-check, then bundle into one ES module.
 // Engine modules ("alpha", "alpha/*") stay external; the engine provides them.
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
@@ -26,8 +27,11 @@ function toProblem(d) {
   return { file: d.file.fileName, line: pos.line + 1, column: pos.character + 1, message };
 }
 
-/** Bundles without type-checking. */
-export async function bundle(entry, outfile) {
+/**
+ * Bundles without type-checking. The inline source map is relative to `outfile`
+ * (where the bundle will live); the bytes are written to `writeTo` (e.g. a staging dir).
+ */
+export async function bundle(entry, outfile, writeTo = outfile) {
   const result = await esbuild.build({
     entryPoints: [entry],
     outfile,
@@ -37,8 +41,11 @@ export async function bundle(entry, outfile) {
     target: TARGET,
     external: ENGINE_MODULES,
     sourcemap: "inline",
+    write: false,
     logLevel: "silent",
   });
+  fs.mkdirSync(path.dirname(writeTo), { recursive: true });
+  fs.writeFileSync(writeTo, result.outputFiles[0].contents);
   return result.errors.map((e) => ({
     file: e.location?.file ?? "",
     line: e.location?.line ?? 0,
@@ -48,11 +55,11 @@ export async function bundle(entry, outfile) {
 }
 
 /** Full compile. Writes nothing if type-checking fails. */
-export async function build(entry, outfile) {
+export async function build(entry, outfile, writeTo = outfile) {
   const problems = typecheck(entry);
   if (problems.length) return { ok: false, problems };
   try {
-    return { ok: true, problems: await bundle(entry, outfile) };
+    return { ok: true, problems: await bundle(entry, outfile, writeTo) };
   } catch (err) {
     return { ok: false, problems: fromEsbuildError(err) };
   }

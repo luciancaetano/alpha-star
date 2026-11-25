@@ -1,7 +1,5 @@
 #pragma once
 
-#include <quickjs.h>
-
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -18,8 +16,8 @@
 
 namespace alpha::script {
 
-// Engine state the natives act on. One per Host; reached from JS via the
-// context opaque pointer. The runtime replaces `world` on every scene enter.
+// Engine state the natives act on: one per game instance (see Instances).
+// The runtime replaces `world` on every scene enter.
 struct ScriptState {
   core::TagRegistry tags;
   core::Actions actions;
@@ -37,6 +35,5 @@ struct ScriptState {
   core::Mixer mixer;
 };
 
-inline ScriptState& state_of(JSContext* ctx) { return *static_cast<ScriptState*>(JS_GetContextOpaque(ctx)); }
 
 }  // namespace alpha::script

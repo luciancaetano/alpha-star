@@ -2,6 +2,7 @@ set(ALPHA_TEST_SOURCES
   test_main.cpp
   core/audio_test.cpp
   core/input_test.cpp
+  core/source_map_test.cpp
   core/time_test.cpp
   core/values_test.cpp
   core/version_test.cpp)
@@ -18,6 +19,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/error_overlay_test.cpp
     script/host_test.cpp
     script/host_limits_test.cpp
+    script/simulate_test.cpp
     script/host_fixture.cpp)
   set(ALPHA_TEST_LIBS alpha_engine)
 endif()

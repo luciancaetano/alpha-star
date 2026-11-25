@@ -9,7 +9,10 @@ Engine::Engine() : runtime_(JS_NewRuntime()), ctx_(JS_NewContext(runtime_)) {
   JS_SetModuleLoaderFunc(runtime_, nullptr, &Engine::load, this);
   JS_SetMemoryLimit(runtime_, kMemoryLimitMb * 1024 * 1024);
   JS_SetInterruptHandler(runtime_, &Engine::interrupt, this);
+  JS_SetRuntimeOpaque(runtime_, this);
 }
+
+Engine& Engine::of(JSContext* ctx) { return *static_cast<Engine*>(JS_GetRuntimeOpaque(JS_GetRuntime(ctx))); }
 
 int Engine::interrupt(JSRuntime*, void* opaque) {
   auto* self = static_cast<Engine*>(opaque);

@@ -5,6 +5,7 @@ add_library(alpha_core
   core/input.cpp
   core/mixer.cpp
   core/random.cpp
+  core/source_map.cpp
   core/synth.cpp
   core/tags.cpp
   core/timers.cpp
@@ -39,6 +40,9 @@ add_library(alpha_engine
   script/asset_bindings.cpp
   script/error_overlay.cpp
   script/host.cpp
+  script/bundle_map.cpp
+  script/instance_bindings.cpp
+  script/instances.cpp
   script/js_engine.cpp
   script/js_value.cpp
   script/spec_parser.cpp

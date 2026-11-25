@@ -269,9 +269,11 @@ declare module "alpha/test" {
   import type { Game, GameTypes } from "alpha";
 
   export interface SimulateOptions<G extends GameTypes> {
+    /** Scene to start in (default: the game's `start`). */
     scene?: keyof G["scenes"] & string;
+    /** Simulated time; the run is round(seconds * 60) fixed steps of 1/60 s. */
     seconds: number;
-    /** Action -> frame numbers on which it is pressed. */
+    /** Action -> frame numbers (0-based) on which it is pressed for one step. */
     inputs?: Partial<Record<G["actions"], number[]>>;
   }
 
@@ -286,6 +288,12 @@ declare module "alpha/test" {
     readonly expect: Expect<G>;
   }
 
-  /** Headless, deterministic: same game + options => same run. */
+  /**
+   * Headless, deterministic: same game + options => same run. Every call is a
+   * fresh game instance (new world and timers, random seeded from config.seed,
+   * in-memory ctx.save that starts empty), with no window and no audio output.
+   * A script error stops the run; `expect.noErrors()` reports it. Tests are the
+   * exported functions of test/main.test.ts, run by `alpha test`.
+   */
   export function simulate<G extends GameTypes>(game: Game<G>, opts: SimulateOptions<G>): Run<G>;
 }

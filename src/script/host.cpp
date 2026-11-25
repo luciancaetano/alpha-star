@@ -3,8 +3,10 @@
 #include <array>
 
 #include "script/asset_bindings.hpp"
+#include "script/bundle_map.hpp"
 #include "script/embedded_js.hpp"
 #include "script/error_overlay.hpp"
+#include "script/instance_bindings.hpp"
 #include "script/system_bindings.hpp"
 #include "script/world_bindings.hpp"
 
@@ -54,10 +56,10 @@ GameInfo game_info(JSContext* ctx, const Value& info) {
 
 }  // namespace
 
-Host::Host(SavePathFor save_path_for) : engine_(std::make_unique<Engine>()) {
-  state_.save_path_for = std::move(save_path_for);
+Host::Host(SavePathFor save_path_for)
+    : instances_(std::move(save_path_for)), engine_(std::make_unique<Engine>()) {
   JSContext* ctx = engine_->ctx();
-  JS_SetContextOpaque(ctx, &state_);
+  JS_SetContextOpaque(ctx, &instances_);
   engine_->add_builtin("alpha", embedded::kAlpha);
   engine_->add_builtin("alpha/test", embedded::kAlphaTest);
   engine_->add_builtin("alpha:runtime", embedded::kRuntime);
@@ -66,6 +68,7 @@ Host::Host(SavePathFor save_path_for) : engine_(std::make_unique<Engine>()) {
   install_world_bindings(ctx, natives.get());
   install_system_bindings(ctx, natives.get());
   install_asset_bindings(ctx, natives.get());
+  install_instance_bindings(ctx, natives.get());
   JS_SetPropertyStr(ctx, global.get(), "__native", natives.release());
 }
 
@@ -84,18 +87,28 @@ GameInfo Host::boot(const std::string& target) {
   // A pack directory (from `alpha export`) or its main.js directly.
   const std::filesystem::path pack(target);
   const std::string path = std::filesystem::is_directory(pack) ? (pack / "main.js").string() : target;
-  state_.asset_dir = std::filesystem::path(path).parent_path();
+  instances_.main().asset_dir = std::filesystem::path(path).parent_path();
   const Value runtime = engine_->import("alpha:runtime");
   step_fn_.emplace(runtime.prop("step"));
   texts_fn_.emplace(runtime.prop("frameTexts"));
-  const Value game = engine_->import(path).prop("default");
+  const Value game = import_bundle(path).prop("default");
   std::array<JSValueConst, 1> args{game.get()};
   return game_info(engine_->ctx(), engine_->call(runtime.prop("boot"), args));
 }
 
+Value Host::import_bundle(const std::string& path) {
+  bundle_path_ = path;
+  source_map_ = load_bundle_map(engine_->ctx(), path);
+  return engine_->import(path);
+}
+
+std::string Host::located(const std::exception& e) const {
+  return source_map_ ? core::rewrite_locations(e.what(), bundle_path_, *source_map_) : e.what();
+}
+
 void Host::step(const core::InputSet& held, float dt) {
   if (paused()) return;
-  state_.actions.update(held);
+  instances_.main().actions.update(held);
   try {
     std::array<JSValueConst, 1> args{JS_NewFloat64(engine_->ctx(), dt)};
     engine_->call(*step_fn_, args);
@@ -115,13 +128,13 @@ std::vector<core::TextItem> Host::texts() {
 }
 
 void Host::pause(const std::exception& e) {
-  error_ = e.what();
-  state_.mixer.stop_all();  // a paused game is silent
+  error_ = located(e);
+  instances_.main().mixer.stop_all();  // a paused game is silent
 }
 
 render::Frame Host::frame() {
   render::Frame f{info_.background, {}, {}};
-  if (state_.world) f.shapes = state_.world->draw_items();
+  if (instances_.main().world) f.shapes = instances_.main().world->draw_items();
   try {
     if (!paused()) f.texts = texts();
   } catch (const std::exception& e) {
@@ -129,6 +142,34 @@ render::Frame Host::frame() {
   }
   if (paused()) f.texts = error_overlay(error_, static_cast<float>(info_.width));
   return f;
+}
+
+std::vector<TestResult> Host::test(const std::string& path) {
+  try {
+    return run_tests(path);
+  } catch (const std::exception& e) {
+    return {{"(loading " + path + ")", located(e)}};
+  }
+}
+
+std::vector<TestResult> Host::run_tests(const std::string& path) {
+  JSContext* ctx = engine_->ctx();
+  instances_.main().asset_dir = std::filesystem::path(path).parent_path();
+  const Value names_fn = engine_->import("alpha/test").prop("testNames");
+  const Value tests = import_bundle(path);
+  std::array<JSValueConst, 1> args{tests.get()};
+  const Value names = engine_->call(names_fn, args);
+  std::vector<TestResult> results;
+  for (const std::string& name : strings_arg(ctx, names.get(), "test names")) {
+    TestResult result{name, ""};
+    try {
+      engine_->call(tests.prop(name.c_str()), {});
+    } catch (const std::exception& e) {
+      result.error = located(e);
+    }
+    results.push_back(std::move(result));
+  }
+  return results;
 }
 
 }  // namespace alpha::script

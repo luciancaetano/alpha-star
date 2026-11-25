@@ -20,6 +20,7 @@ class TagRegistry {
   TagId intern(std::string_view name);
   std::optional<TagId> find(std::string_view name) const;
   std::string_view name(TagId id) const { return names_[id]; }
+  std::size_t size() const { return names_.size(); }
 
  private:
   std::vector<std::string> names_;

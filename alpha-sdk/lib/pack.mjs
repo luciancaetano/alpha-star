@@ -84,7 +84,7 @@ export async function exportPack({ root, entry, out, target = null }) {
   if (standalone.problem) return { ok: false, problems: [standalone.problem], files: [] };
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-pack-"));
   try {
-    const built = await build(entry, path.join(staging, "main.js"));
+    const built = await build(entry, path.join(out, "main.js"), path.join(staging, "main.js"));
     if (!built.ok) return { ok: false, problems: built.problems, files: [] };
     const def = await readGameDef(entry);
     if (!def) return { ok: false, problems: [problem("main module must `export default game({...})`", entry)], files: [] };

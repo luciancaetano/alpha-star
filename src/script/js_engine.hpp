@@ -32,7 +32,11 @@ class Engine {
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
 
+  // The engine that owns `ctx`.
+  static Engine& of(JSContext* ctx);
   JSContext* ctx() const { return ctx_; }
+  // A fresh call budget for the running script (simulate: one per game step).
+  void restart_budget() { start_clock(); }
   void add_builtin(std::string name, std::string_view source);
   // Evaluates a module (builtin name or file path); returns its namespace.
   Value import(const std::string& name);

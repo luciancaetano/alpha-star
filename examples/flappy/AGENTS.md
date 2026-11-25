@@ -12,6 +12,7 @@ npm install                 # once
 npm run check               # type-check only (fast)
 npm run export              # type-check + bundle + copy assets -> dist/ (the pack)
 npm start                   # export, then open the pack in the engine bundled in the SDK
+npm test                    # type-check + run test/main.test.ts headlessly (alpha test)
 npx alpha run -- --frames 120 --screenshot s.bmp   # headless check
 npx alpha export --standalone --out build/game     # pack + engine binary: runs by itself
 ```
@@ -67,3 +68,11 @@ the export copies each declared file into the pack and fails naming any missing 
 Write a `simulate(game, { scene, seconds, inputs })` test for each behavior you
 add. Inputs are action → frame numbers, so runs are reproducible. Assert outcomes
 (`expect.scene`, `expect.count`, `expect.noErrors`), not internals.
+
+- Every exported function in `test/main.test.ts` is one test; `npm test` (= `alpha test`)
+  prints `PASS name` / `FAIL name` + the error with `src/...ts:line:col`, exit code 1 on any failure.
+- Each `simulate` is a fresh game: seeded random, empty in-memory save, 60 steps per second
+  (`seconds: 3` = 180 frames, frames numbered from 0), no window, no sound. Same options => same result.
+- Pick inputs from the physics, not by guessing: one flap every 40 frames roughly holds
+  altitude; every 20 frames climbs off the top of the screen in ~1.4 s.
+- Runtime errors (game or tests) point at the `.ts` source through the bundle's source map.
