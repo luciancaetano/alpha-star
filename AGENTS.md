@@ -56,6 +56,11 @@ Physics lives in `src/physics/` (Box2D v3: `physics_world` bodies/contacts/pre-s
 and the embedded `physics.js` / `tween.js` modules. Texture filtering is per image
 (`core::Image::smooth`, from `pixelMode`); never set a global scale mode.
 Input order: dev tools → game UI (`ui::consumes`) → game actions; what the UI consumed never drives actions.
+Audio: `core::Mixer` is stereo with volume buses; music is a `core::Stream` (`platform/music_stream`,
+stb_vorbis / dr_mp3 in `alpha_codecs`) decoded in `mix()` on the main thread; streams hold SDL audio
+streams, so `main` stops them before `SDL_Quit`. Saves/settings/locales are the embedded `alpha:prefs`
+and `alpha:i18n` modules (files through `prefsRead`/`prefsWrite`: atomic + `.bak`); `alpha:audio` builds
+`ctx.audio`. Never put data-shape rules for these in runtime.js.
 Builds and gates: `CMAKE_BUILD_PARALLEL_LEVEL=8` (the Linux gate also runs with `--cpus 8`); one build at a time.
 
 Dev tools (Dear ImGui, F1; `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:

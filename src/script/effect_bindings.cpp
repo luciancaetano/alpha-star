@@ -5,6 +5,7 @@
 #include <string>
 
 #include "core/error.hpp"
+#include "core/particles.hpp"
 #include "script/effect_parser.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
@@ -85,7 +86,8 @@ JSValue define_layer(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 JSValue emit(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const double n = number_arg(ctx, argv[1], "emit(count)");
   if (!(n >= 0.0 && n <= 20000.0)) throw core::Error("emit(count): count must be 0..20000");
-  world_of(s).emitter(id_arg(ctx, argv[0])).burst(static_cast<int>(n));
+  const int count = static_cast<int>(n);
+  world_of(s).emitter(id_arg(ctx, argv[0])).burst(s.reduced_motion ? core::reduced_count(count) : count);
   return JS_UNDEFINED;
 }
 

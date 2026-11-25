@@ -276,6 +276,7 @@ int main(int argc, char** argv) {
     run(options, host, renderer, tools, window);
   }
   host.release_ui();
+  host.mixer().stop_all();  // streamed music holds SDL audio streams: released before SDL_Quit
   SDL_DestroyRenderer(sdl);
   SDL_DestroyWindow(window);
   SDL_Quit();

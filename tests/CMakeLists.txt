@@ -1,6 +1,7 @@
 set(ALPHA_TEST_SOURCES
   test_main.cpp
   core/audio_test.cpp
+  core/mixer_test.cpp
   core/cli_test.cpp
   core/axes_test.cpp
   core/camera_test.cpp
@@ -25,6 +26,8 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     physics/physics_world_test.cpp
     physics/queries_joints_test.cpp
     platform/assets_test.cpp
+    platform/audio_decode_test.cpp
+    platform/save_file_test.cpp
     platform/frame_latency_test.cpp
     platform/gamepads_test.cpp
     platform/log_file_test.cpp
@@ -45,6 +48,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/entity_links_test.cpp
     script/physics_script_test.cpp
     script/pixel_mode_test.cpp
+    script/prefs_script_test.cpp
     script/sprite_script_test.cpp
     script/test_report_test.cpp
     script/console_test.cpp
@@ -80,6 +84,7 @@ add_executable(alpha_tests ${ALPHA_TEST_SOURCES})
 target_link_libraries(alpha_tests PRIVATE ${ALPHA_TEST_LIBS} doctest::doctest)
 target_include_directories(alpha_tests PRIVATE script)
 target_compile_definitions(alpha_tests PRIVATE DOCTEST_CONFIG_USE_STD_HEADERS
+  ALPHA_TEST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures"
   ALPHA_TEST_FONT="${PROJECT_SOURCE_DIR}/examples/flappy/assets/fonts/PressStart2P-Regular.ttf")
 alpha_set_warnings(alpha_tests)
 add_test(NAME alpha_tests COMMAND alpha_tests)

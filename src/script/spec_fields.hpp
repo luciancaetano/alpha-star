@@ -23,6 +23,8 @@ Value field(JSContext* ctx, JSValueConst obj, const char* name);
 core::Color color_arg(JSContext* ctx, JSValueConst v, const std::string& path);
 // obj[name] as a number, or `fallback` when absent.
 float number_or(JSContext* ctx, JSValueConst obj, const char* name, const std::string& path, float fallback);
+// A number in [lo, hi]; errors name `what`, the range and the value.
+float ranged(JSContext* ctx, JSValueConst v, const std::string& what, double lo, double hi);
 
 // One of `options` by name, or an error listing them ("a", "b" or "c").
 template <typename E, std::size_t N>

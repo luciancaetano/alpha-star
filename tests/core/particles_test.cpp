@@ -156,3 +156,21 @@ TEST_CASE("particle throughput" * doctest::skip()) {
   const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
   std::printf("particles: %d live, %.3f ms per step + quads\n", e.count(), ms / 600.0);
 }
+
+TEST_CASE("reduced motion scales emitter counts down but keeps bursts and one-shots valid") {
+  EmitterSpec s;
+  s.rate = 40.0f;
+  s.burst = 3;
+  s.max = 100;
+  s.one_shot = true;
+  const EmitterSpec r = alpha::core::reduced_motion(s);
+  CHECK(r.rate == doctest::Approx(40.0f * alpha::core::kReducedMotion));
+  CHECK(r.burst == 1);
+  CHECK(r.max == 25);
+  CHECK(r.one_shot);
+  EmitterSpec none;
+  CHECK(alpha::core::reduced_motion(none).burst == 0);
+  CHECK(alpha::core::reduced_count(8) == 2);
+  CHECK(alpha::core::reduced_count(1) == 1);
+  CHECK(alpha::core::reduced_count(0) == 0);
+}

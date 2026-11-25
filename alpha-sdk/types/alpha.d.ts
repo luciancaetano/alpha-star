@@ -54,7 +54,20 @@ declare module "alpha" {
     fonts?: string;
     /** Collision category names (config.collision.categories), e.g. "player" | "enemy". Optional. */
     categories?: string;
+    /** Streamed music names (assets.music), e.g. "theme" | "boss". Optional. */
+    music?: string;
+    /** Locale names (assets.locales), e.g. "en" | "pt". Optional. */
+    locales?: string;
+    /** Extra volume buses (config.audio.buses), e.g. "ambience". Optional. */
+    buses?: string;
   }
+
+  /** The game's music names (`never` without `music`). */
+  export type MusicOf<G extends GameTypes> = G extends { music: infer M extends string } ? M : never;
+  /** The game's locale names (`string` without `locales`). */
+  export type LocaleOf<G extends GameTypes> = G extends { locales: infer L extends string } ? L : string;
+  /** Built-in buses plus config.audio.buses. */
+  export type BusOf<G extends GameTypes> = "master" | "music" | "sfx" | "voice" | (G extends { buses: infer B extends string } ? B : never);
 
   /** The game's layer names (`never` without `layers`). */
   export type LayerOf<G extends GameTypes> = G extends { layers: infer L extends string } ? L : never;
@@ -503,6 +516,13 @@ declare module "alpha" {
     players(): number;
     /** Vibrates gamepads: strength 0..1 for 0..10 seconds (0 stops); every player if omitted. No-op without a pad. */
     rumble(strength: number, seconds: number, player?: Player): void;
+    /**
+     * The player's own inputs for an action (a controls menu), replacing config.actions'
+     * list; persisted in settings and applied at every boot. `ctx.settings.reset()` undoes it.
+     */
+    rebind(action: A, inputs: string[]): void;
+    /** The inputs an action has now (rebound or from config.actions). */
+    bindings(action: A): string[];
   }
 
   /** Seeded by config.seed. Math.random is disabled. */
@@ -514,11 +534,59 @@ declare module "alpha" {
     pick<T>(items: readonly T[]): T;
   }
 
-  /** Persistent key/value storage; survives restarts. */
-  export interface Save {
+  /**
+   * Persistent key/value storage; survives restarts. Each slot is one file in the
+   * player's data folder, written atomically (temp file + rename, the previous one
+   * kept as .bak; a damaged file falls back to its .bak with a logged warning) and
+   * stamped with config.save.version (older files go through config.save.migrate).
+   */
+  export interface SaveSlot {
     get<T extends SaveValue>(key: string, fallback: T): T;
+    /** JSON-safe values only (a copy is stored); writes the slot file. */
     set(key: string, value: SaveValue): void;
+    has(key: string): boolean;
+    remove(key: string): void;
+    clear(): void;
+    keys(): string[];
   }
+
+  /** ctx.save: the "main" slot itself, plus named slots (e.g. one per save game). */
+  export interface Save extends SaveSlot {
+    /** Slot names: 1..32 letters, digits, '-' or '_'. slot("main") is ctx.save. */
+    slot(name: string): SaveSlot;
+  }
+
+  /** config.save: version the save data; `migrate` upgrades older slots once when read. */
+  export interface SaveConfig {
+    /** Integer >= 1, default 1. Bump it when the data's shape changes. */
+    version?: number;
+    /** Returns the data in the current shape; called once per older slot (files before versioning are version 1). */
+    migrate?(data: { [k: string]: SaveValue }, fromVersion: number): { [k: string]: SaveValue };
+  }
+
+  /**
+   * ctx.settings: the player's preferences, kept apart from saves (settings.json) and
+   * applied at boot. Set accessibility flags here; volumes, locale, fullscreen and
+   * bindings are set where they live (audio.bus(b).volume, ctx.locale,
+   * window.fullscreen, input.rebind), which persists them too.
+   */
+  export interface Settings<G extends GameTypes> {
+    /** UI scale 0.5..3 (default 1): the RmlUi dp ratio, so sizes in `dp` grow with it. */
+    uiScale: number;
+    /** Adds class "high-contrast" to every UI document's body: style `.high-contrast ...` in .rcss. */
+    highContrast: boolean;
+    /** Camera shake intensity and particle counts (rate, burst, max, emit) scaled to 1/4. */
+    reducedMotion: boolean;
+    readonly volumes: Record<BusOf<G>, number>;
+    readonly locale: LocaleOf<G> | null;
+    readonly fullscreen: boolean;
+    readonly bindings: Partial<Record<G["actions"], string[]>>;
+    /** Back to defaults (volumes 1, config.locale, config.actions, flags off), applied and saved. */
+    reset(): void;
+  }
+
+  /** Placeholders `{name}` in a text are filled from params; `count` also picks plural forms. */
+  export type TextParams = { [name: string]: string | number };
 
   /**
    * Game UI: RmlUi documents (HTML/CSS-like `.rml` + `.rcss`) declared in
@@ -560,8 +628,11 @@ declare module "alpha" {
   /** A note, or notes played one after another. Same spec = same sound, always. */
   export type Synth = Note | Note[];
 
-  /** A WAV file path (relative to the game .js), or a synthesized sound. */
-  export type SoundAsset = string | Synth;
+  /**
+   * A sound: a .wav/.ogg/.mp3 file path (decoded whole at boot) or a synthesized sound,
+   * on the "sfx" bus; or `{ file, bus }` / `{ synth, bus }` to put it on another bus.
+   */
+  export type SoundAsset<B extends string = string> = string | Synth | { file: string; bus?: B } | { synth: Synth; bus?: B };
 
   export interface PlayOptions {
     /** 0..1, default 1 */
@@ -569,6 +640,21 @@ declare module "alpha" {
     /** playback speed, default 1 (2 = octave up) */
     pitch?: number;
     loop?: boolean;
+    /** -1 (left) .. 1 (right), default 0 (both sides, full volume) */
+    pan?: number;
+  }
+
+  export interface MusicOptions {
+    /** 0..1, default 1 */
+    volume?: number;
+    /** default true */
+    loop?: boolean;
+  }
+
+  /** A volume bus: every sound on it (and every bus, through "master") scales by `volume`. */
+  export interface Bus {
+    /** 0..1, default 1; persisted in settings. */
+    volume: number;
   }
 
   /** A playing sound. Stopping twice is a no-op. */
@@ -577,14 +663,31 @@ declare module "alpha" {
     stop(): void;
   }
 
-  export interface Audio<S extends string> {
+  /**
+   * Audio is output only: it never affects the simulation. Sounds go through
+   * their bus, music through "music", everything through "master".
+   */
+  export interface Audio<S extends string, M extends string = never, B extends string = BusOf<GameTypes>> {
     /** Plays a preloaded sound from assets.sounds. */
     play(sound: S, opts?: PlayOptions): Voice;
-    /** Synthesizes and plays a sound on the fly. */
+    /** Synthesizes and plays a sound on the fly (sfx bus). */
     tone(synth: Synth, opts?: PlayOptions): Voice;
+    /** Stops every sound and the music. */
     stopAll(): void;
-    /** Master volume 0..1. */
-    volume: number;
+    /**
+     * Streams music from assets.music (decoded a little at a time, never loaded whole).
+     * One track at a time: whatever played stops at once. `fadeIn` in seconds.
+     */
+    music(name: M, opts?: MusicOptions & { fadeIn?: number }): void;
+    /** Fades the current music out and `name` in over `seconds`. */
+    crossfade(name: M, seconds: number, opts?: MusicOptions): void;
+    /** Fades the music out over `fadeOut` seconds (default 0 = at once). */
+    stopMusic(fadeOut?: number): void;
+    /** The music playing (not fading out), or null. */
+    readonly musicPlaying: M | null;
+    /** "master", "music", "sfx", "voice", then config.audio.buses. */
+    readonly buses: readonly B[];
+    bus(name: B): Bus;
   }
 
   // ---- scene context ----------------------------------------------------------
@@ -607,8 +710,21 @@ declare module "alpha" {
     readonly input: Input<G["actions"], AxisOf<G>>;
     readonly random: Random;
     readonly save: Save;
+    readonly settings: Settings<G>;
+    /**
+     * The current locale (assets.locales; null without any). Setting it re-translates
+     * UI elements with `data-t="key"` and is persisted in settings.
+     */
+    locale: LocaleOf<G> | null;
+    /**
+     * Text of `key` in the current locale (nested keys with dots: "menu.play"), with
+     * `{name}` placeholders filled from params; a plural entry `{ zero?, one, other }`
+     * is picked by params.count. Falls back to config.locale's text; a missing key
+     * shows "[key]" (and is logged once in dev builds).
+     */
+    t(key: string, params?: TextParams): string;
     readonly ui: UI<G["ui"]>;
-    readonly audio: Audio<G["sounds"]>;
+    readonly audio: Audio<G["sounds"], MusicOf<G>, BusOf<G>>;
     readonly camera: Camera;
     readonly window: GameWindow;
 
@@ -713,6 +829,12 @@ declare module "alpha" {
     /** Named draw layers, e.g. `{ bg: { z: -100, parallax: 0.2 }, fx: { z: 100 } }`. */
     layers?: Record<LayerOf<G>, LayerDef>;
     window?: WindowConfig;
+    /** Extra volume buses next to master, music, sfx and voice, e.g. `{ buses: ["ambience"] }`. */
+    audio?: { buses?: Exclude<BusOf<G>, "master" | "music" | "sfx" | "voice">[] };
+    /** Save versioning and migration. */
+    save?: SaveConfig;
+    /** Default and fallback locale (default: the first of assets.locales). */
+    locale?: LocaleOf<G>;
   }
 
   /** Scenes enterable without params. */
@@ -727,7 +849,14 @@ declare module "alpha" {
     scenes: { [K in keyof G["scenes"]]: Scene<G, K> };
     /** Every asset is loaded before the start scene; a missing file stops boot with its name. */
     assets: {
-      sounds: Record<G["sounds"], SoundAsset>;
+      sounds: Record<G["sounds"], SoundAsset<BusOf<G>>>;
+      /** Music name -> .ogg/.mp3/.wav file, streamed when played (checked at boot, never preloaded). */
+      music?: Record<MusicOf<G>, string>;
+      /**
+       * Locale name -> JSON file of texts, e.g. `{ en: "locales/en.json", pt: "locales/pt.json" }`.
+       * Texts are UTF-8; world text draws ASCII + Latin-1, RmlUi whatever its fonts have.
+       */
+      locales?: Record<LocaleOf<G>, string>;
       /** Image name -> file, or `{ file, pixelMode }` to override config.pixelMode for it. */
       images?: Record<G["images"], FileAsset>;
       /** Font name -> .ttf/.otf file; the name is the `font-family` used in .rcss. */
@@ -801,7 +930,7 @@ declare module "alpha" {
 }
 
 declare module "alpha/test" {
-  import type { AnimationOf, AxisOf, Game, GameTypes } from "alpha";
+  import type { AnimationOf, AxisOf, Game, GameTypes, LocaleOf, MusicOf } from "alpha";
 
   /**
    * One player's simulated input: action -> frames (pressed for one step each),
@@ -827,6 +956,13 @@ declare module "alpha/test" {
      * document or an unknown id fails the test.
      */
     clicks?: { [target: string]: number[] };
+    /** The player's settings at boot, as settings.json holds them, e.g. `{ locale: "pt", reducedMotion: true, volumes: { music: 0.5 } }`. */
+    settings?: Partial<{
+      volumes: Record<string, number>; locale: string; fullscreen: boolean; bindings: Record<string, string[]>;
+      uiScale: number; highContrast: boolean; reducedMotion: boolean;
+    }>;
+    /** Save slots at boot: `{ main: data, slotName: data }` (main = ctx.save). */
+    saves?: { [slot: string]: { [k: string]: unknown } };
   }
 
   export interface Expect<G extends GameTypes> {
@@ -841,6 +977,8 @@ declare module "alpha/test" {
     shown(doc: keyof G["ui"] & string): void;
     /** Live particles of every emitter at the end of the run. */
     particles(): { equals(n: number): void; atLeast(n: number): void };
+    /** The music playing at the end of the run (null = none). */
+    music(name: MusicOf<G> | null): void;
   }
 
   export interface EntitySnapshot {
@@ -861,12 +999,18 @@ declare module "alpha/test" {
     readonly state: unknown;
     /** Living entities with the tag at the end of the run, oldest first (plain data). */
     entities(tag: G["tags"]): EntitySnapshot[];
+    /** At the end of the run: the music playing, the locale, the settings, the save slots. */
+    readonly music: MusicOf<G> | null;
+    readonly locale: LocaleOf<G> | null;
+    readonly settings: { volumes: Record<string, number>; locale: string | null; uiScale: number; highContrast: boolean; reducedMotion: boolean; bindings: Record<string, string[]> };
+    readonly saves: { [slot: string]: { [k: string]: unknown } };
   }
 
   /**
    * Headless, deterministic: same game + options => same run. Every call is a
    * fresh game instance (new world and timers, random seeded from config.seed,
-   * in-memory ctx.save that starts empty), with no window and no audio output.
+   * in-memory ctx.save and settings, empty unless opts.saves / opts.settings seed them),
+   * with no window and no audio output (music and buses are still tracked).
    * A script error stops the run; `expect.noErrors()` reports it. Tests are the
    * exported functions of test/main.test.ts, run by `alpha test`.
    */

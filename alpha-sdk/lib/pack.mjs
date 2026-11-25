@@ -42,7 +42,7 @@ export async function readGameDef(entry) {
 const entryFile = (entry) => (typeof entry === "string" ? entry : entry?.file ?? "");
 const entryPixel = (entry, fallback) => (typeof entry?.pixelMode === "boolean" ? entry.pixelMode : fallback);
 
-// Files the pack must contain: every string sound, image, font and UI document
+// Files the pack must contain: every sound file, image, font, music, locale and UI document
 // (the files a document references are found by uiReferences once it exists).
 // Images and sheets carry `pixelMode` (config.pixelMode, default true, or their own).
 export function assetFiles(def) {
@@ -50,7 +50,8 @@ export function assetFiles(def) {
   const pixel = entryPixel(def?.config, true);
   const files = [];
   for (const [name, sound] of Object.entries(assets.sounds ?? {})) {
-    if (typeof sound === "string") files.push({ key: `assets.sounds.${name}`, file: sound });
+    const file = typeof sound === "string" ? sound : sound?.file;
+    if (typeof file === "string") files.push({ key: `assets.sounds.${name}`, file });
   }
   for (const [name, image] of Object.entries(assets.images ?? {})) {
     files.push({ key: `assets.images.${name}`, file: entryFile(image), pixelMode: entryPixel(image, pixel) });
@@ -58,7 +59,7 @@ export function assetFiles(def) {
   for (const [name, sheet] of Object.entries(assets.sheets ?? {})) {
     files.push({ key: `assets.sheets.${name}.image`, file: sheet?.image ?? "", pixelMode: entryPixel(sheet, pixel) });
   }
-  for (const kind of ["fonts", "ui", "maps"]) {
+  for (const kind of ["fonts", "ui", "maps", "music", "locales"]) {
     for (const [name, entry] of Object.entries(assets[kind] ?? {})) files.push({ key: `assets.${kind}.${name}`, file: entryFile(entry) });
   }
   return files;

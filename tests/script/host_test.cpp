@@ -160,8 +160,8 @@ const play = scene("play", {
     ctx.spawn({ tags: ["hero"], pos: [30, 10], shape: { image: "hero", size: [8, 4] } });
     const v = ctx.audio.play("beep", { volume: 0.5, pitch: 2, loop: true });
     ctx.audio.tone([{ wave: "square", freq: [440, 880], duration: 0.05 }, { wave: "noise", freq: 1, duration: 0.05 }]);
-    ctx.audio.volume = 0.25;
-    if (!v.playing || ctx.audio.volume !== 0.25) throw new Error("voice not playing");
+    ctx.audio.bus("master").volume = 0.25;
+    if (!v.playing || ctx.audio.bus("master").volume !== 0.25) throw new Error("voice not playing");
     v.stop();
     if (v.playing) throw new Error("voice did not stop");
   },
@@ -175,7 +175,7 @@ export default game({ config: { title: "a", size: [288, 100], seed: 1, actions: 
   host.load(box.write("a.js", game));
   REQUIRE_MESSAGE(!host.paused(), host.error());
   CHECK(host.mixer().voices() == 1);  // the tone; the looped voice was stopped
-  CHECK(host.mixer().volume() == 0.25f);
+  CHECK(host.mixer().bus_volume(alpha::core::Mixer::kMaster) == 0.25f);
   const auto shapes = host.frame().shapes;
   REQUIRE(shapes.size() == 2);
   REQUIRE(shapes[0].shape.image);
@@ -205,8 +205,12 @@ TEST_CASE("asset and audio mistakes name the asset and what exists") {
             .find("assets.sounds has: a") != std::string::npos);
   CHECK(boot_error("{}", "ctx.spawn({ tags: [], pos: [0, 0], shape: { image: 'x' } });")
             .find("not in assets.images; have: (none)") != std::string::npos);
-  CHECK(boot_error("{}", "ctx.audio.volume = 2;").find("audio.volume must be in [0, 1]") !=
+  CHECK(boot_error("{}", "ctx.audio.bus('sfx').volume = 2;").find("audio.bus(...).volume must be in [0, 1]") !=
         std::string::npos);
+  CHECK(boot_error("{}", "ctx.audio.bus('crowd');").find("unknown bus \"crowd\"; buses: master, music, sfx, voice") !=
+        std::string::npos);
+  CHECK(boot_error("{}", "ctx.audio.music('theme');").find("assets.music has: (none)") != std::string::npos);
+  CHECK(boot_error("{ music: { m: 'song.flac' } }", "").find(".ogg (Vorbis), .mp3 or .wav") != std::string::npos);
   CHECK(boot_error("{}", "ctx.audio.tone({ wave: 'sine', freq: [1, 2, 3], duration: 1 });")
             .find("audio.tone.freq must be [x, y]") != std::string::npos);
 }

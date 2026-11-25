@@ -68,6 +68,25 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   target_compile_options(box2d PRIVATE -Wno-error=maybe-uninitialized)
 endif()
 
+# Audio codecs: single-file decoders, pinned by commit and SHA-256.
+# stb_vorbis v1.25 (nothings/stb; MIT or public domain) for OGG Vorbis,
+# dr_mp3 v0.7.4 (mackron/dr_libs tag mp3-0.7.4; MIT-0 or public domain) for MP3.
+# alpha_codecs compiles both implementations; their warnings are not ours
+# (no alpha_set_warnings, SYSTEM include dir).
+FetchContent_Declare(stb_vorbis
+  URL https://raw.githubusercontent.com/nothings/stb/6b5799bae8a1fe3792691ef4b72ae26434c3e799/stb_vorbis.c
+  URL_HASH SHA256=97a8febc738e6a29fafc8d8bc557c7f17ad3db7ba6544485f59395cc6008b764
+  DOWNLOAD_NO_EXTRACT TRUE)
+FetchContent_Declare(dr_mp3
+  URL https://raw.githubusercontent.com/mackron/dr_libs/aec2dd20667f54acfdb66031217df6d240f56c52/dr_mp3.h
+  URL_HASH SHA256=f5c8020eeebb79877184432efdd2651f24869f5bb8f379d45450fd0aed1ee915
+  DOWNLOAD_NO_EXTRACT TRUE)
+FetchContent_MakeAvailable(stb_vorbis dr_mp3)
+file(CONFIGURE OUTPUT ${CMAKE_BINARY_DIR}/codecs/alpha_codecs.c
+  CONTENT "#include \"stb_vorbis.c\"\n#define DR_MP3_IMPLEMENTATION\n#include \"dr_mp3.h\"\n" @ONLY)
+add_library(alpha_codecs STATIC ${CMAKE_BINARY_DIR}/codecs/alpha_codecs.c)
+target_include_directories(alpha_codecs SYSTEM PUBLIC ${stb_vorbis_SOURCE_DIR} ${dr_mp3_SOURCE_DIR})
+
 # Game UI: RmlUi (HTML/CSS-like .rml/.rcss) with its FreeType font engine.
 # FreeType static and self-contained: no zlib/bzip2/png/harfbuzz/brotli from the system.
 foreach(dep ZLIB BZIP2 PNG HARFBUZZ BROTLI)

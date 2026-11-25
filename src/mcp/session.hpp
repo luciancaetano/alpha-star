@@ -24,6 +24,8 @@ struct GameState {
   std::vector<ecs::EntityView> entities;
   std::map<std::string, ui::DocumentView> ui;  // every document: shown or not, element texts
   int joints = 0;                              // living physics joints in the scene
+  std::string locale;                          // ctx.locale; empty without assets.locales
+  std::string music;                           // the music playing; empty when none
 };
 
 // Inject an action like a device would: a one-step tap, or held until released.

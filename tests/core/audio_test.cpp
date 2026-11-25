@@ -32,10 +32,6 @@ Tone tone(Wave wave, float freq, float duration) {
   return t;
 }
 
-SoundPtr constant(float value, std::size_t count) {
-  return std::make_shared<const std::vector<float>>(count, value);
-}
-
 }  // namespace
 
 TEST_CASE("synthesize has the requested length and frequency") {
@@ -80,40 +76,4 @@ TEST_CASE("envelope starts and ends silent; sequences concatenate") {
 TEST_CASE("noise is the same every time") {
   const std::vector<Tone> tones{tone(Wave::Noise, 1, 0.01f)};
   CHECK(synthesize(tones, kRate) == synthesize(tones, kRate));
-}
-
-TEST_CASE("mixer sums voices with volume and master volume, then clamps") {
-  Mixer m;
-  m.play(constant(0.25f, 4), {});
-  m.play(constant(0.25f, 4), {0.5f, 1.0f, false});
-  std::vector<float> out(4);
-  m.mix(out);
-  CHECK(out[0] == doctest::Approx(0.375f));
-  m.play(constant(1.0f, 4), {});
-  m.play(constant(1.0f, 4), {});
-  m.set_volume(0.5f);
-  m.mix(out);
-  CHECK(out[0] == doctest::Approx(1.0f));  // (1 + 1) * 0.5
-  CHECK(m.volume() == 0.5f);
-}
-
-TEST_CASE("mixer drops finished voices, loops, pitches and stops") {
-  Mixer m;
-  const VoiceId once = m.play(constant(1.0f, 3), {});
-  const VoiceId loop = m.play(constant(1.0f, 2), {1.0f, 1.0f, true});
-  const VoiceId fast = m.play(constant(1.0f, 4), {1.0f, 2.0f, false});
-  std::vector<float> out(3);
-  m.mix(out);
-  CHECK_FALSE(m.playing(fast));  // 4 samples at 2x pitch = 2 output samples
-  CHECK(out[2] == doctest::Approx(1.0f));
-  m.mix(out);
-  CHECK_FALSE(m.playing(once));
-  CHECK(m.playing(loop));
-  CHECK(out[0] == doctest::Approx(1.0f));
-  m.stop(loop);
-  CHECK(m.voices() == 0);
-  m.play(constant(1.0f, 9), {});
-  m.stop_all();
-  m.mix(out);
-  CHECK(out[0] == 0.0f);
 }

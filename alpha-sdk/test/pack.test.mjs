@@ -193,3 +193,17 @@ test("export names the map and the tileset it cannot use", async () => {
   const r2 = await exportPack(project(MAP_ASSETS, tsx));
   assert.match(r2.problems[0].message, /a\.tsx: save tilesets as JSON \(\.tsj\)/);
 });
+
+test("export copies sound files in { file, bus }, music and locale files", async () => {
+  const p = project(`{ sounds: { a: { file: "assets/a.ogg", bus: "voice" }, b: { synth: { wave: "sine", freq: 1, duration: 1 } } },
+                       images: { i: "assets/i.png" }, music: { theme: "assets/music/theme.mp3" },
+                       locales: { en: "assets/locales/en.json", pt: "assets/locales/pt.json" } }`,
+    { "assets/a.ogg": "OGG", "assets/i.png": "PNG", "assets/music/theme.mp3": "MP3",
+      "assets/locales/en.json": "{}", "assets/locales/pt.json": "{}" });
+  const { ok, problems } = await exportPack(p);
+  assert.deepEqual(problems, []);
+  assert.ok(ok);
+  for (const f of ["assets/a.ogg", "assets/music/theme.mp3", "assets/locales/en.json", "assets/locales/pt.json"]) {
+    assert.ok(fs.existsSync(path.join(p.out, f)), f);
+  }
+});

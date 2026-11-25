@@ -1,0 +1,20 @@
+{
+  "title": {
+    "hint": "press flap",
+    "settings": "S / START: settings"
+  },
+  "over": {
+    "title": "GAME OVER",
+    "score": "SCORE",
+    "best": "BEST",
+    "again": "PLAY AGAIN"
+  },
+  "settings": {
+    "title": "SETTINGS",
+    "music": "MUSIC",
+    "sfx": "EFFECTS",
+    "language": "LANGUAGE",
+    "back": "BACK",
+    "languageName": "ENGLISH"
+  }
+}

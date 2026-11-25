@@ -66,3 +66,37 @@ export function gameOverFadesTheWorld() {
   run.expect.count("fade").equals(1);
   run.expect.noErrors();
 }
+
+export function themeMusicStartsOnTheTitle() {
+  simulate(game, { seconds: 0.1 }).expect.music("theme");
+}
+
+export function titleSpeaksThePlayersLanguage() {
+  simulate(game, { seconds: 0.1 }).expect.text("title", "hint").equals("press flap");
+  const pt = simulate(game, { seconds: 0.1, settings: { locale: "pt" } });
+  pt.expect.text("title", "hint").equals("aperte para voar");
+}
+
+export function settingsMenuSetsVolumeAndLanguage() {
+  // S / Start opens the menu; the clicks land on its buttons (gamepad A on focus does the same).
+  const run = simulate(game, {
+    seconds: 0.3,
+    inputs: { settings: [0] },
+    clicks: { "settings#music-down": [5, 6], "settings#sfx-up": [7], "settings#language": [8] },
+  });
+  run.expect.scene("settings");
+  run.expect.text("settings", "music").equals("80%");
+  run.expect.text("settings", "lang").equals("PORTUGUÊS");
+  if (run.settings.volumes.music !== 0.8 || run.locale !== "pt") throw new Error(`settings not kept: ${JSON.stringify(run.settings)}`);
+}
+
+export function settingsBackReturnsToTitle() {
+  const run = simulate(game, { seconds: 0.3, inputs: { settings: [0] }, clicks: { "settings#back": [5] } });
+  run.expect.scene("title");
+}
+
+export function bestScoreIsKeptInTheSave() {
+  const run = simulate(game, { scene: "play", seconds: 3, saves: { main: { best: 7 } } });
+  run.expect.text("over", "best").equals("7");
+  if (run.saves.main.best !== 7) throw new Error(JSON.stringify(run.saves));
+}

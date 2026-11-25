@@ -24,7 +24,7 @@ build/gate/container at a time, `podman machine start` only for the Linux gate a
 | 8 | Camera (follow/zoom/shake/bounds) + sprite sheets & animation + atlas packing + tilemaps (Tiled import) | done (this commit; LOG 163-176) |
 | 9 | Particles, tint/alpha/blend, layers/parallax, world text, fullscreen & scaling modes | done (this commit; LOG 177-190) |
 | 10 | Physics: end events, raycasts/queries, layers/filters, materials, joints, one-way, CCD; tween/easing, vector math, parent/child, entity data, prefabs; per-asset pixelMode filtering | done (this commit; LOG 191-205) |
-| 11 | Audio: OGG/MP3, streaming music, buses, crossfade, pan; save slots/versioning, settings; localization; accessibility | todo |
+| 11 | Audio: OGG/MP3, streaming music, buses, crossfade, pan; save slots/versioning, settings; localization; accessibility | done (this commit; LOG 206-220) |
 | 12 | Portable IO (SDL_IOStream everywhere) + app lifecycle (suspend/resume, focus pause) | todo |
 | 13 | Performance: benchmarks, batch API, profiler in dev tools; fuzz JS/C++ boundary, soak tests, leak fixes | todo |
 | 14 | `alpha init` templates, docs site + API reference + agent docs, 5+ examples, LICENSE/semver/CHANGELOG/CONTRIBUTING | todo |

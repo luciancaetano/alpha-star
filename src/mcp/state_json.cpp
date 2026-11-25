@@ -45,6 +45,8 @@ Fields state_fields(const GameState& s) {
           {"fps", json::num(s.fps)},
           {"entities", json::array(entities)},
           {"joints", json::num(s.joints)},
+          {"locale", s.locale.empty() ? "null" : json::str(s.locale)},
+          {"music", s.music.empty() ? "null" : json::str(s.music)},
           {"ui", json::object(docs)}};
 }
 

@@ -1,0 +1,20 @@
+{
+  "title": {
+    "hint": "aperte para voar",
+    "settings": "S / START: ajustes"
+  },
+  "over": {
+    "title": "FIM DE JOGO",
+    "score": "PONTOS",
+    "best": "RECORDE",
+    "again": "JOGAR DE NOVO"
+  },
+  "settings": {
+    "title": "AJUSTES",
+    "music": "MÚSICA",
+    "sfx": "EFEITOS",
+    "language": "IDIOMA",
+    "back": "VOLTAR",
+    "languageName": "PORTUGUÊS"
+  }
+}

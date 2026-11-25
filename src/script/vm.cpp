@@ -1,6 +1,9 @@
 #include "script/vm.hpp"
 
 #include "script/asset_bindings.hpp"
+#include "script/audio_bindings.hpp"
+#include "script/prefs_bindings.hpp"
+#include "script/settings_bindings.hpp"
 #include "script/bundle_map.hpp"
 #include "script/camera_bindings.hpp"
 #include "script/effect_bindings.hpp"
@@ -28,6 +31,9 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
   engine->add_builtin("alpha:maps", embedded::kMaps);
   engine->add_builtin("alpha:tween", embedded::kTween);
   engine->add_builtin("alpha:physics", embedded::kPhysics);
+  engine->add_builtin("alpha:audio", embedded::kAudio);
+  engine->add_builtin("alpha:prefs", embedded::kPrefs);
+  engine->add_builtin("alpha:i18n", embedded::kI18n);
   engine->add_builtin("alpha:runtime", embedded::kRuntime);
   const Value global(ctx, JS_GetGlobalObject(ctx));
   Value natives(ctx, JS_NewObject(ctx));
@@ -35,6 +41,9 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
   install_system_bindings(ctx, natives.get());
   install_input_bindings(ctx, natives.get());
   install_asset_bindings(ctx, natives.get());
+  install_audio_bindings(ctx, natives.get());
+  install_prefs_bindings(ctx, natives.get());
+  install_settings_bindings(ctx, natives.get());
   install_instance_bindings(ctx, natives.get());
   install_ui_bindings(ctx, natives.get());
   install_sprite_bindings(ctx, natives.get());

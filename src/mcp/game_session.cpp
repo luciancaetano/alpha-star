@@ -59,6 +59,8 @@ GameState GameSession::state() {
     s.joints = world->physics().joints().count();
   }
   if (const ui::Ui* game_ui = host_.ui()) s.ui = game_ui->view();
+  s.locale = host_.locale();
+  s.music = host_.mixer().music_name();
   return s;
 }
 

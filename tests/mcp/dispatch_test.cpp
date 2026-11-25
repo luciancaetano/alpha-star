@@ -26,6 +26,8 @@ struct FakeSession final : Session {
     s.fps = 60;
     s.entities.push_back({7, {1.5f, 2}, 90, 1, {"bird"}, alpha::core::Vec2{0, -3}, "", "", 1.0f, std::nullopt, 0, R"({"hp":2})"});
     s.joints = 3;
+    s.locale = "pt";
+    s.music = "theme";
     s.ui["hud"] = {true, {{"score", "3"}}};
     return s;
   }
@@ -95,6 +97,7 @@ TEST_CASE("control: state reports scene, pause, entities and UI") {
   CHECK(line.find(R"("error":null)") != std::string::npos);
   CHECK(line.find(R"("frame":42)") != std::string::npos);
   CHECK(line.find(R"("joints":3)") != std::string::npos);
+  CHECK(line.find(R"("locale":"pt","music":"theme")") != std::string::npos);
   CHECK(line.find(R"({"id":7,"tags":["bird"],"pos":[1.5,2],"rotation":90,"z":1,"velocity":[0,-3],"animation":null,"layer":null,"alpha":1,"text":null,"particles":0,"data":{"hp":2}})") !=
         std::string::npos);
   CHECK(line.find(R"("ui":{"hud":{"shown":true,"texts":{"score":"3"}}})") != std::string::npos);

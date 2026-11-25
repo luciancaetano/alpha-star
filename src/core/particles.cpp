@@ -17,6 +17,15 @@ float pick(Span s, Random& random) { return s.max > s.min ? random.range(s.min, 
 
 }  // namespace
 
+int reduced_count(int n) { return static_cast<int>(std::ceil(static_cast<float>(n) * kReducedMotion)); }
+
+EmitterSpec reduced_motion(EmitterSpec spec) {
+  spec.rate *= kReducedMotion;
+  spec.burst = reduced_count(spec.burst);
+  spec.max = reduced_count(spec.max);
+  return spec;
+}
+
 Color mix(Color a, Color b, float t) {
   return {channel(lerp(a.r, b.r, t)), channel(lerp(a.g, b.g, t)), channel(lerp(a.b, b.b, t)),
           channel(lerp(a.a, b.a, t))};

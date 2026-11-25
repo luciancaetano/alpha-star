@@ -110,6 +110,40 @@ reload (like every entity); keep long-lived values in `ctx.state`. Tests read
 `simulate(...).entities(tag)` (pos, rotation, scale, alpha, data, velocity) and `.state`.
 MCP `game_state` adds `data` per entity and `joints`.
 
+## Audio, saves, settings, localization, accessibility
+
+```ts
+assets: {
+  sounds: { jump: "sfx/jump.ogg", line: { file: "vo/line1.mp3", bus: "voice" }, beep: { wave: "sine", freq: 880, duration: 0.1 } },
+  music: { theme: "music/theme.ogg" },                       // streamed, never loaded whole
+  locales: { en: "locales/en.json", pt: "locales/pt.json" },
+}
+config: { audio: { buses: ["ambience"] }, save: { version: 2, migrate: (d, from) => ({ ...d, gold: d.coins }) }, locale: "en" }
+
+ctx.audio.play("jump", { pan: -0.5 });                       // -1 left .. 1 right
+ctx.audio.music("theme", { loop: true, volume: 0.6, fadeIn: 1 });
+ctx.audio.crossfade("boss", 2); ctx.audio.stopMusic(1.5); ctx.audio.musicPlaying;
+ctx.audio.bus("music").volume = 0.5;                         // master / music / sfx / voice / config.audio.buses
+ctx.save.set("best", 9); ctx.save.slot("slot2").get("level", 1);
+ctx.locale = "pt"; ctx.t("coins", { count: 3 });            // "{count} moedas" via { one, other }
+ctx.input.rebind("jump", ["W", "GamepadA"]);
+ctx.settings.uiScale = 1.5; ctx.settings.highContrast = true; ctx.settings.reducedMotion = true;
+```
+
+Sounds (.wav/.ogg/.mp3) are decoded at boot; music is decoded a chunk at a time on the main
+thread while it plays (~0.1 ms per 60 Hz frame in a debug build), one track at a time (crossfades
+overlap two). Audio is output only: simulations never depend on it. Saves are versioned slot files
+(`save.json`, `save-<slot>.json`) written atomically (temp file + rename, previous file kept as
+`.bak`; a damaged file falls back to its `.bak` with a logged warning). Settings live in
+`settings.json` (bus volumes, locale, fullscreen, rebinds, uiScale, highContrast, reducedMotion)
+and are applied at boot; a value the game can no longer use is skipped with a warning.
+RmlUi elements with `data-t="key"` show `ctx.t(key)` and re-translate when the locale changes;
+`.high-contrast` is set on every document body; `uiScale` is RmlUi's dp ratio (size in `dp`).
+Reduced motion scales camera shake and particle counts to 1/4. World text draws UTF-8 ASCII +
+Latin-1 (others as `?`). Tests: `simulate(game, { settings: { locale: "pt" }, saves: { main: {...} } })`,
+then `run.music`, `run.locale`, `run.settings`, `run.saves`, `expect.music("theme")`. MCP
+`game_state` adds `locale` and `music`.
+
 ## Using alpha-star with an AI agent (MCP)
 
 `alpha mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server

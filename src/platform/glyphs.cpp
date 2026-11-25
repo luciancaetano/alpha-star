@@ -46,7 +46,7 @@ std::vector<FT_Byte> read_file(const std::filesystem::path& file) {
   return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
 }
 
-Bitmap render(FT_Face face, char c, core::Glyph& glyph, float ascent) {
+Bitmap render(FT_Face face, char32_t c, core::Glyph& glyph, float ascent) {
   if (FT_Load_Char(face, static_cast<FT_ULong>(c), FT_LOAD_RENDER) != 0) return {};
   const FT_GlyphSlot slot = face->glyph;
   const FT_Bitmap& bm = slot->bitmap;
@@ -112,8 +112,8 @@ core::FontAtlasPtr rasterize_font(const std::filesystem::path& file, int pixels)
   const float ascent = static_cast<float>(face->size->metrics.ascender) / 64.0f;
   atlas->line_height = static_cast<float>(face->size->metrics.height) / 64.0f;
   std::vector<Bitmap> bitmaps;
-  for (char c = core::kFirstGlyph; c <= core::kLastGlyph; ++c) {
-    bitmaps.push_back(render(face.get(), c, atlas->glyphs[static_cast<std::size_t>(c - core::kFirstGlyph)], ascent));
+  for (std::size_t i = 0; i < core::kGlyphCount; ++i) {
+    bitmaps.push_back(render(face.get(), core::glyph_code(i), atlas->glyphs[i], ascent));
   }
   atlas->image = paint(bitmaps, *atlas, pack(bitmaps, *atlas));
   return atlas;

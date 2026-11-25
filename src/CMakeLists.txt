@@ -11,6 +11,7 @@ add_library(alpha_core
   core/input.cpp
   core/log_ring.cpp
   core/mixer.cpp
+  core/music_track.cpp
   core/particles.cpp
   core/pad_slots.cpp
   core/random.cpp
@@ -35,7 +36,7 @@ if(NOT ALPHA_WITH_RUNTIME_DEPS)
 endif()
 
 # Script runtime JS is embedded in the binary: the player ships one executable.
-set(ALPHA_JS_FILES alpha alpha_test maps physics runtime tween)
+set(ALPHA_JS_FILES alpha alpha_test audio i18n maps physics prefs runtime tween)
 # Each file becomes adjacent raw literals of <= 8000 chars: MSVC rejects a single
 # literal over ~16 KB (C2026), while concatenated ones may reach 64 KB.
 foreach(js ${ALPHA_JS_FILES})
@@ -66,10 +67,13 @@ add_library(alpha_engine
   physics/queries.cpp
   platform/assets.cpp
   platform/audio_out.cpp
+  platform/decoders.cpp
   platform/frame_latency.cpp
   platform/gamepads.cpp
   platform/glyphs.cpp
   platform/log_file.cpp
+  platform/music_stream.cpp
+  platform/save_file.cpp
   platform/sdl_input.cpp
   platform/window.cpp
   render/quads.cpp
@@ -77,6 +81,7 @@ add_library(alpha_engine
   render/tessellate.cpp
   render/text_layout.cpp
   script/asset_bindings.cpp
+  script/audio_bindings.cpp
   script/error_overlay.cpp
   script/host.cpp
   script/vm.cpp
@@ -88,6 +93,8 @@ add_library(alpha_engine
   script/input_bindings.cpp
   script/joint_bindings.cpp
   script/physics_bindings.cpp
+  script/prefs_bindings.cpp
+  script/settings_bindings.cpp
   script/instance_bindings.cpp
   script/instances.cpp
   script/js_engine.cpp
@@ -105,11 +112,12 @@ add_library(alpha_engine
   ui/library.cpp
   ui/pad_nav.cpp
   ui/rml_renderer.cpp
+  ui/translate.cpp
   ui/ui.cpp)
 target_include_directories(alpha_engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnTT::EnTT qjs SDL3_image::SDL3_image
-  RmlUi::Core alpha_rmlui_sdl Freetype::Freetype)
+  RmlUi::Core alpha_rmlui_sdl Freetype::Freetype alpha_codecs)
 alpha_set_warnings(alpha_engine)
 
 # devtools: Dear ImGui engine dev tools (F1). Only with ALPHA_DEVTOOLS; a

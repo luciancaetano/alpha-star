@@ -1,0 +1,28 @@
+<rml>
+<head>
+  <link type="text/rcss" href="flappy.rcss"/>
+  <style>
+    .panel { margin-top: 110dp; }
+    .volume { display: block; margin: 10dp 0dp; }
+    .volume button { display: inline-block; width: 36dp; margin: 0dp 6dp; padding: 6dp 0dp; }
+    .volume .label { display: block; margin-bottom: 4dp; }
+    .value { display: inline-block; width: 48dp; }
+  </style>
+</head>
+<body>
+  <!-- Gamepad: D-pad / stick moves focus, A presses, B goes back. -->
+  <div class="panel">
+    <h1 data-t="settings.title">SETTINGS</h1>
+    <div class="volume">
+      <span class="label" data-t="settings.music">MUSIC</span>
+      <button id="music-down" autofocus>-</button><span id="music" class="value">100%</span><button id="music-up">+</button>
+    </div>
+    <div class="volume">
+      <span class="label" data-t="settings.sfx">EFFECTS</span>
+      <button id="sfx-down">-</button><span id="sfx" class="value">100%</span><button id="sfx-up">+</button>
+    </div>
+    <button id="language"><span data-t="settings.language">LANGUAGE</span>: <span id="lang" data-t="settings.languageName">ENGLISH</span></button>
+    <button id="back" data-t="settings.back">BACK</button>
+  </div>
+</body>
+</rml>

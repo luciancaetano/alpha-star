@@ -4,10 +4,13 @@
   <style>
     h1 { margin-top: 150dp; font-size: 36dp; }
     .hint { margin-top: 110dp; }
+    .small { margin-top: 12dp; font-size: 8dp; }
   </style>
 </head>
 <body>
   <h1 class="shadow">FLAPPY</h1>
-  <p class="hint shadow blink">press flap</p>
+  <!-- data-t: the engine fills these with ctx.t(key) in the current locale. -->
+  <p id="hint" class="hint shadow blink" data-t="title.hint">press flap</p>
+  <p class="small shadow" data-t="title.settings">S / START: settings</p>
 </body>
 </rml>

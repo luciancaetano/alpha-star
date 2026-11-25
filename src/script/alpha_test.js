@@ -2,7 +2,8 @@
 // Types: alpha-sdk/types/alpha.d.ts. Each simulate() is a fresh game instance
 // (own world, timers, seeded random, in-memory save), stepped at a fixed 1/60 s
 // with no window and no audio output, so the same options give the same run.
-import { createInstance, memorySave } from "alpha:runtime";
+import { createInstance } from "alpha:runtime";
+import { memoryStore } from "alpha:prefs";
 
 const N = globalThis.__native;
 const DT = 1 / 60;
@@ -118,12 +119,39 @@ function animationsOf(counts) {
   return out;
 }
 
+// opts.settings (a settings object, as ctx.settings persists it) and opts.saves
+// ({ main: data, slotName: data }) seed the run's in-memory files.
+function seedFiles(opts) {
+  const files = {};
+  if (opts.settings !== undefined) {
+    if (!opts.settings || typeof opts.settings !== "object") fail("simulate: settings must be an object like { locale: \"pt\", volumes: { music: 0.5 }, reducedMotion: true }");
+    files.settings = JSON.stringify(opts.settings);
+  }
+  for (const [slot, data] of Object.entries(opts.saves ?? {})) {
+    if (!data || typeof data !== "object") fail(`simulate: saves.${slot} must be an object (the slot's data)`);
+    files[slot === "main" ? "save" : `save-${slot}`] = JSON.stringify(data);
+  }
+  return files;
+}
+
+// The run's save slots after it: { main: data, slotName: data }.
+function savesOf(store) {
+  const out = {};
+  for (const [file, text] of Object.entries(store.files())) {
+    if (file !== "save" && !file.startsWith("save-")) continue;
+    const parsed = JSON.parse(text);
+    out[file === "save" ? "main" : file.slice(5)] = parsed && typeof parsed.version === "number" && parsed.data ? parsed.data : parsed;
+  }
+  return out;
+}
+
 // Runs the game in a fresh instance and returns what tests may inspect.
 function runGame(game, opts) {
   const frames = framesOf(opts.seconds);
   const id = N.instanceCreate();
   try {
-    const sim = createInstance(id, memorySave());
+    const store = memoryStore(seedFiles(opts));
+    const sim = createInstance(id, store);
     sim.boot(game, opts.scene, "simulate");
     const players = playerInputs(opts.inputs, sim);
     const clicks = clicksByFrame(opts.clicks);
@@ -141,7 +169,8 @@ function runGame(game, opts) {
     const counts = sim.within(() => N.tagCounts());
     return { frames, scene: sim.scene(), counts, animations: sim.within(() => animationsOf(counts)), ui: sim.within(() => N.uiView()),
       particles: sim.within(() => N.particles()), error,
-      snapshots: Object.fromEntries(Object.keys(counts).map((tag) => [tag, sim.entities(tag)])), state: sim.state() };
+      snapshots: Object.fromEntries(Object.keys(counts).map((tag) => [tag, sim.entities(tag)])), state: sim.state(),
+      music: sim.music(), locale: sim.locale(), settings: sim.settings(), saves: savesOf(store) };
   } finally {
     N.instanceDestroy(id);
   }
@@ -175,6 +204,9 @@ function expectations(r) {
         if (got !== name) fail(`expected "${tag}" playing animation "${name}" ${after}, got ${got ? `"${got}"` : "no animation (not a sheet sprite)"}${paused}`);
       },
     }),
+    music(name) {
+      if (r.music !== name) fail(`expected music ${JSON.stringify(name)} ${after}, got ${JSON.stringify(r.music)}${paused}`);
+    },
     shown(doc) {
       if (!r.ui[doc]?.shown) fail(`expected document "${doc}" shown ${after}; shown: ${Object.keys(r.ui).filter((k) => r.ui[k].shown).join(", ") || "(none)"}${paused}`);
     },
@@ -198,9 +230,10 @@ function expectations(r) {
 }
 
 export function simulate(game, opts) {
-  if (!opts || typeof opts !== "object") fail("simulate(game, { seconds, scene?, inputs?, clicks? }): options are required");
+  if (!opts || typeof opts !== "object") fail("simulate(game, { seconds, scene?, inputs?, clicks?, settings?, saves? }): options are required");
   const r = runGame(game, opts);
-  return { frames: r.frames, expect: expectations(r), state: r.state, entities: (tag) => r.snapshots[tag] ?? [] };
+  return { frames: r.frames, expect: expectations(r), state: r.state, entities: (tag) => r.snapshots[tag] ?? [],
+    music: r.music, locale: r.locale, settings: r.settings, saves: r.saves };
 }
 
 // Test runner support: names of the exported test functions, sorted.

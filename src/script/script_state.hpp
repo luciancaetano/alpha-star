@@ -33,12 +33,18 @@ struct ScriptState {
   core::Vec2 gravity;
   core::Vec2 view_size;  // config.size: what each scene's camera shows
   std::unique_ptr<ecs::World> world;
-  // ctx.save file: resolved from the game title when the runtime first reads it.
+  // The game's save.json path for its title; save slots and settings sit next
+  // to it. Empty for test instances (their saves live in memory).
   std::function<std::string(const std::string& title)> save_path_for;
-  std::string save_path;
   // Assets, preloaded at boot; file paths resolve against `asset_dir`.
   std::filesystem::path asset_dir;
-  std::map<std::string, core::SoundPtr, std::less<>> sounds;
+  struct Sound {
+    core::SoundPtr samples;
+    core::BusId bus = core::Mixer::kSfx;
+  };
+  std::map<std::string, Sound, std::less<>> sounds;
+  // assets.music: full paths, streamed when played (never preloaded).
+  std::map<std::string, std::string, std::less<>> music;
   core::PictureTable images;
   core::SheetTable sheets;
   // Decoded image files by full path: an atlas page or tileset is decoded once.
@@ -56,6 +62,11 @@ struct ScriptState {
   // ctx.window: written by the engine every frame (headless: as scripts set it).
   core::WindowState window;
   core::Mixer mixer;
+  // ctx.locale (mirrored for MCP state and dev tools; the runtime owns it).
+  std::string locale;
+  // ctx.settings.reducedMotion: camera shake and particle counts scaled by
+  // core::kReducedMotion.
+  bool reduced_motion = false;
   // Game UI (assets.ui documents), created at boot with config.size.
   std::unique_ptr<ui::Ui> ui;
 };

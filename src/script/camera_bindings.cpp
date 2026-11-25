@@ -5,8 +5,10 @@
 #include <string>
 
 #include "core/error.hpp"
+#include "core/particles.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
+#include "script/spec_fields.hpp"
 #include "script/world_bindings.hpp"
 
 namespace alpha::script {
@@ -16,15 +18,6 @@ namespace {
 core::Camera& camera(ScriptState& s) { return world_of(s).camera(); }
 
 // argv[i] as a number in [lo, hi] (`what` names it in the error).
-float ranged(JSContext* ctx, JSValueConst v, const std::string& what, double lo, double hi) {
-  const double x = number_arg(ctx, v, what);
-  if (!(x >= lo && x <= hi)) {
-    throw core::Error(what + " must be in [" + std::to_string(lo) + ", " + std::to_string(hi) + "], got " +
-                      std::to_string(x));
-  }
-  return static_cast<float>(x);
-}
-
 JSValue camera_get(JSContext* ctx, ScriptState& s, JSValueConst*) {
   const core::Camera& c = camera(s);
   JSValue out = JS_NewArray(ctx);
@@ -60,7 +53,8 @@ JSValue camera_follow(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 
 // cameraShake(intensity, seconds); 0 seconds stops a shake.
 JSValue camera_shake(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  core::start_shake(camera(s), ranged(ctx, argv[0], "camera.shake intensity", 0.0, 10000.0),
+  const float intensity = ranged(ctx, argv[0], "camera.shake intensity", 0.0, 10000.0);
+  core::start_shake(camera(s), s.reduced_motion ? intensity * core::kReducedMotion : intensity,
                     ranged(ctx, argv[1], "camera.shake seconds", 0.0, 60.0));
   return JS_UNDEFINED;
 }

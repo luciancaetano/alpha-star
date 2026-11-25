@@ -2,6 +2,7 @@
 import { game } from "./alpha";
 import over from "./scenes/over";
 import play from "./scenes/play";
+import settings from "./scenes/settings";
 import title from "./scenes/title";
 import { WORLD } from "./tuning";
 
@@ -16,12 +17,14 @@ export default game({
     actions: {
       flap: ["Space", "MouseLeft", "GamepadA", "GamepadB", "GamepadX", "GamepadY", "GamepadRT"],
       restart: ["R"],
+      settings: ["S", "GamepadStart", "GamepadBack"],
     },
+    locale: "en",
   },
   start: "title",
-  scenes: { title, play, over },
+  scenes: { title, play, over, settings },
   assets: {
-    // Procedural: no audio files to ship. A string here would load a WAV instead.
+    // Procedural: no audio files to ship. A file path (.wav/.ogg/.mp3) here would load one instead.
     sounds: {
       flap: { wave: "square", freq: [300, 600], duration: 0.08, volume: 0.25 },
       point: [
@@ -29,9 +32,18 @@ export default game({
         { wave: "triangle", freq: 1320, duration: 0.12, volume: 0.4 },
       ],
     },
+    // Streamed while it plays (never loaded whole). CC0, made by tools/make_music.py.
+    music: { theme: "assets/music/theme.ogg" },
+    // ctx.t(key) and data-t="key" in the .rml documents.
+    locales: { en: "assets/locales/en.json", pt: "assets/locales/pt.json" },
     // Fonts are used by name in the .rcss (font-family: pixel). OFL, see assets/fonts/OFL.txt.
     fonts: { pixel: "assets/fonts/PressStart2P-Regular.ttf" },
     // Each document's own <link>/src files (flappy.rcss) are packed with it.
-    ui: { title: "assets/ui/title.rml", hud: "assets/ui/hud.rml", over: "assets/ui/over.rml" },
+    ui: {
+      title: "assets/ui/title.rml",
+      hud: "assets/ui/hud.rml",
+      over: "assets/ui/over.rml",
+      settings: "assets/ui/settings.rml",
+    },
   },
 });

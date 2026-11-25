@@ -10,6 +10,9 @@
 import { joinPath, loadMap, mapView, spawnLayers } from "alpha:maps";
 import { aliveOf, bodyOf, contactOf, physicsCtx, tweenAccess } from "alpha:physics";
 import { makeTweens } from "alpha:tween";
+import { defineBuses, loadAudio, makeAudio } from "alpha:audio";
+import { makeI18n } from "alpha:i18n";
+import { SETTINGS_DEFAULTS, fileStore, jsonSafe, makeSave, readSettings, saveConfig, writeSettings } from "alpha:prefs";
 
 const N = globalThis.__native;
 
@@ -84,10 +87,7 @@ function fileEntry(entry, what, fallback) {
 
 // Every asset is loaded (or synthesized) before the first scene starts.
 function preload(s, assets, pixel) {
-  for (const [name, sound] of Object.entries(assets.sounds ?? {})) {
-    if (typeof sound === "string") N.loadSound(name, sound);
-    else N.synthSound(name, sound);
-  }
+  loadAudio(assets);
   const atlas = atlasOf();
   const images = Object.entries(assets.images ?? {}).map(([name, e]) => [name, fileEntry(e, `assets.images.${name}`, pixel)]);
   for (const [name, e] of images) N.loadImage(name, ...atlas(e.file, e.pixelMode), e.pixelMode);
@@ -106,6 +106,8 @@ function preload(s, assets, pixel) {
     N.loadFont(name, e.file, e.pixelMode);
   }
   for (const [name, file] of Object.entries(assets.ui ?? {})) N.loadUi(name, file);
+  s.i18n.load(assets.locales, s.game.config.locale);
+  s.defaultLocale = s.i18n.locale;
 }
 
 // ctx.ui errors start with the call, e.g. `ui.set("hud", "scroe"): no element ...`.
@@ -115,16 +117,6 @@ function uiCall(what, args, fn) {
   } catch (e) {
     fail(`ui.${what}(${args.map((a) => JSON.stringify(a)).join(", ")}): ${e.message}`);
   }
-}
-
-// ctx.save backends: the engine's save file, or memory only (test runs).
-export const fileSave = {
-  read: (title) => JSON.parse(N.saveRead(title) || "{}"),
-  write: (data) => N.saveWrite(JSON.stringify(data)),
-};
-
-export function memorySave() {
-  return { read: () => ({}), write: () => {} };
 }
 
 function makeEntities() {
@@ -221,17 +213,6 @@ function spawnWith(s, spec) {
   return s.entities.entity(id);
 }
 
-function voice(id) {
-  return {
-    get playing() { return N.voicePlaying(id); },
-    stop: () => N.stopVoice(id),
-  };
-}
-
-function playArgs(opts = {}) {
-  return [opts.volume ?? 1, opts.pitch ?? 1, Boolean(opts.loop)];
-}
-
 // ctx.input for player p (1..4), or any player (0).
 function playerInput(p) {
   return {
@@ -247,10 +228,28 @@ function checkPlayer(n, what) {
   return n;
 }
 
-function makeInput() {
+function checkAction(s, action, what) {
+  const actions = s.game.config.actions ?? {};
+  if (!Object.hasOwn(actions, action)) fail(`${what}("${action}"): not in config.actions; actions: ${Object.keys(actions).join(", ") || "(none)"}`);
+  return action;
+}
+
+// rebind: the player's own inputs for an action, persisted in settings (bindings).
+function makeInput(s) {
   const players = [1, 2, 3, 4].map(playerInput);
   return {
     ...playerInput(0),
+    rebind(action, inputs) {
+      checkAction(s, action, "input.rebind");
+      try {
+        N.bind("actions", action, inputs);
+      } catch (e) {
+        fail(`input.rebind("${action}", ${JSON.stringify(inputs)}): ${e.message}`);
+      }
+      s.settings.bindings[action] = [...inputs];
+      persistSettings(s);
+    },
+    bindings: (action) => [...(s.settings.bindings[checkAction(s, action, "input.bindings")] ?? s.game.config.actions[action])],
     mouse: () => N.mouse(),
     player: (n) => players[checkPlayer(n, `input.player(${n})`) - 1],
     players: () => N.players(),
@@ -305,6 +304,88 @@ function mapOf(s, name, what) {
   return map;
 }
 
+function persistSettings(s) {
+  writeSettings(s.store, s.settings);
+}
+
+// data-t elements of the game's documents show ctx.t(key) in the current locale.
+function syncLocale(s) {
+  N.localeSet(s.i18n.locale ?? "");
+  const keys = N.uiKeys();
+  if (keys.length) N.uiTranslate(keys, keys.map((k) => s.i18n.t(k)));
+}
+
+function applyAccess(s) {
+  const st = s.settings;
+  N.uiAccess(st.uiScale, st.highContrast);
+  N.reducedMotion(st.reducedMotion);
+}
+
+// Settings from the player's file are applied leniently: a value this game
+// cannot use (a bus or locale it no longer has) is skipped with a warning.
+function applySettings(s) {
+  const st = s.settings;
+  const skip = (what, e) => console.warn(`settings: ${what} ignored (${e.message})`);
+  for (const [bus, v] of Object.entries(st.volumes ?? {})) {
+    try { N.busVolume(bus, v); } catch (e) { skip(`volumes.${bus}`, e); }
+  }
+  for (const [action, inputs] of Object.entries(st.bindings ?? {})) {
+    try { N.bind("actions", checkAction(s, action, "settings.bindings"), inputs); } catch (e) { skip(`bindings.${action}`, e); }
+  }
+  if (typeof st.locale === "string") {
+    try { s.i18n.set(st.locale); } catch (e) { skip("locale", e); }
+  }
+  if (typeof st.fullscreen === "boolean") N.windowFullscreen(st.fullscreen);
+  try { applyAccess(s); } catch (e) {
+    skip("uiScale/highContrast/reducedMotion", e);
+    Object.assign(st, { uiScale: 1, highContrast: false, reducedMotion: false });
+    applyAccess(s);
+  }
+  syncLocale(s);
+}
+
+function flagSetting(s, key) {
+  return {
+    get: () => s.settings[key],
+    set(v) {
+      if (typeof v !== "boolean") fail(`settings.${key} must be true or false, got ${show(v)}`);
+      s.settings[key] = v;
+      applyAccess(s);
+      persistSettings(s);
+    },
+  };
+}
+
+// ctx.settings: accessibility flags set here; volumes, locale, fullscreen and
+// bindings are read here and set where they live (audio.bus, ctx.locale,
+// window.fullscreen, input.rebind), which persists them too.
+function makeSettings(s) {
+  const api = {
+    get uiScale() { return s.settings.uiScale; },
+    set uiScale(v) {
+      if (typeof v !== "number" || !(v >= 0.5 && v <= 3)) fail(`settings.uiScale must be a number in [0.5, 3], got ${show(v)}`);
+      s.settings.uiScale = v;
+      applyAccess(s);
+      persistSettings(s);
+    },
+    get volumes() { return Object.fromEntries(N.buses().map((b) => [b, N.busVolume(b)])); },
+    get locale() { return s.i18n.locale; },
+    get fullscreen() { return N.windowGet()[0]; },
+    get bindings() { return JSON.parse(JSON.stringify(s.settings.bindings)); },
+    reset() {
+      for (const b of N.buses()) N.busVolume(b, 1);
+      for (const [action, inputs] of Object.entries(s.game.config.actions ?? {})) N.bind("actions", action, inputs);
+      if (s.defaultLocale) s.i18n.set(s.defaultLocale);
+      s.settings = { ...SETTINGS_DEFAULTS, volumes: {}, bindings: {} };
+      applyAccess(s);
+      syncLocale(s);
+      persistSettings(s);
+    },
+  };
+  for (const key of ["highContrast", "reducedMotion"]) Object.defineProperty(api, key, { ...flagSetting(s, key), enumerable: true });
+  return api;
+}
+
 // The ctx object a game's scenes see. `s` is the instance's mutable state.
 function makeCtx(s) {
   const addTimer = (id, fn) => {
@@ -316,19 +397,22 @@ function makeCtx(s) {
     get dt() { return s.stepDt; },
     get time() { return s.sceneTime; },
     state: undefined,
-    input: makeInput(),
+    input: makeInput(s),
     random: {
       range: (min, max) => N.random(min, max, false),
       int: (min, max) => N.random(min, max, true),
       pick: (items) => items[N.random(0, items.length - 1, true)],
     },
-    save: {
-      get: (key, fallback) => (Object.hasOwn(s.saveData, key) ? s.saveData[key] : fallback),
-      set(key, value) {
-        s.saveData[key] = value;
-        s.save.write(s.saveData);
-      },
+    get save() { return s.save; },
+    settings: makeSettings(s),
+    get locale() { return s.i18n.locale; },
+    set locale(name) {
+      s.i18n.set(name);
+      s.settings.locale = name;
+      persistSettings(s);
+      syncLocale(s);
     },
+    t: (key, params) => s.i18n.t(key, params),
     ui: {
       show: (name) => uiCall("show", [name], () => N.uiShow(name)),
       hide: (name) => uiCall("hide", [name], () => N.uiHide(name)),
@@ -338,20 +422,18 @@ function makeCtx(s) {
         s.uiHandlers.set(uiCall("on", [name, id, event], () => N.uiOn(name, id, event)), fn);
       },
     },
-    audio: {
-      play: (sound, opts) => voice(N.playSound(sound, ...playArgs(opts))),
-      tone: (synth, opts) => voice(N.playTone(synth, ...playArgs(opts))),
-      stopAll: () => N.stopAll(),
-      get volume() { return s.masterVolume; },
-      set volume(v) {
-        N.setVolume(v);
-        s.masterVolume = v;
-      },
-    },
+    audio: makeAudio((bus, v) => {
+      s.settings.volumes[bus] = v;
+      persistSettings(s);
+    }),
     camera: makeCamera(),
     window: {
       get fullscreen() { return N.windowGet()[0]; },
-      set fullscreen(v) { N.windowFullscreen(Boolean(v)); },
+      set fullscreen(v) {
+        N.windowFullscreen(Boolean(v));
+        s.settings.fullscreen = Boolean(v);
+        persistSettings(s);
+      },
       get size() { const w = N.windowGet(); return [w[1], w[2]]; },
     },
     spawn: (spec) => spawnWith(s, spec),
@@ -432,19 +514,6 @@ function dispatch(s, rows, kind) {
   }
 }
 
-// True for values that survive JSON.stringify + JSON.parse unchanged: null,
-// booleans, finite numbers, strings, arrays and plain objects of those.
-function jsonSafe(v, depth = 0) {
-  if (depth > 64) return false;
-  if (v === null || typeof v === "string" || typeof v === "boolean") return true;
-  if (typeof v === "number") return Number.isFinite(v);
-  if (Array.isArray(v)) return v.every((x) => jsonSafe(x, depth + 1));
-  if (typeof v !== "object") return false;
-  const proto = Object.getPrototypeOf(v);
-  if (proto !== Object.prototype && proto !== null) return false;
-  return Object.values(v).every((x) => jsonSafe(x, depth + 1));
-}
-
 // The running scene as JSON text another run of the game can start from:
 // {scene, params, state?}; state only when it is JSON-safe. "" when there is
 // no scene or its params are not JSON-safe (then the next run starts fresh).
@@ -472,8 +541,12 @@ function bootGame(s, ctx, g, start, what, from) {
   if (c.deadzone !== undefined) N.deadzone(c.deadzone);
   for (const [axis, sources] of Object.entries(c.axes ?? {})) N.bind("axes", axis, sources);
   defineLayers(c.layers ?? {});
+  defineBuses(c.audio);
+  s.store.open(c.title ?? "alpha-star");
+  s.save = makeSave(s.store, saveConfig(c.save));
   preload(s, s.game.assets ?? {}, pixelOf(c, "config", true));
-  s.saveData = s.save.read(c.title ?? "alpha-star");
+  s.settings = readSettings(s.store);
+  applySettings(s);
   const at = startOf(s, start, what, from);
   enter(s, ctx, at.scene, at.params, at);
   return { title: c.title ?? "alpha-star", size: c.size, background: c.background ?? "#000000", window: c.window };
@@ -539,11 +612,12 @@ function within(id, fn) {
   }
 }
 
-// One game instance. `id` is its native instance; `save` its ctx.save backend.
-export function createInstance(id, save) {
+// One game instance. `id` is its native instance; `store` keeps its saves and
+// settings (fileStore() for the engine's game, memoryStore() for test runs).
+export function createInstance(id, store) {
   const s = {
     game: null, current: null, currentName: null, currentParams: undefined, pending: null, handlers: [], uiHandlers: new Map(),
-    saveData: {}, save, sceneTime: 0, stepDt: 1 / 60, masterVolume: 1,
+    store, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60,
     timers: new Map(), entities: makeEntities(), maps: new Map(), tweens: makeTweens(tweenAccess),
   };
   const ctx = makeCtx(s);
@@ -560,12 +634,16 @@ export function createInstance(id, save) {
     // For headless test runs: living entities with `tag` (oldest first) and the scene state, as plain data.
     entities: (tag) => within(id, () => N.findAll(tag).map((e) => snapshotOf(s.entities.entity(e)))),
     state: () => (jsonSafe(ctx.state) ? JSON.parse(JSON.stringify(ctx.state ?? null)) : undefined),
+    // Audio and settings as plain data (headless test runs).
+    music: () => within(id, () => N.musicName()),
+    locale: () => s.i18n.locale,
+    settings: () => within(id, () => ({ ...JSON.parse(JSON.stringify(s.settings)), volumes: ctx.settings.volumes, locale: s.i18n.locale })),
   };
 }
 
 // ---- host entry points (the engine's own game, instance 0) -------------------
 
-const main = createInstance(0, fileSave);
+const main = createInstance(0, fileStore());
 
 // from: JSON text from carried() of the run this one replaces, or "".
 export function boot(g, from) {

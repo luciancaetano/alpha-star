@@ -51,39 +51,37 @@ JSValue advance_timers(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return new_ids(ctx, s.timers.advance(number_arg(ctx, argv[0], "dt")));
 }
 
-JSValue save_read(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  s.save_path = s.save_path_for(string_arg(ctx, argv[0], "config.title"));
-  std::ifstream file(s.save_path, std::ios::binary);
-  std::ostringstream text;
-  if (file) text << file.rdbuf();
-  return JS_NewString(ctx, text.str().c_str());
-}
-
-JSValue save_write(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  const std::string json = string_arg(ctx, argv[0], "save data");
-  std::ofstream file(s.save_path, std::ios::binary | std::ios::trunc);
-  if (!(file << json)) throw core::Error("cannot write save file \"" + s.save_path + "\"");
-  return JS_UNDEFINED;
+void write_log(JSContext* ctx, core::LogLine line) {
+  std::fputs(core::format_line(line).c_str(), stderr);  // shipping: stderr is the log file
+  instances_of(ctx).log().push(line.level, std::move(line.text));
 }
 
 // log(level, text): console.* from any instance; stderr plus the dev tools log.
 JSValue log(JSContext* ctx, ScriptState&, JSValueConst* argv) {
   const auto level = static_cast<int>(number_arg(ctx, argv[0], "log level"));
   if (level < 0 || level > 2) throw core::Error("log level must be 0, 1 or 2");
-  const auto lvl = static_cast<core::LogLevel>(level);
-  std::string text = string_arg(ctx, argv[1], "log text");
-  core::LogLine line{lvl, std::move(text)};
-  std::fputs(core::format_line(line).c_str(), stderr);  // shipping: stderr is the log file
-  instances_of(ctx).log().push(line.level, std::move(line.text));
+  write_log(ctx, {static_cast<core::LogLevel>(level), string_arg(ctx, argv[1], "log text")});
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 9> kNatives{{
+// devWarn(text): a warning for the game's developer (missing translations, ...);
+// logged by debug-tools builds only, players never see it.
+JSValue dev_warn(JSContext* ctx, ScriptState&, JSValueConst* argv) {
+#if ALPHA_DEBUG_TOOLS
+  write_log(ctx, {core::LogLevel::Warn, string_arg(ctx, argv[0], "warning")});
+#else
+  (void)ctx;
+  (void)argv;
+#endif
+  return JS_UNDEFINED;
+}
+
+constexpr std::array<Native, 8> kNatives{{
     {"configure", guarded<configure>, 5},     {"random", guarded<random>, 3},
     {"timerEvery", guarded<timer_every>, 1},
     {"timerAfter", guarded<timer_after>, 1},  {"clearTimers", guarded<clear_timers>, 0},
-    {"advanceTimers", guarded<advance_timers>, 1}, {"saveRead", guarded<save_read>, 1},
-    {"saveWrite", guarded<save_write>, 1},    {"log", guarded<log>, 2},
+    {"advanceTimers", guarded<advance_timers>, 1}, {"log", guarded<log>, 2},
+    {"devWarn", guarded<dev_warn>, 1},
 }};
 
 }  // namespace

@@ -143,7 +143,7 @@ core::EmitterSpec parse_emitter(JSContext* ctx, JSValueConst obj, const ScriptSt
   colors(ctx, obj, out);
   out.look = particle_look(ctx, obj, s);
   parse_look(ctx, obj, kEmitter, out.look);
-  return out;
+  return s.reduced_motion ? core::reduced_motion(out) : out;
 }
 
 }  // namespace alpha::script

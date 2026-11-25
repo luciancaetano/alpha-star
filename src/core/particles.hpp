@@ -53,6 +53,14 @@ class Emitter {
   bool spent_ = false;  // the first burst went out
 };
 
+// Reduced motion (an accessibility setting): particle counts and camera
+// shake are scaled by this.
+inline constexpr float kReducedMotion = 0.25f;
+// n scaled by kReducedMotion, rounded up so any n > 0 stays > 0.
+int reduced_count(int n);
+// rate, burst and max scaled by kReducedMotion.
+EmitterSpec reduced_motion(EmitterSpec spec);
+
 // a -> b by t in [0, 1], per channel.
 Color mix(Color a, Color b, float t);
 // c multiplied by tint, its alpha also by `alpha` (0..1).

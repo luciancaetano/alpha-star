@@ -1,5 +1,7 @@
 #include "script/spec_fields.hpp"
 
+#include <sstream>
+
 namespace alpha::script {
 
 bool has(JSContext* ctx, JSValueConst obj, const char* name) {
@@ -14,6 +16,16 @@ core::Color color_arg(JSContext* ctx, JSValueConst v, const std::string& path) {
   const auto parsed = core::parse_color(text);
   if (!parsed) throw core::Error(kSpawn + path + " must be a color like \"#73bf2e\" or \"#ffffff80\", got \"" + text + "\"");
   return *parsed;
+}
+
+float ranged(JSContext* ctx, JSValueConst v, const std::string& what, double lo, double hi) {
+  const double x = number_arg(ctx, v, what);
+  if (!(x >= lo && x <= hi)) {
+    std::ostringstream out;
+    out << what << " must be in [" << lo << ", " << hi << "], got " << x;
+    throw core::Error(out.str());
+  }
+  return static_cast<float>(x);
 }
 
 float number_or(JSContext* ctx, JSValueConst obj, const char* name, const std::string& path, float fallback) {

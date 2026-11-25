@@ -3,9 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 
-#include <cstdint>
 #include <filesystem>
-#include <fstream>
 #include <memory>
 #include <vector>
 
@@ -16,46 +14,7 @@
 using namespace alpha;
 namespace fs = std::filesystem;
 
-namespace {
-
-template <typename T>
-void put(std::ofstream& f, T v) {
-  f.write(reinterpret_cast<const char*>(&v), sizeof(T));
-}
-
-// 16-bit PCM WAV with `frames` frames of `channels` channels, all = value.
-fs::path write_wav(const char* name, int rate, std::uint16_t channels, std::int16_t value, int frames) {
-  const fs::path path = fs::temp_directory_path() / name;
-  std::ofstream f(path, std::ios::binary);
-  const auto data = static_cast<std::uint32_t>(frames * channels * 2);
-  f.write("RIFF", 4);
-  put<std::uint32_t>(f, 36 + data);
-  f.write("WAVEfmt ", 8);
-  put<std::uint32_t>(f, 16);
-  put<std::uint16_t>(f, 1);
-  put<std::uint16_t>(f, channels);
-  put<std::uint32_t>(f, static_cast<std::uint32_t>(rate));
-  put<std::uint32_t>(f, static_cast<std::uint32_t>(rate * channels * 2));
-  put<std::uint16_t>(f, static_cast<std::uint16_t>(channels * 2));
-  put<std::uint16_t>(f, 16);
-  f.write("data", 4);
-  put<std::uint32_t>(f, data);
-  for (int i = 0; i < frames * channels; ++i) put<std::int16_t>(f, value);
-  return path;
-}
-
-}  // namespace
-
-TEST_CASE("load_wav resamples to mono 48 kHz floats") {
-  const fs::path path = write_wav("alpha_test.wav", 24000, 2, 16384, 2400);
-  const auto samples = platform::load_wav(path.string());
-  CHECK(samples.size() == doctest::Approx(4800).epsilon(0.01));
-  CHECK(samples[samples.size() / 2] == doctest::Approx(0.5f).epsilon(0.01));
-  fs::remove(path);
-}
-
 TEST_CASE("asset loaders name the file and the accepted formats on failure") {
-  CHECK_THROWS_WITH_AS(platform::load_wav("no/such.wav"), doctest::Contains("no/such.wav"), core::Error);
   CHECK_THROWS_WITH_AS(platform::load_image("no/such.png"), doctest::Contains("PNG, JPG or BMP"),
                        core::Error);
 }
@@ -78,7 +37,7 @@ TEST_CASE("load_image decodes PNG into RGBA rows") {
   fs::remove(path);
 }
 
-TEST_CASE("audio out tops up the device queue from the mixer") {
+TEST_CASE("audio out tops up the device queue from the mixer, in stereo frames") {
   SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "dummy");
   REQUIRE(SDL_InitSubSystem(SDL_INIT_AUDIO));
   {

@@ -9,8 +9,11 @@
 #include <RmlUi/Core/StringUtilities.h>
 
 #include <filesystem>
+#include <set>
+#include <utility>
 
 #include "core/error.hpp"
+#include "ui/translate.hpp"
 
 namespace alpha::ui {
 
@@ -66,7 +69,27 @@ Rml::ElementDocument* Ui::load(const std::string& path) {
   Rml::ElementDocument* doc = context_->LoadDocument(std::filesystem::path(path).generic_string());
   if (!doc) throw core::Error("cannot load " + path + ": " + take_messages());
   doc->AddEventListener(Rml::EventId::Click, &listener_);
+  apply_translations(doc, translations_);
+  doc->SetClass("high-contrast", high_contrast_);
   return doc;
+}
+
+std::vector<std::string> Ui::translation_keys() const {
+  std::set<std::string> keys;
+  for (const auto& [name, d] : documents_) collect_translation_keys(d.doc, keys);
+  return {keys.begin(), keys.end()};
+}
+
+void Ui::translate(std::map<std::string, std::string> texts) {
+  translations_ = std::move(texts);
+  for (const auto& [name, d] : documents_) apply_translations(d.doc, translations_);
+}
+
+void Ui::accessibility(float scale, bool high_contrast) {
+  scale_ = scale;
+  high_contrast_ = high_contrast;
+  context_->SetDensityIndependentPixelRatio(scale);
+  for (const auto& [name, d] : documents_) d.doc->SetClass("high-contrast", high_contrast);
 }
 
 void Ui::add(const std::string& name, const std::string& path) {

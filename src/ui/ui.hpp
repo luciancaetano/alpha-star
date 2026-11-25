@@ -61,6 +61,15 @@ class Ui {
   std::map<std::string, DocumentView> view() const;
   // The logical screen changed size (scaling "expand").
   void resize(int width, int height);
+  // data-t="key" elements: every key the documents use, and their texts (kept,
+  // so documents reloaded later show them too).
+  std::vector<std::string> translation_keys() const;
+  void translate(std::map<std::string, std::string> texts);
+  // Accessibility: `scale` = RmlUi dp ratio (sizes in dp grow with it);
+  // high contrast = class "high-contrast" on every document's body.
+  void accessibility(float scale, bool high_contrast);
+  float scale() const { return scale_; }
+  bool high_contrast() const { return high_contrast_; }
 
   // Engine side: drawing and input (see ui/input.hpp).
   void render(SDL_Renderer* sdl);
@@ -117,6 +126,9 @@ class Ui {
   bool gamepad_last_ = false;
   std::uint32_t next_handler_ = 1;
   std::vector<std::uint32_t> events_;
+  std::map<std::string, std::string> translations_;
+  float scale_ = 1.0f;
+  bool high_contrast_ = false;
 };
 
 }  // namespace alpha::ui

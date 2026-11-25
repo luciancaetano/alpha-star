@@ -18,24 +18,6 @@ namespace {
 
 }  // namespace
 
-std::vector<float> load_wav(const std::string& path) {
-  SDL_AudioSpec spec{};
-  Uint8* data = nullptr;
-  Uint32 length = 0;
-  if (!SDL_LoadWAV(path.c_str(), &spec, &data, &length)) fail("cannot load sound (WAV only)", path);
-  const SDL_AudioSpec mono{SDL_AUDIO_F32, 1, core::Mixer::kSampleRate};
-  Uint8* converted = nullptr;
-  int converted_length = 0;
-  const bool ok = SDL_ConvertAudioSamples(&spec, data, static_cast<int>(length), &mono, &converted,
-                                          &converted_length);
-  SDL_free(data);
-  if (!ok) fail("cannot convert sound", path);
-  std::vector<float> samples(static_cast<std::size_t>(converted_length) / sizeof(float));
-  std::memcpy(samples.data(), converted, samples.size() * sizeof(float));
-  SDL_free(converted);
-  return samples;
-}
-
 core::Image load_image(const std::string& path) {
   SDL_Surface* loaded = IMG_Load(path.c_str());
   if (!loaded) fail("cannot load image (PNG, JPG or BMP)", path);

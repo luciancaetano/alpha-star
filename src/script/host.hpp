@@ -96,6 +96,8 @@ class Host {
 
   // Audio produced by the game; the platform layer drains it every frame.
   core::Mixer& mixer() { return vm_->main().mixer; }
+  // ctx.locale of the game; empty without assets.locales.
+  const std::string& locale() const { return vm_->main().locale; }
   bool paused() const { return !error_.empty(); }
   const std::string& error() const { return error_; }
 
