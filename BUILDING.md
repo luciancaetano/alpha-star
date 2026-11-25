@@ -36,7 +36,7 @@ change, restage it or games will fail against the old engine:
 
 ```powershell
 python tools/stage_engine.py      # or: make sdk-engine
-make deploy-engine                # all of it: engines, templates, skills, docs site, notices check, SDK tests
+make deploy-engine                # all of it: Windows + Linux engines (container), templates, skills, docs site, notices check, SDK tests
 ```
 
 It builds `release` and `shipping` and copies them into `alpha-sdk/engine/`, under the resource guard.

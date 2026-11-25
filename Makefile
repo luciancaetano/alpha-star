@@ -46,10 +46,11 @@ sdk-engine:
 sdk-engine-linux:
 	$(PYTHON) tools/stage_engine.py --linux
 
-# Prepare alpha-sdk/ for use and release in one step: build + stage the release/shipping engines,
-# mirror the examples into templates, copy skills/ in, regenerate the docs site, check the
-# third-party notices, then run the SDK tests (they verify templates and docs are in sync).
-deploy-engine: sdk-engine
+# Prepare alpha-sdk/ for use and release in one step: build + stage the release/shipping engines
+# for this OS and for Linux (Linux ones in the podman/docker container), mirror the examples into
+# templates, copy skills/ in, regenerate the docs site, check the third-party notices, then run
+# the SDK tests (they verify templates and docs are in sync).
+deploy-engine: sdk-engine sdk-engine-linux
 	npm --prefix alpha-sdk ci
 	npm --prefix alpha-sdk run templates
 	npm --prefix alpha-sdk run prepack

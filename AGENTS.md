@@ -40,7 +40,7 @@ make build-debug | build-prod | run-debug | debug   # debug = run under VS/lldb/
 make flappy                                         # build engine + examples/flappy, then play
                                                     # examples/platformer: sheets, Tiled map, camera
 make sdk-engine | sdk-engine-linux                  # stage release engine into alpha-sdk/engine/
-make deploy-engine                                  # sdk-engine + templates + skills + docs site + notices check + SDK tests
+make deploy-engine                                  # sdk-engine + sdk-engine-linux + templates + skills + docs site + notices check + SDK tests
 make gate                                           # full Windows gate (tools/gate.py, resource-guarded)
 make test                                           # tests only (ctest --preset dev under resource_guard)
 make linux-gate                                     # full gate in the Linux container: run on the dedicated Linux PC, not this one
