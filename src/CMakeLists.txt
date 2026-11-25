@@ -34,6 +34,7 @@ add_library(alpha_engine
   physics/physics_world.cpp
   platform/assets.cpp
   platform/audio_out.cpp
+  platform/frame_latency.cpp
   platform/sdl_input.cpp
   render/renderer.cpp
   render/tessellate.cpp

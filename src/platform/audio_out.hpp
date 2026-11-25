@@ -23,7 +23,11 @@ class AudioOut {
   // Samples queued in the device and not yet played.
   int queued() const;
 
-  static constexpr int kLatency = core::Mixer::kSampleRate / 20;  // 50 ms
+  // Queue target: ~2 frames at 60 Hz. Lower risks gaps when a frame runs late;
+  // higher makes sounds lag behind the action.
+  static constexpr int kLatency = core::Mixer::kSampleRate / 30;  // ~33 ms
+  // Device buffer in sample frames (SDL's default can be several times larger).
+  static constexpr const char* kDeviceFrames = "512";  // ~11 ms at 48 kHz
 
  private:
   SDL_AudioStream* stream_ = nullptr;

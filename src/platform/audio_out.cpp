@@ -4,6 +4,7 @@ namespace alpha::platform {
 
 AudioOut::AudioOut() {
   const SDL_AudioSpec spec{SDL_AUDIO_F32, 1, core::Mixer::kSampleRate};
+  SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, kDeviceFrames);
   stream_ = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, nullptr, nullptr);
   if (stream_) SDL_ResumeAudioStreamDevice(stream_);
 }

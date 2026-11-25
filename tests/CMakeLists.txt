@@ -14,6 +14,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     ecs/world_test.cpp
     physics/physics_world_test.cpp
     platform/assets_test.cpp
+    platform/frame_latency_test.cpp
     platform/sdl_input_test.cpp
     render/renderer_test.cpp
     render/tessellate_test.cpp
