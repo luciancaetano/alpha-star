@@ -66,7 +66,8 @@ JSValue advance_timers(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return new_ids(ctx, s.timers.advance(number_arg(ctx, argv[0], "dt")));
 }
 
-JSValue save_read(JSContext* ctx, ScriptState& s, JSValueConst*) {
+JSValue save_read(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  s.save_path = s.save_path_for(string_arg(ctx, argv[0], "config.title"));
   std::ifstream file(s.save_path, std::ios::binary);
   std::ostringstream text;
   if (file) text << file.rdbuf();
@@ -85,7 +86,7 @@ constexpr std::array<Native, 10> kNatives{{
     {"action", guarded<action>, 2},           {"random", guarded<random>, 3},
     {"timerEvery", guarded<timer_every>, 1},
     {"timerAfter", guarded<timer_after>, 1},  {"clearTimers", guarded<clear_timers>, 0},
-    {"advanceTimers", guarded<advance_timers>, 1}, {"saveRead", guarded<save_read>, 0},
+    {"advanceTimers", guarded<advance_timers>, 1}, {"saveRead", guarded<save_read>, 1},
     {"saveWrite", guarded<save_write>, 1},
 }};
 

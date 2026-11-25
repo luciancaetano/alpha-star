@@ -60,3 +60,10 @@ FetchContent_Declare(SDL3_image
   SYSTEM)
 
 FetchContent_MakeAvailable(SDL3 box2d quickjs EnTT SDL3_image)
+
+# Box2D hardcodes -Werror for GCC; GCC 13 at -O2 reports a false-positive
+# -Wmaybe-uninitialized inside Box2D's own distance.c (Release only). Third-party
+# warnings are not ours to fix: keep them visible but not fatal for that target.
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(box2d PRIVATE -Wno-error=maybe-uninitialized)
+endif()

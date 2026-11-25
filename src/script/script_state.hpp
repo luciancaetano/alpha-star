@@ -3,6 +3,7 @@
 #include <quickjs.h>
 
 #include <filesystem>
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -26,6 +27,8 @@ struct ScriptState {
   core::Timers timers;
   core::Vec2 gravity;
   std::unique_ptr<ecs::World> world;
+  // ctx.save file: resolved from the game title when the runtime first reads it.
+  std::function<std::string(const std::string& title)> save_path_for;
   std::string save_path;
   // Assets, preloaded at boot; file paths resolve against `asset_dir`.
   std::filesystem::path asset_dir;

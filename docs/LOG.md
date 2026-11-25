@@ -73,3 +73,12 @@
 | 67 | Static MSVC runtime in Debug broke Microsoft coverage (empty coverage.xml → CRAP 0%) → static only in Release | Root cause found by bisecting the one Windows change; shipped exe still needs no VC++ redist |
 | 68 | Verified on Windows: staged win32-x64 engine (4 MB), `alpha run` with bundled engine, standalone Flappy export runs fused | End-to-end proof |
 | 69 | Not done yet: Linux compile/gate (first container build still running), linux-x64 engine not staged | Recorded; next step |
+| 70 | `linux_gate.py` runs containers with `--init` | Root cause of the hung container: `xvfb-run` as PID 1 never received Xvfb's SIGUSR1 ready signal, so the command never started |
+| 71 | GCC fixes in tests: explicit `image` initializer in `ShapeSpec` aggregates (`-Wmissing-field-initializers`), `<cmath>`/`<algorithm>` in tessellate_test | MSVC accepted them; GCC with -Werror did not. Engine sources compiled clean |
+| 72 | Box2D target: `-Wno-error=maybe-uninitialized` on GCC only | Box2D hardcodes -Werror; GCC 13 -O2 false positive in its own distance.c broke the Linux Release build. Third-party, still visible as a warning |
+| 73 | Linux gate GATE PASS (63 tests, gcovr coverage, CRAP, dryer, limits); `stage_engine.py --linux` → `alpha-sdk/engine/linux-x64/alpha_star` (5.8 MB); Flappy dist runs 60 frames headless under xvfb + screenshot | Linux port done |
+| 74 | `.github/workflows/ci.yml`: Windows + ubuntu-24.04 gate, SDK `npm ci && npm test`, macOS build+ctest with `continue-on-error` | CI mirrors the local gate; macOS not yet verified |
+| 75 | Script call budget 250 ms via `JS_SetInterruptHandler`, deadline set per `Engine::call`/`import` | `while(true){}` pauses with a readable error instead of freezing the engine |
+| 76 | QuickJS memory limit 256 MB; OOM errors prefixed with the limit | Allocation bomb pauses, engine survives |
+| 77 | Saves in the per-user data dir: `Host(SavePathFor)`, path resolved from `config.title` when the runtime first reads the save; `main.cpp` uses `SDL_GetPrefPath("alpha-star", title)` | Game dir may be read-only/shared; title only known after boot starts, so a function instead of a fixed path |
+| 78 | Host tests split: helpers in `tests/script/host_fixture.{hpp,cpp}`, limits/save tests in `host_limits_test.cpp` | host_test.cpp would exceed 300 lines |

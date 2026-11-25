@@ -7,6 +7,23 @@ namespace alpha::script {
 
 Engine::Engine() : runtime_(JS_NewRuntime()), ctx_(JS_NewContext(runtime_)) {
   JS_SetModuleLoaderFunc(runtime_, nullptr, &Engine::load, this);
+  JS_SetMemoryLimit(runtime_, kMemoryLimitMb * 1024 * 1024);
+  JS_SetInterruptHandler(runtime_, &Engine::interrupt, this);
+}
+
+int Engine::interrupt(JSRuntime*, void* opaque) {
+  auto* self = static_cast<Engine*>(opaque);
+  self->timed_out_ = std::chrono::steady_clock::now() > self->deadline_;
+  return self->timed_out_ ? 1 : 0;
+}
+
+// Explains an exception caused by an engine limit, or returns "".
+std::string Engine::limit_hit() const {
+  if (timed_out_) {
+    return "script ran longer than " + std::to_string(kCallBudget.count()) +
+           " ms in one call and was stopped (infinite loop?)\n";
+  }
+  return "";
 }
 
 Engine::~Engine() {
@@ -54,23 +71,33 @@ void Engine::run_jobs() {
 }
 
 Value Engine::import(const std::string& name) {
+  start_clock();
   Value compiled = check(compile(name));
   auto* module = static_cast<JSModuleDef*>(JS_VALUE_GET_PTR(compiled.get()));
   const Value promise = check(JS_EvalFunction(ctx_, compiled.release()));
   run_jobs();
   if (JS_PromiseState(ctx_, promise.get()) == JS_PROMISE_REJECTED) {
-    JS_Throw(ctx_, JS_PromiseResult(ctx_, promise.get()));
-    throw ScriptError(take_exception(ctx_));
+    check(JS_Throw(ctx_, JS_PromiseResult(ctx_, promise.get())));
   }
   return {ctx_, JS_GetModuleNamespace(ctx_, module)};
 }
 
 Value Engine::check(JSValue result) {
-  if (JS_IsException(result)) throw ScriptError(take_exception(ctx_));
-  return {ctx_, result};
+  if (!JS_IsException(result)) return {ctx_, result};
+  std::string error = take_exception(ctx_);
+  if (error.find("out of memory") != std::string::npos) {
+    error = "script ran out of memory (limit " + std::to_string(kMemoryLimitMb) + " MB)\n" + error;
+  }
+  throw ScriptError(limit_hit() + error);
+}
+
+void Engine::start_clock() {
+  deadline_ = std::chrono::steady_clock::now() + kCallBudget;
+  timed_out_ = false;
 }
 
 Value Engine::call(const Value& fn, std::span<JSValueConst> args) {
+  start_clock();
   Value result = check(JS_Call(ctx_, fn.get(), JS_UNDEFINED, static_cast<int>(args.size()),
                                args.data()));
   run_jobs();

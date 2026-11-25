@@ -2,6 +2,7 @@
 
 #include <quickjs.h>
 
+#include <chrono>
 #include <map>
 #include <span>
 #include <string>
@@ -16,6 +17,11 @@ namespace alpha::script {
 struct ScriptError : core::Error {
   using core::Error::Error;
 };
+
+// Limits on one script call (import, enter, update, handler): a script that
+// exceeds either is stopped and the game pauses with a ScriptError.
+inline constexpr std::chrono::milliseconds kCallBudget{250};
+inline constexpr std::size_t kMemoryLimitMb = 256;
 
 // One QuickJS runtime + context. Modules come from built-in sources
 // ("alpha", ...) or from files.
@@ -37,6 +43,9 @@ class Engine {
 
  private:
   static JSModuleDef* load(JSContext* ctx, const char* name, void* opaque);
+  static int interrupt(JSRuntime* rt, void* opaque);
+  std::string limit_hit() const;
+  void start_clock();
   std::string source_of(const std::string& name) const;
   JSValue compile(const std::string& name);
   void run_jobs();
@@ -44,6 +53,8 @@ class Engine {
   JSRuntime* runtime_;
   JSContext* ctx_;
   std::map<std::string, std::string, std::less<>> builtins_;
+  std::chrono::steady_clock::time_point deadline_;
+  bool timed_out_ = false;
 };
 
 }  // namespace alpha::script

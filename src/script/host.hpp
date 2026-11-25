@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -10,6 +11,10 @@
 #include "script/script_state.hpp"
 
 namespace alpha::script {
+
+// Where ctx.save persists (a JSON file), chosen from the game title once the
+// game has booted far enough to know it.
+using SavePathFor = std::function<std::string(const std::string& title)>;
 
 struct GameInfo {
   std::string title = "alpha-star";
@@ -23,8 +28,7 @@ struct GameInfo {
 // frame() shows the error. The engine itself never throws out of here.
 class Host {
  public:
-  // save_path: where ctx.save persists (JSON).
-  explicit Host(std::string save_path);
+  explicit Host(SavePathFor save_path_for);
   ~Host();
   Host(const Host&) = delete;
   Host& operator=(const Host&) = delete;

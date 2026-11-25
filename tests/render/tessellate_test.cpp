@@ -1,5 +1,7 @@
 #include <doctest/doctest.h>
 
+#include <algorithm>
+#include <cmath>
 #include <vector>
 
 #include "render/tessellate.hpp"
@@ -17,7 +19,7 @@ const Color kBlack{0, 0, 0, 255};
 }  // namespace
 
 TEST_CASE("rect becomes two triangles at its rotated corners") {
-  const std::vector<DrawItem> items{{{Rect{{20, 10}}, kRed, {}}, {100, 50}, 90.0f}};
+  const std::vector<DrawItem> items{{{Rect{{20, 10}}, kRed, {}, {}}, {100, 50}, 90.0f}};
   const auto v = tessellate(items);
   REQUIRE(v.size() == 6);
   // 90 degrees: the 20x10 rect now spans 10 wide, 20 tall around (100, 50).
@@ -35,7 +37,7 @@ TEST_CASE("rect becomes two triangles at its rotated corners") {
 }
 
 TEST_CASE("circle is a fan with every rim vertex at the radius") {
-  const std::vector<DrawItem> items{{{Circle{12}, kRed, {}}, {10, 20}, 0.0f}};
+  const std::vector<DrawItem> items{{{Circle{12}, kRed, {}, {}}, {10, 20}, 0.0f}};
   const auto v = tessellate(items);
   REQUIRE(v.size() == static_cast<std::size_t>(kCircleSegments) * 3);
   for (std::size_t i = 0; i < v.size(); i += 3) {
@@ -46,7 +48,7 @@ TEST_CASE("circle is a fan with every rim vertex at the radius") {
 }
 
 TEST_CASE("outline is emitted first and larger, fill after") {
-  const std::vector<DrawItem> items{{{Rect{{10, 10}}, kRed, kBlack}, {0, 0}, 0.0f}};
+  const std::vector<DrawItem> items{{{Rect{{10, 10}}, kRed, kBlack, {}}, {0, 0}, 0.0f}};
   const auto v = tessellate(items);
   REQUIRE(v.size() == 12);
   CHECK(v[0].color == kBlack);

@@ -201,7 +201,7 @@ export function boot(g) {
   N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]));
   for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bindAction(action, inputs);
   preload(game.assets ?? {});
-  saveData = JSON.parse(N.saveRead() || "{}");
+  saveData = JSON.parse(N.saveRead(c.title ?? "alpha-star") || "{}");
   enter(game.start, undefined);
   return { title: c.title ?? "alpha-star", size: c.size, background: c.background ?? "#000000" };
 }

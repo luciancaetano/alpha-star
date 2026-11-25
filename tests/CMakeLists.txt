@@ -16,7 +16,9 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     render/renderer_test.cpp
     render/tessellate_test.cpp
     script/error_overlay_test.cpp
-    script/host_test.cpp)
+    script/host_test.cpp
+    script/host_limits_test.cpp
+    script/host_fixture.cpp)
   set(ALPHA_TEST_LIBS alpha_engine)
 endif()
 

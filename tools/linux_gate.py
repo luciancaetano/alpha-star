@@ -31,7 +31,7 @@ def main(argv):
     if subprocess.run(build, cwd=cfg.ROOT).returncode != 0:
         return 1
     command = argv[argv.index("--") + 1:] if "--" in argv else ["python3", "tools/gate.py"]
-    run = [tool, "run", "--rm", "--network=host", "-v", f"{cfg.ROOT}:/src", "-v", f"{BUILD_VOLUME}:/src/build",
+    run = [tool, "run", "--rm", "--init", "--network=host", "-v", f"{cfg.ROOT}:/src", "-v", f"{BUILD_VOLUME}:/src/build",
            IMAGE, "xvfb-run", "-a", *command]
     return subprocess.run(run, cwd=cfg.ROOT).returncode
 

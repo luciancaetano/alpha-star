@@ -23,3 +23,6 @@
 | Mixer | `core::Mixer`: voices with volume/pitch/loop over shared sample buffers; main thread only, drained into the device each frame (`platform::AudioOut`). |
 | Voice | One playing sound, returned by `ctx.audio.play` / `tone`; `stop()`, `playing`. |
 | Sprite | Shape `{ image, size? }`: an image asset drawn as a rotated texture in z order. |
+| Call budget | `kCallBudget` (250 ms, `script/js_engine.hpp`): wall time one script call (import, enter, update, handler) may run; past it QuickJS is interrupted and the game pauses with "script ran longer than 250 ms ... (infinite loop?)". |
+| Memory limit | `kMemoryLimitMb` (256 MB): QuickJS heap cap; hitting it pauses with "script ran out of memory (limit 256 MB)". |
+| Save path | `SavePathFor(title)`: where `ctx.save` persists; the engine uses `SDL_GetPrefPath("alpha-star", title)/save.json` (per-user data dir), tests pass a temp file. |

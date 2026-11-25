@@ -54,8 +54,8 @@ GameInfo game_info(JSContext* ctx, const Value& info) {
 
 }  // namespace
 
-Host::Host(std::string save_path) : engine_(std::make_unique<Engine>()) {
-  state_.save_path = std::move(save_path);
+Host::Host(SavePathFor save_path_for) : engine_(std::make_unique<Engine>()) {
+  state_.save_path_for = std::move(save_path_for);
   JSContext* ctx = engine_->ctx();
   JS_SetContextOpaque(ctx, &state_);
   engine_->add_builtin("alpha", embedded::kAlpha);

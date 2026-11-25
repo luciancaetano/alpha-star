@@ -7,11 +7,16 @@
 #include <SDL3/SDL.h>
 
 #include "script/host.hpp"
+#include "host_fixture.hpp"
 
 using alpha::core::InputSet;
 using alpha::core::parse_input;
 using alpha::script::Host;
 namespace fs = std::filesystem;
+using alpha::test::Sandbox;
+using alpha::test::tiny;
+using alpha::test::space;
+using alpha::test::first_text;
 
 namespace {
 
@@ -57,36 +62,6 @@ export default game({
   assets: { sounds: {} },
 });
 )js";
-
-struct Sandbox {
-  fs::path dir = fs::temp_directory_path() / "alpha_host_test";
-  Sandbox() {
-    fs::remove_all(dir);
-    fs::create_directories(dir);
-  }
-  ~Sandbox() { fs::remove_all(dir); }
-  std::string write(const std::string& name, const std::string& source) const {
-    std::ofstream(dir / name) << source;
-    return (dir / name).string();
-  }
-  std::string save() const { return (dir / "save.json").string(); }
-};
-
-InputSet space() { return InputSet{}.set(*parse_input("Space")); }
-
-std::string first_text(Host& host) {
-  const auto texts = host.frame().texts;
-  return texts.empty() ? "" : texts.front().text;
-}
-
-// A game whose `play` scene runs `body` in update (or enter).
-std::string tiny(const std::string& hook, const std::string& body) {
-  return "import { define } from 'alpha'; const { scene, game } = define();\n"
-         "const play = scene('play', { " + hook + "(ctx) { " + body + " } });\n"
-         "export default game({ config: { title: 't', size: [288, 100], seed: 1,\n"
-         "  actions: { jump: ['Space'] } }, start: 'play', scenes: { play },\n"
-         "  assets: { sounds: {} } });\n";
-}
 
 }  // namespace
 

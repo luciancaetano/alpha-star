@@ -40,8 +40,8 @@ TEST_CASE("renderer clears to background and fills shapes, later z on top") {
   Canvas c;
   REQUIRE(c.sdl);
   Frame f{kBg, {}, {}};
-  f.shapes.push_back({{Rect{{20, 20}}, kWhite, {}}, {16, 16}, 0});
-  f.shapes.push_back({{Circle{6}, kGreen, {}}, {16, 16}, 0});
+  f.shapes.push_back({{Rect{{20, 20}}, kWhite, {}, {}}, {16, 16}, 0});
+  f.shapes.push_back({{Circle{6}, kGreen, {}, {}}, {16, 16}, 0});
   c.renderer.draw(f);
   CHECK(c.pixel(60, 30) == kBg);
   CHECK(c.pixel(16, 16) == kGreen);  // circle over rect

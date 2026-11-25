@@ -53,6 +53,19 @@ Options parse(int argc, char** argv) {
   return o;
 }
 
+// ctx.save lives in the per-user data dir, never next to the game (which may be
+// read-only or shared): e.g. %APPDATA%/alpha-star/<title>/save.json.
+std::string save_path_for(const std::string& title) {
+  char* dir = SDL_GetPrefPath("alpha-star", title.c_str());
+  if (!dir) {
+    SDL_Log("no per-user data dir (%s); saves disabled", SDL_GetError());
+    return "";
+  }
+  std::string path = std::string(dir) + "save.json";
+  SDL_free(dir);
+  return path;
+}
+
 int fail(const char* what) {
   SDL_Log("%s failed: %s", what, SDL_GetError());
   SDL_Quit();
@@ -111,8 +124,7 @@ int main(int argc, char** argv) {
   }
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) return fail("SDL_Init");
   SDL_Log("alpha-star %s", alpha::core::version().data());
-  const bool is_pack = std::filesystem::is_directory(options.game);
-  alpha::script::Host host(is_pack ? options.game + "/save.json" : options.game + ".save.json");
+  alpha::script::Host host(save_path_for);
   const alpha::script::GameInfo info = host.load(options.game);
   SDL_Window* window = nullptr;
   SDL_Renderer* sdl = nullptr;

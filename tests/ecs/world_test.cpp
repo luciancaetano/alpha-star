@@ -20,7 +20,7 @@ TagSet tagged(std::initializer_list<TagId> ids) {
 }
 
 EntitySpec plain(std::initializer_list<TagId> tags, Vec2 pos, int z = 0) {
-  return {tagged(tags), pos, 0.0f, z, ShapeSpec{Circle{5}, Color{}, {}}, {}};
+  return {tagged(tags), pos, 0.0f, z, ShapeSpec{Circle{5}, Color{}, {}, {}}, {}};
 }
 
 EntitySpec solid_box(Vec2 pos, Vec2 size) {
