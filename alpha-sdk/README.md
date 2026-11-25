@@ -22,9 +22,12 @@ agents (`--sdk <npm spec>` writes another SDK dependency, e.g. `file:../alpha-sd
 site (`docs/site/` in the repo, `npm run docs` here) has the guides and the API reference
 generated from `types/alpha.d.ts`.
 
-Engines are bundled per platform in `engine/<platform>-<arch>/` (release:
-`run`/`test`/`mcp`) and `engine/<platform>-<arch>/shipping/` (players). Override
-with `--engine <path>` or `$ALPHA_STAR`.
+Engines come in per-platform packages, like esbuild: `@alpha-star/engine-win32-x64` and
+`@alpha-star/engine-linux-x64` are `optionalDependencies` of this package with the exact same
+version, and npm installs only the one matching your machine (`os`/`cpu`). Each holds the release
+engine (`run`/`test`/`mcp`) and `shipping/` (players). In an alpha-star checkout the SDK uses
+`engine/<platform>-<arch>/` instead (staged by `tools/stage_engine.py`). Override with
+`--engine <path>` or `$ALPHA_STAR`.
 
 ## Sprites, camera and tilemaps
 

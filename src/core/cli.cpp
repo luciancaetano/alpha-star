@@ -68,6 +68,7 @@ bool set_option(CliOptions& o, std::string_view flag, std::string_view value) {
 bool set_switch(CliOptions& o, std::string_view flag) {
 #if ALPHA_DEBUG_TOOLS
   if (flag == "--devtools") return o.devtools = true;
+  if (flag == "--version") return o.version = true;
 #endif
 #if ALPHA_MCP
   if (flag == "--hidden") return o.hidden = true;

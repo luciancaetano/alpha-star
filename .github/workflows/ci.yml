@@ -1,10 +1,21 @@
-# CI mirrors the local commands: `python tools/gate.py` (build, tests, coverage,
-# limits, CRAP, duplication) on Windows and Linux, plus the SDK tests.
+# CI mirrors the local commands (AGENTS.md, docs/RELEASE_0.2.0.md "Verify a release"):
+#   python tools/gate.py                         build, tests, coverage, limits, CRAP, duplication
+#   python tools/stage_engine.py                 release + shipping engines into alpha-sdk/engine/<target>/
+#                                                (the shipping one only if check_shipping passes)
+#   cd alpha-sdk && npm ci && npm test           SDK tests (end-to-end with the staged engines)
+#   alpha test in every example                  examples/<name>: npm install && npm test
+#   python tools/check_shipping.py --pack DIR    a standalone Flappy export ships game.jsbc only
+#   python tools/pack_release.py --install-test  npm tarballs into dist/release/ (verified, then
+#                                                installed offline into a temp project); NOT published
+# Nothing here publishes, tags or uploads packages; that stays a manual, approved step.
 name: ci
 
 on:
   push:
   pull_request:
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: "8"
 
 jobs:
   gate-windows:
@@ -14,16 +25,39 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - run: pip install -r tools/requirements.txt
       # Coverage uses Microsoft.CodeCoverage.Console, shipped with the runner's Visual Studio.
       - run: python tools/gate.py
-      # Build flavors: the shipping engine must contain no dev/debug/agent features
-      # (positive), and the check must bite on the release engine (negative).
-      - run: cmake --preset release && cmake --build --preset release
-      - run: cmake --preset shipping && cmake --build --preset shipping
-      - run: python tools/check_shipping.py
+      # Release + shipping engines staged into the SDK; the check must bite on the release engine.
+      - run: python tools/stage_engine.py
       - run: python tools/check_shipping.py --preset release --expect-found
+      - name: SDK tests
+        working-directory: alpha-sdk
+        run: |
+          npm ci
+          npm test
+      - name: Examples (alpha test)
+        shell: bash
+        run: |
+          for e in examples/*/; do (cd "$e" && npm install --no-audit --no-fund && npm test) || exit 1; done
+      - name: Standalone export is clean
+        shell: bash
+        run: |
+          (cd examples/flappy && npx alpha export --standalone --out build/standalone)
+          python tools/check_shipping.py --pack examples/flappy/build/standalone
+      - name: Release tarballs (local pack + offline install test, not published)
+        run: python tools/pack_release.py --install-test --require win32-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-tarballs-win32
+          path: dist/release/
+          retention-days: 7
 
+  # The Linux gate is meant for the dedicated Linux machine (a self-hosted runner, or
+  # `make linux-gate` there; docs/ROADMAP.md). On GitHub's ubuntu image it runs the same steps.
   gate-linux:
     runs-on: ubuntu-24.04
     steps:
@@ -44,11 +78,24 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/harness"
           "$RUNNER_TEMP/harness/bin/pip" install -r tools/requirements.txt gcovr==8.3
           echo "$RUNNER_TEMP/harness/bin" >> "$GITHUB_PATH"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - run: xvfb-run -a python3 tools/gate.py
-      - run: cmake --preset release && cmake --build --preset release
-      - run: cmake --preset shipping && cmake --build --preset shipping
-      - run: python3 tools/check_shipping.py
+      - run: python3 tools/stage_engine.py
       - run: python3 tools/check_shipping.py --preset release --expect-found
+      - name: SDK tests
+        working-directory: alpha-sdk
+        run: |
+          npm ci
+          xvfb-run -a npm test
+      - name: Release tarballs (local pack + offline install test, not published)
+        run: xvfb-run -a python3 tools/pack_release.py --install-test --require linux-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-tarballs-linux
+          path: dist/release/
+          retention-days: 7
 
   # macOS is not yet verified: build + ctest only, no coverage gate, and a
   # failure here does not fail the workflow.
@@ -60,16 +107,3 @@ jobs:
       - run: cmake --preset dev
       - run: cmake --build --preset dev
       - run: ctest --preset dev
-
-  sdk:
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: alpha-sdk
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - run: npm ci
-      - run: npm test

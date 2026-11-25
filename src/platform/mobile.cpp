@@ -20,7 +20,7 @@ void prepare_mobile(int width, int height) {
 
 std::string bundled_pack() {
 #if defined(__ANDROID__)
-  return "main.js";  // APK assets: main.js and assets/... at the root
+  return pack_entry("").string();  // APK assets: game.jsbc (or main.js) and assets/... at the root
 #else
   const char* base = SDL_GetBasePath();
   if (!base || !vfs::exists(pack_entry(base))) return "";

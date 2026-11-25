@@ -9,8 +9,11 @@ alpha export --target android-arm64 --out build/android
 
 The project holds:
 
-- the game pack (`main.js` + `assets/...`) in `app/src/main/assets`: the engine reads it from the
-  APK through SDL, the same code that reads a pack folder on desktop;
+- the game pack (`game.jsbc` + `assets/...`) in `app/src/main/assets`: the engine reads it from the
+  APK through SDL, the same code that reads a pack folder on desktop. `game.jsbc` is compiled by
+  the SDK's release engine for this machine: the bytecode format is the same on every
+  little-endian 64-bit platform, and the engine built for the APK from the same source carries the
+  same build id (QuickJS source hash + `-64`). `--no-bytecode` ships `main.js` instead;
 - SDL 3.2.10's Java glue (`SDLActivity`, version-checked against the engine at start);
 - a CMake build of the engine from the alpha-star source, **shipping flavor** (no dev tools, MCP or
   debug features), `arm64-v8a` only. The SDK finds the source in the repo it sits in, or pass
@@ -55,8 +58,21 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 adb logcat -s SDL SDL/APP            # the engine's log and console.log
 ```
 
-The release APK is signed with the debug key so it installs at once; sign it with your own key
-(Android Studio: Build > Generate Signed Bundle) before publishing.
+Without a release key the APK is signed with the debug key so it installs at once. To sign with
+your own key, point the build at your keystore through the environment (nothing is written into
+the project, and the SDK never creates or stores keys):
+
+```
+keytool -genkeypair -v -keystore my-release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias game
+set ALPHA_ANDROID_KEYSTORE=C:\keys\my-release.jks      # export ... on Linux/macOS
+set ALPHA_ANDROID_KEYSTORE_PASSWORD=...
+set ALPHA_ANDROID_KEY_ALIAS=game
+set ALPHA_ANDROID_KEY_PASSWORD=...
+gradlew.bat assembleRelease
+```
+
+Keep the keystore and its passwords out of the repository; losing it means you cannot update the
+app on Google Play (use Play App Signing).
 
 ## Touch, back button, lifecycle
 

@@ -38,6 +38,44 @@ your source map. Bytecode is **not encryption**: property names, strings and the
 structure are still in the file, and a determined person can decompile it. Do not put secrets
 (API keys) in a game.
 
+**Threat model: the pack folder is trusted.** The header's length and checksum catch accidents
+(a truncated download, a damaged disk, a file from another version). They are not a security
+boundary: QuickJS does not validate bytecode, and a file crafted on purpose (a cut body re-sealed
+with a fresh header) can crash the engine. Signing the bytecode would not change that: the
+shipping engine would have to carry the verification key, and anyone who can replace
+`game.jsbc` can replace the engine executable next to it too. So the rule is the same as for any
+native game: whoever can write to the game's folder can run code as the player, and the engine
+only ever loads bytecode from its own pack (never from saves, downloads or the network). Protect
+the folder (installer permissions, store packages) and sign the executable (below) so players can
+tell your build from a modified one.
+
+## Signing
+
+```
+set ALPHA_SIGN_CMD=signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a {file}
+npx alpha export --standalone --sign --out build/game
+python tools/check_shipping.py --pack build/game --signed       # in the alpha-star repo
+```
+
+`--sign` runs **your** signing command on the engine copy in the pack (`{file}` becomes its
+quoted path; appended when missing). The SDK's own engine stays unmodified, and the SDK never
+creates, downloads or stores certificates or keys. If the command fails, the pack is deleted, so an
+unsigned build never looks signed.
+
+`check_shipping --pack` requires the engine to be byte-identical to the staged shipping engine;
+with `--signed` it requires it to be identical once the Authenticode signature is removed
+(checksum, security directory and certificate table), so a signed engine that was otherwise
+changed still fails.
+
+- **Windows (Authenticode):** `signtool` from the Windows SDK with your code-signing certificate
+  (a cloud HSM / Azure Trusted Signing command works the same way). Timestamp it (`/tr`) so the
+  signature outlives the certificate. SmartScreen reputation builds up per certificate.
+- **macOS (not verified in this release):** `codesign --force --options runtime --timestamp
+  --sign "Developer ID Application: ..." {file}`, then notarize the zipped folder or `.app`
+  with `xcrun notarytool submit --wait` and `xcrun stapler staple`. Needs an Apple Developer ID.
+- **Android:** the APK is signed by Gradle with your release keystore from the environment; see
+  [Android](android.html#build-and-install).
+
 **Debugging a standalone build:** `--no-bytecode` ships `main.js` instead (readable stack traces
 with line numbers). Error messages from `game.jsbc` have no line numbers. `alpha run`, `alpha test`,
 hot reload and the MCP tools always use JS + source maps.
@@ -50,8 +88,10 @@ The pack includes `THIRD_PARTY_NOTICES.txt` (the engine's dependencies' licenses
 files your fonts name with `{ file, license }`). The font's own license is what matters for a font
 (OFL is fine).
 
-Engines live in the SDK under `engine/<platform>-<arch>/` (release: run/test/mcp) and
-`engine/<platform>-<arch>/shipping/` (players). Override with `--engine <path>` or `$ALPHA_STAR`.
+Engines come from the platform package npm installed next to the SDK
+(`@alpha-star/engine-win32-x64`, `@alpha-star/engine-linux-x64`: release engine for run/test/mcp,
+`shipping/` for players); in an alpha-star checkout from `alpha-sdk/engine/<platform>-<arch>/`.
+Override with `--engine <path>` or `$ALPHA_STAR`.
 
 Android: `alpha export --target android-arm64` writes a Gradle project (and builds the APK when the
 toolchain is installed); see [Android](android.html).

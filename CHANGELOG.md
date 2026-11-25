@@ -7,8 +7,33 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.2.0] - 2026-11-25
+
+Release candidate: everything below is in 0.2.0, prepared but **not published** (no npm package,
+no tag yet). Summary and known limitations: [docs/RELEASE_0.2.0.md](docs/RELEASE_0.2.0.md).
+Highlights: `alpha init` templates and five examples, docs site, Android export, post effects and
+2D lighting, bytecode standalone packs, per-platform engine packages, signing hooks.
+
 ### Added
 
+- Per-platform engine packages, like esbuild: `@alpha-star/engine-win32-x64` and
+  `@alpha-star/engine-linux-x64` (`os`/`cpu` set; release + shipping engines, LICENSE,
+  THIRD_PARTY_NOTICES.txt) are exact-version `optionalDependencies` of `@alpha-star/sdk`, which no
+  longer contains engines. The SDK finds the engine in the installed platform package first, then
+  `alpha-sdk/engine/<target>/` (repo checkout), and `--engine` / `$ALPHA_STAR` still override.
+  `tools/pack_release.py [--install-test]` builds and verifies the tarballs in `dist/release/`
+  (one version everywhere, required files, no build junk, size budgets, engines identical to the
+  staged ones) and installs them offline into a temp project (init, test, standalone export).
+- `alpha export --standalone --sign`: runs `$ALPHA_SIGN_CMD` (`{file}` = the pack's engine copy;
+  e.g. signtool) on the exported engine; the staged engine stays unmodified; no certificates are
+  created or stored; a failed signature deletes the pack. `check_shipping.py --pack DIR --signed`
+  compares the engine with the staged one once the Authenticode signature is removed.
+- Android APKs ship `game.jsbc` too (compiled by this machine's release engine; same build id as
+  the arm64 engine built from source); `--no-bytecode` keeps `main.js`. Release keystore for the
+  Gradle build from `ALPHA_ANDROID_KEYSTORE*` environment variables (debug key otherwise).
+- `alpha_star --version` (release/dev engines) prints `alpha-star <version>`.
 - Android target: `alpha export --target android-arm64` writes a Gradle project (SDL's Java glue,
   pack in the APK assets, shipping engine built from source, arm64-v8a) and builds a debug-signed
   APK when the Android toolchain is installed; otherwise prints what to install. `config.android`
@@ -29,10 +54,13 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 ### Changed
 
 - A pack directory with a `game.jsbc` runs it instead of `main.js`.
+- CI: the Windows job stages the engines and runs the SDK tests, every example's tests, the
+  standalone pack check and the release pack + install test; the Linux job is for the dedicated
+  Linux runner; macOS stays build-only and allowed to fail.
+- Documented threat model: bytecode integrity is not a security boundary; the pack folder is
+  trusted (Exporting guide).
 
-## [0.2.0] - 2026-11-25
-
-### Added
+### Added (step 14)
 - `alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup] [--sdk <spec>]`: a ready
   project (package.json, tsconfig, src/{types,alpha,tuning,main}.ts, scenes, prefabs, tests,
   AGENTS.md, generated CC0 art, .gitignore). Templates live in `alpha-sdk/templates/`, mirrored

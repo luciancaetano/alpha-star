@@ -17,4 +17,21 @@ TEST_CASE("run_test_file: exit 0 only when there are tests and all pass") {
   CHECK(alpha::script::run_test_file((box.dir / "missing.js").string(), "") == 1);
 }
 
+TEST_CASE("run_command: --version, --test and --compile are whole commands; a game is not") {
+  Sandbox box;
+  alpha::core::CliOptions o;
+  CHECK(alpha::script::run_command(o) == -1);
+  o.game = "pack";
+  CHECK(alpha::script::run_command(o) == -1);
+  o.version = true;
+  CHECK(alpha::script::run_command(o) == 0);
+  o.version = false;
+  o.test_file = box.write("t.js", "export function a() {}\n");
+  CHECK(alpha::script::run_command(o) == 0);
+  o.test_file.clear();
+  o.compile_source = (box.dir / "missing.js").string();
+  o.compile_out = (box.dir / "out.jsbc").string();
+  CHECK(alpha::script::run_command(o) != 0);
+}
+
 #endif

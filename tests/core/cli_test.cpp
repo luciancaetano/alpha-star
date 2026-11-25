@@ -38,6 +38,12 @@ TEST_CASE("cli: --compile <main.js> <out.jsbc> is a whole command") {
   CHECK(parse({"pack", "--compile", "a.js", "b.jsbc"}).compile_source.empty());
 }
 
+TEST_CASE("cli: --version (the SDK checks its engines report its own version)") {
+  CHECK(parse({"--version"}).version);
+  CHECK(parse({"--version"}).game.empty());
+  CHECK_FALSE(parse({"pack"}).version);
+}
+
 TEST_CASE("cli: debug flags (ALPHA_DEBUG_TOOLS builds)") {
   const CliOptions o = parse({"pack", "--frames", "120", "--screenshot", "out.bmp", "--tap", "Space",
                               "--tap-every", "20", "--devtools"});

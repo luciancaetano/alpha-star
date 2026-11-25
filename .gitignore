@@ -1,6 +1,8 @@
 # Build output and fetched deps
 build/
 out/
+# Release tarballs (tools/pack_release.py; never committed, never published from here)
+dist/
 
 # IDE / editor
 .vs/

@@ -4,7 +4,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { availableTargets, bundledEngine, engineFile, hostTarget, resolveEngine, shippingEngine } from "../lib/engine.mjs";
+import { availableTargets, bundledEngine, engineFile, hostTarget, packageEngineDir, resolveEngine, shippingEngine }
+  from "../lib/engine.mjs";
 import { exportPack } from "../lib/pack.mjs";
 
 const ENGINE_DIR = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), "engine");
@@ -38,6 +39,23 @@ test("bundled engines are discovered per target", () =>
     assert.equal(bundledEngine("nope-x0"), null);
     assert.equal(shippingEngine(FAKE), path.join(ENGINE_DIR, FAKE, "shipping", engineFile(FAKE)));
     assert.equal(shippingEngine("nope-x0"), null);
+  }));
+
+test("an installed platform package wins over the SDK's engine folder", () =>
+  withFakeEngine(() => {
+    const pkg = path.join(ENGINE_DIR, "..", "node_modules", "@alpha-star", `engine-${FAKE}`);
+    fs.mkdirSync(path.join(pkg, "shipping"), { recursive: true });
+    fs.writeFileSync(path.join(pkg, "package.json"), JSON.stringify({ name: `@alpha-star/engine-${FAKE}`, version: "0.0.0" }));
+    fs.writeFileSync(path.join(pkg, engineFile(FAKE)), "PKG");
+    try {
+      assert.equal(packageEngineDir(FAKE), pkg);
+      assert.equal(bundledEngine(FAKE), path.join(pkg, engineFile(FAKE)));
+      // No shipping binary in the package: the SDK folder's is still found.
+      assert.equal(shippingEngine(FAKE), path.join(ENGINE_DIR, FAKE, "shipping", engineFile(FAKE)));
+      assert.equal(packageEngineDir("nope-x0"), null);
+    } finally {
+      fs.rmSync(pkg, { recursive: true, force: true });
+    }
   }));
 
 function project() {

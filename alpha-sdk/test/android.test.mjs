@@ -6,6 +6,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { androidValues, defaultPackage, exportAndroid, findToolchain, orientationFor, SDK_PACKAGES, TEMPLATE }
   from "../lib/android.mjs";
+import { stampOf } from "../lib/bytecode.mjs";
+import { bundledEngine } from "../lib/engine.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -39,7 +41,10 @@ test("android export assembles a Gradle project: pack in assets, ids and orienta
   assert.deepEqual(r.problems, []);
   assert.ok(r.ok);
   const main = path.join(p.out, "app", "src", "main");
-  assert.ok(fs.existsSync(path.join(main, "assets", "main.js")));
+  // The APK ships bytecode compiled by this machine's release engine (no JS source).
+  const game = bundledEngine() ? "game.jsbc" : "main.js";
+  assert.deepEqual(fs.readdirSync(path.join(main, "assets")).filter((f) => /\.(js|jsbc|map)$/.test(f)), [game]);
+  if (bundledEngine()) assert.match(stampOf(fs.readFileSync(path.join(main, "assets", game))).build, /-64$/);
   assert.equal(read(main, "assets", "assets", "a.wav"), "WAV");
   const gradle = read(p.out, "app", "build.gradle");
   assert.match(gradle, /applicationId "com\.studio\.flappy"/);
@@ -47,6 +52,7 @@ test("android export assembles a Gradle project: pack in assets, ids and orienta
   assert.match(gradle, /versionName "1\.2"/);
   assert.match(gradle, /-DALPHA_SHIPPING=ON/);
   assert.match(gradle, /abiFilters 'arm64-v8a'/);
+  assert.match(gradle, /System\.getenv\("ALPHA_ANDROID_KEYSTORE"\)/);  // release key from env, none stored
   assert.ok(gradle.includes(`path file("${path.join(REPO, "CMakeLists.txt").split(path.sep).join("/")}")`));
   assert.doesNotMatch(gradle, /\{\{/);
   assert.match(read(main, "AndroidManifest.xml"), /android:screenOrientation="sensorPortrait"/);
@@ -59,6 +65,15 @@ test("android export assembles a Gradle project: pack in assets, ids and orienta
   for (const pkg of SDK_PACKAGES) assert.ok(r.help.includes(pkg), pkg);
   assert.match(r.help, /assembleRelease/);
   assert.match(r.help, /JDK 17/);
+});
+
+test("android export without bytecode ships main.js; without a compiler it says how to fix it", async () => {
+  const p = project(`{ title: "t", size: [10, 10], seed: 1, actions: { back: [] } }`);
+  const plain = await exportAndroid({ ...p, target: "android-arm64", engineSrc: REPO, env: {}, build: false, bytecode: false });
+  assert.ok(plain.ok);
+  assert.ok(fs.existsSync(path.join(p.out, "app", "src", "main", "assets", "main.js")));
+  const none = await exportAndroid({ ...p, target: "android-arm64", engineSrc: REPO, env: {}, build: false, compiler: null });
+  assert.match(none.problems[0].message, /no release engine .*--no-bytecode/);
 });
 
 test("android export rejects a bad package id, an unknown target and a missing engine source", async () => {

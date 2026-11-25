@@ -122,7 +122,11 @@ python tools/stage_engine.py                                 # stage release + s
 ```
 `alpha run`/`alpha test`/`alpha mcp` use the release engine; `alpha export --standalone` copies the shipping one
 unmodified and ships `game.jsbc` (bytecode from the release engine's `--compile`, stamped `core::BuildStamp`;
-a pack dir runs it before main.js) instead of main.js; `check_shipping.py --pack DIR` verifies such a pack.
+a pack dir runs it before main.js) instead of main.js; `check_shipping.py --pack DIR` verifies such a pack
+(`--signed` after `alpha export --sign`, which runs `$ALPHA_SIGN_CMD` on the pack's engine copy only).
+Android APKs ship `game.jsbc` too. Release: `python tools/pack_release.py --install-test` packs
+`@alpha-star/sdk` + `@alpha-star/engine-<target>` (exact-version optionalDependencies; the SDK resolves
+the platform package, then `alpha-sdk/engine/`) into `dist/release/` and never publishes.
 
 `python tools/gate.py` (preset dev; `--preset harness` = fast core-only) runs build + tests + all checks. A change is done only when it passes.
 

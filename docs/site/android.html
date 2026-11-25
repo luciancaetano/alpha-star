@@ -6,7 +6,7 @@
 <p><code>alpha export --target android-arm64</code> turns a game into an Android Studio / Gradle project; with the Android toolchain installed it also builds the APK.</p>
 <pre><code>alpha export --target android-arm64 --out build/android</code></pre>
 <p>The project holds:</p>
-<ul><li>the game pack (<code>main.js</code> + <code>assets/...</code>) in <code>app/src/main/assets</code>: the engine reads it from the APK through SDL, the same code that reads a pack folder on desktop;</li><li>SDL 3.2.10's Java glue (<code>SDLActivity</code>, version-checked against the engine at start);</li><li>a CMake build of the engine from the alpha-star source, <strong>shipping flavor</strong> (no dev tools, MCP or debug features), <code>arm64-v8a</code> only. The SDK finds the source in the repo it sits in, or pass <code>--engine-src &lt;alpha-star checkout&gt;</code> / set <code>ALPHA_ENGINE_SRC</code>.</li></ul>
+<ul><li>the game pack (<code>game.jsbc</code> + <code>assets/...</code>) in <code>app/src/main/assets</code>: the engine reads it from the APK through SDL, the same code that reads a pack folder on desktop. <code>game.jsbc</code> is compiled by the SDK's release engine for this machine: the bytecode format is the same on every little-endian 64-bit platform, and the engine built for the APK from the same source carries the same build id (QuickJS source hash + <code>-64</code>). <code>--no-bytecode</code> ships <code>main.js</code> instead;</li><li>SDL 3.2.10's Java glue (<code>SDLActivity</code>, version-checked against the engine at start);</li><li>a CMake build of the engine from the alpha-star source, <strong>shipping flavor</strong> (no dev tools, MCP or debug features), <code>arm64-v8a</code> only. The SDK finds the source in the repo it sits in, or pass <code>--engine-src &lt;alpha-star checkout&gt;</code> / set <code>ALPHA_ENGINE_SRC</code>.</li></ul>
 <h2 id="game-config">Game config</h2>
 <pre><code>config: {
   title: "Flappy Star",          // the app name
@@ -24,7 +24,14 @@
 gradlew.bat assembleRelease          # ./gradlew on Linux/macOS
 adb install -r app/build/outputs/apk/release/app-release.apk
 adb logcat -s SDL SDL/APP            # the engine's log and console.log</code></pre>
-<p>The release APK is signed with the debug key so it installs at once; sign it with your own key (Android Studio: Build &gt; Generate Signed Bundle) before publishing.</p>
+<p>Without a release key the APK is signed with the debug key so it installs at once. To sign with your own key, point the build at your keystore through the environment (nothing is written into the project, and the SDK never creates or stores keys):</p>
+<pre><code>keytool -genkeypair -v -keystore my-release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias game
+set ALPHA_ANDROID_KEYSTORE=C:\keys\my-release.jks      # export ... on Linux/macOS
+set ALPHA_ANDROID_KEYSTORE_PASSWORD=...
+set ALPHA_ANDROID_KEY_ALIAS=game
+set ALPHA_ANDROID_KEY_PASSWORD=...
+gradlew.bat assembleRelease</code></pre>
+<p>Keep the keystore and its passwords out of the repository; losing it means you cannot update the app on Google Play (use Play App Signing).</p>
 <h2 id="touch-back-button-lifecycle">Touch, back button, lifecycle</h2>
 <ul><li>A finger is also the mouse: <code>"MouseLeft"</code> and <code>ctx.input.mouse()</code> work unchanged (first finger).</li><li><code>"Touch"</code> is held while any finger is down; <code>"TouchLeft"</code> / <code>"TouchRight"</code> while one is on that half of the screen (two-button games: <code>left: ["Left", "TouchLeft"]</code>). A tap shorter than one step still presses.</li><li>The back button is the <code>"Back"</code> input; it does not close the app. Bind it with Escape: <code>back: ["Escape", "Back"]</code>, and quit or open a menu from the game.</li><li>Switching apps pauses the game: <code>ctx.onPause</code> runs, no steps run and audio stops until <code>ctx.onResume</code>. Saves and settings are written when set (atomically), so nothing is lost if Android kills the app in the background. The engine stops stepping the moment Android announces the background, before its event is polled.</li><li>Saves live in the app's private storage (<code>SDL_GetPrefPath</code>); the log goes to logcat.</li></ul>
 <h2 id="limitations">Limitations</h2>

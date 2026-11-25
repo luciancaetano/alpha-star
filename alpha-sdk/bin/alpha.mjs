@@ -7,7 +7,8 @@
 //                                sprite sheets packed into alpha-atlas-N.png pages unless --no-atlas);
 //                                --standalone also copies the unmodified shipping engine in, so the
 //                                pack runs by itself (default target: this machine), and ships the
-//                                game as game.jsbc bytecode instead of main.js (--no-bytecode: main.js)
+//                                game as game.jsbc bytecode instead of main.js (--no-bytecode: main.js);
+//                                --sign runs $ALPHA_SIGN_CMD ({file} = the pack's engine copy) on it
 //   alpha export --target android-arm64 [--out build/android] [--engine-src <alpha-star checkout>]
 //                                Gradle project (pack in its assets, engine built from source,
 //                                shipping flavor); builds the APK when the Android toolchain is
@@ -31,13 +32,14 @@ import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { formatProblem, typecheck } from "../lib/build.mjs";
-import { hostTarget, resolveEngine } from "../lib/engine.mjs";
+import { engineFile, hostTarget, resolveEngine } from "../lib/engine.mjs";
+import { signFile } from "../lib/sign.mjs";
 import { exportAndroid } from "../lib/android.mjs";
 import { exportPack } from "../lib/pack.mjs";
 import { buildTests, testArgs } from "../lib/test.mjs";
 import { watchProject } from "../lib/watch.mjs";
 
-const USAGE = `usage: alpha <init|check|export|run|test|mcp|--version> [--entry src/main.ts] [--out dist] [--standalone] [--no-bytecode] [--target <platform-arch>|android-arm64] [--engine-src dir] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
+const USAGE = `usage: alpha <init|check|export|run|test|mcp|--version> [--entry src/main.ts] [--out dist] [--standalone [--sign]] [--no-bytecode] [--target <platform-arch>|android-arm64] [--engine-src dir] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
 
 import { initProject, VERSION } from "../lib/init.mjs";
 
@@ -59,6 +61,7 @@ function parse(argv) {
     watch: own.includes("--watch"),
     atlas: !own.includes("--no-atlas"),
     bytecode: !own.includes("--no-bytecode"),
+    sign: own.includes("--sign"),
     engineArgs: dash >= 0 ? argv.slice(dash + 1) : [],
   };
 }
@@ -72,7 +75,7 @@ function report(problems, verb) {
 async function androidCmd(args) {
   const out = args.out === path.resolve("dist") ? path.resolve("build/android") : args.out;
   const r = await exportAndroid({ root: process.cwd(), entry: args.entry, out, target: args.android,
-                                  engineSrc: args.engineSrc, atlas: args.atlas });
+                                  engineSrc: args.engineSrc, atlas: args.atlas, bytecode: args.bytecode });
   if (!r.ok) return report(r.problems, "android export");
   console.log(`exported Android project ${path.relative(process.cwd(), out) || "."} (${r.values.PACKAGE}, ` +
               `${r.files.length} asset file(s))`);
@@ -86,7 +89,15 @@ async function exportCmd(args) {
                                                           target: args.target, atlas: args.atlas,
                                                           bytecode: args.bytecode });
   if (!ok) return report(problems, "export");
-  const engine = args.target ? `, engine ${args.target}` : "";
+  if (args.sign) {
+    const failed = args.target ? signFile(path.join(args.out, engineFile(args.target)))
+      : { file: "", line: 0, column: 0, message: "--sign signs the engine executable: add --standalone" };
+    if (failed) {
+      fs.rmSync(args.out, { recursive: true, force: true });  // never leave an unsigned build that looks signed
+      return report([failed], "export");
+    }
+  }
+  const engine = args.target ? `, engine ${args.target}${args.sign ? " (signed)" : ""}` : "";
   console.log(`exported ${path.relative(process.cwd(), args.out) || "."} (${game} + ${files.length} asset file(s)${engine})`);
   return 0;
 }

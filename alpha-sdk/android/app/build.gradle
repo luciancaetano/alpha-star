@@ -26,11 +26,24 @@ android {
             }
         }
     }
+    // Release keystore from the environment (never stored in the project):
+    // ALPHA_ANDROID_KEYSTORE (path), ALPHA_ANDROID_KEYSTORE_PASSWORD, ALPHA_ANDROID_KEY_ALIAS,
+    // ALPHA_ANDROID_KEY_PASSWORD. Without them the APK is debug-signed (installs with adb).
+    def keystore = System.getenv("ALPHA_ANDROID_KEYSTORE")
+    signingConfigs {
+        release {
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv("ALPHA_ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ALPHA_ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ALPHA_ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
-            // Debug-signed so the APK installs with adb; sign with your own key to publish.
-            signingConfig signingConfigs.debug
+            signingConfig keystore ? signingConfigs.release : signingConfigs.debug
         }
     }
     externalNativeBuild {

@@ -2,6 +2,8 @@
 
 #include <cstdio>
 
+#include "core/version.hpp"
+#include "script/bytecode.hpp"
 #include "script/host.hpp"
 
 namespace alpha::script {
@@ -31,6 +33,13 @@ int run_test_file(const std::string& path, const std::string& asset_dir) {
   if (results.empty()) std::printf("no tests: %s exports no functions\n", path.c_str());
   std::printf("%zu passed, %zu failed\n", results.size() - failed, failed);
   return failed == 0 && !results.empty() ? 0 : 1;
+}
+
+int run_command(const core::CliOptions& o) {
+  if (o.version) return std::printf("alpha-star %s\n", core::version().data()) < 0 ? 1 : 0;
+  if (!o.test_file.empty()) return run_test_file(o.test_file, o.test_assets);
+  if (!o.compile_source.empty()) return compile_file(o.compile_source, o.compile_out);
+  return -1;
 }
 
 }  // namespace alpha::script

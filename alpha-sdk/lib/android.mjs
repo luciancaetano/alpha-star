@@ -1,6 +1,6 @@
 // `alpha export --target android-arm64`: a ready-to-build Gradle project.
 //   <out>/                  the SDK's android/ template (SDL 3.2.10 Java glue, Gradle wrapper)
-//   <out>/app/src/main/assets  the game pack (main.js + assets/...), read through SDL's APK asset IO
+//   <out>/app/src/main/assets  the game pack (game.jsbc + assets/...), read through SDL's APK asset IO
 // The engine's libmain.so is built from the alpha-star source with the shipping flavor
 // (CMake externalNativeBuild). When the Android toolchain is installed, Gradle builds the
 // APK at once; otherwise the exporter says exactly what to install and how to build.
@@ -9,11 +9,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { bundledEngine } from "./engine.mjs";
 import { exportPack, readGameDef } from "./pack.mjs";
 
 const SDK = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 export const TEMPLATE = path.join(SDK, "android");
 export const ANDROID_TARGETS = ["android-arm64"];
+const ABI_BITS = { "android-arm64": 64 };  // pointer width in the engine's bytecode build id
 
 // What the Gradle project pins (app/build.gradle); sdkmanager package names.
 export const TOOLCHAIN = {
@@ -150,7 +152,10 @@ function runGradle(out, toolchain, engineSrc) {
 }
 
 // Assembles the project in `out`; builds the APK when `build` and the toolchain is there.
-export async function exportAndroid({ root, entry, out, target, engineSrc, atlas = true, env = process.env, build = true }) {
+// bytecode: the APK ships game.jsbc compiled by this machine's release engine (same
+// QuickJS source hash; arm64 is 64-bit like the host), compiler overrides it.
+export async function exportAndroid({ root, entry, out, target, engineSrc, atlas = true, env = process.env, build = true,
+                                      bytecode = true, compiler = bundledEngine() }) {
   const fail = (problems) => ({ ok: false, problems, files: [] });
   if (!ANDROID_TARGETS.includes(target)) return fail([problem(`unknown target "${target}"; Android targets: ${ANDROID_TARGETS.join(", ")}`)]);
   const source = findEngineSource(engineSrc, env);
@@ -164,7 +169,7 @@ export async function exportAndroid({ root, entry, out, target, engineSrc, atlas
   if (problems.length) return fail(problems);
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-android-"));
   try {
-    const pack = await exportPack({ root, entry, out: staging, atlas });
+    const pack = await exportPack({ root, entry, out: staging, atlas, bytecode, compiler, bytecodeBits: ABI_BITS[target] });
     if (!pack.ok) return pack;
     fs.rmSync(out, { recursive: true, force: true });
     fs.mkdirSync(out, { recursive: true });

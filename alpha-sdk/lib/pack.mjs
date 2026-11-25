@@ -213,10 +213,10 @@ function engineFor(target) {
 
 // The game file a pack ships: standalone packs get game.jsbc compiled from the
 // staged main.js (unless bytecode is off); every other pack keeps main.js.
-function gameFile(staging, standalone, { bytecode, compiler }) {
-  if (!standalone.engine || !bytecode) return { file: "main.js" };
-  const failed = compileBytecode({ compiler, shipping: standalone.engine, source: path.join(staging, "main.js"),
-                                   out: path.join(staging, BYTECODE_FILE) });
+function gameFile(staging, standalone, { bytecode, compiler, bytecodeBits }) {
+  if (!bytecode || !(standalone.engine || bytecodeBits)) return { file: "main.js" };
+  const failed = compileBytecode({ compiler, shipping: standalone.engine, bits: bytecodeBits,
+                                   source: path.join(staging, "main.js"), out: path.join(staging, BYTECODE_FILE) });
   return failed ? { problem: failed } : { file: BYTECODE_FILE };
 }
 
@@ -224,17 +224,18 @@ function gameFile(staging, standalone, { bytecode, compiler }) {
 // a plain pack, or "<platform>-<arch>" to include that engine binary. atlas: pack
 // images and sheet images into texture pages (default; transparent to game code).
 // bytecode: standalone packs ship game.jsbc (no JS source, no source map) compiled by
-// `compiler` (default: this machine's release engine). Returns { ok, problems, files }.
-// Writes nothing unless everything checks out.
+// `compiler` (default: this machine's release engine). bytecodeBits: also ship game.jsbc
+// without an engine binary, for a target built from source with that pointer width
+// (Android). Returns { ok, problems, files }. Writes nothing unless everything checks out.
 export async function exportPack({ root, entry, out, target = null, atlas = true, bytecode = true,
-                                   compiler = bundledEngine() }) {
+                                   compiler = bundledEngine(), bytecodeBits = null }) {
   const standalone = target ? engineFor(target) : {};
   if (standalone.problem) return { ok: false, problems: [standalone.problem], files: [] };
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-pack-"));
   try {
     const built = await build(entry, path.join(out, "main.js"), path.join(staging, "main.js"));
     if (!built.ok) return { ok: false, problems: built.problems, files: [] };
-    const game = gameFile(staging, standalone, { bytecode, compiler });
+    const game = gameFile(staging, standalone, { bytecode, compiler, bytecodeBits });
     if (game.problem) return { ok: false, problems: [game.problem], files: [] };
     const def = await readGameDef(entry);
     if (!def) return { ok: false, problems: [problem("main module must `export default game({...})`", entry)], files: [] };

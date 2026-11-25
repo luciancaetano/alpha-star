@@ -26,9 +26,19 @@ function mismatch(stamp, shipping) {
     "and its shipping engine are different builds; restage both with tools/stage_engine.py");
 }
 
+// A target built from source (Android): its build id is the same QuickJS source hash
+// as this checkout's, plus its pointer width. QuickJS-ng writes bytecode little-endian
+// with LEB128 counts on every host (quickjs.c bc_put_*), so only the width must match.
+function widthMismatch(stamp, bits) {
+  return stamp.build.endsWith(`-${bits}`) ? null
+    : problem(`the SDK's release engine compiles for build ${stamp.build}, but the target needs ${bits}-bit ` +
+              "pointers; export from a 64-bit machine, or with --no-bytecode (ships main.js)");
+}
+
 // Compiles `source` (bundled main.js) to `out`. compiler: the release engine for
-// this machine; shipping: the engine that will run it. Returns a problem or null.
-export function compileBytecode({ compiler, shipping, source, out }) {
+// this machine; shipping: the engine that will run it, or bits: the pointer width of
+// a target built from source. Returns a problem or null.
+export function compileBytecode({ compiler, shipping, bits, source, out }) {
   if (!compiler) {
     return problem("no release engine for this machine to compile game.jsbc; stage both flavors with " +
                    "tools/stage_engine.py, or export with --no-bytecode (ships main.js)");
@@ -39,5 +49,5 @@ export function compileBytecode({ compiler, shipping, source, out }) {
   }
   const stamp = stampOf(fs.readFileSync(out));
   if (!stamp) return problem(`${compiler} wrote no game.jsbc header (is it an alpha-star release engine?)`);
-  return mismatch(stamp, shipping);
+  return shipping ? mismatch(stamp, shipping) : widthMismatch(stamp, bits);
 }

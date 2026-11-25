@@ -3,6 +3,8 @@
 Usage: python tools/check_shipping.py [--preset shipping | --binary PATH] [--expect-found]
        python tools/check_shipping.py --pack DIR   # a standalone pack: game.jsbc, no readable
                                                    # JS / source maps, engine == staged shipping one
+       python tools/check_shipping.py --pack DIR --signed   # after alpha export --sign: engine ==
+                                                   # staged one once its Authenticode signature is removed
 
 Default binary: the shipping preset's alpha_star (cmake --preset shipping);
 --preset NAME checks another preset's build (e.g. release for the negative test).
@@ -77,7 +79,7 @@ SOURCE_SUFFIXES = (".js", ".mjs", ".cjs", ".ts", ".map")
 SOURCE_TEXT = [rb"sourceMappingURL", rb"export default", rb"import \{", rb"\bfunction\s*\w*\s*\([^)]*\)\s*\{"]
 
 
-def pack_problems(pack, staged):
+def pack_problems(pack, staged, signed=False):
     """Standalone pack: game.jsbc and no readable JS; the engine is the staged shipping one, unmodified."""
     problems = [f"ships source file {p.relative_to(pack)}" for p in pack.rglob("*") if p.suffix in SOURCE_SUFFIXES]
     jsbc = pack / "game.jsbc"
@@ -86,15 +88,43 @@ def pack_problems(pack, staged):
         problems.append("no game.jsbc (ALPHAJBC header)")
     problems += [f"game.jsbc contains source text /{p.decode()}/" for p in SOURCE_TEXT if re.search(p, data)]
     exe = pack / staged.name
-    if not exe.is_file() or exe.read_bytes() != staged.read_bytes():
-        problems.append(f"{exe.name} differs from the staged shipping engine {staged} (must be unmodified)")
+    if not exe.is_file() or not same_engine(exe.read_bytes(), staged.read_bytes(), signed):
+        what = "the staged shipping engine plus a signature" if signed else "unmodified"
+        problems.append(f"{exe.name} differs from the staged shipping engine {staged} (must be {what})")
     return problems
 
 
-def check_pack(pack):
+def unsigned_pe(data):
+    """A PE image without its Authenticode signature: checksum and security directory zeroed,
+    certificate table (and signtool's 8-byte alignment padding) cut off. Anything else: as is."""
+    if data[:2] != b"MZ":
+        return data
+    opt = struct.unpack_from("<I", data, 0x3C)[0] + 24
+    dirs = opt + (112 if struct.unpack_from("<H", data, opt)[0] == 0x20B else 96)
+    cert = struct.unpack_from("<I", data, dirs + 4 * 8)[0]
+    out = bytearray(data[:cert] if cert else data)
+    struct.pack_into("<I", out, opt + 64, 0)
+    struct.pack_into("<II", out, dirs + 4 * 8, 0, 0)
+    return bytes(out)
+
+
+def same_engine(exe, staged, signed):
+    """Unsigned packs: byte-identical. Signed packs (alpha export --sign): identical once the
+    Authenticode signature is removed (PE); other formats can't be unsigned here, so they must
+    at least pass the shipping marker/form checks."""
+    if not signed:
+        return exe == staged
+    if exe[:2] == b"MZ":
+        bare, base = unsigned_pe(exe), unsigned_pe(staged)
+        return bare[:len(base)] == base and not bare[len(base):].strip(b"\0")
+    return not marker_hits(exe) and not form_problems(exe)
+
+
+def check_pack(pack, signed=False):
     staged = sorted((Path(__file__).resolve().parent.parent / "alpha-sdk" / "engine").glob("*/shipping/alpha_star*"))
-    host = [s for s in staged if (pack / s.name).is_file() and (pack / s.name).read_bytes() == s.read_bytes()]
-    problems = pack_problems(pack, (host or staged or [Path("alpha_star")])[0])
+    host = [s for s in staged if (pack / s.name).is_file()
+            and same_engine((pack / s.name).read_bytes(), s.read_bytes(), signed)]
+    problems = pack_problems(pack, (host or staged or [Path("alpha_star")])[0], signed)
     print(f"check_shipping: pack {pack}")
     for problem in problems:
         print(f"  PACK  {problem}")
@@ -108,9 +138,11 @@ def main(argv):
     ap.add_argument("--preset", default="shipping")
     ap.add_argument("--expect-found", action="store_true")
     ap.add_argument("--pack", type=Path, help="check a standalone pack (alpha export --standalone) instead")
+    ap.add_argument("--signed", action="store_true",
+                    help="with --pack: the engine was signed by alpha export --sign (compare without the signature)")
     a = ap.parse_args(argv)
     if a.pack:
-        return check_pack(a.pack)
+        return check_pack(a.pack, a.signed)
     binary = a.binary or toolchain.built_exe(a.preset)
     data = binary.read_bytes()
     hits = marker_hits(data)

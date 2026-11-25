@@ -14,12 +14,12 @@
     "./png": "./lib/png.mjs"
   },
   "types": "./types/alpha.d.ts",
+  "license": "MIT",
   "files": [
     "bin",
     "android",
     "lib",
     "types",
-    "engine",
     "notices",
     "templates",
     "tsconfig.game.json"
@@ -34,5 +34,9 @@
     "esbuild": "0.25.0",
     "typescript": "5.8.2",
     "zod": "3.25.76"
+  },
+  "optionalDependencies": {
+    "@alpha-star/engine-linux-x64": "0.2.0",
+    "@alpha-star/engine-win32-x64": "0.2.0"
   }
 }

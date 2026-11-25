@@ -15,6 +15,7 @@ struct CliOptions {
   std::string tap;
   int tap_every = 0;
   bool devtools = false;
+  bool version = false;  // --version: print "alpha-star <version>" and exit
   std::string test_file;  // non-empty = test mode
   std::string test_assets;
   std::string compile_source;  // --compile <main.js> <out.jsbc>: write bytecode, then exit

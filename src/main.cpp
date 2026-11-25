@@ -46,6 +46,7 @@
 //   --tap INPUT       input name to tap headlessly, e.g. Space
 //   --tap-every K     tap it every K frames
 //   --devtools        open the dev tools (F12) at start; dev builds only
+//   --version         print "alpha-star <version>" and exit
 // With ALPHA_MCP (dev, release): agent control channel, see src/mcp/dispatch.hpp
 //   --control PORT    serve the alpha-control protocol on 127.0.0.1:PORT
 //   --hidden          no visible window (agent runs)
@@ -263,8 +264,7 @@ int main(int argc, char** argv) {
   const std::vector<std::string_view> args(argv + 1, argv + argc);
   const Options options = alpha::core::parse_cli(args);
 #if ALPHA_DEBUG_TOOLS
-  if (!options.test_file.empty()) return alpha::script::run_test_file(options.test_file, options.test_assets);
-  if (!options.compile_source.empty()) return alpha::script::compile_file(options.compile_source, options.compile_out);
+  if (const int code = alpha::script::run_command(options); code >= 0) return code;
 #endif
   const std::string game = options.game.empty() ? alpha::platform::bundled_pack() : options.game;
   if (game.empty()) return no_game();
