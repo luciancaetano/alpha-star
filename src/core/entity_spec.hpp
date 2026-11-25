@@ -10,6 +10,7 @@
 
 #include "core/color.hpp"
 #include "core/image.hpp"
+#include "core/lighting.hpp"
 #include "core/sheet.hpp"
 #include "core/tags.hpp"
 #include "core/vec2.hpp"
@@ -177,6 +178,7 @@ struct EntitySpec {
   std::optional<BodySpec> body;
   Layer layer;
   std::optional<EmitterSpec> emitter;
+  std::optional<LightSpec> light;
 };
 
 // One live particle as drawn: center, size and color (tint already applied).

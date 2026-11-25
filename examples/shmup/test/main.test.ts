@@ -46,3 +46,13 @@ export function sittingStillEventuallyLosesAndTheMusicFades() {
   run.expect.scene("over");
   run.expect.music(null);
 }
+
+export function cToggleTheCrtFilterWithoutChangingTheGame() {
+  const plain = simulate(game, { seconds: 2, inputs: SWEEP });
+  const crt = simulate(game, { seconds: 2, inputs: { ...SWEEP, crt: [10] } });
+  crt.expect.noErrors();
+  if (!(crt.state as { crt: boolean }).crt) throw new Error("C should turn the CRT filter on");
+  if (score(crt.state) !== score(plain.state)) throw new Error("effects are render-only: the score must not change");
+  const twice = simulate(game, { seconds: 1, inputs: { crt: [10, 30] } });
+  if ((twice.state as { crt: boolean }).crt) throw new Error("a second press turns it off");
+}

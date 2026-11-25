@@ -8,6 +8,7 @@
 #include "script/body_parser.hpp"
 #include "script/effect_parser.hpp"
 #include "script/js_value.hpp"
+#include "script/postfx_bindings.hpp"
 #include "script/spec_fields.hpp"
 
 namespace alpha::script {
@@ -118,6 +119,7 @@ core::EntitySpec parse_entity_spec(JSContext* ctx, JSValueConst spec, ScriptStat
   out.layer = parse_layer(ctx, spec, s);
   if (has(ctx, spec, "shape")) shape(ctx, field(ctx, spec, "shape").get(), s, out);
   if (has(ctx, spec, "body")) out.body = parse_body(ctx, field(ctx, spec, "body").get(), s);
+  if (has(ctx, spec, "light")) out.light = parse_light(ctx, field(ctx, spec, "light").get());
   if (has(ctx, spec, "emitter")) out.emitter = parse_emitter(ctx, field(ctx, spec, "emitter").get(), s);
   return out;
 }

@@ -21,6 +21,8 @@ bool has(JSContext* ctx, JSValueConst obj, const char* name);
 Value field(JSContext* ctx, JSValueConst obj, const char* name);
 // A "#rgb" / "#rrggbb" / "#rrggbbaa" string; `path` names the field in errors.
 core::Color color_arg(JSContext* ctx, JSValueConst v, const std::string& path);
+// The same color check where `what` is the whole field name (no "spawn: " prefix).
+core::Color color_named(JSContext* ctx, JSValueConst v, const std::string& what);
 // obj[name] as a number, or `fallback` when absent.
 float number_or(JSContext* ctx, JSValueConst obj, const char* name, const std::string& path, float fallback);
 // A number in [lo, hi]; errors name `what`, the range and the value.

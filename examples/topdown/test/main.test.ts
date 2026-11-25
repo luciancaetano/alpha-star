@@ -61,3 +61,11 @@ export function againStartsANewRound() {
   run.expect.noErrors();
   run.expect.scene("play");
 }
+
+export function lightsAreRenderOnly() {
+  // Heroes and bullets carry lights; the simulation must not notice them.
+  const run = simulate(game, { seconds: 1, inputs: { fire: frames(0, 60) } });
+  run.expect.noErrors();
+  run.expect.count("hero").equals(1);
+  if (run.entities("bullet").length + score(run.state) === 0) throw new Error("firing should leave bullets or kills");
+}

@@ -11,12 +11,14 @@ bool has(JSContext* ctx, JSValueConst obj, const char* name) {
 
 Value field(JSContext* ctx, JSValueConst obj, const char* name) { return {ctx, JS_GetPropertyStr(ctx, obj, name)}; }
 
-core::Color color_arg(JSContext* ctx, JSValueConst v, const std::string& path) {
-  const std::string text = string_arg(ctx, v, kSpawn + path);
+core::Color color_named(JSContext* ctx, JSValueConst v, const std::string& what) {
+  const std::string text = string_arg(ctx, v, what);
   const auto parsed = core::parse_color(text);
-  if (!parsed) throw core::Error(kSpawn + path + " must be a color like \"#73bf2e\" or \"#ffffff80\", got \"" + text + "\"");
+  if (!parsed) throw core::Error(what + " must be a color like \"#73bf2e\" or \"#ffffff80\", got \"" + text + "\"");
   return *parsed;
 }
+
+core::Color color_arg(JSContext* ctx, JSValueConst v, const std::string& path) { return color_named(ctx, v, kSpawn + path); }
 
 float ranged(JSContext* ctx, JSValueConst v, const std::string& what, double lo, double hi) {
   const double x = number_arg(ctx, v, what);

@@ -1,6 +1,6 @@
 // Every name the game uses. The compiler rejects anything not listed here.
 export interface Starfighter {
-  actions: "fire" | "restart";
+  actions: "fire" | "restart" | "crt";
   axes: "moveX" | "moveY";
   sounds: "shot" | "boom" | "hurt";
   /** Streamed music (assets.music): a generated WAV loop. */

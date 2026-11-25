@@ -48,3 +48,5 @@ ctx.spawn({ tags: ["label"], pos, shape: { text: "+1", size: 8, color: "#ffe14d"
 config: { window: { scaling: "integer" }, pixelMode: true }   // letterbox | integer | stretch | expand
 ctx.window.fullscreen = true;   // Alt+Enter too
 ```
+
+Full-screen effects (bloom, CRT, ...) and 2D lights: see [Shaders and lighting](shaders.html).

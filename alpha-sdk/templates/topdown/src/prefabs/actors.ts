@@ -14,6 +14,8 @@ export function hero(player: number, at: Vec2): Spec {
     z: 2,
     shape: { sheet: "hero", animation: "idle", ...(player === 2 ? { tint: "#9be7ff" } : {}) },
     body: { type: "dynamic", fixedRotation: true, collider: { circle: HERO.radius } },
+    // Each hero carries a lantern (config.lighting keeps the rest of the arena dim).
+    light: { radius: 110, color: player === 2 ? "#9be7ff" : "#ffd9a0", intensity: 1.8 },
     data: { player, hp: HERO.hp, bombs: HERO.bombs, aim: [1, 0], cooldown: 0 },
   };
 }
@@ -34,6 +36,7 @@ export function bullet(from: Vec2, aim: Vec2): Spec {
     tags: ["bullet"],
     pos: vec.add(from, vec.scale(aim, HERO.radius + 4)),
     shape: { circle: BULLET.radius, color: "#ffe14d" },
+    light: { radius: 28, color: "#ffe14d" },
     body: { type: "dynamic", bullet: true, velocity: vec.scale(aim, BULLET.speed), collider: { circle: BULLET.radius, sensor: true } },
     data: { life: BULLET.life },
   };

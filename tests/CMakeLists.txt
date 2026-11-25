@@ -12,6 +12,7 @@ set(ALPHA_TEST_SOURCES
   core/window_test.cpp
   core/particles_test.cpp
   core/perf_test.cpp
+  core/postfx_test.cpp
   core/input_test.cpp
   core/log_ring_test.cpp
   core/pack_watch_test.cpp
@@ -40,6 +41,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     platform/sdl_input_test.cpp
     platform/window_test.cpp
     render/effects_render_test.cpp
+    render/postfx_render_test.cpp
     render/renderer_test.cpp
     render/tessellate_test.cpp
     script/app_events_test.cpp
@@ -54,6 +56,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/map_script_test.cpp
     script/simulate_test.cpp
     script/effects_script_test.cpp
+    script/postfx_script_test.cpp
     script/entity_links_test.cpp
     script/physics_script_test.cpp
     script/pixel_mode_test.cpp

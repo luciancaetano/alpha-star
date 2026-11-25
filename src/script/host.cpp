@@ -154,7 +154,10 @@ render::Frame Host::frame(float blend) {
   if (const ecs::World* world = vm_->main().world.get()) {
     f.shapes = world->draw_items(blend);
     f.view = world->view(blend);
+    f.lights = world->lights(blend);
+    f.effects = world->postfx().chain();
   }
+  f.lighting = vm_->main().lighting;
   if (paused()) f.texts = error_overlay(error_, static_cast<float>(info_.width));
 #if ALPHA_DEBUG_TOOLS
   else if (!reload_error_.empty()) f.texts = error_overlay(reload_error_, static_cast<float>(info_.width));

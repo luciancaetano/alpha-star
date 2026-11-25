@@ -11,7 +11,7 @@ export default game({
     background: "#0b0d1a",
     seed: 3,
     gravity: [0, 0],
-    actions: { fire: ["Space", "J", "Z", "GamepadA", "GamepadRT"], restart: ["R", "GamepadStart"] },
+    actions: { fire: ["Space", "J", "Z", "GamepadA", "GamepadRT"], restart: ["R", "GamepadStart"], crt: ["C", "GamepadY"] },
     axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"], moveY: ["GamepadLeftY", "W/S", "Up/Down"] },
     // Stars far behind (they barely move with camera shake), effects over everything.
     layers: { stars: { z: -100, parallax: 0.3 }, fx: { z: 100 } },

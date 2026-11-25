@@ -12,6 +12,7 @@
 #include "core/entity_spec.hpp"
 #include "core/particles.hpp"
 #include "core/perf.hpp"
+#include "core/postfx.hpp"
 #include "core/random.hpp"
 #include "physics/physics_world.hpp"
 
@@ -133,6 +134,11 @@ class World {
   // Living shapes and particles, ordered by layer z, z, then creation, placed
   // at the blend previous -> current by `blend` in [0, 1] (1 = current state).
   std::vector<core::DrawItem> draw_items(float blend = 1.0f) const;
+  // Living lights (spawn `light`) at the same blend, oldest first.
+  std::vector<core::LightItem> lights(float blend = 1.0f) const;
+  // The scene's post effects (ctx.postfx); a new scene starts with none.
+  core::PostFx& postfx() { return postfx_; }
+  const core::PostFx& postfx() const { return postfx_; }
 
  private:
   entt::entity living(EntityId id) const;
@@ -159,6 +165,7 @@ class World {
   core::Random own_random_{0};
   core::Random* random_;
   core::FrameTimes times_;
+  core::PostFx postfx_;
 };
 
 }  // namespace alpha::ecs

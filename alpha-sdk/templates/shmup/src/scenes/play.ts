@@ -5,7 +5,7 @@ import { boom, enemy, ship, shot, star } from "../prefabs/actors";
 import { ENEMY, SHIP, SHOT, STARS, VIEW } from "../tuning";
 import type { Starfighter } from "../types";
 
-type State = { score: number };
+type State = { score: number; crt: boolean };
 type Play = Context<Starfighter, State>;
 type Thing = Entity<Starfighter["tags"], any>;
 
@@ -20,6 +20,12 @@ function scrollStars(ctx: Play) {
     if (stars.y[i] > VIEW.height) stars.y[i] -= VIEW.height;
   }
   stars.write();
+}
+
+function toggleCrt(ctx: Play) {
+  ctx.state.crt = !ctx.state.crt;
+  if (ctx.state.crt) ctx.postfx.add("crt", { strength: 0.6 });
+  else ctx.postfx.remove("crt");
 }
 
 function fly(ctx: Play, s: Thing) {
@@ -68,7 +74,7 @@ function hurt(ctx: Play, s: Thing, e: Thing) {
 }
 
 export default scene("play", {
-  state: () => ({ score: 0 }),
+  state: () => ({ score: 0, crt: false }),
 
   enter(ctx) {
     for (let i = 0; i < STARS.count; i++) {
@@ -85,6 +91,9 @@ export default scene("play", {
     ctx.onHit("ship", "enemy", (s, e) => hurt(ctx, s, e));
     if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { fadeIn: 1, volume: 0.6 });
     ctx.ui.show("hud");
+    // Render-only looks: glow on the bright shots and stars; C toggles a CRT filter.
+    ctx.postfx.add("bloom", { strength: 0.9, radius: 3 });
+    if (ctx.state.crt) ctx.postfx.add("crt", { strength: 0.6 });
   },
 
   update(ctx) {
@@ -95,6 +104,7 @@ export default scene("play", {
     steerEnemies(ctx);
     ctx.ui.set("hud", "score", `${ctx.state.score}`.padStart(6, "0"));
     ctx.ui.set("hud", "lives", "A".repeat(Math.max(0, s.data.lives as number)));
+    if (ctx.input.pressed("crt")) toggleCrt(ctx);
     if (ctx.input.pressed("restart")) ctx.go("play");
   },
 });

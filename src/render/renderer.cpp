@@ -44,7 +44,8 @@ Renderer::Renderer(SDL_Renderer* sdl, int width, int height, core::Scaling scali
       game_size_{static_cast<float>(width), static_cast<float>(height)},
       size_(game_size_),
       scaling_(scaling),
-      fonts_(kFontAtlases, [this](const core::Image* image) { forget(image); }) {
+      fonts_(kFontAtlases, [this](const core::Image* image) { forget(image); }),
+      compositor_(sdl) {
   present_logical();
   SDL_SetRenderDrawBlendMode(sdl_, SDL_BLENDMODE_BLEND);
 }
@@ -68,6 +69,7 @@ Renderer::~Renderer() {
 
 void Renderer::draw(const Frame& frame) {
   if (scaling_ == core::Scaling::Expand) present_logical();
+  compositor_.begin(size_, core::needs_scene(frame.effects));
   const core::Color bg = frame.background;
   SDL_SetRenderDrawColor(sdl_, bg.r, bg.g, bg.b, bg.a);
   SDL_RenderClear(sdl_);
@@ -79,6 +81,8 @@ void Renderer::draw(const Frame& frame) {
   draw_shapes(frame.shapes, view);
   for (SDL_Texture* tex : doomed_) SDL_DestroyTexture(tex);
   doomed_.clear();
+  compositor_.light(frame.lighting, core::light_discs(frame.lights, view));
+  compositor_.finish(frame.effects);
   for (const core::TextItem& text : frame.texts) draw_text(text);
 }
 

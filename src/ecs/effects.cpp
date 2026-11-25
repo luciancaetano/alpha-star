@@ -75,6 +75,18 @@ std::vector<core::DrawItem> draw_list(const entt::registry& registry, float blen
   return items;
 }
 
+std::vector<core::LightItem> light_list(const entt::registry& registry, float blend) {
+  std::vector<std::pair<std::uint64_t, core::LightItem>> keyed;
+  const auto view = registry.view<const Transform, const Previous, const Sequence, const Layered, const Lit>(entt::exclude<Doomed>);
+  for (auto [e, t, p, seq, l, lit] : view.each()) {
+    keyed.emplace_back(seq.value, core::LightItem{p.pos + (t.pos - p.pos) * blend, lit.light, l.layer.parallax});
+  }
+  std::sort(keyed.begin(), keyed.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
+  std::vector<core::LightItem> out;
+  for (auto& k : keyed) out.push_back(k.second);
+  return out;
+}
+
 void rescale(core::ShapeSpec& shape, Scaled& base, float scale) {
   if (!(scale > 0.0f) || !std::isfinite(scale)) {
     throw core::Error("entity.scale must be a number > 0, got " + std::to_string(scale));

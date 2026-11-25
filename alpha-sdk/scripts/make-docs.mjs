@@ -21,7 +21,7 @@ const MASCOT = path.join(REPO, "aster.png");
 export const NAV = [
   ["Start", [["index", "Getting started"], ["concepts", "Concepts"], ["examples", "Examples"]]],
   ["Guides", [["input", "Input"], ["ui", "Game UI"], ["audio", "Audio and music"], ["physics", "Physics"],
-              ["particles", "Particles, looks, layers"], ["tilemaps", "Sprites, camera, tilemaps"],
+              ["particles", "Particles, looks, layers"], ["shaders", "Shaders and lighting"], ["tilemaps", "Sprites, camera, tilemaps"],
               ["saves", "Saves, settings, i18n"], ["hot-reload", "Hot reload"], ["mcp", "MCP for agents"],
               ["testing", "Testing"], ["exporting", "Exporting"], ["android", "Android"]]],
   ["Reference", [["reference", "API reference"], ["agents", "AGENTS.md for games"]]],

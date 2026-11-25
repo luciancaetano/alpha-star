@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <functional>
 #include <map>
+#include <optional>
 #include <memory>
 #include <set>
 #include <string>
@@ -58,6 +59,8 @@ struct ScriptState {
   std::vector<std::string> categories;
   // config.pixelMode false: filled shapes get antialiased edges unless shape.smooth says otherwise.
   bool smooth_shapes = false;
+  // config.lighting (none: no lightmap; lights are ignored).
+  std::optional<core::Lighting> lighting;
   // config.layers by name.
   std::map<std::string, core::Layer, std::less<>> layers;
   // ctx.window: written by the engine every frame (headless: as scripts set it).

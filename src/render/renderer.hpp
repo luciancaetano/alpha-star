@@ -10,7 +10,10 @@
 #include "core/camera.hpp"
 #include "core/entity_spec.hpp"
 #include "core/window.hpp"
+#include "core/lighting.hpp"
 #include "core/pixel_grid.hpp"
+#include "core/postfx.hpp"
+#include "render/compositor.hpp"
 #include "render/font_cache.hpp"
 #include "render/tessellate.hpp"
 
@@ -26,6 +29,11 @@ struct Frame {
   std::vector<core::DrawItem> shapes;  // already ordered (World::draw_items)
   std::vector<core::TextItem> texts;   // drawn over shapes, in order
   std::optional<core::View> view;
+  // Render-only looks: lights (with `lighting` set) multiply the world by a
+  // lightmap; `effects` then run over the lit world, in order. Texts stay unaffected.
+  std::optional<core::Lighting> lighting;
+  std::vector<core::LightItem> lights;
+  std::vector<core::Effect> effects;
 };
 
 // What the last draw() did: shapes drawn / skipped as off-screen, and
@@ -92,6 +100,7 @@ class Renderer {
   // World-text atlases at output sizes; an evicted one frees its texture.
   FontCache fonts_;
   std::vector<SDL_Texture*> doomed_;  // evicted this frame
+  Compositor compositor_;
 };
 
 }  // namespace alpha::render

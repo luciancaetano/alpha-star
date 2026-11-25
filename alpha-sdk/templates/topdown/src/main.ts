@@ -19,6 +19,8 @@ export default game({
     // Player 1 also has the keyboard; each gamepad is its own player.
     axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"], moveY: ["GamepadLeftY", "W/S", "Up/Down"] },
     window: { scaling: "integer" },
+    // Dim where no light reaches: heroes and bullets carry lights (render-only).
+    lighting: { ambient: "#404858" },
   },
   start: "play",
   scenes: { play, over },

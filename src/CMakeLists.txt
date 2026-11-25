@@ -12,11 +12,13 @@ add_library(alpha_core
   core/bmfont.cpp
   core/pixel_grid.cpp
   core/input.cpp
+  core/lighting.cpp
   core/log_ring.cpp
   core/mixer.cpp
   core/music_track.cpp
   core/particles.cpp
   core/pad_slots.cpp
+  core/postfx.cpp
   core/perf.cpp
   core/random.cpp
   core/sheet.cpp
@@ -85,7 +87,9 @@ add_library(alpha_engine
   platform/sdl_input.cpp
   platform/vfs.cpp
   platform/window.cpp
+  render/compositor.cpp
   render/font_cache.cpp
+  render/light_mesh.cpp
   render/quads.cpp
   render/renderer.cpp
   render/tessellate.cpp
@@ -104,6 +108,7 @@ add_library(alpha_engine
   script/input_bindings.cpp
   script/joint_bindings.cpp
   script/physics_bindings.cpp
+  script/postfx_bindings.cpp
   script/prefs_bindings.cpp
   script/settings_bindings.cpp
   script/instance_bindings.cpp

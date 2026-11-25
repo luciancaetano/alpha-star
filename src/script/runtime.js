@@ -299,6 +299,20 @@ function pair(v, what) {
   return v;
 }
 
+// ctx.postfx: the current scene's full-screen effects, drawn in the order first added.
+function makePostfx() {
+  return {
+    add: (name, params) => N.postfxPut(name, params),
+    set: (name, params) => {
+      if (!N.postfxList().includes(name)) fail(`postfx.set("${name}"): not added in this scene; have: ${N.postfxList().join(" ") || "(none)"}; use postfx.add`);
+      N.postfxPut(name, params);
+    },
+    remove: (name) => N.postfxRemove(name),
+    clear: () => N.postfxClear(),
+    list: () => N.postfxList(),
+  };
+}
+
 // ctx.camera: the current scene's camera (each scene starts with the identity one).
 function makeCamera() {
   const get = () => N.cameraGet();
@@ -463,6 +477,7 @@ function makeCtx(s) {
       persistSettings(s);
     }),
     camera: makeCamera(),
+    postfx: makePostfx(),
     window: {
       get fullscreen() { return N.windowGet()[0]; },
       set fullscreen(v) {
@@ -604,6 +619,7 @@ function bootGame(s, ctx, g, start, what, from) {
   if (c.deadzone !== undefined) N.deadzone(c.deadzone);
   for (const [axis, sources] of Object.entries(c.axes ?? {})) N.bind("axes", axis, sources);
   defineLayers(c.layers ?? {});
+  defineLighting(c.lighting);
   defineBuses(c.audio);
   s.store.open(c.title ?? "alpha-star");
   s.save = makeSave(s.store, saveConfig(c.save));
@@ -622,6 +638,15 @@ function collisionCategories(collision) {
     fail(`config.collision must be { categories: ["player", "enemy", ...] }, got ${show(collision)}`);
   }
   return collision.categories;
+}
+
+// config.lighting: { ambient } turns the lightmap on (spawn `light` entities light it up).
+function defineLighting(lighting) {
+  if (lighting === undefined) return N.setLighting(null);
+  if (!lighting || typeof lighting !== "object" || typeof lighting.ambient !== "string") {
+    fail(`config.lighting must be { ambient: "#rrggbb" } (the color where no light reaches), got ${show(lighting)}`);
+  }
+  N.setLighting(lighting.ambient);
 }
 
 // config.layers: { name: { z, parallax? } }, drawn in z order (then entity z).

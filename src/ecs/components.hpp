@@ -54,6 +54,11 @@ struct Emission {
   core::Emitter emitter;
 };
 
+// A light riding on the entity (drawn into the lightmap).
+struct Lit {
+  core::LightSpec light;
+};
+
 struct PhysicsBody {
   b2BodyId id;
 };

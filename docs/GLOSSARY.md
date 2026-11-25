@@ -113,3 +113,6 @@
 | Touch inputs | `"Touch"` (any finger), `"TouchLeft"` / `"TouchRight"` (a finger on that half of the window): player 1's virtual buttons, `core::Touches` fed by `platform::apply_touch`. A finger is also SDL's emulated mouse (`"MouseLeft"`, `ctx.input.mouse()`). |
 | Back input | `"Back"`: the Android back button (`SDL_SCANCODE_AC_BACK`; `prepare_mobile` traps it so it never closes the app). |
 | Lifecycle watch | `platform::LifecycleWatch`: an SDL event watch that, on the pushing thread, only flags "leaving" (background / terminating) and flushes stderr; `AppEvents` stops stepping while flagged, and the queued event drives `AppLifecycle` and the hooks as usual. |
+| PostFx | A scene's full-screen effect chain (`ctx.postfx`, `core::PostFx`): built-in effects in first-add order, render-only. |
+| Compositor | `render::Compositor`: lighting and post effects on SDL_Renderer alone (render targets, add/modulate blends, vertex colors); no shaders. |
+| Lightmap | Offscreen texture cleared to `config.lighting.ambient` with every entity `light` added, multiplied into the world. |

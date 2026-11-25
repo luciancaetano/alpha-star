@@ -212,6 +212,51 @@ declare module "alpha" {
     collidesWith?: C[];
   }
 
+  /**
+   * A 2D light: full `color` x `intensity` at the entity, fading to nothing at `radius`
+   * world pixels. Lights add up in a lightmap that multiplies the world (config.lighting).
+   */
+  export interface LightSpec {
+    /** World pixels, 1..4096. */
+    radius: number;
+    /** Default "#ffffff". */
+    color?: string;
+    /** 0..8, default 1. */
+    intensity?: number;
+  }
+
+  /** Built-in full-screen effects (ctx.postfx). */
+  export type PostFxName = "bloom" | "crt" | "pixelate" | "tint" | "vignette";
+  /** Parameters per effect; missing ones take their defaults. */
+  export interface PostFxParams {
+    /** Glow around bright pixels: strength 0..2 (0.6), radius 1..16 game px (4). */
+    bloom: { strength?: number; radius?: number };
+    /** Scanlines + vignette: strength 0..1 (0.5). */
+    crt: { strength?: number };
+    /** Blocks of `size` game px, 1..64 (4). */
+    pixelate: { size?: number };
+    /** Color grade: the screen multiplied by `color` ("#ffffff"), faded by strength 0..1 (1). */
+    tint: { color?: string; strength?: number };
+    /** Dark edges: strength 0..1 (0.5); radius 0..1 (0.5) = clear part from the center. */
+    vignette: { strength?: number; radius?: number };
+  }
+  /**
+   * The current scene's post effects, drawn over the (lit) world in the order first
+   * added; UI and dev tools stay unaffected. Each scene starts with none. Render-only:
+   * simulate() and game state never see them. Works on every renderer (software too).
+   */
+  export interface PostFx {
+    /** Adds the effect, or replaces its params when already added (keeping its place). */
+    add<N extends PostFxName>(name: N, params?: PostFxParams[N]): void;
+    /** Like add, for an effect already added (error otherwise). Missing params reset to defaults. */
+    set<N extends PostFxName>(name: N, params?: PostFxParams[N]): void;
+    /** False when it was not added. */
+    remove(name: PostFxName): boolean;
+    clear(): void;
+    /** Names in draw order. */
+    list(): PostFxName[];
+  }
+
   /** Plain data describing an entity. Build it with functions, not classes. */
   export interface EntitySpec<T extends string = string, I extends string = never, S extends { [k: string]: string } = {},
     L extends string = never, F extends string = never, C extends string = string> {
@@ -220,6 +265,8 @@ declare module "alpha" {
     shape?: Shape<I, S, F>;
     body?: BodySpec<C>;
     emitter?: EmitterSpec<I, keyof S & string>;
+    /** A light riding on the entity; seen only with config.lighting. Render-only. */
+    light?: LightSpec;
     rotation?: number;
     /** Order inside the entity's layer (default 0). */
     z?: number;
@@ -737,6 +784,8 @@ declare module "alpha" {
     readonly ui: UI<G["ui"]>;
     readonly audio: Audio<G["sounds"], MusicOf<G>, BusOf<G>>;
     readonly camera: Camera;
+    /** Full-screen effects of the current scene (bloom, crt, pixelate, tint, vignette). */
+    readonly postfx: PostFx;
     readonly window: GameWindow;
 
     spawn(spec: EntitySpec<G["tags"], G["images"], SheetsOf<G>, LayerOf<G>, FontOf<G>, CategoryOf<G>>): Entity<G["tags"], AnimationOf<G>>;
@@ -869,6 +918,11 @@ declare module "alpha" {
     pixelMode?: boolean;
     /** Named draw layers, e.g. `{ bg: { z: -100, parallax: 0.2 }, fx: { z: 100 } }`. */
     layers?: Record<LayerOf<G>, LayerDef>;
+    /**
+     * 2D lighting: the world is multiplied by a lightmap that is `ambient` where no light
+     * reaches, plus every entity `light`. Off when absent. Render-only (UI unaffected).
+     */
+    lighting?: { ambient: string };
     window?: WindowConfig;
     /** Pause (ctx.onPause) when the window loses focus or is minimized. Default true. */
     pauseOnFocusLoss?: boolean;

@@ -62,6 +62,7 @@ EntityId World::spawn(const core::EntitySpec& spec) {
 void World::attach(entt::entity e, const core::EntitySpec& spec) {
   if (spec.shape) registry_.emplace<Visual>(e, *spec.shape);
   if (spec.emitter) registry_.emplace<Emission>(e, core::Emitter(*spec.emitter));
+  if (spec.light) registry_.emplace<Lit>(e, *spec.light);
   if (spec.body) {
     registry_.emplace<PhysicsBody>(e, physics_.create(to_id(e), *spec.body, spec.pos, spec.rotation));
     registry_.emplace<Collider>(e, spec.body->collider);
@@ -282,6 +283,7 @@ void World::snapshot() {
 }
 
 std::vector<core::DrawItem> World::draw_items(float blend) const { return draw_list(registry_, blend); }
+std::vector<core::LightItem> World::lights(float blend) const { return light_list(registry_, blend); }
 
 std::vector<PlacedCollider> World::colliders() const {
   std::vector<PlacedCollider> out;

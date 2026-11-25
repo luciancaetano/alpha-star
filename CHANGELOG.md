@@ -15,6 +15,11 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
   (package, icon, versionCode, version). Guide page "Android".
 - Touch inputs `Touch`, `TouchLeft`, `TouchRight`; `Back` (Android back button).
 - Orientation from the game size; immediate pause when the OS announces background (event watch).
+- Post effects `ctx.postfx` (`bloom`, `crt`, `pixelate`, `tint`, `vignette`; scene-scoped, ordered,
+  validated params) and 2D lighting (`config.lighting: { ambient }` + spawn `light: { radius, color?, intensity? }`),
+  render-only, on every SDL renderer including the software one. Guide page "Shaders and lighting".
+  Shmup example: bloom + CRT toggle (C); topdown: lantern and bullet lights. Custom shader code is not
+  available yet (needs SDL 3.4).
 
 ## [0.2.0] - 2026-11-25
 
