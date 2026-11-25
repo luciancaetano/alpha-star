@@ -20,6 +20,9 @@ class AppEvents {
   explicit AppEvents(bool interactive);
   // True when `event` was a lifecycle event (handled here).
   bool handle(const SDL_Event& event, Host& host);
+  // The OS events SDL gave only to the watch (background, foreground,
+  // terminating, low memory): once per frame, after polling.
+  void drain(Host& host);
   // Applies config.pauseOnFocusLoss of the running game (it may reload).
   void configure(Host& host);
   // Also while the OS has announced background / termination not yet polled.

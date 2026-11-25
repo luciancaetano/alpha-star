@@ -141,7 +141,7 @@ export function installHelp(out, toolchain) {
 }
 
 // What each --variant builds: the Gradle task and its output under app/build/outputs.
-// debug: engine with dev tools (F12 / three fingers held 1 s), debug tools and logs, for your phone;
+// debug: engine with dev tools (shake the phone or Menu key, as in React Native), debug tools and logs, for your phone;
 // release: shipping engine, an APK for side-loading or other stores; bundle: shipping engine, the
 // AAB Google Play takes. All three are signed with ALPHA_ANDROID_KEYSTORE when set, else the debug key.
 export const VARIANTS = {

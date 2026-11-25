@@ -121,9 +121,11 @@ which Google Play requires for apps targeting Android 15+.
 
 ## Dev tools on the phone
 
-The debug variant carries the engine dev tools (Dear ImGui). Open and close them by holding
-**three fingers still on the screen for one second** (or Back+Start on a connected gamepad). The
-fingers still reach the game while you hold them. Release APKs and AABs have no dev tools at all.
+The debug variant carries the engine dev tools (Dear ImGui). Open and close them the way React
+Native opens its dev menu: **shake the phone**, or send the Menu key from the computer with
+`adb shell input keyevent 82` (Ctrl+M in the emulator). A gamepad's Back+Start works too. Release
+APKs and AABs have no dev tools at all. The debug APK has no MCP channel (`alpha mcp` drives desktop
+engines); its panels are still drawn at desktop size on a phone screen.
 
 ## Hints per platform
 

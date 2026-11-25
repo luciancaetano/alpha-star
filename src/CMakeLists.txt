@@ -168,7 +168,7 @@ if(ALPHA_DEVTOOLS)
     devtools/routing.cpp
     devtools/snapshot.cpp
     devtools/time_control.cpp
-    devtools/touch_toggle.cpp)
+    devtools/shake_toggle.cpp)
   target_link_libraries(alpha_devtools PUBLIC alpha_engine PRIVATE alpha_imgui)
   alpha_set_warnings(alpha_devtools)
 endif()

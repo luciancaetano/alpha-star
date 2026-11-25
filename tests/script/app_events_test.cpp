@@ -129,25 +129,37 @@ TEST_CASE("simulate appPauses: no steps while paused, hooks at both edges") {
   CHECK(results[1].passed());
 }
 
-TEST_CASE("the OS announcing background pauses at once, before the loop polls the event") {
+// SDL 3.2 never queues the OS lifecycle events (background, foreground, terminating,
+// low memory): it only calls event watchers. Pushing then flushing the queue is that.
+static void os_says(Uint32 type) {
+  SDL_Event e = event_of(type);
+  REQUIRE(SDL_PushEvent(&e));
+  SDL_FlushEvent(type);
+}
+
+TEST_CASE("the OS announcing background pauses at once; the loop drains it, then foreground resumes") {
   REQUIRE(SDL_InitSubSystem(SDL_INIT_EVENTS));
   Sandbox box;
   Host host(box.save());
   host.load(box.write("g.js", hooks_game("")));
   AppEvents app(true);
   app.configure(host);
-  SDL_Event bg = event_of(SDL_EVENT_WILL_ENTER_BACKGROUND);
-  REQUIRE(SDL_PushEvent(&bg));
+  os_says(SDL_EVENT_WILL_ENTER_BACKGROUND);
+  os_says(SDL_EVENT_DID_ENTER_BACKGROUND);
   CHECK(app.paused());  // the watch saw it on the pushing thread
   alpha::core::FixedStep clock(0.25, 8);
   CHECK(app.steps(clock, 2) == 0);
   CHECK_FALSE(host.app_paused());  // no JS ran from the watch
-  SDL_Event polled{};
-  while (SDL_PollEvent(&polled)) app.handle(polled, host);
-  CHECK(host.app_paused());  // the queued event drove the hooks
-  SDL_Event fg = event_of(SDL_EVENT_DID_ENTER_FOREGROUND);
-  REQUIRE(SDL_PushEvent(&fg));
-  while (SDL_PollEvent(&polled)) app.handle(polled, host);
-  CHECK_FALSE(app.paused());
+  app.drain(host);
+  CHECK(host.app_paused());  // the loop ran the hooks
+  CHECK(last_log(host) == "pause:true");
+  os_says(SDL_EVENT_WILL_ENTER_FOREGROUND);
+  os_says(SDL_EVENT_DID_ENTER_FOREGROUND);
+  app.drain(host);
+  CHECK_FALSE(app.paused());  // the game runs again (it froze here on Android)
+  CHECK(last_log(host) == "resume:false");
+  os_says(SDL_EVENT_LOW_MEMORY);
+  app.drain(host);
+  CHECK(last_log(host) == "low");
   SDL_QuitSubSystem(SDL_INIT_EVENTS);
 }

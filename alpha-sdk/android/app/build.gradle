@@ -3,7 +3,7 @@ plugins {
 }
 
 // The engine is built from source, arm64-v8a only. debug: the release flavor (dev tools: F12,
-// gamepad Back+Start or three fingers held 1 s; debug tools and logs). release (APK and AAB):
+// gamepad Back+Start, shake or Menu key; debug tools and logs). release (APK and AAB):
 // the shipping flavor (no dev tools, MCP or debug features). The game pack is in src/main/assets.
 android {
     namespace = "org.libsdl.app"
@@ -44,7 +44,9 @@ android {
     }
     buildTypes {
         debug {
-            externalNativeBuild { cmake { arguments "-DALPHA_SHIPPING=OFF" } }
+            // The release preset's flavor without MCP (its agent channel is for desktops; NDK libc++
+            // has no floating-point from_chars). CMake defaults leave the dev tools off.
+            externalNativeBuild { cmake { arguments "-DALPHA_SHIPPING=OFF", "-DALPHA_DEVTOOLS=ON", "-DALPHA_MCP=OFF", "-DALPHA_DEBUG_TOOLS=ON" } }
         }
         release {
             minifyEnabled false

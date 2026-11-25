@@ -10,6 +10,24 @@
 
 namespace alpha::devtools {
 
+namespace {
+
+// The device's first accelerometer (phones), for the shake toggle; null when there is none.
+SDL_Sensor* open_accelerometer() {
+  if (!SDL_InitSubSystem(SDL_INIT_SENSOR)) return nullptr;
+  int count = 0;
+  SDL_SensorID* ids = SDL_GetSensors(&count);
+  SDL_Sensor* found = nullptr;
+  for (int i = 0; i < count && !found; ++i) {
+    if (SDL_GetSensorTypeForID(ids[i]) == SDL_SENSOR_ACCEL) found = SDL_OpenSensor(ids[i]);
+  }
+  SDL_free(ids);
+  if (!found) SDL_QuitSubSystem(SDL_INIT_SENSOR);
+  return found;
+}
+
+}  // namespace
+
 DevTools::DevTools(SDL_Window* window, SDL_Renderer* sdl) : sdl_(sdl) {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -17,9 +35,14 @@ DevTools::DevTools(SDL_Window* window, SDL_Renderer* sdl) : sdl_(sdl) {
   ImGui::StyleColorsDark();
   ImGui_ImplSDL3_InitForSDLRenderer(window, sdl);
   ImGui_ImplSDLRenderer3_Init(sdl);
+  accelerometer_ = open_accelerometer();
 }
 
 DevTools::~DevTools() {
+  if (accelerometer_) {
+    SDL_CloseSensor(accelerometer_);
+    SDL_QuitSubSystem(SDL_INIT_SENSOR);
+  }
   ImGui_ImplSDLRenderer3_Shutdown();
   ImGui_ImplSDL3_Shutdown();
   ImGui::DestroyContext();
@@ -33,17 +56,16 @@ bool DevTools::toggle_requested(const SDL_Event& event) const {
   return is_toggle(event, pad && SDL_GetGamepadButton(pad, other));
 }
 
-// Fingers reach the game too: the gesture only needs to see them.
-void DevTools::track_fingers(const SDL_Event& event) {
-  const SDL_TouchFingerEvent& f = event.tfinger;
-  if (event.type == SDL_EVENT_FINGER_DOWN) touch_.down(f.fingerID, f.x, f.y, SDL_NS_TO_MS(f.timestamp));
-  else if (event.type == SDL_EVENT_FINGER_MOTION) touch_.move(f.fingerID, f.x, f.y);
-  else if (event.type == SDL_EVENT_FINGER_UP || event.type == SDL_EVENT_FINGER_CANCELED) touch_.up(f.fingerID);
+// The first accelerometer's samples, while one is open: true when they make a shake.
+bool DevTools::shaken(const SDL_Event& event) {
+  if (event.type != SDL_EVENT_SENSOR_UPDATE || !accelerometer_) return false;
+  if (event.sensor.which != SDL_GetSensorID(accelerometer_)) return false;
+  const float* a = event.sensor.data;
+  return shake_.sample(a[0], a[1], a[2], SDL_NS_TO_MS(event.sensor.timestamp));
 }
 
 bool DevTools::handle(const SDL_Event& event) {
-  track_fingers(event);
-  if (toggle_requested(event)) {
+  if (toggle_requested(event) || shaken(event)) {
     toggle();
     return false;
   }
@@ -59,7 +81,6 @@ void DevTools::decorate(render::Frame& frame, const ecs::World* world) const {
 }
 
 void DevTools::draw(script::Host& host, FrameStats stats) {
-  if (touch_.poll(SDL_GetTicks())) toggle();  // a held gesture sends no events: checked every frame
   if (!open_) return;
   ImGui_ImplSDLRenderer3_NewFrame();
   ImGui_ImplSDL3_NewFrame();

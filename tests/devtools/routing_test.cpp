@@ -31,6 +31,12 @@ SDL_Event of_type(SDL_EventType type) {
 
 }  // namespace
 
+TEST_CASE("the Menu key toggles them too (React Native's: adb shell input keyevent 82, Ctrl+M in the emulator)") {
+  CHECK(is_toggle(key(SDL_SCANCODE_MENU), false));
+  CHECK_FALSE(is_toggle(key(SDL_SCANCODE_MENU, true), false));
+  CHECK_FALSE(reaches_game(key(SDL_SCANCODE_MENU), {}));
+}
+
 TEST_CASE("F12 (not F1) or gamepad Back+Start toggles the dev tools") {
   CHECK(is_toggle(key(SDL_SCANCODE_F12), false));
   CHECK_FALSE(is_toggle(key(SDL_SCANCODE_F12, true), false));

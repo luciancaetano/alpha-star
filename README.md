@@ -58,7 +58,7 @@ python ../../tools/resource_guard.py -- node ../../alpha-sdk/bin/alpha.mjs test
 python ../../tools/resource_guard.py -- node ../../alpha-sdk/bin/alpha.mjs run --watch
 ```
 
-`test` runs the game's tests without a window. `run --watch` opens the game and updates the pack when the code changes. Press **F12** or **Back+Start** on a gamepad to open the development tools; on a phone (debug APK: `alpha run --target android-arm64`), hold **three fingers still on the screen for one second**.
+`test` runs the game's tests without a window. `run --watch` opens the game and updates the pack when the code changes. Press **F12** or **Back+Start** on a gamepad to open the development tools; on a phone (debug APK: `alpha run --target android-arm64`), **shake it** or run `adb shell input keyevent 82`, as in React Native.
 
 The commands above use `resource_guard.py` to cap the CPU and memory of the processes. Use this protection as well for builds, tests and benchmarks you run manually in this repository.
 

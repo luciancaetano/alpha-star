@@ -106,8 +106,8 @@ Performance and robustness levers (step 13; see `docs/PERF.md`):
 - Profiler: dev tools "Profiler" window (F12), MCP `game_state.perf`, `--perf PATH` on `--frames` runs.
 - Many entities moved per frame: `ctx.positions(tag)` (bulk), not `entity.pos` per entity.
 
-Dev tools (Dear ImGui, F12, gamepad Back+Start, or three fingers held still 1 s on touch screens
-(`devtools::TouchToggle`; Android debug APKs); `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:
+Dev tools (Dear ImGui, F12, gamepad Back+Start; Android debug APKs: shake the phone or press Menu (`adb shell input keyevent 82`), as in React Native
+(`devtools::ShakeToggle`); `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:
 never put game-facing features in `src/devtools/`.
 
 ### Build flavors (`cmake/Flavors.cmake`)

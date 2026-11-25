@@ -39,19 +39,31 @@ bool announces_leaving(std::optional<core::AppEvent> e) {
   return e == AppEvent::background || e == AppEvent::terminating;
 }
 
+// The events SDL only gives to watchers (window events are queued as usual).
+bool from_os(std::optional<core::AppEvent> e) {
+  return announces_leaving(e) || e == AppEvent::foreground || e == AppEvent::low_memory;
+}
+
 }  // namespace
 
 LifecycleWatch::LifecycleWatch() { SDL_AddEventWatch(&LifecycleWatch::on_event, this); }
 
 LifecycleWatch::~LifecycleWatch() { SDL_RemoveEventWatch(&LifecycleWatch::on_event, this); }
 
-void LifecycleWatch::seen(core::AppEvent event) {
-  if (announces_leaving(event)) leaving_.store(false);
+std::vector<core::AppEvent> LifecycleWatch::take() {
+  const std::scoped_lock hold(lock_);
+  leaving_.store(false);  // the caller now drives the machine with them
+  return std::exchange(pending_, {});
 }
 
 bool SDLCALL LifecycleWatch::on_event(void* self, SDL_Event* event) {
-  if (announces_leaving(app_event(*event))) {
-    static_cast<LifecycleWatch*>(self)->leaving_.store(true);
+  const auto app = app_event(*event);
+  if (!from_os(app)) return true;
+  auto* watch = static_cast<LifecycleWatch*>(self);
+  const std::scoped_lock hold(watch->lock_);
+  watch->pending_.push_back(*app);
+  if (announces_leaving(app)) {
+    watch->leaving_.store(true);
     std::fflush(stderr);
   }
   return true;

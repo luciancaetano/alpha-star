@@ -135,6 +135,7 @@ bool pump(Devices& d, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl
     alpha::platform::apply_event(d.input, logical, d.pads.slots());
     alpha::platform::apply_touch(d.input, event);  // window-relative x: TouchLeft / TouchRight
   }
+  app.drain(host);  // background / foreground: SDL hands them only to the lifecycle watch
   return true;
 }
 
@@ -231,7 +232,6 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
   }
   report_render(o, host, renderer);
 }
-
 
 // No game argument and no fused pack: tell the developer (usage) or the player.
 int no_game() {

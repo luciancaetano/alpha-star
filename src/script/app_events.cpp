@@ -15,9 +15,12 @@ AppEvents::AppEvents(bool interactive) : interactive_(interactive), machine_(int
 bool AppEvents::handle(const SDL_Event& event, Host& host) {
   const auto app = platform::app_event(event);
   if (!app) return false;
-  watch_.seen(*app);
   apply(machine_.handle(*app), host);
   return true;
+}
+
+void AppEvents::drain(Host& host) {
+  for (const core::AppEvent event : watch_.take()) apply(machine_.handle(event), host);
 }
 
 void AppEvents::configure(Host& host) {

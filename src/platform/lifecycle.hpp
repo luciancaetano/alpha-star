@@ -3,7 +3,9 @@
 #include <SDL3/SDL_events.h>
 
 #include <atomic>
+#include <mutex>
 #include <optional>
+#include <vector>
 
 #include "core/app_lifecycle.hpp"
 
@@ -15,13 +17,13 @@ namespace alpha::platform {
 // state machine acts on the first).
 std::optional<core::AppEvent> app_event(const SDL_Event& event);
 
-// SDL_AddEventWatch for the moment the OS announces background / termination
-// (SDL docs: on mobile the app may be suspended or killed before the main loop
-// polls the queued event). The callback runs on the pushing thread: it only
-// sets an atomic flag and flushes stderr (saves and settings are already
-// written atomically when set); it never touches JS. The main loop stops
-// stepping while leaving() and the queued event, once polled, drives the
-// lifecycle as usual (seen() clears the flag).
+// The OS lifecycle events (background, foreground, terminating, low memory):
+// SDL 3.2 never queues them, it only calls event watchers, on the pushing
+// thread. The watch keeps them (under a lock) for the main loop to take();
+// it only records, sets leaving() on background / termination and flushes
+// stderr (saves and settings are already written atomically when set); it
+// never touches JS. The loop stops stepping while leaving() and drives the
+// lifecycle with what take() returns (which clears leaving()).
 class LifecycleWatch {
  public:
   LifecycleWatch();
@@ -29,11 +31,14 @@ class LifecycleWatch {
   LifecycleWatch(const LifecycleWatch&) = delete;
   LifecycleWatch& operator=(const LifecycleWatch&) = delete;
   bool leaving() const { return leaving_.load(); }
-  void seen(core::AppEvent event);
+  // The OS events since the last call, oldest first.
+  std::vector<core::AppEvent> take();
 
  private:
   static bool SDLCALL on_event(void* self, SDL_Event* event);
   std::atomic<bool> leaving_{false};
+  std::mutex lock_;
+  std::vector<core::AppEvent> pending_;
 };
 
 }  // namespace alpha::platform

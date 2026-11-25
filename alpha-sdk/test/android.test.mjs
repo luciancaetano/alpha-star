@@ -54,7 +54,7 @@ test("android export assembles a Gradle project: pack in assets, ids and orienta
   const engine = path.relative(path.join(p.out, "app"), path.join(REPO, "CMakeLists.txt")).split(path.sep).join("/");
   assert.ok(gradle.includes(`path file("${engine}")`), gradle.match(/path file\(.*\)/)?.[0]);
   // debug APKs carry the dev tools (release engine flavor); release APKs and AABs ship without them.
-  assert.match(gradle, /debug \{\s*externalNativeBuild \{ cmake \{ arguments "-DALPHA_SHIPPING=OFF" \} \}/);
+  assert.match(gradle, /debug \{[^}]*externalNativeBuild \{ cmake \{ arguments "-DALPHA_SHIPPING=OFF", "-DALPHA_DEVTOOLS=ON", "-DALPHA_MCP=OFF", "-DALPHA_DEBUG_TOOLS=ON" \} \}/);
   assert.match(gradle, /release \{[^}]*signingConfig.*\s*externalNativeBuild \{ cmake \{ arguments "-DALPHA_SHIPPING=ON" \} \}/);
   assert.match(gradle, /abiFilters 'arm64-v8a'/);
   assert.match(gradle, /-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON/);  // Google Play: 16 KB pages
