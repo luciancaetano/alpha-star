@@ -374,3 +374,11 @@
 | 323 | Rewrote README.md in Brazilian Portuguese: engine/SDK purpose, implemented features, guarded Windows setup, local SDK initialization, CLI, game structure, MCP workflow, examples, packaging, platform validation status and repository navigation | Make the project understandable and runnable without assuming an npm publication or promising unfinished integrations |
 | 324 | Reviewed the rewritten commands against SDK initialization/export and build sources; added Python gate dependencies; verified all 17 local Markdown links, balanced code fences and git diff whitespace. Full Windows gate reported GATE PASS: 419 doctest cases passed, 4 skipped, plus coverage, limits, file-access, CRAP and duplication checks | Validate the documentation and satisfy the required repository gate before committing |
 | 325 | Redrew examples/flappy player-pixel.png as hand-made 32x32 pixel art (was 1254x1254 nearest-downscaled to 44 px); moved all work to `main` (fast-forward, now the GitHub default branch); AGENTS.md: never create a branch unless explicitly asked | Fix the over-pixelated player and keep a single branch |
+
+### 2026-11-25 ? Web-sized README logo
+
+| # | Action | Reason |
+|---|---|---|
+| 325 | Resized logo.png from 1536 x 1024 to 640 x 427 with Lanczos and optimized PNG encoding, retaining RGBA transparency. Size dropped from 1,770,872 to 245,625 bytes (86.1%); visually inspected the output | Serve a smaller image while keeping 2x resolution for the README's 320 px display width |
+
+- flappy: player sprite (32x32 pixel art, nearest) was drawn at 44/132 px (1.375x/4.125x), so pixels came out uneven; now 32/128 (1x/4x) in src/tuning.ts. Hitbox (BIRD.radius 12) unchanged. flappy tests 15/15.
