@@ -17,6 +17,12 @@ npx alpha run -- --frames 120 --screenshot s.bmp   # headless check
 npx alpha export --standalone --out build/game     # pack + engine binary: runs by itself
 ```
 
+Playing the game yourself: `npx alpha mcp` is an MCP server (tools `game_start`,
+`game_input`, `game_step`, `game_state`, `game_screenshot`, `game_logs`, ...; see
+`../../alpha-sdk/README.md`, "Using alpha-star with an AI agent"). Example: `game_start`
+-> `game_pause` -> `game_input {kind: "press", action: "flap"}` -> `game_step {frames: 2}`
+-> state shows scene `play`.
+
 A change is done only when `npm run export` prints `exported dist (...)`.
 Errors are `file:line:col: error: ...`; nothing is written while any exist.
 Asset paths in `main.ts` are relative to this folder (e.g. `assets/sfx/hit.wav`);

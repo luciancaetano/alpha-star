@@ -51,6 +51,8 @@ class Host {
   GameInfo load(const std::string& path);
   // One fixed step with the inputs held (or tapped) during it.
   void step(const core::InputFrame& input, float dt);
+  // The game's actions and axes (agent control injects through them).
+  core::Controls& controls() { return instances_.main().controls; }
   // Gamepad vibrations the game asked for since the last call (ctx.input.rumble).
   core::RumbleRequests take_rumble();
   // blend: how far real time is into the next fixed step (FixedStep::fraction);

@@ -45,6 +45,17 @@ if(ALPHA_WITH_RUNTIME_DEPS AND ALPHA_DEVTOOLS)
   list(APPEND ALPHA_TEST_LIBS alpha_devtools)
 endif()
 
+if(ALPHA_WITH_RUNTIME_DEPS AND ALPHA_MCP)
+  list(APPEND ALPHA_TEST_SOURCES
+    mcp/control_test.cpp
+    mcp/dispatch_test.cpp
+    mcp/game_session_test.cpp
+    mcp/json_test.cpp
+    mcp/mcp_fixture.cpp
+    mcp/socket_test.cpp)
+  list(APPEND ALPHA_TEST_LIBS alpha_mcp)
+endif()
+
 add_executable(alpha_tests ${ALPHA_TEST_SOURCES})
 target_link_libraries(alpha_tests PRIVATE ${ALPHA_TEST_LIBS} doctest::doctest)
 target_include_directories(alpha_tests PRIVATE script)

@@ -42,6 +42,9 @@ class Axes {
   float value(AxisId id, std::size_t player = kAnyPlayer) const;
   // Overrides one player's value until the next update (headless tests); clamped to [-1, 1].
   void set(AxisId id, std::size_t player, float v);
+  // Holds one player's value across updates (agent control) until released
+  // with nullopt; clamped to [-1, 1]. Wins over the devices while held.
+  void hold(AxisId id, std::size_t player, std::optional<float> v);
 
  private:
   struct Source {
@@ -53,6 +56,7 @@ class Axes {
     std::string name;
     std::vector<Source> sources;
     std::array<float, kMaxPlayers> values{};
+    std::array<std::optional<float>, kMaxPlayers> held{};
   };
   static float resolve(const Axis& axis, const InputSet& held, const AnalogValues& analog);
 

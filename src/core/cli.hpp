@@ -17,6 +17,8 @@ struct CliOptions {
   bool devtools = false;
   std::string test_file;  // non-empty = test mode
   std::string test_assets;
+  int control_port = 0;  // agent control channel (ALPHA_MCP); 0 = off
+  bool hidden = false;   // no visible window (agent runs; ALPHA_MCP)
 };
 
 // Parses argv[1..]. Never throws: unknown flags, missing values and malformed

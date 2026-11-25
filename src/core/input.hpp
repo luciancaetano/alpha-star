@@ -59,6 +59,8 @@ class Actions {
   // Throws Error naming the unknown input and listing the valid ones.
   ActionId bind(std::string_view action, std::span<const std::string> inputs);
   std::optional<ActionId> find(std::string_view action) const;
+  // Declared names, space separated (for error messages).
+  std::string names() const;
   // Call once per fixed step with what every player held (or pressed) during it.
   void update(const InputFrame& frame);
 

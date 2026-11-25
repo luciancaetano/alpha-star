@@ -65,7 +65,7 @@ embedded JS (comments included) end up in the binary too.
 | Flag | Gates | dev | release | shipping |
 |---|---|---|---|---|
 | `ALPHA_DEVTOOLS` | Dear ImGui dev tools (`src/devtools/`, `--devtools`) | ON | OFF | OFF |
-| `ALPHA_MCP` | MCP server for agents (step 6) | ON | OFF | OFF |
+| `ALPHA_MCP` | agent control channel `src/mcp/` (`--control PORT`, `--hidden`) driven by `alpha mcp` | ON | ON | OFF |
 | `ALPHA_DEBUG_TOOLS` | CLI `--frames --screenshot --tap --tap-every --devtools`, `--test` runner, `alpha/test` + its natives, diagnostic logs | ON | ON | OFF |
 | `ALPHA_SHIPPING` | forces the three OFF; IPO/LTO, stripped / no PDB, Windows GUI subsystem (no console), asserts off; unknown flags ignored; logs only to `<pref dir>/log.txt` | OFF | OFF | ON |
 
@@ -74,7 +74,7 @@ cmake --preset shipping && cmake --build --preset shipping   # player engine
 python tools/check_shipping.py                               # fails on any dev/debug/agent marker
 python tools/stage_engine.py                                 # stage release + shipping into alpha-sdk/engine/
 ```
-`alpha run`/`alpha test` use the release engine; `alpha export --standalone` copies the shipping one.
+`alpha run`/`alpha test`/`alpha mcp` use the release engine; `alpha export --standalone` copies the shipping one.
 
 `python tools/gate.py` (preset dev; `--preset harness` = fast core-only) runs build + tests + all checks. A change is done only when it passes.
 

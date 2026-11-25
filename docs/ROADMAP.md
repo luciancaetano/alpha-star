@@ -19,7 +19,7 @@ build/gate/container at a time, `podman machine start` only for the Linux gate a
 | 4 | RmlUi game UI (old ctx.ui dropped) + UI gamepad navigation | done 24bce97 |
 | 4b | Build flavors via compile flags (#if): ALPHA_DEVTOOLS (exists), ALPHA_MCP, ALPHA_DEBUG_TOOLS (headless CLI flags, --test runner/alpha/test, diagnostics), umbrella ALPHA_SHIPPING (forces all off, LTO, stripped, WIN32 subsystem/no console, asserts off); presets dev/release/shipping; `alpha export --standalone` ships the shipping engine; CI/test asserts the shipping binary has no devtools/MCP/test-runner symbols or strings; AGENTS.md rule: every dev/debug feature lands behind its flag | done (this commit; LOG 114-124) |
 | 5 | Gameplay joystick: axes, triggers, deadzone, players, rumble, hot-plug, simulate axes | done (this commit; LOG 125-138) |
-| 6 | MCP server (agent drives the game: start, input, state, screenshots, errors) | todo |
+| 6 | MCP server (agent drives the game: start, input, state, screenshots, errors) | done (this commit; LOG 139-152) |
 | 7 | Hot reload (pack re-export -> running engine reloads) | todo |
 | 8 | Camera (follow/zoom/shake/bounds) + sprite sheets & animation + atlas packing + tilemaps (Tiled import) | todo |
 | 9 | Particles, tint/alpha/blend, layers/parallax, world text, fullscreen & scaling modes | todo |

@@ -5,6 +5,7 @@
 #include <array>
 #include <string>
 
+#include "core/index_of.hpp"
 #include "devtools/inspector.hpp"
 
 namespace alpha::devtools {
@@ -14,11 +15,7 @@ namespace {
 constexpr ImVec4 kErrorColor{1.0f, 0.4f, 0.4f, 1.0f};
 constexpr std::array<ImVec4, 3> kLevelColors{{{0.85f, 0.85f, 0.85f, 1.0f}, {1.0f, 0.8f, 0.3f, 1.0f}, kErrorColor}};
 
-std::string joined(const std::vector<std::string>& tags) {
-  std::string out;
-  for (const std::string& t : tags) out += (out.empty() ? "" : ", ") + t;
-  return out;
-}
+std::string joined(const std::vector<std::string>& tags) { return core::join(tags, ", "); }
 
 void overlay_window(const DevSnapshot& s) {
   ImGui::SetNextWindowPos({8, 8}, ImGuiCond_FirstUseEver);

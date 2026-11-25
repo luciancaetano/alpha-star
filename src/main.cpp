@@ -3,6 +3,7 @@
 
 #include <cstdio>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -21,6 +22,9 @@
 #if ALPHA_DEVTOOLS
 #include "devtools/dev_tools.hpp"
 #endif
+#if ALPHA_MCP
+#include "mcp/control.hpp"
+#endif
 
 // Composition root: alpha_star <pack-dir | game.js> [options]  (pack = `alpha export` output)
 // With no game argument it runs the pack it sits in (standalone export).
@@ -33,6 +37,9 @@
 //   --tap INPUT       input name to tap headlessly, e.g. Space
 //   --tap-every K     tap it every K frames
 //   --devtools        open the dev tools (F1) at start; dev builds only
+// With ALPHA_MCP (dev, release): agent control channel, see src/mcp/dispatch.hpp
+//   --control PORT    serve the alpha-control protocol on 127.0.0.1:PORT
+//   --hidden          no visible window (agent runs)
 namespace {
 
 #if ALPHA_DEVTOOLS
@@ -56,6 +63,29 @@ struct Tools {
 #endif
 
 constexpr double kDt = 1.0 / 60.0;
+using InputSource = std::function<alpha::core::InputFrame()>;
+
+#if ALPHA_MCP
+using Control = alpha::mcp::Control;
+Control make_control(const alpha::core::CliOptions& o, alpha::script::Host& host, alpha::render::Renderer& r,
+                     InputSource devices) {
+  return Control(alpha::mcp::control_config(o), host, r, std::move(devices), static_cast<float>(kDt));
+}
+#else
+// Builds without ALPHA_MCP have no agent channel: every step is a device step.
+struct Control {
+  alpha::script::Host& host;
+  InputSource devices;
+  int steps(int wanted) const { return wanted; }
+  bool paused() const { return false; }
+  void step() { host.step(devices(), static_cast<float>(kDt)); }
+  bool poll(double) { return true; }
+};
+Control make_control(const alpha::core::CliOptions&, alpha::script::Host& host, alpha::render::Renderer&,
+                     InputSource devices) {
+  return Control{host, std::move(devices)};
+}
+#endif
 constexpr float kWindowScale = 1.5f;
 
 using Options = alpha::core::CliOptions;
@@ -118,8 +148,8 @@ int steps_for_frame(const Options& o, alpha::core::FixedStep& clock, Tools& tool
 
 // How far into the next fixed step to draw (smooth motion at any refresh rate).
 // Exact state when stepping frame by frame (--frames, dev tools pause).
-float blend_for(const Options& o, const alpha::core::FixedStep& clock, const Tools& tools) {
-  if (o.frames > 0 || tools.paused()) return 1.0f;
+float blend_for(const Options& o, const alpha::core::FixedStep& clock, const Tools& tools, const Control& control) {
+  if (o.frames > 0 || tools.paused() || control.paused()) return 1.0f;
   return static_cast<float>(clock.fraction());
 }
 
@@ -133,6 +163,11 @@ void draw(alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& t
   tools.draw(host, stats);
 }
 
+// The pausing script error, once, on stderr.
+void report_error(const alpha::script::Host& host, bool& reported) {
+  if (host.paused() && !reported) reported = std::fprintf(stderr, "%s\n", host.error().c_str()) > 0;
+}
+
 void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools) {
   alpha::platform::AudioOut audio;
   if (!audio.ok()) SDL_Log("no audio device (%s); running silent", SDL_GetError());
@@ -140,16 +175,19 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
   alpha::core::FixedStep clock(kDt, 5);
   Uint64 last = SDL_GetTicksNS();
   bool reported = false;
-  for (int frame = 0; pump(d, tools, host, renderer.sdl()) && (o.frames == 0 || frame < o.frames); ++frame) {
+  bool running = true;
+  Control control = make_control(o, host, renderer, [&d] { return alpha::platform::consume(d.input, d.pads.slots()); });
+  for (int frame = 0; running && pump(d, tools, host, renderer.sdl()) && (o.frames == 0 || frame < o.frames); ++frame) {
     tap(o, frame, d.input);
     const double elapsed = seconds_since(last);
-    const int steps = steps_for_frame(o, clock, tools, elapsed);
-    for (int s = 0; s < steps; ++s) host.step(alpha::platform::consume(d.input, d.pads.slots()), static_cast<float>(kDt));
+    const int steps = control.steps(steps_for_frame(o, clock, tools, elapsed));
+    for (int s = 0; s < steps; ++s) control.step();
     d.pads.rumble(host.take_rumble());
     audio.pump(host.mixer());
-    draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps}, blend_for(o, clock, tools));
-    if (host.paused() && !reported) reported = std::fprintf(stderr, "%s\n", host.error().c_str()) > 0;
+    draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps}, blend_for(o, clock, tools, control));
+    report_error(host, reported);
     if (!o.screenshot.empty() && frame + 1 == o.frames) renderer.save_bmp(o.screenshot);
+    running = control.poll(elapsed * 1000.0);  // agent requests see this frame drawn, before present
     renderer.present();
   }
 }
@@ -226,7 +264,7 @@ int main(int argc, char** argv) {
   SDL_Renderer* sdl = nullptr;
   const auto w = static_cast<int>(static_cast<float>(info.width) * kWindowScale);
   const auto h = static_cast<int>(static_cast<float>(info.height) * kWindowScale);
-  if (!SDL_CreateWindowAndRenderer(info.title.c_str(), w, h, SDL_WINDOW_RESIZABLE, &window, &sdl)) {
+  if (!SDL_CreateWindowAndRenderer(info.title.c_str(), w, h, SDL_WINDOW_RESIZABLE | (options.hidden ? SDL_WINDOW_HIDDEN : 0), &window, &sdl)) {
     return fail("SDL_CreateWindowAndRenderer");
   }
   limit_latency(sdl);

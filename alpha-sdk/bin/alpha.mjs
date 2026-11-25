@@ -11,17 +11,22 @@
 //   alpha test [--entry test/main.test.ts] [--engine path]
 //                                type-check + bundle the tests, run every exported
 //                                test function headlessly in the engine; exit 1 on failure
+//   alpha mcp [--engine path]    MCP server on stdio for AI agents: check/export/test the game,
+//                                start it and drive/observe it (input, step, state, screenshots, logs)
 //
 // Options: --entry <file> (default src/main.ts; test/main.test.ts for `test`). Engine lookup for `run`/`test`:
 // --engine, $ALPHA_STAR, the engine bundled in this SDK, `alpha_star` on PATH.
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { formatProblem, typecheck } from "../lib/build.mjs";
 import { hostTarget, resolveEngine } from "../lib/engine.mjs";
 import { exportPack } from "../lib/pack.mjs";
 import { buildTests, testArgs } from "../lib/test.mjs";
 
-const USAGE = `usage: alpha <check|export|run|test> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>] [--engine path] [-- engine args]`;
+const USAGE = `usage: alpha <check|export|run|test|mcp> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>] [--engine path] [-- engine args]`;
+
+const VERSION = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
 function parse(argv) {
   const dash = argv.indexOf("--");
@@ -77,6 +82,7 @@ async function main(argv) {
   if (args.command === "export") return exportCmd(args);
   if (args.command === "run") return (await exportCmd(args)) || launch(args);
   if (args.command === "test") return testCmd(args);
+  if (args.command === "mcp") return (await import("../lib/mcp.mjs")).runMcp({ root: process.cwd(), engine: args.engine, version: VERSION });
   console.error(USAGE);
   return 2;
 }

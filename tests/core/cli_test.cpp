@@ -58,3 +58,20 @@ TEST_CASE("cli: without ALPHA_DEBUG_TOOLS every flag is unknown") {
   CHECK(o.test_file.empty());
 }
 #endif
+
+#if ALPHA_MCP
+TEST_CASE("cli: agent control flags (ALPHA_MCP builds)") {
+  const CliOptions o = parse({"pack", "--control", "4321", "--hidden"});
+  CHECK(o.control_port == 4321);
+  CHECK(o.hidden);
+  CHECK(parse({"pack", "--control", "70000"}).control_port == 0);
+  CHECK(parse({"pack", "--control", "x"}).control_port == 0);
+  CHECK_FALSE(parse({"pack"}).hidden);
+}
+#else
+TEST_CASE("cli: without ALPHA_MCP the control flags are unknown") {
+  const CliOptions o = parse({"pack", "--control", "4321", "--hidden"});
+  CHECK(o.control_port == 0);
+  CHECK_FALSE(o.hidden);
+}
+#endif

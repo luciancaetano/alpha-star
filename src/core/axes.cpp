@@ -83,11 +83,7 @@ AxisId Axes::bind(std::string_view axis, std::span<const std::string> sources) {
 
 std::optional<AxisId> Axes::find(std::string_view axis) const { return index_by_name<AxisId>(axes_, axis); }
 
-std::string Axes::names() const {
-  std::string out;
-  for (const Axis& a : axes_) out += (out.empty() ? "" : " ") + a.name;
-  return out;
-}
+std::string Axes::names() const { return names_of(axes_); }
 
 float Axes::resolve(const Axis& axis, const InputSet& held, const AnalogValues& analog) {
   float best = 0.0f;
@@ -103,7 +99,7 @@ void Axes::update(const InputFrame& frame) {
     const PlayerInput& in = frame.players[p];
     const InputSet held = in.held | analog_buttons(in.analog);
     const AnalogValues analog = with_deadzone(in.analog, deadzone_);
-    for (Axis& a : axes_) a.values[p] = resolve(a, held, analog);
+    for (Axis& a : axes_) a.values[p] = a.held[p].value_or(resolve(a, held, analog));
   }
 }
 
@@ -113,6 +109,11 @@ float Axes::value(AxisId id, std::size_t player) const {
   float best = 0.0f;
   for (float v : values) best = stronger(best, v);
   return best;
+}
+
+void Axes::hold(AxisId id, std::size_t player, std::optional<float> v) {
+  auto& held = axes_[id].held[player];
+  held = v ? std::optional<float>(std::clamp(*v, -1.0f, 1.0f)) : std::nullopt;
 }
 
 void Axes::set(AxisId id, std::size_t player, float v) { axes_[id].values[player] = std::clamp(v, -1.0f, 1.0f); }

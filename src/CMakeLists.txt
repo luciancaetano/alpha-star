@@ -35,6 +35,7 @@ configure_file(script/embedded_js.hpp.in
 
 # engine: everything the binary runs. Games are JS; nothing game-specific here.
 add_library(alpha_engine
+  ecs/entity_view.cpp
   ecs/world.cpp
   physics/physics_world.cpp
   platform/assets.cpp
@@ -85,6 +86,26 @@ if(ALPHA_DEVTOOLS)
   alpha_set_warnings(alpha_devtools)
 endif()
 
+# mcp: the agent control channel (--control PORT). Only with ALPHA_MCP; shipping
+# compiles and links nothing of it.
+if(ALPHA_MCP)
+  add_library(alpha_mcp
+    mcp/agent_input.cpp
+    mcp/base64.cpp
+    mcp/control.cpp
+    mcp/dispatch.cpp
+    mcp/game_session.cpp
+    mcp/json.cpp
+    mcp/socket.cpp
+    mcp/state_json.cpp)
+  target_link_libraries(alpha_mcp PUBLIC alpha_engine)
+  if(WIN32)
+    target_link_libraries(alpha_mcp PRIVATE ws2_32)
+  endif()
+  alpha_set_warnings(alpha_mcp)
+endif()
+
 add_executable(alpha_star main.cpp)
-target_link_libraries(alpha_star PRIVATE alpha_engine $<$<BOOL:${ALPHA_DEVTOOLS}>:alpha_devtools>)
+target_link_libraries(alpha_star PRIVATE alpha_engine $<$<BOOL:${ALPHA_DEVTOOLS}>:alpha_devtools>
+  $<$<BOOL:${ALPHA_MCP}>:alpha_mcp>)
 alpha_set_warnings(alpha_star)

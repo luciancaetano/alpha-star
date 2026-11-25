@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 
 #include <cmath>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -184,4 +185,31 @@ TEST_CASE("a new device takes a free reserved slot when no slot is unused") {
   for (std::uint32_t i = 0; i < kMaxPlayers; ++i) slots.connect(i + 1, "k" + std::to_string(i));
   slots.disconnect(2);
   CHECK(slots.connect(50, "new") == 1u);
+}
+
+TEST_CASE("a held axis value survives updates until released (agent input)") {
+  Axes axes;
+  const std::vector<std::string> sources{"A/D"};
+  const AxisId x = axes.bind("moveX", sources);
+  axes.hold(x, 1, 0.5f);
+  axes.update(InputFrame{});
+  CHECK(axes.value(x, 1) == doctest::Approx(0.5f));
+  CHECK(axes.value(x, 0) == 0.0f);
+  axes.update(InputFrame{});
+  CHECK(axes.value(x, 1) == doctest::Approx(0.5f));
+  axes.hold(x, 1, 3.0f);
+  axes.update(InputFrame{});
+  CHECK(axes.value(x, 1) == 1.0f);
+  axes.hold(x, 1, std::nullopt);
+  axes.update(InputFrame{});
+  CHECK(axes.value(x, 1) == 0.0f);
+}
+
+TEST_CASE("actions list their names for error messages") {
+  Actions actions;
+  CHECK(actions.names().empty());
+  const std::vector<std::string> keys{"Space"};
+  actions.bind("flap", keys);
+  actions.bind("pause", keys);
+  CHECK(actions.names() == "flap pause");
 }

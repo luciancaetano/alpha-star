@@ -72,6 +72,8 @@ std::optional<ActionId> Actions::find(std::string_view action) const {
   return index_by_name<ActionId>(actions_, action);
 }
 
+std::string Actions::names() const { return names_of(actions_); }
+
 void Actions::update(const InputFrame& frame) {
   std::array<InputSet, kMaxPlayers> held;
   for (std::size_t p = 0; p < kMaxPlayers; ++p) {

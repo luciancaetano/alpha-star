@@ -16,10 +16,10 @@
     },
     {
       "name": "release",
-      "description": "Optimized engine for alpha run/test: debug CLI + test runner, no dev tools/MCP",
+      "description": "Optimized engine for alpha run/test/mcp: debug CLI + test runner + agent control, no dev tools",
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "ALPHA_BUILD_TESTS": "OFF",
-        "ALPHA_DEVTOOLS": "OFF", "ALPHA_MCP": "OFF", "ALPHA_DEBUG_TOOLS": "ON", "ALPHA_SHIPPING": "OFF" }
+        "ALPHA_DEVTOOLS": "OFF", "ALPHA_MCP": "ON", "ALPHA_DEBUG_TOOLS": "ON", "ALPHA_SHIPPING": "OFF" }
     },
     {
       "name": "shipping",

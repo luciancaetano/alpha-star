@@ -3,7 +3,8 @@
 # absent from shipping builds (checked by tools/check_shipping.py).
 #
 #   ALPHA_DEVTOOLS     Dear ImGui engine dev tools (F1, --devtools)
-#   ALPHA_MCP          MCP server for agents (step 6; nothing implements it yet)
+#   ALPHA_MCP          agent control channel (src/mcp/, --control PORT --hidden)
+#                      that `alpha mcp` drives; dev and release presets
 #   ALPHA_DEBUG_TOOLS  headless/debug CLI flags (--frames --screenshot --tap
 #                      --tap-every --devtools), the --test runner + alpha/test
 #                      module and its natives, extra diagnostic logging

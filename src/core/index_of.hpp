@@ -4,6 +4,7 @@
 #include <iterator>
 #include <cstddef>
 #include <optional>
+#include <string>
 #include <string_view>
 
 namespace alpha::core {
@@ -23,6 +24,22 @@ std::optional<Id> index_by_name(const Range& range, std::string_view name) {
     if (range[i].name == name) return static_cast<Id>(i);
   }
   return std::nullopt;
+}
+
+// The strings of `parts` with `sep` between them.
+template <typename Range>
+std::string join(const Range& parts, std::string_view sep) {
+  std::string out;
+  for (const auto& p : parts) out += (out.empty() ? std::string() : std::string(sep)) + p;
+  return out;
+}
+
+// Every element's `.name`, space separated (for error messages).
+template <typename Range>
+std::string names_of(const Range& range) {
+  std::string out;
+  for (const auto& e : range) out += (out.empty() ? "" : " ") + e.name;
+  return out;
 }
 
 }  // namespace alpha::core

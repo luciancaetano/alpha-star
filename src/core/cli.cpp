@@ -6,7 +6,7 @@ namespace alpha::core {
 
 namespace {
 
-#if ALPHA_DEBUG_TOOLS
+#if ALPHA_DEBUG_TOOLS || ALPHA_MCP
 // A non-negative int, or 0 when the text is not exactly one.
 int count_of(std::string_view text) {
   int value = 0;
@@ -14,8 +14,9 @@ int count_of(std::string_view text) {
   return ec == std::errc() && end == text.data() + text.size() && value > 0 ? value : 0;
 }
 
-// Applies one `--flag value`; false when the flag takes no value or is unknown.
-bool set_option(CliOptions& o, std::string_view flag, std::string_view value) {
+// Each applies one `--flag value` of its feature; false when the flag is not theirs.
+#if ALPHA_DEBUG_TOOLS
+bool debug_option(CliOptions& o, std::string_view flag, std::string_view value) {
   if (flag == "--frames") o.frames = count_of(value);
   else if (flag == "--screenshot") o.screenshot = value;
   else if (flag == "--tap") o.tap = value;
@@ -25,11 +26,46 @@ bool set_option(CliOptions& o, std::string_view flag, std::string_view value) {
   else return false;
   return true;
 }
+#else
+bool debug_option(CliOptions&, std::string_view, std::string_view) { return false; }
+#endif
+
+#if ALPHA_MCP
+// A TCP port 1..65535, or 0 (off).
+int port_of(std::string_view text) {
+  const int port = count_of(text);
+  return port <= 65535 ? port : 0;
+}
+
+bool control_option(CliOptions& o, std::string_view flag, std::string_view value) {
+  if (flag != "--control") return false;
+  o.control_port = port_of(value);
+  return true;
+}
+#else
+bool control_option(CliOptions&, std::string_view, std::string_view) { return false; }
+#endif
+
+// False when the flag takes no value or is unknown.
+bool set_option(CliOptions& o, std::string_view flag, std::string_view value) {
+  return debug_option(o, flag, value) || control_option(o, flag, value);
+}
+
+// Flags without a value; false when unknown.
+bool set_switch(CliOptions& o, std::string_view flag) {
+#if ALPHA_DEBUG_TOOLS
+  if (flag == "--devtools") return o.devtools = true;
+#endif
+#if ALPHA_MCP
+  if (flag == "--hidden") return o.hidden = true;
+#endif
+  return false;
+}
 
 void parse_flags(CliOptions& o, std::span<const std::string_view> flags) {
   for (std::size_t i = 0; i < flags.size(); ++i) {
-    if (flags[i] == "--devtools") o.devtools = true;
-    else if (i + 1 < flags.size() && set_option(o, flags[i], flags[i + 1])) ++i;
+    if (set_switch(o, flags[i])) continue;
+    if (i + 1 < flags.size() && set_option(o, flags[i], flags[i + 1])) ++i;
   }
 }
 #else
