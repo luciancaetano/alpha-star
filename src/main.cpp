@@ -13,6 +13,10 @@
 #include "render/renderer.hpp"
 #include "script/host.hpp"
 
+#ifdef ALPHA_DEVTOOLS
+#include "devtools/dev_tools.hpp"
+#endif
+
 // Composition root: alpha_star <pack-dir | game.js> [options]  (pack = `alpha export` output)
 // With no arguments it runs the pack it sits in (standalone export).
 // alpha_star --test <tests.js>: runs every exported test function headlessly
@@ -21,7 +25,27 @@
 //   --screenshot PATH save the last frame as BMP (with --frames)
 //   --tap INPUT       input name to tap headlessly, e.g. Space
 //   --tap-every K     tap it every K frames
+//   --devtools        open the dev tools (F1) at start; dev builds only
 namespace {
+
+#ifdef ALPHA_DEVTOOLS
+using Tools = alpha::devtools::DevTools;
+using alpha::devtools::FrameStats;
+#else
+// Shipping builds have no dev tools: the loop calls these no-ops instead.
+struct FrameStats {
+  double frame_ms = 0.0;
+  int steps = 0;
+};
+struct Tools {
+  Tools(SDL_Window*, SDL_Renderer*) {}
+  void toggle() {}
+  bool handle(const SDL_Event&) { return true; }
+  int steps(int wanted) { return wanted; }
+  void decorate(alpha::render::Frame&, const alpha::ecs::World*) const {}
+  void draw(alpha::script::Host&, FrameStats) {}
+};
+#endif
 
 constexpr double kDt = 1.0 / 60.0;
 constexpr float kWindowScale = 1.5f;
@@ -32,6 +56,7 @@ struct Options {
   std::string screenshot;
   std::string tap;
   int tap_every = 0;
+  bool devtools = false;
 };
 
 // Standalone pack (`alpha export --standalone`): main.js next to the executable.
@@ -41,16 +66,22 @@ std::string fused_pack() {
   return base;
 }
 
+// Applies one `--flag value`.
+void set_option(Options& o, std::string_view flag, const char* value) {
+  if (flag == "--frames") o.frames = std::stoi(value);
+  if (flag == "--screenshot") o.screenshot = value;
+  if (flag == "--tap") o.tap = value;
+  if (flag == "--tap-every") o.tap_every = std::stoi(value);
+}
+
 Options parse(int argc, char** argv) {
   Options o;
   const bool has_game = argc > 1 && argv[1][0] != '-';
   o.game = has_game ? argv[1] : fused_pack();
-  for (int i = has_game ? 2 : 1; i + 1 < argc; i += 2) {
+  for (int i = has_game ? 2 : 1; i < argc; ++i) {
     const std::string_view flag = argv[i];
-    if (flag == "--frames") o.frames = std::stoi(argv[i + 1]);
-    if (flag == "--screenshot") o.screenshot = argv[i + 1];
-    if (flag == "--tap") o.tap = argv[i + 1];
-    if (flag == "--tap-every") o.tap_every = std::stoi(argv[i + 1]);
+    if (flag == "--devtools") o.devtools = true;
+    else if (i + 1 < argc) set_option(o, flag, argv[++i]);
   }
   return o;
 }
@@ -74,12 +105,13 @@ int fail(const char* what) {
   return 1;
 }
 
-bool pump(alpha::platform::InputState& input) {
+// Events the dev tools capture (F1, typing/clicking in their windows) never reach the game.
+bool pump(alpha::platform::InputState& input, Tools& tools) {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_EVENT_QUIT) return false;
     if (event.type == SDL_EVENT_GAMEPAD_ADDED) SDL_OpenGamepad(event.gdevice.which);
-    alpha::platform::apply_event(input, event);
+    if (tools.handle(event)) alpha::platform::apply_event(input, event);
   }
   return true;
 }
@@ -89,27 +121,40 @@ void tap(const Options& o, int frame, alpha::platform::InputState& input) {
   if (code && o.tap_every > 0 && frame % o.tap_every == 0) input.pressed.set(*code);
 }
 
-// Steps to run this frame: exactly 1 in --frames mode, real time otherwise.
-int steps_for_frame(const Options& o, alpha::core::FixedStep& clock, Uint64& last) {
+double seconds_since(Uint64& last) {
   const Uint64 now = SDL_GetTicksNS();
   const double elapsed = static_cast<double>(now - last) / 1e9;
   last = now;
-  return o.frames > 0 ? 1 : clock.advance(elapsed);
+  return elapsed;
 }
 
-void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& renderer) {
+// Exactly 1 step per frame in --frames mode, real time otherwise; dev tools may pause.
+int steps_for_frame(const Options& o, alpha::core::FixedStep& clock, Tools& tools, double elapsed) {
+  return tools.steps(o.frames > 0 ? 1 : clock.advance(elapsed));
+}
+
+// Game frame, then dev overlays drawn with it (physics view), then the dev tools windows.
+void draw(alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools, FrameStats stats) {
+  alpha::render::Frame frame = host.frame();
+  tools.decorate(frame, host.world());
+  renderer.draw(frame);
+  tools.draw(host, stats);
+}
+
+void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools) {
   alpha::platform::AudioOut audio;
   if (!audio.ok()) SDL_Log("no audio device (%s); running silent", SDL_GetError());
   alpha::platform::InputState input;
   alpha::core::FixedStep clock(kDt, 5);
   Uint64 last = SDL_GetTicksNS();
   bool reported = false;
-  for (int frame = 0; pump(input) && (o.frames == 0 || frame < o.frames); ++frame) {
+  for (int frame = 0; pump(input, tools) && (o.frames == 0 || frame < o.frames); ++frame) {
     tap(o, frame, input);
-    const int steps = steps_for_frame(o, clock, last);
+    const double elapsed = seconds_since(last);
+    const int steps = steps_for_frame(o, clock, tools, elapsed);
     for (int s = 0; s < steps; ++s) host.step(alpha::platform::consume(input), static_cast<float>(kDt));
     audio.pump(host.mixer());
-    renderer.draw(host.frame());
+    draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps});
     if (host.paused() && !reported) reported = std::fprintf(stderr, "%s\n", host.error().c_str()) > 0;
     if (!o.screenshot.empty() && frame + 1 == o.frames) renderer.save_bmp(o.screenshot);
     renderer.present();
@@ -145,7 +190,7 @@ int main(int argc, char** argv) {
   if (argc == 3 && std::string_view(argv[1]) == "--test") return run_tests(argv[2]);
   const Options options = parse(argc, argv);
   if (options.game.empty()) {
-    std::fprintf(stderr, "usage: alpha_star <pack-dir | game.js> [--frames N] [--screenshot out.bmp]\n");
+    std::fprintf(stderr, "usage: alpha_star <pack-dir | game.js> [--frames N] [--screenshot out.bmp] [--devtools]\n");
     return 2;
   }
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) return fail("SDL_Init");
@@ -161,7 +206,11 @@ int main(int argc, char** argv) {
   }
   SDL_SetRenderVSync(sdl, 1);
   alpha::render::Renderer renderer(sdl, info.width, info.height);
-  run(options, host, renderer);
+  {
+    Tools tools(window, sdl);  // gone before its renderer
+    if (options.devtools) tools.toggle();
+    run(options, host, renderer, tools);
+  }
   SDL_DestroyRenderer(sdl);
   SDL_DestroyWindow(window);
   SDL_Quit();

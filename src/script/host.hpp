@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "core/input.hpp"
+#include "core/log_ring.hpp"
 #include "render/renderer.hpp"
 #include "core/source_map.hpp"
 #include "script/instances.hpp"
@@ -60,6 +61,17 @@ class Host {
   bool paused() const { return !error_.empty(); }
   const std::string& error() const { return error_; }
 
+  // Read-only views for the engine's dev tools (never exposed to scripts).
+  // Script console.* lines and pausing errors, newest last.
+  const core::LogRing& log() const;
+  // Current scene name; empty before the first scene starts.
+  std::string scene();
+  // The running scene's world; null before the first scene starts.
+  ecs::World* world();
+  const core::TagRegistry& tags();
+  // Wall time of the last step's script call (compare with kCallBudget).
+  double last_call_ms() const { return step_ms_; }
+
  private:
   GameInfo boot(const std::string& target);
   // Imports the user's bundle (game or tests) and remembers its source map.
@@ -76,8 +88,10 @@ class Host {
   std::optional<core::SourceMap> source_map_;
   std::optional<Value> step_fn_;
   std::optional<Value> texts_fn_;
+  std::optional<Value> scene_fn_;
   GameInfo info_;
   std::string error_;
+  double step_ms_ = 0.0;
 };
 
 }  // namespace alpha::script

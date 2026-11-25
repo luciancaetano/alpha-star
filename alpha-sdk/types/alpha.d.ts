@@ -8,6 +8,16 @@
 //   3. scenes/*.ts — `export default scene("play", { state, enter, update })`
 //   4. main.ts    — `export default game({ config, start, scenes, assets })`
 
+/**
+ * Debug output: printed to stderr and shown in the engine's dev tools console
+ * (F1 in dev builds). Arguments are joined with spaces; non-strings as JSON.
+ */
+declare var console: {
+  log(...args: unknown[]): void;
+  warn(...args: unknown[]): void;
+  error(...args: unknown[]): void;
+};
+
 declare module "alpha" {
   // ---- game description (written once by the agent) ----------------------
 

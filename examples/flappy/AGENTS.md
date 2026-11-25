@@ -49,6 +49,16 @@ the export copies each declared file into the pack and fails naming any missing 
   register it in `main.ts` `scenes`. The compiler lists what is missing.
 - **Collision:** in `enter`, `ctx.onHit("a", "b", fn)` (solid) or `ctx.onEnter("a", "b", fn)` (sensor).
 - **Timed event:** `ctx.every(seconds, fn)` / `ctx.after(seconds, fn)`. Never `setTimeout`.
+- **Debug output:** `console.log(...)` / `console.warn` / `console.error` print to stderr and to the
+  dev tools console. Remove them when done.
+
+## Dev tools (dev engine builds only)
+
+Press **F1** (gamepad Back+Start) in a dev build of the engine (`build/dev`, `make run-debug`)
+for the built-in tools: FPS/frame/script-call overlay, entity inspector (filter by tag, edit
+pos/rotation/velocity), console (current error + `console.*` log), pause/step one fixed frame,
+and a physics view of collider outlines. `--devtools` opens them at start. The engine bundled in
+the SDK is a release build and has no dev tools; nothing in a game can depend on them.
 
 ## Rules
 

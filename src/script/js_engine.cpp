@@ -95,7 +95,8 @@ Value Engine::check(JSValue result) {
 }
 
 void Engine::start_clock() {
-  deadline_ = std::chrono::steady_clock::now() + kCallBudget;
+  started_ = std::chrono::steady_clock::now();
+  deadline_ = started_ + kCallBudget;
   timed_out_ = false;
 }
 
@@ -104,7 +105,12 @@ Value Engine::call(const Value& fn, std::span<JSValueConst> args) {
   Value result = check(JS_Call(ctx_, fn.get(), JS_UNDEFINED, static_cast<int>(args.size()),
                                args.data()));
   run_jobs();
+  stop_clock();
   return result;
+}
+
+void Engine::stop_clock() {
+  last_call_ms_ = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started_).count();
 }
 
 }  // namespace alpha::script

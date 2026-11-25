@@ -1,6 +1,7 @@
 #include "script/system_bindings.hpp"
 
 #include <array>
+#include <cstdio>
 #include <fstream>
 #include <sstream>
 
@@ -81,13 +82,24 @@ JSValue save_write(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 10> kNatives{{
+// log(level, text): console.* from any instance; stderr plus the dev tools log.
+JSValue log(JSContext* ctx, ScriptState&, JSValueConst* argv) {
+  const auto level = static_cast<int>(number_arg(ctx, argv[0], "log level"));
+  if (level < 0 || level > 2) throw core::Error("log level must be 0, 1 or 2");
+  const auto lvl = static_cast<core::LogLevel>(level);
+  std::string text = string_arg(ctx, argv[1], "log text");
+  std::fprintf(stderr, "[%s] %s\n", core::level_name(lvl).data(), text.c_str());
+  instances_of(ctx).log().push(lvl, std::move(text));
+  return JS_UNDEFINED;
+}
+
+constexpr std::array<Native, 11> kNatives{{
     {"configure", guarded<configure>, 3},     {"bindAction", guarded<bind_action>, 2},
     {"action", guarded<action>, 2},           {"random", guarded<random>, 3},
     {"timerEvery", guarded<timer_every>, 1},
     {"timerAfter", guarded<timer_after>, 1},  {"clearTimers", guarded<clear_timers>, 0},
     {"advanceTimers", guarded<advance_timers>, 1}, {"saveRead", guarded<save_read>, 1},
-    {"saveWrite", guarded<save_write>, 1},
+    {"saveWrite", guarded<save_write>, 1},    {"log", guarded<log>, 2},
 }};
 
 }  // namespace

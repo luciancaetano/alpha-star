@@ -115,3 +115,25 @@ TEST_CASE("draw_items orders by z then creation and skips destroyed") {
   CHECK(items[2].pos.x == 1);
   CHECK(items[3].pos.x == 5);
 }
+
+TEST_CASE("entities lists every living entity oldest first") {
+  World w({0, 0});
+  const EntityId a = w.spawn(plain({kSolid}, {1, 1}));
+  const EntityId b = w.spawn(plain({}, {2, 2}));
+  const EntityId c = w.spawn(plain({kBird}, {3, 3}));
+  w.destroy(b);
+  CHECK(w.entities() == std::vector<EntityId>{a, c});
+}
+
+TEST_CASE("colliders reports each living body's collider where the body is") {
+  World w({0, 0});
+  w.spawn(plain({}, {0, 0}));
+  const EntityId box = w.spawn(solid_box({40, 50}, {20, 10}));
+  const auto all = w.colliders();
+  REQUIRE(all.size() == 1);
+  CHECK(all[0].pos == Vec2{40, 50});
+  CHECK(std::get<Rect>(all[0].collider.geometry).size == Vec2{20, 10});
+  CHECK_FALSE(all[0].collider.sensor);
+  w.destroy(box);
+  CHECK(w.colliders().empty());
+}

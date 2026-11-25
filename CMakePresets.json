@@ -4,7 +4,7 @@
     {
       "name": "dev",
       "binaryDir": "${sourceDir}/build/dev",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "ALPHA_COVERAGE": "ON" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "ALPHA_COVERAGE": "ON", "ALPHA_DEVTOOLS": "ON" }
     },
     {
       "name": "harness",
@@ -17,7 +17,7 @@
       "name": "release",
       "description": "Production build, no tests",
       "binaryDir": "${sourceDir}/build/release",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "ALPHA_BUILD_TESTS": "OFF" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "ALPHA_BUILD_TESTS": "OFF", "ALPHA_DEVTOOLS": "OFF" }
     }
   ],
   "buildPresets": [

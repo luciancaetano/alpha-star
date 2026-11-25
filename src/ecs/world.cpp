@@ -27,6 +27,7 @@ EntityId World::spawn(const core::EntitySpec& spec) {
   if (spec.shape) registry_.emplace<Visual>(e, *spec.shape);
   if (spec.body) {
     registry_.emplace<PhysicsBody>(e, physics_.create(to_id(e), *spec.body, spec.pos, spec.rotation));
+    registry_.emplace<Collider>(e, spec.body->collider);
   }
   return to_id(e);
 }
@@ -47,9 +48,17 @@ entt::entity World::living(EntityId id) const {
 }
 
 std::vector<EntityId> World::find_all(core::TagId tag) const {
+  std::vector<EntityId> ids;
+  for (const EntityId id : entities()) {
+    if (registry_.get<Tags>(to_entity(id)).set.test(tag)) ids.push_back(id);
+  }
+  return ids;
+}
+
+std::vector<EntityId> World::entities() const {
   std::vector<std::pair<std::uint64_t, EntityId>> found;
-  for (auto [e, tags, seq] : registry_.view<const Tags, const Sequence>(entt::exclude<Doomed>).each()) {
-    if (tags.set.test(tag)) found.emplace_back(seq.value, to_id(e));
+  for (auto [e, seq] : registry_.view<const Sequence>(entt::exclude<Doomed>).each()) {
+    found.emplace_back(seq.value, to_id(e));
   }
   std::sort(found.begin(), found.end());
   std::vector<EntityId> ids;
@@ -144,6 +153,18 @@ std::vector<core::DrawItem> World::draw_items() const {
   std::vector<core::DrawItem> items;
   for (auto& k : keyed) items.push_back(std::move(std::get<2>(k)));
   return items;
+}
+
+std::vector<PlacedCollider> World::colliders() const {
+  std::vector<PlacedCollider> out;
+  for (const EntityId id : entities()) {
+    const entt::entity e = to_entity(id);
+    if (const auto* c = registry_.try_get<Collider>(e)) {
+      const Transform& t = registry_.get<Transform>(e);
+      out.push_back({c->spec, t.pos, t.rotation});
+    }
+  }
+  return out;
 }
 
 }  // namespace alpha::ecs

@@ -9,6 +9,18 @@
 // each other. Every call into an instance selects it natively first.
 const N = globalThis.__native;
 
+// console.* goes to stderr and the dev tools console (levels 0 log, 1 warn, 2 error).
+function show(value) {
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+}
+const writer = (level) => (...args) => N.log(level, args.map(show).join(" "));
+globalThis.console = { log: writer(0), warn: writer(1), error: writer(2) };
+
 Math.random = () => {
   throw new Error("Math.random is disabled so runs are reproducible; use ctx.random");
 };
@@ -277,4 +289,8 @@ export function step(dt) {
 
 export function frameTexts() {
   return main.frameTexts();
+}
+
+export function sceneName() {
+  return main.scene();
 }

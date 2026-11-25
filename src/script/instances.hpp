@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 
+#include "core/log_ring.hpp"
 #include "script/script_state.hpp"
 
 namespace alpha::script {
@@ -27,6 +28,9 @@ class Instances {
   std::uint32_t use(std::uint32_t id);
   // Throws Error for the main or the active instance.
   void destroy(std::uint32_t id);
+  // console.* lines and pausing errors of every instance, newest last.
+  core::LogRing& log() { return log_; }
+  const core::LogRing& log() const { return log_; }
 
  private:
   ScriptState& at(std::uint32_t id);
@@ -35,6 +39,7 @@ class Instances {
   ScriptState* active_;
   std::uint32_t active_id_ = kMain;
   std::uint32_t next_id_ = kMain + 1;
+  core::LogRing log_{200};
 };
 
 inline Instances& instances_of(JSContext* ctx) { return *static_cast<Instances*>(JS_GetContextOpaque(ctx)); }

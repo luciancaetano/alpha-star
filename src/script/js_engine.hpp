@@ -37,6 +37,8 @@ class Engine {
   JSContext* ctx() const { return ctx_; }
   // A fresh call budget for the running script (simulate: one per game step).
   void restart_budget() { start_clock(); }
+  // Wall time of the last call(), in milliseconds.
+  double last_call_ms() const { return last_call_ms_; }
   void add_builtin(std::string name, std::string_view source);
   // Evaluates a module (builtin name or file path); returns its namespace.
   Value import(const std::string& name);
@@ -50,6 +52,7 @@ class Engine {
   static int interrupt(JSRuntime* rt, void* opaque);
   std::string limit_hit() const;
   void start_clock();
+  void stop_clock();
   std::string source_of(const std::string& name) const;
   JSValue compile(const std::string& name);
   void run_jobs();
@@ -59,6 +62,8 @@ class Engine {
   std::map<std::string, std::string, std::less<>> builtins_;
   std::chrono::steady_clock::time_point deadline_;
   bool timed_out_ = false;
+  std::chrono::steady_clock::time_point started_;
+  double last_call_ms_ = 0.0;
 };
 
 }  // namespace alpha::script

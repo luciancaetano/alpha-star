@@ -32,6 +32,11 @@ struct PhysicsBody {
   b2BodyId id;
 };
 
+// The collider a body was made with (read back by the dev tools physics view).
+struct Collider {
+  core::ColliderSpec spec;
+};
+
 // Destroyed by script this step; removed at the start of the next step.
 struct Doomed {};
 

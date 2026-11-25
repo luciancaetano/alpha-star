@@ -91,6 +91,7 @@ GameInfo Host::boot(const std::string& target) {
   const Value runtime = engine_->import("alpha:runtime");
   step_fn_.emplace(runtime.prop("step"));
   texts_fn_.emplace(runtime.prop("frameTexts"));
+  scene_fn_.emplace(runtime.prop("sceneName"));
   const Value game = import_bundle(path).prop("default");
   std::array<JSValueConst, 1> args{game.get()};
   return game_info(engine_->ctx(), engine_->call(runtime.prop("boot"), args));
@@ -112,6 +113,7 @@ void Host::step(const core::InputSet& held, float dt) {
   try {
     std::array<JSValueConst, 1> args{JS_NewFloat64(engine_->ctx(), dt)};
     engine_->call(*step_fn_, args);
+    step_ms_ = engine_->last_call_ms();
   } catch (const std::exception& e) {
     pause(e);
   }
@@ -129,6 +131,7 @@ std::vector<core::TextItem> Host::texts() {
 
 void Host::pause(const std::exception& e) {
   error_ = located(e);
+  instances_.log().push(core::LogLevel::Error, error_);
   instances_.main().mixer.stop_all();  // a paused game is silent
 }
 
@@ -171,5 +174,18 @@ std::vector<TestResult> Host::run_tests(const std::string& path) {
   }
   return results;
 }
+
+const core::LogRing& Host::log() const { return instances_.log(); }
+
+std::string Host::scene() {
+  if (!scene_fn_) return "";
+  const Value name = engine_->call(*scene_fn_, {});
+  return JS_IsString(name.get()) ? to_string(engine_->ctx(), name.get()) : "";
+}
+
+ecs::World* Host::world() { return instances_.main().world.get(); }
+
+const core::TagRegistry& Host::tags() { return instances_.main().tags; }
+
 
 }  // namespace alpha::script

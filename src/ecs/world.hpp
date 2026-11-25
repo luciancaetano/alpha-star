@@ -20,6 +20,13 @@ struct Contact {
   EntityId b;
 };
 
+// A body's collider where the body is now (dev tools physics view).
+struct PlacedCollider {
+  core::ColliderSpec collider;
+  core::Vec2 pos;
+  float rotation = 0.0f;  // degrees
+};
+
 struct StepEvents {
   std::vector<Contact> hits;    // solid contacts that began
   std::vector<Contact> enters;  // a = visitor, b = sensor
@@ -42,6 +49,8 @@ class World {
   // All living entities with the tag, oldest first.
   std::vector<EntityId> find_all(core::TagId tag) const;
   core::TagSet tags(EntityId id) const;
+  // Every living entity, oldest first.
+  std::vector<EntityId> entities() const;
 
   core::Vec2 position(EntityId id) const;
   void set_position(EntityId id, core::Vec2 pos);
@@ -57,6 +66,8 @@ class World {
   StepEvents step(float dt);
   // Living shapes, ordered by z then creation.
   std::vector<core::DrawItem> draw_items() const;
+  // Living bodies' colliders, oldest first.
+  std::vector<PlacedCollider> colliders() const;
 
  private:
   entt::entity living(EntityId id) const;

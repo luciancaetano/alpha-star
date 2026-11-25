@@ -3,6 +3,7 @@ add_library(alpha_core
   core/color.cpp
   core/fixed_step.cpp
   core/input.cpp
+  core/log_ring.cpp
   core/mixer.cpp
   core/random.cpp
   core/source_map.cpp
@@ -54,6 +55,21 @@ target_include_directories(alpha_engine PUBLIC
 target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnTT::EnTT qjs SDL3_image::SDL3_image)
 alpha_set_warnings(alpha_engine)
 
+# devtools: Dear ImGui engine dev tools (F1). Only with ALPHA_DEVTOOLS; a
+# release build compiles and links nothing of it.
+if(ALPHA_DEVTOOLS)
+  add_library(alpha_devtools
+    devtools/dev_tools.cpp
+    devtools/inspector.cpp
+    devtools/panels.cpp
+    devtools/routing.cpp
+    devtools/snapshot.cpp
+    devtools/time_control.cpp)
+  target_link_libraries(alpha_devtools PUBLIC alpha_engine PRIVATE alpha_imgui)
+  target_compile_definitions(alpha_devtools PUBLIC ALPHA_DEVTOOLS)
+  alpha_set_warnings(alpha_devtools)
+endif()
+
 add_executable(alpha_star main.cpp)
-target_link_libraries(alpha_star PRIVATE alpha_engine)
+target_link_libraries(alpha_star PRIVATE alpha_engine $<$<BOOL:${ALPHA_DEVTOOLS}>:alpha_devtools>)
 alpha_set_warnings(alpha_star)
