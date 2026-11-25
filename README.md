@@ -152,11 +152,22 @@ The following is a proposed roadmap, not a release schedule.
 
 ## Getting started
 
+```
+npx @alpha-star/sdk init my-game --template platformer   # blank | platformer | topdown | puzzle | shmup
+cd my-game
+npm install
+npm test     # headless, deterministic tests
+npm start    # play
+```
+
+Documentation: open `docs/site/index.html` (getting started, concepts, guides, the API reference
+generated from `alpha-sdk/types/alpha.d.ts`, and how to write an `AGENTS.md` for a game). Five
+small complete games live in `examples/` (flappy, platformer, topdown, puzzle, shmup). Changes
+are listed in [CHANGELOG.md](CHANGELOG.md); contributing rules in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 While a game runs from the SDK (`npm start`, `alpha run`, `--watch`), press **F12** (or gamepad
 Back+Start) for the built-in dev tools: overlay, entity inspector, console, pause/step and a physics
 view. Exported standalone games ship without them.
-
-Installation instructions, build prerequisites, example projects and API documentation will be published as the engine's development workflow stabilizes.
 
 ## Technology
 
@@ -170,7 +181,7 @@ Installation instructions, build prerequisites, example projects and API documen
 
 ## License
 
-The Alpha Star licensing model has not yet been announced. Third-party components remain subject to their respective licenses: `alpha export` writes `THIRD_PARTY_NOTICES.txt` into every pack with the notices of the engine's dependencies (including the FreeType License credit) and the license file of each font that names one (`assets.fonts.x: { file, license }`). For fonts, the font's own license is what matters (SIL OFL is fine; a bitmap font made from a font follows that font's license). Restricted console integrations will also be subject to applicable platform agreements.
+Alpha Star is released under the [MIT License](LICENSE). Third-party components remain subject to their respective licenses: `alpha export` writes `THIRD_PARTY_NOTICES.txt` into every pack with the notices of the engine's dependencies (including the FreeType License credit) and the license file of each font that names one (`assets.fonts.x: { file, license }`). For fonts, the font's own license is what matters (SIL OFL is fine; a bitmap font made from a font follows that font's license). Restricted console integrations will also be subject to applicable platform agreements.
 
 ---
 

@@ -2,10 +2,11 @@
 
 You are editing a game for the alpha-star engine. Write TypeScript in `src/`;
 `alpha export` type-checks it and bundles it into one JS module (`dist/main.js`)
-that the engine runs. The API types live in `../../alpha-sdk/types/alpha.d.ts`;
-read that file when unsure, it is the source of truth. `../flappy/AGENTS.md`
-covers input, sounds, UI, saves and the MCP tools; this file covers what is
-specific to a scrolling game: sprite sheets, a Tiled map and the camera.
+that the engine runs. The API types live in `node_modules/@alpha-star/sdk/types/alpha.d.ts`;
+read that file when unsure, it is the source of truth (the docs site has the same as an
+HTML reference). The SDK README covers input, sounds, UI, saves and the MCP tools
+(`npx alpha mcp`); this file covers what is specific to a scrolling game: sprite sheets,
+a Tiled map and the camera.
 
 ## Commands
 

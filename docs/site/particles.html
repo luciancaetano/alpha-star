@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Particles, looks, layers - alpha-star</title><link rel="stylesheet" href="style.css"></head>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="index.html">Getting started</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html" class="here">Particles, looks, layers</a></li><li><a href="tilemaps.html">Sprites, camera, tilemaps</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<main><h1 id="particles-looks-layers">Particles, looks, layers</h1>
+<h2 id="particles">Particles</h2>
+<p>Effects are data: an <code>emitter</code> on a spawn spec. Particles are born at the entity and fly on their own, simulated on the fixed step with the game's seed.</p>
+<pre><code>ctx.spawn({ tags: ["dust"], pos: feet, layer: "fx",
+  emitter: { burst: 10, oneShot: true, lifetime: [0.3, 0.5], speed: [20, 50], angle: [190, 350],
+             gravity: [0, 60], size: [5, 2], color: ["#b89a6cff", "#b89a6c00"], shape: "rect", blend: "add" } });
+trail.emit(8);           // burst on an entity spawned with an emitter
+trail.emitting = false;  // stop `rate` emission</code></pre>
+<p>A one-shot emitter's entity goes away with its last particle. At most 20000 live particles per scene. <code>ctx.settings.reducedMotion</code> scales counts to 1/4. Tests: <code>run.expect.particles().atLeast(5)</code>.</p>
+<h2 id="looks">Looks</h2>
+<pre><code>e.tint = "#ff000080"; e.alpha = 0.5; e.blend = "add"; e.scale = 2; e.flipX = true;</code></pre>
+<h2 id="layers">Layers</h2>
+<pre><code>config: { layers: { far: { z: -100, parallax: 0.2 }, fx: { z: 100 } } }
+ctx.spawn({ ...hill(x), layer: "far" });</code></pre>
+<p>Layers draw in <code>z</code> order (then entity <code>z</code>); parallax 0 is fixed to the screen, 1 moves with the world.</p>
+<h2 id="many-entities">Many entities</h2>
+<pre><code>const stars = ctx.positions("star");
+for (let i = 0; i &lt; stars.count; i++) stars.y[i] += 40 * ctx.dt;
+stars.write();</code></pre>
+<p>Several times cheaper than <code>entity.pos</code> per entity when thousands move every frame (<code>examples/shmup</code>).</p>
+<h2 id="world-text-and-the-window">World text and the window</h2>
+<pre><code>ctx.spawn({ tags: ["label"], pos, shape: { text: "+1", size: 8, color: "#ffe14d" } });  // built-in font without `font`
+config: { window: { scaling: "integer" }, pixelMode: true }   // letterbox | integer | stretch | expand
+ctx.window.fullscreen = true;   // Alt+Enter too</code></pre></main></body></html>

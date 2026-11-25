@@ -232,3 +232,21 @@ test("export writes THIRD_PARTY_NOTICES.txt: engine deps (FreeType credit) and e
   const r = await exportPack(missing);
   assert.match(r.problems[0].message, /assets\.fonts\.t: t\.fnt references "gone\.png", not found/);
 });
+
+test("export evaluates games that use every value export of \"alpha\" (vec at module level too)", async () => {
+  const p = project(`{ sounds: { a: { wave: "sine", freq: 440, duration: 0.1 }, b: { wave: "sine", freq: 220, duration: 0.1 } } }`, {}, "never");
+  const main = fs.readFileSync(p.entry, "utf8");
+  fs.writeFileSync(p.entry, main.replace(`import { define } from "alpha";`,
+    `import { define, vec } from "alpha";\nexport const START = vec.add(vec.scale(vec.fromAngle(0, 2), 2), vec.norm([3, 4]));`));
+  const { ok, problems } = await exportPack(p);
+  assert.deepEqual(problems, []);
+  assert.ok(ok);
+});
+
+test("the exporter's alpha shim has every export of the engine's alpha module", async (t) => {
+  const engine = new URL("../../src/script/alpha.js", import.meta.url);
+  if (!fs.existsSync(engine)) return t.skip("engine sources not next to this SDK");
+  const names = [...fs.readFileSync(engine, "utf8").matchAll(/^export (?:function|const) (\w+)/gm)].map((m) => m[1]);
+  const shim = await import("../lib/alpha-shim.mjs");
+  for (const name of names) assert.ok(name in shim, `alpha-shim.mjs lacks "${name}"`);
+});

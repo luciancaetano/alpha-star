@@ -1,6 +1,6 @@
 {
   "name": "@alpha-star/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Types and CLI for alpha-star games: check, export packs (JS + assets), run.",
   "type": "module",
   "bin": {
@@ -10,7 +10,8 @@
     ".": "./lib/build.mjs",
     "./pack": "./lib/pack.mjs",
     "./tsconfig.json": "./tsconfig.game.json",
-    "./engine": "./lib/engine.mjs"
+    "./engine": "./lib/engine.mjs",
+    "./png": "./lib/png.mjs"
   },
   "types": "./types/alpha.d.ts",
   "files": [
@@ -19,10 +20,13 @@
     "types",
     "engine",
     "notices",
+    "templates",
     "tsconfig.game.json"
   ],
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "templates": "node scripts/sync-templates.mjs",
+    "docs": "node scripts/make-docs.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",

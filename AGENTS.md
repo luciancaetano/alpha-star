@@ -24,7 +24,10 @@ QuickJS-ng scripts that AI agents write for vibecoder users.
 ```
 src/<module>/   engine code; one module per folder (core, ecs, physics, render, platform, script, ui, devtools, mcp)
 tests/<module>/ doctest tests mirroring src/
-alpha-sdk/      npm package: script API types + `alpha` CLI (check/export/run) + bundled engines
+alpha-sdk/      npm package: script API types + `alpha` CLI (init/check/export/run/test/mcp) + bundled engines
+                + templates/ (`alpha init`; mirrored from examples/ by `npm run templates`)
+examples/       five small games (flappy, platformer, topdown, puzzle, shmup): agent reference material
+docs/guide/     docs site sources; `cd alpha-sdk && npm run docs` -> docs/site/ (API reference from alpha.d.ts)
 tools/          harness levers (limits, crapper, dryer, mutator, check_shipping)
 docs/           GLOSSARY.md, LOG.md
 cmake/          dependency + warnings config

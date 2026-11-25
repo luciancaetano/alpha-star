@@ -1,0 +1,13 @@
+<rml>
+<head>
+  <link type="text/rcss" href="arena.rcss"/>
+</head>
+<body>
+  <div class="panel">
+    <h1>OVERRUN</h1>
+    <p id="score">SCORE 0</p>
+    <p id="best">BEST 0</p>
+    <button id="again" autofocus>AGAIN</button>
+  </div>
+</body>
+</rml>

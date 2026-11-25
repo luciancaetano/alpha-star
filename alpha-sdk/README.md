@@ -4,6 +4,8 @@ Types and the `alpha` CLI for alpha-star games (TypeScript, bundled to one JS
 module the engine runs). Run every command from the game project folder.
 
 ```
+alpha init <dir> [--template t]     new project: blank | platformer | topdown | puzzle | shmup
+alpha --version                     SDK version (= the bundled engines' version)
 alpha check                         type-check only
 alpha export [--out dist]           type-check, bundle, copy assets into a pack
 alpha export --standalone           ... plus the player engine (runs by itself)
@@ -13,6 +15,12 @@ alpha run --watch                   ... and re-export on every change: the game 
 alpha test                          run test/main.test.ts headlessly (simulate + expect)
 alpha mcp                           MCP server for AI agents (below)
 ```
+
+`alpha init my-game --template shmup && cd my-game && npm install && npm test && npm start`:
+every template is a small complete game with tests, generated CC0 art and an `AGENTS.md` for AI
+agents (`--sdk <npm spec>` writes another SDK dependency, e.g. `file:../alpha-sdk`). The docs
+site (`docs/site/` in the repo, `npm run docs` here) has the guides and the API reference
+generated from `types/alpha.d.ts`.
 
 Engines are bundled per platform in `engine/<platform>-<arch>/` (release:
 `run`/`test`/`mcp`) and `engine/<platform>-<arch>/shipping/` (players). Override

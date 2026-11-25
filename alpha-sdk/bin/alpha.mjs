@@ -14,6 +14,9 @@
 //   alpha test [--entry test/main.test.ts] [--engine path]
 //                                type-check + bundle the tests, run every exported
 //                                test function headlessly in the engine; exit 1 on failure
+//   alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup] [--sdk <npm spec>]
+//                                new project from a template: then npm install, npm test, npm start
+//   alpha --version              the SDK version (the bundled engines are built from the same version)
 //   alpha mcp [--engine path]    MCP server on stdio for AI agents: check/export/test the game,
 //                                start it and drive/observe it (input, step, state, screenshots, logs)
 //
@@ -28,9 +31,9 @@ import { exportPack } from "../lib/pack.mjs";
 import { buildTests, testArgs } from "../lib/test.mjs";
 import { watchProject } from "../lib/watch.mjs";
 
-const USAGE = `usage: alpha <check|export|run|test|mcp> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
+const USAGE = `usage: alpha <init|check|export|run|test|mcp|--version> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
 
-const VERSION = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
+import { initProject, VERSION } from "../lib/init.mjs";
 
 function parse(argv) {
   const dash = argv.indexOf("--");
@@ -110,7 +113,26 @@ function launch(args, engineArgs = [args.out, ...args.engineArgs]) {
   return run.status ?? 1;
 }
 
+function initCmd(argv) {
+  const opt = (name, fallback) => (argv.includes(`--${name}`) ? argv[argv.indexOf(`--${name}`) + 1] : fallback);
+  const dir = argv[1];
+  if (!dir || dir.startsWith("--")) {
+    console.error("usage: alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup] [--sdk <npm spec>]");
+    return 2;
+  }
+  const r = initProject({ dir, template: opt("template", "blank"), sdk: opt("sdk", undefined) });
+  if (!r.ok) return report(r.problems.map((message) => ({ file: "", line: 0, column: 0, message })), "init");
+  console.log(`created ${dir} (${r.files.length} files). Next:
+  cd ${dir}
+  npm install
+  npm test
+  npm start`);
+  return 0;
+}
+
 async function main(argv) {
+  if (argv[0] === "--version" || argv[0] === "-v") return void console.log(VERSION) ?? 0;
+  if (argv[0] === "init") return initCmd(argv);
   const args = parse(argv);
   if (args.command === "check") return report(typecheck(args.entry), "check");
   if (args.command === "export") return exportCmd(args);

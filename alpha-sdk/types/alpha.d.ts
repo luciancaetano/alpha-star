@@ -10,7 +10,7 @@
 
 /**
  * Debug output: printed to stderr and shown in the engine's dev tools console
- * (F1 in dev builds). Arguments are joined with spaces; non-strings as JSON.
+ * (F12 in dev and release builds). Arguments are joined with spaces; non-strings as JSON.
  */
 declare var console: {
   log(...args: unknown[]): void;
@@ -414,11 +414,6 @@ declare module "alpha" {
     parallax?: number;
   }
 
-  /**
-   * ctx.camera: which part of the world the screen shows. Each scene starts with the
-   * identity camera (pos = center of config.size, zoom 1): world pixels = screen pixels.
-   * Moves on the fixed step (deterministic); the UI and overlays never move with it.
-   */
   /** ctx.positions(tag): ids[i] is at (x[i], y[i]); write() sets every position back. */
   export interface Positions {
     readonly count: number;
@@ -428,6 +423,11 @@ declare module "alpha" {
     write(): void;
   }
 
+  /**
+   * ctx.camera: which part of the world the screen shows. Each scene starts with the
+   * identity camera (pos = center of config.size, zoom 1): world pixels = screen pixels.
+   * Moves on the fixed step (deterministic); the UI and overlays never move with it.
+   */
   export interface Camera {
     /** World point at the screen center. */
     pos: Vec2Ref;

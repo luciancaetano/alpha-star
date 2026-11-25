@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Physics - alpha-star</title><link rel="stylesheet" href="style.css"></head>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="index.html">Getting started</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html" class="here">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="tilemaps.html">Sprites, camera, tilemaps</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<main><h1 id="physics">Physics</h1>
+<p>Box2D v3 under a small API. Units are pixels, degrees and kg (50 px = 1 m inside).</p>
+<pre><code>config: { gravity: [0, 900], collision: { categories: ["ship", "enemy", "shot"] } }
+
+body: { type: "dynamic", fixedRotation: true, gravityScale: 1, bullet: false,
+        category: "ship", collidesWith: ["enemy"],
+        collider: { rect: [12, 16], friction: 0.6, restitution: 0, density: 1 } }
+// static (walls), kinematic (moved by velocity only: lifts, enemies on paths), dynamic
+// collider: { circle: r } or { rect: [w, h] }; sensor: true (overlaps only); oneWay: true (jump up through)</code></pre>
+<h2 id="contacts">Contacts</h2>
+<pre><code>ctx.onHit("hero", "enemy", (h, e, contact) =&gt; { /* contact.normal h -&gt; e, point, speed */ });
+ctx.onHitEnd("hero", "ground", (h, g) =&gt; {});
+ctx.onEnter("player", "coin", (p, c) =&gt; {});   // a sensor overlap starts
+ctx.onExit("player", "zone", (p, z) =&gt; {});</code></pre>
+<p>Several contacts can arrive in one step: check <code>e.alive</code> before acting on an entity a previous handler may have destroyed. Categories need both sides to accept each other.</p>
+<h2 id="queries">Queries</h2>
+<pre><code>ctx.raycast([x, y], [x, y + 12], { tags: ["walls"] });   // { entity, point, normal, fraction } | null
+ctx.raycastAll(from, to, { categories: ["enemy"] });
+ctx.queryCircle(center, radius, { tags: ["enemy"] });    // sensors included
+ctx.queryRect([x, y, w, h]);</code></pre>
+<p>Raycasts ignore sensors; area queries include them.</p>
+<h2 id="bodies-and-joints">Bodies and joints</h2>
+<pre><code>hero.body.velocity = [vx, vy];
+hero.body.applyImpulse([0, -hero.body.mass * 300]);   // changes velocity by 300 px/s
+const rope = ctx.joint({ type: "rope", a: hook, b: crate, length: 80 });   // revolute | distance | weld | prismatic
+rope.destroy();</code></pre>
+<h2 id="tweens-and-vectors">Tweens and vectors</h2>
+<pre><code>import { vec } from "alpha";   // add sub scale len norm dot lerp angle fromAngle dist
+ctx.tween(lift, { to: { x: 470 }, seconds: 2.5, ease: "sineInOut", yoyo: true, repeat: Infinity });
+ctx.tween(coin, { to: { scale: 2.5, alpha: 0 }, seconds: 0.25, onDone: () =&gt; ctx.destroy(coin) });</code></pre>
+<p>A tweened kinematic body moves by velocity, so riders are carried (<code>examples/platformer</code> lift).</p></main></body></html>

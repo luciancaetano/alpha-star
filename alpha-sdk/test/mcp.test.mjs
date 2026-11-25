@@ -95,20 +95,22 @@ test("game_reload picks up a code change in the running game; a type error chang
   const root = flappyCopy();
   const tuning = path.join(root, "src", "tuning.ts");
   const client = await connect(root);
-  const birdX = (state) => state.entities.find((e) => e.tags.includes("bird")).pos[0];
+  // The title bird bobs around ART.titleY (+-6 px): moving titleY by 100 moves it for sure.
+  const birdY = (state) => state.entities.find((e) => e.tags.includes("bird")).pos[1];
+  const near = (y, at) => assert.ok(Math.abs(y - at) <= 6, `bird y ${y} not within 6 px of ${at}`);
   try {
     const started = stateOf(await call(client, "game_start", { hidden: true }));
-    assert.equal(birdX(started), 80);
-    fs.writeFileSync(tuning, fs.readFileSync(tuning, "utf8").replace("x: 80,", "x: 100,"));
+    near(birdY(started), 244);
+    fs.writeFileSync(tuning, fs.readFileSync(tuning, "utf8").replace("titleY: 244", "titleY: 144"));
     const reloaded = stateOf(await call(client, "game_reload"));
     assert.equal(reloaded.scene, "title");
     assert.equal(reloaded.error, null);
-    assert.equal(birdX(reloaded), 100);
-    fs.writeFileSync(tuning, fs.readFileSync(tuning, "utf8").replace("x: 100,", "x: \"wide\","));
+    near(birdY(reloaded), 144);
+    fs.writeFileSync(tuning, fs.readFileSync(tuning, "utf8").replace("titleY: 144", "titleY: \"high\""));
     const bad = await call(client, "game_reload");
     assert.ok(bad.isError);
-    assert.match(textOf(bad), /not changed[\s\S]*bird\.ts:\d+:\d+: error/);
-    assert.equal(birdX(stateOf(await call(client, "game_state"))), 100);
+    assert.match(textOf(bad), /not changed[\s\S]*title\.ts:\d+:\d+: error/);
+    near(birdY(stateOf(await call(client, "game_state"))), 144);
     await call(client, "game_stop");
   } finally {
     await client.close();

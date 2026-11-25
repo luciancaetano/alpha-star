@@ -1,0 +1,11 @@
+/* No assets.fonts: the engine's built-in 8x8 font (sizes in multiples of 8). */
+body { width: 100%; height: 100%; font-size: 8dp; color: #f5e6c8; }
+p { display: block; margin: 4dp 8dp; }
+.bar span { display: inline-block; width: 33%; }
+.keys { position: absolute; bottom: 2dp; width: 100%; text-align: center; color: #b49a7a; }
+.panel { display: block; width: 180dp; margin: 56dp auto 0dp auto; padding: 12dp; background-color: #4a3248; border: 2dp #f5e6c8; text-align: center; }
+h1 { display: block; font-size: 16dp; color: #ffd166; margin-bottom: 8dp; }
+button { display: block; margin-top: 10dp; padding: 6dp; background-color: #6d4b6b; tab-index: auto; }
+button:hover, button:focus { background-color: #ef8354; }
+.high-contrast { color: #ffffff; }
+.high-contrast .panel { background-color: #000000; border-color: #ffffff; }

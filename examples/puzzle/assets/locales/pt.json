@@ -1,0 +1,13 @@
+{
+  "hud": {
+    "level": "NÍVEL {n}/{of}",
+    "moves": { "zero": "NENHUM MOVIMENTO", "one": "1 MOVIMENTO", "other": "{count} MOVIMENTOS" },
+    "best": "RECORDE {n}",
+    "keys": "SETAS  Z DESFAZ  R REINICIA"
+  },
+  "solved": {
+    "title": "RESOLVIDO!",
+    "moves": { "one": "EM 1 MOVIMENTO", "other": "EM {count} MOVIMENTOS" },
+    "next": "PRÓXIMO NÍVEL"
+  }
+}

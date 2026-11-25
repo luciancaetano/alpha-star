@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { encodePng } from "../../../alpha-sdk/lib/png.mjs";
+import { encodePng } from "@alpha-star/sdk/png";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 

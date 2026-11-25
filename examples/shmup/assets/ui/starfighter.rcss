@@ -1,0 +1,8 @@
+/* No assets.fonts: the engine's built-in 8x8 font (sizes in multiples of 8). */
+body { width: 100%; height: 100%; font-size: 8dp; color: #e0e6ff; }
+.bar { display: block; margin: 4dp 6dp; }
+#lives { float: right; color: #ef476f; }
+.panel { display: block; width: 160dp; margin: 110dp auto 0dp auto; padding: 12dp; background-color: #1b1f3b; border: 2dp #9bf6ff; text-align: center; }
+h1 { display: block; font-size: 16dp; color: #ffd166; margin-bottom: 8dp; }
+button { display: block; margin-top: 10dp; padding: 6dp; background-color: #2b3170; tab-index: auto; }
+button:hover, button:focus { background-color: #ef476f; }

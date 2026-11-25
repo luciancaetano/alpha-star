@@ -1,0 +1,12 @@
+<rml>
+<head>
+  <link type="text/rcss" href="crates.rcss"/>
+</head>
+<body>
+  <div class="panel">
+    <h1 data-t="solved.title">SOLVED!</h1>
+    <p id="moves">IN 0 MOVES</p>
+    <button id="next" autofocus data-t="solved.next">NEXT LEVEL</button>
+  </div>
+</body>
+</rml>

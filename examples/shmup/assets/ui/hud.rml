@@ -1,0 +1,8 @@
+<rml>
+<head>
+  <link type="text/rcss" href="starfighter.rcss"/>
+</head>
+<body>
+  <p class="bar"><span id="score">000000</span><span id="lives">AAA</span></p>
+</body>
+</rml>
