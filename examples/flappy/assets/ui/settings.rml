@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="flappy.rcss"/>
   <style>
-    .panel { margin-top: 110dp; }
+    .panel { margin-top: 90dp; }
     .volume { display: block; margin: 10dp 0dp; }
     .volume button { display: inline-block; width: 36dp; margin: 0dp 6dp; padding: 6dp 0dp; }
     .volume .label { display: block; margin-bottom: 4dp; }

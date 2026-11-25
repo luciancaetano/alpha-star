@@ -2,15 +2,18 @@
 <head>
   <link type="text/rcss" href="flappy.rcss"/>
   <style>
-    h1 { margin-top: 150dp; font-size: 36dp; }
-    .hint { margin-top: 110dp; }
-    .small { margin-top: 12dp; font-size: 8dp; }
+    .eyebrow { margin-top: 74dp; }
+    h1 { margin: 14dp 0dp 0dp; font-size: 32dp; }
+    .orbit { display: block; margin-top: 8dp; font-size: 22dp; color: #80eeff; letter-spacing: 6dp; }
+    .hint { margin: 170dp auto 0dp; padding: 14dp 4dp; width: 236dp; background-color: #101a3be8; border: 1dp #667fbd; border-radius: 8dp; }
+    .small { margin-top: 16dp; font-size: 7dp; color: #c1bbeb; }
   </style>
 </head>
 <body>
-  <h1 class="shadow">FLAPPY</h1>
+  <p class="eyebrow shadow" data-t="title.tagline">A COSMIC ADVENTURE</p>
+  <h1 class="shadow">FLAPPY<span class="orbit">ORBIT</span></h1>
   <!-- data-t: the engine fills these with ctx.t(key) in the current locale. -->
-  <p id="hint" class="hint shadow blink" data-t="title.hint">press flap</p>
+  <p id="hint" class="hint shadow" data-t="title.hint">press flap</p>
   <p class="small shadow" data-t="title.settings">S / START: settings</p>
 </body>
 </rml>

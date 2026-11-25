@@ -1,10 +1,12 @@
 import { scene } from "../alpha";
 import { bird } from "../prefabs/bird";
+import { background } from "../prefabs/background";
 import { ground } from "../prefabs/ground";
-import { BIRD } from "../tuning";
+import { ART } from "../tuning";
 
 export default scene("title", {
   enter(ctx) {
+    ctx.spawn(background());
     ctx.spawn(ground());
     ctx.spawn(bird(false));
     ctx.ui.show("title");
@@ -13,7 +15,7 @@ export default scene("title", {
   },
   update(ctx) {
     // Idle bob as a pure function of time: deterministic.
-    ctx.find("bird").pos.y = BIRD.startY + Math.sin(ctx.time * 4) * 6;
+    ctx.find("bird").pos.y = ART.titleY + (ctx.settings.reducedMotion ? 0 : Math.sin(ctx.time * 3) * 6);
     if (ctx.input.pressed("settings")) ctx.go("settings");
     else if (ctx.input.pressed("flap")) ctx.go("play");
   },

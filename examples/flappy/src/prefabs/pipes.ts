@@ -2,7 +2,7 @@ import type { Collider, EntitySpec, Random, Vec2 } from "alpha";
 import type { Flappy } from "../types";
 import { PIPE, WORLD } from "../tuning";
 
-type Spec = EntitySpec<Flappy["tags"]>;
+type Spec = EntitySpec<Flappy["tags"], Flappy["images"]>;
 
 /** Top pipe, bottom pipe and a scoring sensor in the gap. */
 export function pipePair(random: Random): Spec[] {
@@ -18,7 +18,7 @@ function pipe(x: number, top: number, bottom: number): Spec {
   return {
     tags: ["solid", "scrolls"],
     pos: [x, (top + bottom) / 2],
-    shape: { rect: size, color: "#73bf2e", outline: "#000" },
+    shape: { image: "column", size },
     body: scrolling({ rect: size }),
   };
 }

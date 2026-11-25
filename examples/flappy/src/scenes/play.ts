@@ -1,6 +1,7 @@
 import type { Context } from "alpha";
 import { scene } from "../alpha";
 import { bird } from "../prefabs/bird";
+import { background } from "../prefabs/background";
 import { ground } from "../prefabs/ground";
 import { pipePair } from "../prefabs/pipes";
 import { BIRD, FEATHERS, PIPE } from "../tuning";
@@ -18,6 +19,7 @@ export default scene("play", {
   state: () => ({ score: 0 }),
 
   enter(ctx) {
+    ctx.spawn(background());
     ctx.spawn(ground());
     ctx.spawn(bird(true));
     ctx.ui.show("hud");

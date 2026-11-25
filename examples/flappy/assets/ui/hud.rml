@@ -1,9 +1,15 @@
 <rml>
 <head>
   <link type="text/rcss" href="flappy.rcss"/>
-  <style>#score { margin-top: 28dp; font-size: 32dp; }</style>
+  <style>
+    .telemetry { display: block; width: 96dp; margin: 16dp auto; padding: 10dp 0dp; background-color: #0c1334dd; border: 1dp #6879b7; border-radius: 10dp; }
+    #score { margin: 7dp 0dp 0dp; font-size: 26dp; }
+  </style>
 </head>
 <body>
-  <p id="score" class="shadow">0</p>
+  <div class="telemetry">
+    <p class="eyebrow" data-t="over.score">SCORE</p>
+    <p id="score" class="shadow">0</p>
+  </div>
 </body>
 </rml>

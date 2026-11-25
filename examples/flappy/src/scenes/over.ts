@@ -1,9 +1,11 @@
 import { scene } from "../alpha";
 import { ground } from "../prefabs/ground";
+import { background } from "../prefabs/background";
 import { FADE, WORLD } from "../tuning";
 
 export default scene("over", {
   enter(ctx, { score }) {
+    ctx.spawn(background());
     ctx.audio.tone({ wave: "noise", freq: 1, duration: 0.3, volume: 0.3, release: 0.25 });
     const best = Math.max(score, ctx.save.get("best", 0));
     ctx.save.set("best", best);

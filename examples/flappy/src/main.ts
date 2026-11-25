@@ -8,11 +8,11 @@ import { WORLD } from "./tuning";
 
 export default game({
   config: {
-    title: "Flappy",
+    title: "Flappy Orbit",
     size: [WORLD.width, WORLD.height],
-    background: "#70c5ce",
+    background: "#090d26",
     seed: 42,
-    // Smooth look: antialiased shapes and linear image filtering (the pixel font opts back in).
+    // Smooth scenery; the player sprite and pixel font opt into nearest-neighbor filtering.
     pixelMode: false,
     gravity: [0, 900],
     // Any face button or the right trigger flaps, on any player's gamepad.
@@ -26,9 +26,15 @@ export default game({
   start: "title",
   scenes: { title, play, over, settings },
   assets: {
+    images: {
+      player: { file: "assets/images/player-pixel.png", pixelMode: true },
+      nebula: "assets/images/nebula.png",
+      column: "assets/images/column.png",
+      deck: "assets/images/deck.png",
+    },
     // Procedural: no audio files to ship. A file path (.wav/.ogg/.mp3) here would load one instead.
     sounds: {
-      flap: { wave: "square", freq: [300, 600], duration: 0.08, volume: 0.25 },
+      flap: { wave: "sine", freq: [420, 1100], duration: 0.10, volume: 0.22 },
       point: [
         { wave: "triangle", freq: 880, duration: 0.06, volume: 0.4 },
         { wave: "triangle", freq: 1320, duration: 0.12, volume: 0.4 },

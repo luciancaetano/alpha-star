@@ -1,6 +1,7 @@
 import type { Context } from "alpha";
 import { scene } from "../alpha";
 import { ground } from "../prefabs/ground";
+import { background } from "../prefabs/background";
 import type { Flappy } from "../types";
 
 type Settings = Context<Flappy, undefined>;
@@ -22,6 +23,7 @@ function show(ctx: Settings, bus: Bus) {
 // Every setting is persisted by the engine (settings.json) and applied at boot.
 export default scene("settings", {
   enter(ctx) {
+    ctx.spawn(background());
     ctx.spawn(ground());
     ctx.ui.show("settings");
     show(ctx, "music");
