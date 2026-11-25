@@ -29,7 +29,9 @@ class Host {
   Host(const Host&) = delete;
   Host& operator=(const Host&) = delete;
 
-  // Loads and boots the game. On failure returns defaults and pauses.
+  // Loads and boots a game: a pack directory (runs <dir>/main.js) or a .js
+  // module. Asset paths resolve against the module's directory.
+  // On failure returns defaults and pauses.
   GameInfo load(const std::string& path);
   // One fixed step with the inputs held (or tapped) during it.
   void step(const core::InputSet& held, float dt);
@@ -41,7 +43,7 @@ class Host {
   const std::string& error() const { return error_; }
 
  private:
-  GameInfo boot(const std::string& path);
+  GameInfo boot(const std::string& target);
   void pause(const std::exception& e);
   std::vector<core::TextItem> texts();
 

@@ -8,15 +8,18 @@ read that file when unsure, it is the source of truth.
 ## Commands
 
 ```
-npm install          # once
-npm run build        # type-check + bundle src/main.ts -> dist/main.js
-npm run build:test   # same for test/main.test.ts
-alpha_star dist/main.js                                   # play
-alpha_star dist/main.js --frames 120 --screenshot s.bmp   # headless check
+npm install                 # once
+npm run check               # type-check only (fast)
+npm run export              # type-check + bundle + copy assets -> dist/ (the pack)
+npm start                   # export, then open the pack in the engine bundled in the SDK
+npx alpha run -- --frames 120 --screenshot s.bmp   # headless check
+npx alpha export --standalone --out build/game     # pack + engine binary: runs by itself
 ```
 
-A change is done only when `npm run build` prints `built dist/main.js`.
+A change is done only when `npm run export` prints `exported dist (...)`.
 Errors are `file:line:col: error: ...`; nothing is written while any exist.
+Asset paths in `main.ts` are relative to this folder (e.g. `assets/sfx/hit.wav`);
+the export copies each declared file into the pack and fails naming any missing one.
 
 ## Layout (one responsibility per file)
 
@@ -35,7 +38,7 @@ Errors are `file:line:col: error: ...`; nothing is written while any exist.
 
 - **New input:** add to `actions` in `types.ts`, then map devices in `main.ts` `config.actions`.
 - **New sound:** add to `sounds` in `types.ts`, then in `main.ts` `assets.sounds` either a WAV path
-  (relative to `dist/main.js`) or a synth spec `{ wave, freq, duration }` / list of notes.
+  (relative to this folder) or a synth spec `{ wave, freq, duration }` / list of notes.
   Play with `ctx.audio.play("name", { volume, pitch, loop })`; one-off procedural sounds with
   `ctx.audio.tone({ wave: "square", freq: [300, 600], duration: 0.1 })`.
 - **New image:** add to `images` in `types.ts`, the file (PNG/JPG/BMP) in `main.ts` `assets.images`,

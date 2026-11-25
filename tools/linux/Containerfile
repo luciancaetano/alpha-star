@@ -1,0 +1,21 @@
+# Linux build environment for alpha-star: GCC + everything SDL3 needs for its
+# X11, Wayland, ALSA and PulseAudio backends, plus the harness tools.
+# Built and used by tools/linux_gate.py.
+FROM docker.io/library/ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential cmake ninja-build git ca-certificates pkg-config \
+      python3 python3-pip python3-venv xvfb xauth \
+      libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev \
+      libxss-dev libxtst-dev libxkbcommon-dev libwayland-dev wayland-protocols \
+      libegl1-mesa-dev libgl1-mesa-dev libgles2-mesa-dev libdrm-dev libgbm-dev \
+      libasound2-dev libpulse-dev libudev-dev libdbus-1-dev libibus-1.0-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY tools/requirements.txt /tmp/requirements.txt
+RUN python3 -m venv /opt/harness \
+    && /opt/harness/bin/pip install --no-cache-dir -r /tmp/requirements.txt gcovr==8.3
+ENV PATH=/opt/harness/bin:$PATH
+
+WORKDIR /src

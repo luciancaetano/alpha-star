@@ -4,10 +4,10 @@
 
 PYTHON ?= python
 FLAPPY := examples/flappy
-# Game module the run/debug targets open (override: make run-debug GAME=path/to/main.js).
-GAME ?= $(FLAPPY)/dist/main.js
+# Game pack the run/debug targets open (override: make run-debug GAME=path/to/pack).
+GAME ?= $(FLAPPY)/dist
 
-.PHONY: build-debug build-prod run-debug debug flappy flappy-build
+.PHONY: build-debug build-prod run-debug debug flappy flappy-build sdk-engine sdk-engine-linux linux-gate
 
 build-debug:
 	cmake --preset dev
@@ -23,10 +23,21 @@ run-debug: build-debug flappy-build
 debug: build-debug flappy-build
 	$(PYTHON) tools/run.py --preset dev --debug $(GAME)
 
-# Compile the Flappy example (TypeScript -> one JS module) with the alpha SDK.
+# Export the Flappy example as a pack (main.js + assets) with the alpha CLI.
 flappy-build:
-	cd $(FLAPPY) && npm install --silent && npm run build
+	cd $(FLAPPY) && npm install --silent && npm run export
 
 # Build engine + example, then play Flappy.
 flappy: build-debug flappy-build
-	$(PYTHON) tools/run.py --preset dev $(FLAPPY)/dist/main.js
+	$(PYTHON) tools/run.py --preset dev $(FLAPPY)/dist
+
+# Stage release engines into alpha-sdk/engine/<platform>-<arch> (shipped with the SDK).
+sdk-engine:
+	$(PYTHON) tools/stage_engine.py
+
+sdk-engine-linux:
+	$(PYTHON) tools/stage_engine.py --linux
+
+# Full gate on Linux (podman/docker container).
+linux-gate:
+	$(PYTHON) tools/linux_gate.py

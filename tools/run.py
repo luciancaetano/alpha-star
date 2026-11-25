@@ -1,6 +1,6 @@
 """Run the engine, optionally under a debugger.
 
-Usage: python tools/run.py [--preset dev] [--debug] <game.js> [engine args...]
+Usage: python tools/run.py [--preset dev] [--debug] <pack-dir | game.js> [engine args...]
 """
 import argparse
 import subprocess
@@ -13,7 +13,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--preset", default="dev")
     ap.add_argument("--debug", action="store_true")
-    ap.add_argument("game", help="built game module, e.g. examples/flappy/dist/main.js")
+    ap.add_argument("game", help="game pack from `alpha export` (or a .js module), e.g. examples/flappy/dist")
     ap.add_argument("engine_args", nargs=argparse.REMAINDER)
     a = ap.parse_args()
     exe = toolchain.built_exe(a.preset)

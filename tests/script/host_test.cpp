@@ -105,6 +105,19 @@ TEST_CASE("host boots a JS game: config, shapes and live text") {
   CHECK(frame.texts[0].align == alpha::core::Align::Center);
 }
 
+TEST_CASE("a pack directory runs its main.js and resolves assets inside it") {
+  Sandbox box;
+  std::string game = tiny("enter", "ctx.audio.play('s');");
+  const std::string empty = "assets: { sounds: {} }";
+  game.replace(game.find(empty), empty.size(),
+               "assets: { sounds: { s: { wave: 'sine', freq: 440, duration: 0.1 } } }");
+  box.write("main.js", game);
+  Host host(box.save());
+  host.load(box.dir.string());
+  CHECK(host.error() == "");
+  CHECK(host.mixer().voices() == 1);
+}
+
 TEST_CASE("input actions, timers and velocity reach the script") {
   Sandbox box;
   Host host(box.save());

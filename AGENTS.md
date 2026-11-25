@@ -24,7 +24,7 @@ QuickJS-ng scripts that AI agents write for vibecoder users.
 ```
 src/<module>/   engine code; one module per folder (core, ecs, physics, render, platform, script, mcp)
 tests/<module>/ doctest tests mirroring src/
-alpha-sdk/      npm package: script API types + TS→single-JS compiler (alpha-build)
+alpha-sdk/      npm package: script API types + `alpha` CLI (check/export/run) + bundled engines
 tools/          harness levers (limits, crapper, dryer, mutator)
 docs/           GLOSSARY.md, LOG.md
 cmake/          dependency + warnings config
@@ -33,8 +33,10 @@ cmake/          dependency + warnings config
 ## Commands
 
 ```
-make build-debug | build-prod | run-debug | debug   # debug = run under VS/lldb/gdb (GAME=path/to/main.js)
+make build-debug | build-prod | run-debug | debug   # debug = run under VS/lldb/gdb (GAME=path/to/pack)
 make flappy                                         # build engine + examples/flappy, then play
+make sdk-engine | sdk-engine-linux                  # stage release engine into alpha-sdk/engine/
+make linux-gate                                     # full gate inside the Linux container
 ```
 
 ```

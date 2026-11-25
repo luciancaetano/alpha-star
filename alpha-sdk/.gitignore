@@ -1,2 +1,4 @@
 node_modules/
 dist/
+# Engine binaries are staged by tools/stage_engine.py and shipped in the npm package.
+engine/

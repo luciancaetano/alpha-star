@@ -1,10 +1,10 @@
-﻿{
+{
   "version": 6,
   "configurePresets": [
     {
       "name": "dev",
       "binaryDir": "${sourceDir}/build/dev",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "ALPHA_COVERAGE": "ON" }
     },
     {
       "name": "harness",

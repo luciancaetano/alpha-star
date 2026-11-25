@@ -1,15 +1,30 @@
 {
   "name": "@alpha-star/sdk",
   "version": "0.1.0",
-  "description": "Types and compiler for alpha-star game scripts (TypeScript -> single JS module).",
+  "description": "Types and CLI for alpha-star games: check, export packs (JS + assets), run.",
   "type": "module",
-  "bin": { "alpha-build": "bin/alpha-build.mjs" },
+  "bin": {
+    "alpha": "bin/alpha.mjs"
+  },
   "exports": {
     ".": "./lib/build.mjs",
-    "./tsconfig.json": "./tsconfig.game.json"
+    "./pack": "./lib/pack.mjs",
+    "./tsconfig.json": "./tsconfig.game.json",
+    "./engine": "./lib/engine.mjs"
   },
   "types": "./types/alpha.d.ts",
-  "files": ["bin", "lib", "types", "tsconfig.game.json"],
-  "scripts": { "test": "node --test test/*.test.mjs" },
-  "dependencies": { "esbuild": "0.25.0", "typescript": "5.8.2" }
+  "files": [
+    "bin",
+    "lib",
+    "types",
+    "engine",
+    "tsconfig.game.json"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "esbuild": "0.25.0",
+    "typescript": "5.8.2"
+  }
 }

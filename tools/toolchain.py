@@ -31,10 +31,10 @@ def debugger_command(exe):
     raise SystemExit("toolchain: no debugger found (Visual Studio, lldb or gdb)")
 
 
-def built_exe(preset, name="alpha_star"):
-    """Find the built executable regardless of generator (single/multi-config)."""
+def built_exe(preset, name="alpha_star", subdir="src"):
+    """Find a built executable regardless of OS and generator (single/multi-config)."""
     suffix = ".exe" if os.name == "nt" else ""
-    hits = sorted((cfg.ROOT / "build" / preset / "src").rglob(name + suffix))
+    hits = sorted(p for p in (cfg.ROOT / "build" / preset / subdir).rglob(name + suffix) if p.is_file())
     if not hits:
         raise SystemExit(f"toolchain: {name} not built for preset '{preset}'")
     return hits[0]

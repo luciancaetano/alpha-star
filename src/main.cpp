@@ -2,6 +2,7 @@
 #include <SDL3/SDL_main.h>
 
 #include <cstdio>
+#include <filesystem>
 #include <string>
 #include <string_view>
 
@@ -12,7 +13,8 @@
 #include "render/renderer.hpp"
 #include "script/host.hpp"
 
-// Composition root: alpha_star <game.js> [options]
+// Composition root: alpha_star <pack-dir | game.js> [options]  (pack = `alpha export` output)
+// With no arguments it runs the pack it sits in (standalone export).
 //   --frames N        run exactly N frames, one fixed step each (deterministic)
 //   --screenshot PATH save the last frame as BMP (with --frames)
 //   --tap INPUT       input name to tap headlessly, e.g. Space
@@ -30,10 +32,18 @@ struct Options {
   int tap_every = 0;
 };
 
+// Standalone pack (`alpha export --standalone`): main.js next to the executable.
+std::string fused_pack() {
+  const char* base = SDL_GetBasePath();
+  if (!base || !std::filesystem::exists(std::filesystem::path(base) / "main.js")) return "";
+  return base;
+}
+
 Options parse(int argc, char** argv) {
   Options o;
-  if (argc > 1) o.game = argv[1];
-  for (int i = 2; i + 1 < argc; i += 2) {
+  const bool has_game = argc > 1 && argv[1][0] != '-';
+  o.game = has_game ? argv[1] : fused_pack();
+  for (int i = has_game ? 2 : 1; i + 1 < argc; i += 2) {
     const std::string_view flag = argv[i];
     if (flag == "--frames") o.frames = std::stoi(argv[i + 1]);
     if (flag == "--screenshot") o.screenshot = argv[i + 1];
@@ -96,12 +106,13 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
 int main(int argc, char** argv) {
   const Options options = parse(argc, argv);
   if (options.game.empty()) {
-    std::fprintf(stderr, "usage: alpha_star <game.js> [--frames N] [--screenshot out.bmp]\n");
+    std::fprintf(stderr, "usage: alpha_star <pack-dir | game.js> [--frames N] [--screenshot out.bmp]\n");
     return 2;
   }
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) return fail("SDL_Init");
   SDL_Log("alpha-star %s", alpha::core::version().data());
-  alpha::script::Host host(options.game + ".save.json");
+  const bool is_pack = std::filesystem::is_directory(options.game);
+  alpha::script::Host host(is_pack ? options.game + "/save.json" : options.game + ".save.json");
   const alpha::script::GameInfo info = host.load(options.game);
   SDL_Window* window = nullptr;
   SDL_Renderer* sdl = nullptr;

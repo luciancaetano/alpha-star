@@ -80,7 +80,10 @@ GameInfo Host::load(const std::string& path) {
   return info_;
 }
 
-GameInfo Host::boot(const std::string& path) {
+GameInfo Host::boot(const std::string& target) {
+  // A pack directory (from `alpha export`) or its main.js directly.
+  const std::filesystem::path pack(target);
+  const std::string path = std::filesystem::is_directory(pack) ? (pack / "main.js").string() : target;
   state_.asset_dir = std::filesystem::path(path).parent_path();
   const Value runtime = engine_->import("alpha:runtime");
   step_fn_.emplace(runtime.prop("step"));

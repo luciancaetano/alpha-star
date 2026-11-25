@@ -64,3 +64,12 @@
 | 58 | dryer → `load_file<Table, Decode, Kind>` native template | One body for every file asset kind |
 | 59 | Not done: OGG/MP3 (WAV only), streaming music (whole file in memory), audio not audible-verified (device opens; samples tested) | Recorded for the next unit |
 | 60 | Makefile: `make flappy` (build engine + compile example + play), `flappy-build`; `run-debug`/`debug` open `GAME` (default flappy); `tools/run.py` forwards game + engine args (also under the debugger) | User request; run targets were calling the binary without a game |
+| 61 | Linux port setup: `tools/linux/Containerfile` (Ubuntu 24.04, GCC, SDL X11/Wayland/ALSA/Pulse deps, gcovr, lizard) + `tools/linux_gate.py` (podman/docker, repo at /src, build in a named volume) | Reproducible Linux build without touching the host; WSL had no compiler and sudo needs a password |
+| 62 | Podman default container network had no route out (apt timed out) → `--network=host` for build and run | Root cause: container network, not the mirrors |
+| 63 | All third-party deps `SYSTEM` (FetchContent), `ALPHA_COVERAGE` (gcov flags via `alpha_set_warnings`), `coverage.py` uses gcovr on Linux, `built_exe` finds any exe per OS | Gate tools run on both OSes; only our code is held to -Werror |
+| 64 | SDK CLI `alpha check|export|run` replaces `alpha-build`; export evaluates the game in Node with an `alpha` shim to read `game.assets`, copies declared files into the pack, refuses missing files and paths leaving the project | User: one CLI that builds, packs assets and exports; engine only gets the pack path |
+| 65 | Engine accepts a pack directory (`<dir>/main.js`, save in `<dir>/save.json`) | `alpha_star <pack>` |
+| 66 | Engines bundled in the SDK per target (`alpha-sdk/engine/<platform>-<arch>/`, git-ignored, staged by `tools/stage_engine.py [--linux]`); `alpha run` resolves --engine, $ALPHA_STAR, bundled, PATH; `alpha export --standalone [--target]` copies the engine into the pack; engine with no game arg runs the `main.js` next to it | User: SDK carries Windows/Linux binaries like Electron |
+| 67 | Static MSVC runtime in Debug broke Microsoft coverage (empty coverage.xml → CRAP 0%) → static only in Release | Root cause found by bisecting the one Windows change; shipped exe still needs no VC++ redist |
+| 68 | Verified on Windows: staged win32-x64 engine (4 MB), `alpha run` with bundled engine, standalone Flappy export runs fused | End-to-end proof |
+| 69 | Not done yet: Linux compile/gate (first container build still running), linux-x64 engine not staged | Recorded; next step |

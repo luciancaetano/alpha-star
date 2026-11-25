@@ -3,8 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "alpha-build src/main.ts -o dist/main.js",
-    "build:test": "alpha-build test/main.test.ts -o dist/main.test.js"
+    "check": "alpha check",
+    "export": "alpha export",
+    "start": "alpha run"
   },
-  "devDependencies": { "@alpha-star/sdk": "file:../../alpha-sdk" }
+  "devDependencies": {
+    "@alpha-star/sdk": "file:../../alpha-sdk"
+  }
 }
