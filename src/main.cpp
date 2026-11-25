@@ -42,6 +42,7 @@ struct Tools {
   void toggle() {}
   bool handle(const SDL_Event&) { return true; }
   int steps(int wanted) { return wanted; }
+  bool paused() const { return false; }
   void decorate(alpha::render::Frame&, const alpha::ecs::World*) const {}
   void draw(alpha::script::Host&, FrameStats) {}
 };
@@ -133,9 +134,17 @@ int steps_for_frame(const Options& o, alpha::core::FixedStep& clock, Tools& tool
   return tools.steps(o.frames > 0 ? 1 : clock.advance(elapsed));
 }
 
+// How far into the next fixed step to draw (smooth motion at any refresh rate).
+// Exact state when stepping frame by frame (--frames, dev tools pause).
+float blend_for(const Options& o, const alpha::core::FixedStep& clock, const Tools& tools) {
+  if (o.frames > 0 || tools.paused()) return 1.0f;
+  return static_cast<float>(clock.fraction());
+}
+
 // Game frame, then dev overlays drawn with it (physics view), then the dev tools windows.
-void draw(alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools, FrameStats stats) {
-  alpha::render::Frame frame = host.frame();
+void draw(alpha::script::Host& host, alpha::render::Renderer& renderer, Tools& tools, FrameStats stats,
+          float blend) {
+  alpha::render::Frame frame = host.frame(blend);
   tools.decorate(frame, host.world());
   renderer.draw(frame);
   tools.draw(host, stats);
@@ -154,7 +163,7 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
     const int steps = steps_for_frame(o, clock, tools, elapsed);
     for (int s = 0; s < steps; ++s) host.step(alpha::platform::consume(input), static_cast<float>(kDt));
     audio.pump(host.mixer());
-    draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps});
+    draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps}, blend_for(o, clock, tools));
     if (host.paused() && !reported) reported = std::fprintf(stderr, "%s\n", host.error().c_str()) > 0;
     if (!o.screenshot.empty() && frame + 1 == o.frames) renderer.save_bmp(o.screenshot);
     renderer.present();

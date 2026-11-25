@@ -51,7 +51,9 @@ class Host {
   GameInfo load(const std::string& path);
   // One fixed step with the inputs held (or tapped) during it.
   void step(const core::InputSet& held, float dt);
-  render::Frame frame();
+  // blend: how far real time is into the next fixed step (FixedStep::fraction);
+  // 1 draws the current state exactly.
+  render::Frame frame(float blend = 1.0f);
   // Test mode (no game booted): imports a test module and calls each exported
   // function once, in name order. A module that fails to load is one failure.
   std::vector<TestResult> test(const std::string& path);

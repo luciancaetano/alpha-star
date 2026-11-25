@@ -137,3 +137,38 @@ TEST_CASE("colliders reports each living body's collider where the body is") {
   w.destroy(box);
   CHECK(w.colliders().empty());
 }
+
+TEST_CASE("draw_items blends previous and current transforms by alpha") {
+  World w({0, 0});
+  const EntityId moved = w.spawn(plain({kSolid}, {0, 0}));
+  w.snapshot();
+  w.set_position(moved, {10, 20});
+  w.set_rotation(moved, 90);
+  const EntityId fresh = w.spawn(plain({kGoal}, {50, 50}));  // spawned after the snapshot
+  const auto half = w.draw_items(0.5f);
+  REQUIRE(half.size() == 2);
+  CHECK(half[0].pos == Vec2{5, 10});
+  CHECK(half[0].rotation == doctest::Approx(45));
+  CHECK(half[1].pos == Vec2{50, 50});  // no smear from the origin
+  CHECK(w.draw_items(1.0f)[0].pos == Vec2{10, 20});
+  CHECK(w.draw_items(0.0f)[0].pos == Vec2{0, 0});
+  static_cast<void>(fresh);
+}
+
+TEST_CASE("rotation blends the short way around") {
+  World w({0, 0});
+  const EntityId e = w.spawn({TagSet{}, {0, 0}, 350.0f, 0, ShapeSpec{Circle{5}, Color{}, {}, {}}, {}});
+  w.snapshot();
+  w.set_rotation(e, 10);
+  CHECK(w.draw_items(0.5f)[0].rotation == doctest::Approx(360).epsilon(0.001));
+}
+
+TEST_CASE("physics motion interpolates between steps") {
+  World w({0, 0});
+  EntitySpec spec = plain({kBird}, {0, 0});
+  spec.body = BodySpec{BodyType::Kinematic, {Circle{5}, false}, {60, 0}};
+  w.spawn(spec);
+  w.snapshot();
+  w.step(1.0f / 60);  // moves 1 px
+  CHECK(w.draw_items(0.5f)[0].pos.x == doctest::Approx(0.5f));
+}

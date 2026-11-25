@@ -11,6 +11,9 @@ class FixedStep {
   // stall the count is capped at max_steps and the backlog is dropped.
   int advance(double elapsed);
   double dt() const { return dt_; }
+  // How far into the next step real time is, in [0, 1): the render blend
+  // factor between the previous and the current simulation state.
+  double fraction() const { return accumulated_ / dt_; }
 
  private:
   double dt_;

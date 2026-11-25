@@ -15,6 +15,13 @@ struct Transform {
   int z = 0;
 };
 
+// Transform at the start of the current fixed step; rendering blends from it
+// to Transform so motion is smooth at any display refresh rate.
+struct Previous {
+  core::Vec2 pos;
+  float rotation = 0.0f;
+};
+
 // Creation order: makes find() and draw order deterministic despite id reuse.
 struct Sequence {
   std::uint64_t value = 0;

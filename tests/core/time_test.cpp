@@ -19,6 +19,17 @@ TEST_CASE("FixedStep turns real time into whole steps and keeps the remainder") 
   CHECK(fs.dt() == 0.25);
 }
 
+TEST_CASE("FixedStep fraction is the fraction of the next step already elapsed") {
+  FixedStep fs(0.25, 8);
+  CHECK(fs.fraction() == 0.0);
+  fs.advance(0.3);  // 1 step, 0.05 left
+  CHECK(fs.fraction() == doctest::Approx(0.2));
+  fs.advance(0.15);  // 0.2 left, no step
+  CHECK(fs.fraction() == doctest::Approx(0.8));
+  fs.advance(10.0);  // stall: backlog dropped
+  CHECK(fs.fraction() == 0.0);
+}
+
 TEST_CASE("FixedStep caps steps after a stall and drops the backlog") {
   FixedStep fs(0.25, 3);
   CHECK(fs.advance(10.0) == 3);

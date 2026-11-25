@@ -1,6 +1,7 @@
 #include "ecs/world.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <tuple>
 
@@ -10,6 +11,17 @@
 namespace alpha::ecs {
 
 namespace {
+
+// Blends angles the short way around (350 -> 10 passes through 360, not 180).
+float blend_angle(float from, float to, float t) {
+  const float delta = std::remainder(to - from, 360.0f);
+  return from + delta * t;
+}
+
+core::DrawItem blended(const core::ShapeSpec& shape, const Previous& p, const Transform& t,
+                       float blend) {
+  return {shape, p.pos + (t.pos - p.pos) * blend, blend_angle(p.rotation, t.rotation, blend)};
+}
 
 EntityId to_id(entt::entity e) { return static_cast<EntityId>(entt::to_integral(e)); }
 
@@ -22,6 +34,7 @@ World::World(core::Vec2 gravity) : physics_(gravity) {}
 EntityId World::spawn(const core::EntitySpec& spec) {
   const entt::entity e = registry_.create();
   registry_.emplace<Transform>(e, spec.pos, spec.rotation, spec.z);
+  registry_.emplace<Previous>(e, spec.pos, spec.rotation);
   registry_.emplace<Sequence>(e, next_sequence_++);
   registry_.emplace<Tags>(e, spec.tags);
   if (spec.shape) registry_.emplace<Visual>(e, *spec.shape);
@@ -140,13 +153,16 @@ StepEvents World::step(float dt) {
   return {living_pairs(contacts.hits), living_pairs(contacts.sensor_enters)};
 }
 
-std::vector<core::DrawItem> World::draw_items() const {
+void World::snapshot() {
+  for (auto [e, t, p] : registry_.view<const Transform, Previous>().each()) p = {t.pos, t.rotation};
+}
+
+std::vector<core::DrawItem> World::draw_items(float blend) const {
   using Keyed = std::tuple<int, std::uint64_t, core::DrawItem>;
   std::vector<Keyed> keyed;
-  const auto view = registry_.view<const Transform, const Visual, const Sequence>(entt::exclude<Doomed>);
-  for (auto [e, t, v, seq] : view.each()) {
-    keyed.emplace_back(t.z, seq.value, core::DrawItem{v.shape, t.pos, t.rotation});
-  }
+  const auto view = registry_.view<const Transform, const Previous, const Visual, const Sequence>(
+      entt::exclude<Doomed>);
+  for (auto [e, t, p, v, seq] : view.each()) keyed.emplace_back(t.z, seq.value, blended(v.shape, p, t, blend));
   std::sort(keyed.begin(), keyed.end(), [](const Keyed& a, const Keyed& b) {
     return std::tie(std::get<0>(a), std::get<1>(a)) < std::tie(std::get<0>(b), std::get<1>(b));
   });

@@ -25,6 +25,7 @@ class DevTools {
   bool handle(const SDL_Event& event);
   // Steps the simulation runs this frame (time controls apply even when closed).
   int steps(int wanted) { return time_.steps(wanted); }
+  bool paused() const { return time_.paused(); }
   // Adds dev overlays drawn with the game (physics view) to its frame.
   void decorate(render::Frame& frame, const ecs::World* world) const;
   // Draws the open tools over the rendered game frame, before present.

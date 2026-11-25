@@ -110,6 +110,7 @@ std::string Host::located(const std::exception& e) const {
 void Host::step(const core::InputSet& held, float dt) {
   if (paused()) return;
   instances_.main().actions.update(held);
+  if (instances_.main().world) instances_.main().world->snapshot();
   try {
     std::array<JSValueConst, 1> args{JS_NewFloat64(engine_->ctx(), dt)};
     engine_->call(*step_fn_, args);
@@ -135,9 +136,9 @@ void Host::pause(const std::exception& e) {
   instances_.main().mixer.stop_all();  // a paused game is silent
 }
 
-render::Frame Host::frame() {
+render::Frame Host::frame(float blend) {
   render::Frame f{info_.background, {}, {}};
-  if (instances_.main().world) f.shapes = instances_.main().world->draw_items();
+  if (instances_.main().world) f.shapes = instances_.main().world->draw_items(blend);
   try {
     if (!paused()) f.texts = texts();
   } catch (const std::exception& e) {

@@ -64,10 +64,13 @@ class World {
 
   // Frees destroyed entities, advances physics, syncs transforms.
   StepEvents step(float dt);
-  // Living shapes, ordered by z then creation.
-  std::vector<core::DrawItem> draw_items() const;
   // Living bodies' colliders, oldest first.
   std::vector<PlacedCollider> colliders() const;
+  // Remembers every transform as "previous". Call at the start of each fixed step.
+  void snapshot();
+  // Living shapes, ordered by z then creation, placed at the blend
+  // previous -> current by `blend` in [0, 1] (1 = current state).
+  std::vector<core::DrawItem> draw_items(float blend = 1.0f) const;
 
  private:
   entt::entity living(EntityId id) const;
