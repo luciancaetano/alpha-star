@@ -45,7 +45,7 @@ npm --prefix alpha-sdk ci
 python tools/stage_engine.py
 ```
 
-The last command builds and stages the `release` and `shipping` engines in `alpha-sdk/engine/`. It already limits resource usage. Run one build at a time. Rerun it after every engine change: `npm run start` in a game uses this staged copy, not `build/`. Full build instructions: [BUILDING.md](BUILDING.md).
+The last command builds and stages the `release` and `shipping` engines in `alpha-sdk/engine/`. It already limits resource usage. Run one build at a time. Rerun it after every engine change: `npm run start` in a game uses this staged copy, not `build/`. Full build instructions: [BUILDING.md](BUILDING.md) (Android: [BUILDING-android.md](BUILDING-android.md)).
 
 ### Play and test an example
 

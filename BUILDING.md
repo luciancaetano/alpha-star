@@ -53,6 +53,10 @@ build/dev/src/Debug/alpha_star.exe examples/flappy/dist
 
 `make flappy` does the build, export and run in one step.
 
+## Android
+
+Setting up the JDK, the Android SDK and its packages to build APKs: [BUILDING-android.md](BUILDING-android.md).
+
 ## Tests and the gate
 
 ```powershell

@@ -51,3 +51,4 @@ Condensed summary of the project's history. The full per-action log (326 entries
 - alpha skills (alpha-sdk/lib/skills.mjs + test): installs/updates skills/<name>/<name>.md as <agent dir>/<name>/SKILL.md for chosen agents (claude .claude/skills, agents .agents/skills [default pair], cursor, gemini, copilot .github/skills, opencode); interactive pick or --agents; package ships skills/ via prepack. Docs: guide/agents.md, SDK README, llm/overview.md.
 - make deploy-engine: sdk-engine + npm ci + templates + skills copy + docs site + notices --check + SDK tests (AGENTS.md, BUILDING.md).
 - make deploy-engine also builds/stages the Linux engines (sdk-engine-linux, container).
+- BUILDING-android.md: JDK, Android SDK (Studio or cmdline-tools), pinned packages, env vars, APK build/install, troubleshooting; linked from BUILDING.md and README.
