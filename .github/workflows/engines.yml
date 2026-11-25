@@ -1,0 +1,123 @@
+# Engine builds on every push to main: Windows debug (preset dev), Windows release, Linux release,
+# then the SDK with those engines staged into alpha-sdk/engine/<target>/ (as tools/stage_engine.py
+# lays them out). Artifacts: the engines and the npm tarballs from tools/pack_release.py.
+# The gates (tests, coverage, limits) stay in ci.yml; nothing here publishes.
+name: engines
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: engines-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: "8"
+
+jobs:
+  windows-debug:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: build/dev/_deps
+          key: deps-windows-dev-${{ hashFiles('cmake/**', 'CMakeLists.txt', 'CMakePresets.json') }}
+      - run: cmake --preset dev
+      - run: cmake --build --preset dev --target alpha_star
+      - name: Collect engine
+        shell: bash
+        run: |
+          mkdir -p out
+          exe=$(python -c "import sys; sys.path.insert(0, 'tools'); import toolchain; print(toolchain.built_exe('dev'))")
+          cp "$exe" out/
+          cp "${exe%.exe}.pdb" out/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engine-win32-x64-debug
+          path: out/
+          retention-days: 14
+
+  # tools/stage_engine.py builds release + shipping and stages them (shipping only if check_shipping passes).
+  windows-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: |
+            build/release/_deps
+            build/shipping/_deps
+          key: deps-windows-release-${{ hashFiles('cmake/**', 'CMakeLists.txt', 'CMakePresets.json') }}
+      - run: python tools/stage_engine.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engine-win32-x64
+          path: alpha-sdk/engine/win32-x64/
+          retention-days: 14
+
+  linux-release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-deps
+      - name: Install harness tools
+        run: |
+          python3 -m venv "$RUNNER_TEMP/harness"
+          "$RUNNER_TEMP/harness/bin/pip" install -r tools/requirements.txt
+          echo "$RUNNER_TEMP/harness/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            build/release/_deps
+            build/shipping/_deps
+          key: deps-linux-release-${{ hashFiles('cmake/**', 'CMakeLists.txt', 'CMakePresets.json') }}
+      - run: python3 tools/stage_engine.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engine-linux-x64
+          path: alpha-sdk/engine/linux-x64/
+          retention-days: 14
+
+  sdk:
+    needs: [windows-release, linux-release]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-deps
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: alpha-sdk/package-lock.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: engine-win32-x64
+          path: alpha-sdk/engine/win32-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: engine-linux-x64
+          path: alpha-sdk/engine/linux-x64
+      # Artifacts drop the executable bit.
+      - run: chmod +x alpha-sdk/engine/linux-x64/alpha_star alpha-sdk/engine/linux-x64/shipping/alpha_star
+      - name: SDK tests
+        working-directory: alpha-sdk
+        run: |
+          npm ci
+          xvfb-run -a npm test
+      - name: Pack (local tarballs + offline install test, not published)
+        run: xvfb-run -a python3 tools/pack_release.py --install-test --require win32-x64 --require linux-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdk-release
+          path: dist/release/
+          retention-days: 14

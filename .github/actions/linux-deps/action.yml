@@ -1,0 +1,17 @@
+# Linux build/runtime packages for the engine: same list as tools/linux/Containerfile.
+# One place for CI (ci.yml gate-linux, engines.yml linux-release / sdk).
+name: linux-deps
+description: Install the engine's Linux build dependencies (SDL3 backends, X11/Wayland, audio, xvfb)
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          build-essential cmake ninja-build git ca-certificates pkg-config \
+          python3 python3-pip python3-venv xvfb xauth \
+          libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev \
+          libxss-dev libxtst-dev libxkbcommon-dev libwayland-dev wayland-protocols \
+          libegl1-mesa-dev libgl1-mesa-dev libgles2-mesa-dev libdrm-dev libgbm-dev \
+          libasound2-dev libpulse-dev libudev-dev libdbus-1-dev libibus-1.0-dev

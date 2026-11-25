@@ -62,17 +62,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      # Same packages as tools/linux/Containerfile.
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential cmake ninja-build git ca-certificates pkg-config \
-            python3 python3-pip python3-venv xvfb xauth \
-            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev \
-            libxss-dev libxtst-dev libxkbcommon-dev libwayland-dev wayland-protocols \
-            libegl1-mesa-dev libgl1-mesa-dev libgles2-mesa-dev libdrm-dev libgbm-dev \
-            libasound2-dev libpulse-dev libudev-dev libdbus-1-dev libibus-1.0-dev
+      - uses: ./.github/actions/linux-deps
       - name: Install harness tools
         run: |
           python3 -m venv "$RUNNER_TEMP/harness"

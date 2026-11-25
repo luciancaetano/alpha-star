@@ -68,3 +68,14 @@ python tools/gate.py              # full gate: build, tests, coverage, limits, C
 Never run ctest, test binaries, benchmarks or fuzzers directly: wrap them as
 `python tools/resource_guard.py -- <command>` so they cannot freeze the machine.
 The code rules are in [AGENTS.md](AGENTS.md).
+
+## Continuous integration (GitHub Actions)
+
+- `.github/workflows/ci.yml` (every push and PR): the full gate on Windows and Linux, staged
+  engines, SDK tests, examples, standalone export check, release tarballs.
+- `.github/workflows/engines.yml` (push to `main`, or run by hand): builds the Windows debug engine
+  (preset `dev`), the Windows and Linux release + shipping engines (`tools/stage_engine.py`), then the
+  SDK with both staged into `alpha-sdk/engine/<target>/` (`npm ci`, `npm test`,
+  `tools/pack_release.py --install-test`). Artifacts: `engine-win32-x64-debug`, `engine-win32-x64`,
+  `engine-linux-x64`, `sdk-release` (the npm tarballs; never published).
+- The Linux package list lives in `.github/actions/linux-deps` (mirrors `tools/linux/Containerfile`).
