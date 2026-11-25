@@ -9,7 +9,7 @@ namespace alpha::core {
 
 namespace {
 
-constexpr std::array<std::string_view, 76> kNames{
+constexpr std::array<std::string_view, 80> kNames{
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R",
     "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
     "Space", "Enter", "Escape", "Tab", "Backspace", "Left", "Right", "Up", "Down",
@@ -19,7 +19,8 @@ constexpr std::array<std::string_view, 76> kNames{
     "GamepadUp", "GamepadDown", "GamepadLeft", "GamepadRight", "GamepadLB", "GamepadRB",
     "GamepadLS", "GamepadRS", "GamepadLT", "GamepadRT",
     "GamepadLeftX-", "GamepadLeftX+", "GamepadLeftY-", "GamepadLeftY+",
-    "GamepadRightX-", "GamepadRightX+", "GamepadRightY-", "GamepadRightY+"};
+    "GamepadRightX-", "GamepadRightX+", "GamepadRightY-", "GamepadRightY+",
+    "Touch", "TouchLeft", "TouchRight", "Back"};
 static_assert(kNames.size() <= kMaxInputs);
 
 std::string unknown_input(std::string_view action, std::string_view input) {

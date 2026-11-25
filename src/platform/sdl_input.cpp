@@ -17,14 +17,14 @@ std::optional<core::InputCode> lookup(const std::array<std::pair<Code, std::stri
   return std::nullopt;
 }
 
-constexpr std::array<std::pair<SDL_Scancode, std::string_view>, 13> kKeys{{
+constexpr std::array<std::pair<SDL_Scancode, std::string_view>, 14> kKeys{{
     {SDL_SCANCODE_SPACE, "Space"},     {SDL_SCANCODE_RETURN, "Enter"},
     {SDL_SCANCODE_ESCAPE, "Escape"},   {SDL_SCANCODE_TAB, "Tab"},
     {SDL_SCANCODE_BACKSPACE, "Backspace"}, {SDL_SCANCODE_LEFT, "Left"},
     {SDL_SCANCODE_RIGHT, "Right"},     {SDL_SCANCODE_UP, "Up"},
     {SDL_SCANCODE_DOWN, "Down"},       {SDL_SCANCODE_LSHIFT, "LeftShift"},
     {SDL_SCANCODE_RSHIFT, "RightShift"}, {SDL_SCANCODE_LCTRL, "LeftCtrl"},
-    {SDL_SCANCODE_RCTRL, "RightCtrl"},
+    {SDL_SCANCODE_RCTRL, "RightCtrl"},   {SDL_SCANCODE_AC_BACK, "Back"},
 }};
 
 constexpr std::array<std::pair<int, std::string_view>, 3> kMouse{{
@@ -126,6 +126,18 @@ void apply_event(InputState& state, const SDL_Event& event, const core::PadSlots
   }
 }
 
+void apply_touch(InputState& state, const SDL_Event& raw) {
+  const SDL_TouchFingerEvent& f = raw.tfinger;
+  if (raw.type == SDL_EVENT_FINGER_DOWN) {
+    state.touches.down(f.fingerID, f.x);
+    state.pressed[0] |= state.touches.held();
+  } else if (raw.type == SDL_EVENT_FINGER_MOTION) {
+    state.touches.move(f.fingerID, f.x);
+  } else if (raw.type == SDL_EVENT_FINGER_UP || raw.type == SDL_EVENT_FINGER_CANCELED) {
+    state.touches.up(f.fingerID);
+  }
+}
+
 void release_player(InputState& state, std::size_t player) {
   state.down[player].reset();
   state.analog[player] = {};
@@ -137,6 +149,7 @@ core::InputFrame consume(InputState& state, const core::PadSlots& slots) {
     frame.players[p] = {state.down[p] | state.pressed[p], state.analog[p]};
     state.pressed[p].reset();
   }
+  frame.players[0].held |= state.touches.held();
   frame.connected = slots.players();
   frame.mouse = state.mouse;
   return frame;

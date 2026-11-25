@@ -128,3 +128,26 @@ TEST_CASE("simulate appPauses: no steps while paused, hooks at both edges") {
   CHECK(results[0].error.find("appPauses must be") != std::string::npos);  // "bad" sorts first
   CHECK(results[1].passed());
 }
+
+TEST_CASE("the OS announcing background pauses at once, before the loop polls the event") {
+  REQUIRE(SDL_InitSubSystem(SDL_INIT_EVENTS));
+  Sandbox box;
+  Host host(box.save());
+  host.load(box.write("g.js", hooks_game("")));
+  AppEvents app(true);
+  app.configure(host);
+  SDL_Event bg = event_of(SDL_EVENT_WILL_ENTER_BACKGROUND);
+  REQUIRE(SDL_PushEvent(&bg));
+  CHECK(app.paused());  // the watch saw it on the pushing thread
+  alpha::core::FixedStep clock(0.25, 8);
+  CHECK(app.steps(clock, 2) == 0);
+  CHECK_FALSE(host.app_paused());  // no JS ran from the watch
+  SDL_Event polled{};
+  while (SDL_PollEvent(&polled)) app.handle(polled, host);
+  CHECK(host.app_paused());  // the queued event drove the hooks
+  SDL_Event fg = event_of(SDL_EVENT_DID_ENTER_FOREGROUND);
+  REQUIRE(SDL_PushEvent(&fg));
+  while (SDL_PollEvent(&polled)) app.handle(polled, host);
+  CHECK_FALSE(app.paused());
+  SDL_QuitSubSystem(SDL_INIT_EVENTS);
+}

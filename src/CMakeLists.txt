@@ -25,6 +25,7 @@ add_library(alpha_core
   core/tags.cpp
   core/tilemap.cpp
   core/timers.cpp
+  core/touch.cpp
   core/version.cpp
   core/window.cpp)
 if(ALPHA_DEBUG_TOOLS)  # hot reload's file watch: dev/release only
@@ -79,6 +80,7 @@ add_library(alpha_engine
   platform/default_font_data.cpp
   platform/lifecycle.cpp
   platform/log_file.cpp
+  platform/mobile.cpp
   platform/music_stream.cpp
   platform/sdl_input.cpp
   platform/vfs.cpp
@@ -170,7 +172,13 @@ if(ALPHA_DEBUG_TOOLS)  # hot reload: dev/release only
   target_sources(alpha_engine PRIVATE script/hot_reload.cpp script/test_report.cpp script/perf_report.cpp)
 endif()
 
-add_executable(alpha_star main.cpp)
+if(ANDROID)
+  # SDL's Java glue (SDLActivity) loads libSDL3.so and libmain.so, then calls SDL_main.
+  add_library(alpha_star SHARED main.cpp)
+  set_target_properties(alpha_star PROPERTIES OUTPUT_NAME main)
+else()
+  add_executable(alpha_star main.cpp)
+endif()
 target_link_libraries(alpha_star PRIVATE alpha_engine $<$<BOOL:${ALPHA_DEVTOOLS}>:alpha_devtools>
   $<$<BOOL:${ALPHA_MCP}>:alpha_mcp>)
 alpha_set_warnings(alpha_star)

@@ -23,7 +23,7 @@ export const NAV = [
   ["Guides", [["input", "Input"], ["ui", "Game UI"], ["audio", "Audio and music"], ["physics", "Physics"],
               ["particles", "Particles, looks, layers"], ["tilemaps", "Sprites, camera, tilemaps"],
               ["saves", "Saves, settings, i18n"], ["hot-reload", "Hot reload"], ["mcp", "MCP for agents"],
-              ["testing", "Testing"], ["exporting", "Exporting"]]],
+              ["testing", "Testing"], ["exporting", "Exporting"], ["android", "Android"]]],
   ["Reference", [["reference", "API reference"], ["agents", "AGENTS.md for games"]]],
 ];
 

@@ -22,6 +22,8 @@ ctx.input.mouse();           // game pixels; ctx.camera.toWorld(...) for the wor
 Gamepad names: `GamepadA B X Y`, `GamepadLB RB LT RT LS RS`, `GamepadStart Back`, `GamepadUp
 Down Left Right`, axes `GamepadLeftX LeftY RightX RightY`, and stick directions as buttons
 (`GamepadLeftY-` = left stick up). Keys use SDL names (`Space`, `Left`, `A`, `Backspace`...).
+Touch screens: `Touch` (any finger), `TouchLeft` / `TouchRight` (a finger on that half of the
+screen), and a finger is also `MouseLeft`; `Back` is the Android back button. See [Android](android.html).
 
 ## Players
 

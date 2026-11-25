@@ -21,7 +21,8 @@ using InputSet = std::bitset<kMaxInputs>;
 // Every input name scripts may bind: "A".."Z", "0".."9", "Space", "Enter",
 // arrows, "MouseLeft", "GamepadA", ..., and the digital view of the analog
 // axes: "GamepadLeftX-" / "GamepadLeftX+" (stick past kPressThreshold),
-// "GamepadLT" / "GamepadRT" (trigger past kPressThreshold).
+// "GamepadLT" / "GamepadRT" (trigger past kPressThreshold); touch screens:
+// "Touch", "TouchLeft", "TouchRight" (core/touch.hpp); "Back" = Android back button.
 std::span<const std::string_view> input_names();
 std::optional<InputCode> parse_input(std::string_view name);
 

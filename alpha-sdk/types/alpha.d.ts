@@ -832,8 +832,18 @@ declare module "alpha" {
     seed: number;
     gravity?: Vec2;
     /**
+     * Android export (`alpha export --target android-arm64`): the package id (default
+     * "org.alphastar.<title letters>"), the launcher icon (a PNG in the project), versionCode
+     * (whole number, default 1) and version (default "1.0"). The screen orientation follows
+     * `size`: portrait only when taller than wide.
+     */
+    android?: { package?: string; icon?: string; versionCode?: number; version?: string };
+    /**
      * Action -> device inputs, e.g. ["Space", "MouseLeft", "GamepadA"]. Sticks and
      * triggers press too: "GamepadLeftY-" (left stick up), "GamepadLeftX+", "GamepadRT".
+     * Touch screens: "Touch" (any finger), "TouchLeft" / "TouchRight" (a finger on that
+     * half of the screen; a touch is also "MouseLeft" at ctx.input.mouse()); "Back" is
+     * the Android back button (bind it with "Escape": `back: ["Escape", "Back"]`).
      * The name "axes" is reserved.
      */
     actions: Record<G["actions"], string[]>;

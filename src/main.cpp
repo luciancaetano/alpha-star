@@ -2,7 +2,6 @@
 #include <SDL3/SDL_main.h>
 
 #include <cstdio>
-#include <filesystem>
 #include <functional>
 #include <string>
 #include <string_view>
@@ -14,9 +13,9 @@
 #include "platform/audio_out.hpp"
 #include "platform/frame_latency.hpp"
 #include "platform/log_file.hpp"
+#include "platform/mobile.hpp"
 #include "platform/gamepads.hpp"
 #include "platform/sdl_input.hpp"
-#include "platform/vfs.hpp"
 #include "platform/window.hpp"
 #include "render/renderer.hpp"
 #include "script/app_events.hpp"
@@ -100,13 +99,6 @@ Control make_control(const alpha::core::CliOptions&, alpha::script::Host& host, 
 
 using Options = alpha::core::CliOptions;
 
-// Standalone pack (`alpha export --standalone`): main.js next to the executable.
-std::string fused_pack() {
-  const char* base = SDL_GetBasePath();
-  if (!base || !alpha::platform::vfs::exists(std::filesystem::path(base) / "main.js")) return "";
-  return base;
-}
-
 int fail(const char* what) {
   SDL_Log("%s failed: %s", what, SDL_GetError());
   SDL_Quit();
@@ -136,7 +128,9 @@ bool pump(Devices& d, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl
     if (!tools.handle(event)) continue;
     SDL_Event logical = event;
     SDL_ConvertEventToRenderCoordinates(sdl, &logical);
-    if (host.reaches_game(logical)) alpha::platform::apply_event(d.input, logical, d.pads.slots());
+    if (!host.reaches_game(logical)) continue;
+    alpha::platform::apply_event(d.input, logical, d.pads.slots());
+    alpha::platform::apply_touch(d.input, event);  // window-relative x: TouchLeft / TouchRight
   }
   return true;
 }
@@ -269,17 +263,18 @@ int main(int argc, char** argv) {
 #if ALPHA_DEBUG_TOOLS
   if (!options.test_file.empty()) return alpha::script::run_test_file(options.test_file, options.test_assets);
 #endif
-  const std::string game = options.game.empty() ? fused_pack() : options.game;
+  const std::string game = options.game.empty() ? alpha::platform::bundled_pack() : options.game;
   if (game.empty()) return no_game();
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) return fail("SDL_Init");
   alpha::script::Host host(save_path_for);
   const alpha::script::GameInfo info = host.load(game);
-#if ALPHA_SHIPPING  // no console: logs go to <pref dir>/log.txt
+#if ALPHA_SHIPPING && !defined(__ANDROID__)  // no console: logs go to <pref dir>/log.txt (Android: logcat)
   alpha::platform::redirect_logs(alpha::platform::pref_file(info.title, "log.txt"), host.log());
 #endif
   SDL_Log("alpha-star %s", alpha::core::version().data());
   SDL_Window* window = nullptr;
   SDL_Renderer* sdl = nullptr;
+  alpha::platform::prepare_mobile(info.width, info.height);
   const alpha::core::Vec2 size{static_cast<float>(info.width), static_cast<float>(info.height)};
   if (!alpha::platform::open_window({info.title, size, info.window, options.hidden}, &window, &sdl)) return fail("SDL_CreateWindowAndRenderer");
   limit_latency(sdl);

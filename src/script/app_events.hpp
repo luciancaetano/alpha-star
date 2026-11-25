@@ -4,6 +4,7 @@
 
 #include "core/app_lifecycle.hpp"
 #include "core/fixed_step.hpp"
+#include "platform/lifecycle.hpp"
 #include "script/host.hpp"
 
 namespace alpha::script {
@@ -21,7 +22,8 @@ class AppEvents {
   bool handle(const SDL_Event& event, Host& host);
   // Applies config.pauseOnFocusLoss of the running game (it may reload).
   void configure(Host& host);
-  bool paused() const { return machine_.paused(); }
+  // Also while the OS has announced background / termination not yet polled.
+  bool paused() const { return machine_.paused() || watch_.leaving(); }
   // The steps to run this frame: none while paused; on resume the clock
   // restarts (no catch-up burst of the paused time).
   int steps(core::FixedStep& clock, int wanted);
@@ -34,6 +36,7 @@ class AppEvents {
   bool interactive_;
   core::AppLifecycle machine_;
   bool resumed_ = false;
+  platform::LifecycleWatch watch_;
 };
 
 }  // namespace alpha::script

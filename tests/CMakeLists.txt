@@ -18,6 +18,7 @@ set(ALPHA_TEST_SOURCES
   core/source_map_test.cpp
   core/sprite_test.cpp
   core/time_test.cpp
+  core/touch_test.cpp
   core/values_test.cpp
   core/version_test.cpp)
 set(ALPHA_TEST_LIBS alpha_core)
@@ -35,6 +36,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     platform/frame_latency_test.cpp
     platform/gamepads_test.cpp
     platform/log_file_test.cpp
+    platform/mobile_test.cpp
     platform/sdl_input_test.cpp
     platform/window_test.cpp
     render/effects_render_test.cpp

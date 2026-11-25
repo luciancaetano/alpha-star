@@ -140,3 +140,39 @@ TEST_CASE("mouse motion sets the pointer position every later step reports") {
   CHECK(consume(s, slots).mouse == alpha::core::Vec2{12.5f, 40.0f});
   CHECK(consume(s, slots).mouse == alpha::core::Vec2{12.5f, 40.0f});
 }
+
+namespace {
+
+SDL_Event finger(Uint32 type, SDL_FingerID id, float x) {
+  SDL_Event e{};
+  e.type = type;
+  e.tfinger.fingerID = id;
+  e.tfinger.x = x;
+  return e;
+}
+
+}  // namespace
+
+TEST_CASE("fingers are player 1's Touch inputs; a tap within one step still presses") {
+  InputState s;
+  const alpha::core::PadSlots slots;
+  apply_touch(s, finger(SDL_EVENT_FINGER_DOWN, 3, 0.8f));
+  apply_touch(s, finger(SDL_EVENT_FINGER_UP, 3, 0.8f));
+  const auto tapped = consume(s, slots).players[0].held;
+  CHECK(has(tapped, "Touch"));
+  CHECK(has(tapped, "TouchRight"));
+  CHECK(consume(s, slots).players[0].held.none());
+  apply_touch(s, finger(SDL_EVENT_FINGER_DOWN, 4, 0.1f));
+  apply_touch(s, finger(SDL_EVENT_FINGER_MOTION, 4, 0.9f));
+  consume(s, slots);
+  const auto moved = consume(s, slots).players[0].held;
+  CHECK(has(moved, "TouchRight"));
+  CHECK_FALSE(has(moved, "TouchLeft"));
+  apply_touch(s, finger(SDL_EVENT_FINGER_CANCELED, 4, 0.9f));
+  apply_touch(s, key(SDL_SCANCODE_A, true));  // not a finger: ignored
+  CHECK(consume(s, slots).players[0].held.none());
+}
+
+TEST_CASE("the Android back button is the Back input") {
+  CHECK(from_scancode(SDL_SCANCODE_AC_BACK) == parse_input("Back"));
+}

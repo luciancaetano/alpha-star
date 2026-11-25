@@ -7,6 +7,15 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
+### Added
+
+- Android target: `alpha export --target android-arm64` writes a Gradle project (SDL's Java glue,
+  pack in the APK assets, shipping engine built from source, arm64-v8a) and builds a debug-signed
+  APK when the Android toolchain is installed; otherwise prints what to install. `config.android`
+  (package, icon, versionCode, version). Guide page "Android".
+- Touch inputs `Touch`, `TouchLeft`, `TouchRight`; `Back` (Android back button).
+- Orientation from the game size; immediate pause when the OS announces background (event watch).
+
 ## [0.2.0] - 2026-11-25
 
 ### Added

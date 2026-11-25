@@ -17,3 +17,6 @@ files your fonts name with `{ file, license }`). The font's own license is what 
 
 Engines live in the SDK under `engine/<platform>-<arch>/` (release: run/test/mcp) and
 `engine/<platform>-<arch>/shipping/` (players). Override with `--engine <path>` or `$ALPHA_STAR`.
+
+Android: `alpha export --target android-arm64` writes a Gradle project (and builds the APK when the
+toolchain is installed); see [Android](android.html).

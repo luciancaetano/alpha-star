@@ -7,6 +7,10 @@
 //                                sprite sheets packed into alpha-atlas-N.png pages unless --no-atlas);
 //                                --standalone also copies the shipping engine in,
 //                                so the pack runs by itself (default target: this machine)
+//   alpha export --target android-arm64 [--out build/android] [--engine-src <alpha-star checkout>]
+//                                Gradle project (pack in its assets, engine built from source,
+//                                shipping flavor); builds the APK when the Android toolchain is
+//                                installed, otherwise prints what to install and the build command
 //   alpha run [--watch] [--out dist] [--engine path] [-- engine args]
 //                                export, then open the pack in the engine; --watch re-exports
 //                                on every source/asset change and the engine hot-reloads the
@@ -27,11 +31,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { formatProblem, typecheck } from "../lib/build.mjs";
 import { hostTarget, resolveEngine } from "../lib/engine.mjs";
+import { exportAndroid } from "../lib/android.mjs";
 import { exportPack } from "../lib/pack.mjs";
 import { buildTests, testArgs } from "../lib/test.mjs";
 import { watchProject } from "../lib/watch.mjs";
 
-const USAGE = `usage: alpha <init|check|export|run|test|mcp|--version> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
+const USAGE = `usage: alpha <init|check|export|run|test|mcp|--version> [--entry src/main.ts] [--out dist] [--standalone] [--target <platform-arch>|android-arm64] [--engine-src dir] [--watch] [--no-atlas] [--engine path] [-- engine args]`;
 
 import { initProject, VERSION } from "../lib/init.mjs";
 
@@ -48,6 +53,8 @@ function parse(argv) {
     out: path.resolve(opt("out", "dist")),
     engine: resolveEngine(opt("engine", "")),
     target: own.includes("--standalone") ? opt("target", hostTarget()) : null,
+    android: opt("target", "").startsWith("android") ? opt("target", "") : null,
+    engineSrc: opt("engine-src", undefined),
     watch: own.includes("--watch"),
     atlas: !own.includes("--no-atlas"),
     engineArgs: dash >= 0 ? argv.slice(dash + 1) : [],
@@ -60,7 +67,19 @@ function report(problems, verb) {
   return problems.length ? 1 : 0;
 }
 
+async function androidCmd(args) {
+  const out = args.out === path.resolve("dist") ? path.resolve("build/android") : args.out;
+  const r = await exportAndroid({ root: process.cwd(), entry: args.entry, out, target: args.android,
+                                  engineSrc: args.engineSrc, atlas: args.atlas });
+  if (!r.ok) return report(r.problems, "android export");
+  console.log(`exported Android project ${path.relative(process.cwd(), out) || "."} (${r.values.PACKAGE}, ` +
+              `${r.files.length} asset file(s))`);
+  console.log(r.apk ? `built ${r.apk}` : r.help);
+  return 0;
+}
+
 async function exportCmd(args) {
+  if (args.android) return androidCmd(args);
   const { ok, problems, files } = await exportPack({ root: process.cwd(), entry: args.entry, out: args.out,
                                                     target: args.target, atlas: args.atlas });
   if (!ok) return report(problems, "export");

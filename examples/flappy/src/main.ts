@@ -19,7 +19,7 @@ export default game({
     actions: {
       flap: ["Space", "MouseLeft", "GamepadA", "GamepadB", "GamepadX", "GamepadY", "GamepadRT"],
       restart: ["R"],
-      settings: ["S", "GamepadStart", "GamepadBack"],
+      settings: ["S", "GamepadStart", "GamepadBack", "Back"],
     },
     locale: "en",
   },
