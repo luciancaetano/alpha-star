@@ -29,6 +29,7 @@ def main():
         ("test", ["ctest", "--preset", a.preset]),
         ("coverage", [py, "tools/coverage.py", "--preset", a.preset]),
         ("limits", [py, "tools/check_limits.py"]),
+        ("file-access", [py, "tools/check_file_access.py", "--self-test"]),
         ("crap", [py, "tools/crapper.py", a.coverage or f"build/{a.preset}/coverage.xml",
                   *(["--only", "src/core"] if a.preset == "harness" else [])]),
         ("dry", [py, "tools/dryer.py"]),

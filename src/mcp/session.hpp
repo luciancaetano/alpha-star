@@ -26,6 +26,7 @@ struct GameState {
   int joints = 0;                              // living physics joints in the scene
   std::string locale;                          // ctx.locale; empty without assets.locales
   std::string music;                           // the music playing; empty when none
+  bool app_paused = false;                     // the app is paused (focus lost, minimized, background)
 };
 
 // Inject an action like a device would: a one-step tap, or held until released.

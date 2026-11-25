@@ -4,14 +4,13 @@
 #include FT_FREETYPE_H
 
 #include <algorithm>
-#include <fstream>
-#include <iterator>
 #include <memory>
 #include <type_traits>
 #include <string>
 #include <vector>
 
 #include "core/error.hpp"
+#include "platform/vfs.hpp"
 
 namespace alpha::platform {
 
@@ -40,10 +39,10 @@ core::Error font_error(const std::filesystem::path& file, const std::string& why
   return core::Error("font \"" + file.generic_string() + "\": " + why);
 }
 
-std::vector<FT_Byte> read_file(const std::filesystem::path& file) {
-  std::ifstream in(file, std::ios::binary);
-  if (!in) throw font_error(file, "cannot read the file (paths are relative to the game's main file)");
-  return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+vfs::Bytes read_file(const std::filesystem::path& file) {
+  auto bytes = vfs::read(file);
+  if (!bytes) throw font_error(file, "cannot read the file (paths are relative to the game's main file)");
+  return std::move(*bytes);
 }
 
 Bitmap render(FT_Face face, char32_t c, core::Glyph& glyph, float ascent) {
@@ -98,7 +97,7 @@ core::ImagePtr paint(const std::vector<Bitmap>& bitmaps, const core::FontAtlas& 
 }  // namespace
 
 core::FontAtlasPtr rasterize_font(const std::filesystem::path& file, int pixels) {
-  const std::vector<FT_Byte> bytes = read_file(file);
+  const vfs::Bytes bytes = read_file(file);
   FT_Library raw_lib = nullptr;
   if (FT_Init_FreeType(&raw_lib) != 0) throw font_error(file, "FreeType failed to start");
   const Library lib(raw_lib);

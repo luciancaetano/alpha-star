@@ -2,8 +2,6 @@
 
 #include <array>
 #include <cstdio>
-#include <fstream>
-#include <sstream>
 
 #include "core/error.hpp"
 #include "script/js_value.hpp"

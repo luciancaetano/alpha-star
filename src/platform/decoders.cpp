@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "core/error.hpp"
+#include "platform/vfs.hpp"
 
 namespace alpha::platform {
 
@@ -24,14 +25,10 @@ namespace {
 
 // The whole (compressed) file: decoders read from memory, so no file stays open
 // while music plays (a pack can be replaced under a running game, e.g. hot reload).
-std::vector<unsigned char> file_bytes(const std::string& path) {
-  std::size_t size = 0;
-  void* data = SDL_LoadFile(path.c_str(), &size);
-  if (!data) fail(path, SDL_GetError());
-  const auto* bytes = static_cast<const unsigned char*>(data);
-  std::vector<unsigned char> out(bytes, bytes + size);
-  SDL_free(data);
-  return out;
+vfs::Bytes file_bytes(const std::string& path) {
+  auto bytes = vfs::read(path);
+  if (!bytes) fail(path, SDL_GetError());
+  return std::move(*bytes);
 }
 
 class Vorbis final : public Decoder {
@@ -54,7 +51,7 @@ class Vorbis final : public Decoder {
   void rewind() override { stb_vorbis_seek_start(file_); }
 
  private:
-  std::vector<unsigned char> bytes_;
+  vfs::Bytes bytes_;
   stb_vorbis* file_ = nullptr;
   stb_vorbis_info info_{};
 };
@@ -76,7 +73,7 @@ class Mp3 final : public Decoder {
   void rewind() override { drmp3_seek_to_pcm_frame(&mp3_, 0); }
 
  private:
-  std::vector<unsigned char> bytes_;
+  vfs::Bytes bytes_;
   drmp3 mp3_{};
 };
 
@@ -86,7 +83,8 @@ class Wav final : public Decoder {
   explicit Wav(const std::string& path) {
     Uint8* data = nullptr;
     Uint32 length = 0;
-    if (!SDL_LoadWAV(path.c_str(), &spec_, &data, &length)) fail(path, SDL_GetError());
+    const vfs::Bytes bytes = file_bytes(path);
+    if (!SDL_LoadWAV_IO(vfs::memory(bytes).release(), true, &spec_, &data, &length)) fail(path, SDL_GetError());
     const SDL_AudioSpec floats{SDL_AUDIO_F32, spec_.channels, spec_.freq};
     Uint8* converted = nullptr;
     int size = 0;

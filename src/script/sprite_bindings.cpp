@@ -5,6 +5,7 @@
 
 #include "core/error.hpp"
 #include "platform/assets.hpp"
+#include "platform/vfs.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
 #include "script/world_bindings.hpp"
@@ -12,7 +13,7 @@
 namespace alpha::script {
 
 core::ImagePtr decoded_image(ScriptState& s, const std::string& file, bool smooth) {
-  const std::string path = (s.asset_dir / file).string();
+  const std::string path = platform::vfs::in_pack(s.asset_dir, file).string();
   core::ImagePtr& slot = s.decoded[smooth ? path + "|smooth" : path];  // one texture per filtering
   if (slot) return slot;
   core::Image image = platform::load_image(path);

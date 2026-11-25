@@ -11,13 +11,21 @@ AudioOut::AudioOut() {
 
 AudioOut::~AudioOut() { SDL_DestroyAudioStream(stream_); }
 
+void AudioOut::pause(bool paused) {
+  if (paused == paused_) return;
+  paused_ = paused;
+  if (!ok()) return;
+  if (paused) SDL_PauseAudioStreamDevice(stream_);
+  else SDL_ResumeAudioStreamDevice(stream_);
+}
+
 int AudioOut::queued() const {
   return ok() ? SDL_GetAudioStreamQueued(stream_) / kFrameBytes : 0;
 }
 
 void AudioOut::pump(core::Mixer& mixer) {
   const int missing = kLatency - queued();
-  if (!ok() || missing <= 0) return;
+  if (!ok() || paused_ || missing <= 0) return;
   buffer_.resize(static_cast<std::size_t>(missing) * 2);
   mixer.mix(buffer_);
   SDL_PutAudioStreamData(stream_, buffer_.data(), missing * kFrameBytes);

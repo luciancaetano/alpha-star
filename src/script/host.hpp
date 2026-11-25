@@ -22,6 +22,7 @@ struct GameInfo {
   int height = 360;
   core::Color background{0, 0, 0, 255};
   core::WindowConfig window;  // config.window
+  bool pause_on_focus_loss = true;  // config.pauseOnFocusLoss
 };
 
 // One exported test function of a test module; error is empty when it passed.
@@ -99,6 +100,13 @@ class Host {
   // ctx.locale of the game; empty without assets.locales.
   const std::string& locale() const { return vm_->main().locale; }
   bool paused() const { return !error_.empty(); }
+  // The app paused (focus lost, minimized, background) or resumed
+  // (script/app_events): ctx.app.paused follows and the running scene's
+  // ctx.onPause / ctx.onResume hooks run. A hook's error pauses the game.
+  void set_app_paused(bool paused);
+  bool app_paused() const { return app_paused_; }
+  // The OS is low on memory: logged, then the scene's ctx.onLowMemory hooks run.
+  void low_memory();
   const std::string& error() const { return error_; }
 
   // Read-only views for the engine's dev tools (never exposed to scripts).
@@ -122,6 +130,8 @@ class Host {
   std::vector<TestResult> run_tests(const std::string& path, const std::string& asset_dir);
 #endif
   void pause(const std::exception& e);
+  // Calls runtime export `name`(arg) unless a script error paused the game.
+  void notify(const char* name, JSValue arg);
 
   SavePathFor save_path_for_;
   core::LogRing log_{200};  // outlives every Vm: lines survive a reload
@@ -131,6 +141,7 @@ class Host {
   GameInfo info_;
   std::string error_;
   double step_ms_ = 0.0;
+  bool app_paused_ = false;
 #if ALPHA_DEBUG_TOOLS
   std::string reload_error_;
 #endif

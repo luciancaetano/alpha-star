@@ -7,6 +7,7 @@
 
 #include "core/error.hpp"
 #include "core/mixer.hpp"
+#include "platform/vfs.hpp"
 
 namespace alpha::platform {
 
@@ -19,7 +20,9 @@ namespace {
 }  // namespace
 
 core::Image load_image(const std::string& path) {
-  SDL_Surface* loaded = IMG_Load(path.c_str());
+  const auto bytes = vfs::read(path);
+  if (!bytes) fail("cannot load image (PNG, JPG or BMP)", path);
+  SDL_Surface* loaded = IMG_Load_IO(vfs::memory(*bytes).release(), true);
   if (!loaded) fail("cannot load image (PNG, JPG or BMP)", path);
   SDL_Surface* rgba = SDL_ConvertSurface(loaded, SDL_PIXELFORMAT_RGBA32);
   SDL_DestroySurface(loaded);

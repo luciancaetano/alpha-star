@@ -6,6 +6,7 @@
 #include <numeric>
 
 #include "core/error.hpp"
+#include "platform/vfs.hpp"
 
 namespace alpha::mcp {
 
@@ -14,16 +15,9 @@ namespace {
 // PNG bytes of what the renderer has drawn so far this frame; empty on failure.
 std::string read_png(SDL_Renderer* sdl) {
   SDL_Surface* pixels = SDL_RenderReadPixels(sdl, nullptr);
-  SDL_IOStream* io = SDL_IOFromDynamicMem();
-  std::string out;
-  if (pixels && io && IMG_SavePNG_IO(pixels, io, false)) {
-    const auto* mem = static_cast<const char*>(
-        SDL_GetPointerProperty(SDL_GetIOProperties(io), SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, nullptr));
-    out.assign(mem, static_cast<std::size_t>(SDL_TellIO(io)));
-  }
-  SDL_CloseIO(io);
+  auto png = platform::vfs::written([pixels](SDL_IOStream* io) { return pixels && IMG_SavePNG_IO(pixels, io, false); });
   SDL_DestroySurface(pixels);
-  return out;
+  return png.value_or("");
 }
 
 }  // namespace
@@ -61,6 +55,7 @@ GameState GameSession::state() {
   if (const ui::Ui* game_ui = host_.ui()) s.ui = game_ui->view();
   s.locale = host_.locale();
   s.music = host_.mixer().music_name();
+  s.app_paused = host_.app_paused();
   return s;
 }
 

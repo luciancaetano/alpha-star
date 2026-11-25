@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "core/error.hpp"
+#include "platform/vfs.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
 #include "script/sprite_bindings.hpp"
@@ -33,7 +34,7 @@ JSValue ui_create(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 // argv = name, file of assets.<kind>.<name>; returns {name, full path}.
 std::pair<std::string, std::string> asset(JSContext* ctx, ScriptState& s, JSValueConst* argv, const std::string& kind) {
   const std::string name = arg(ctx, argv, 0, "asset name");
-  return {name, (s.asset_dir / arg(ctx, argv, 1, ("assets." + kind + "." + name).c_str())).string()};
+  return {name, platform::vfs::in_pack(s.asset_dir, arg(ctx, argv, 1, ("assets." + kind + "." + name).c_str())).string()};
 }
 
 JSValue load_ui(JSContext* ctx, ScriptState& s, JSValueConst* argv) {

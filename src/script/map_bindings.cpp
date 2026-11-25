@@ -1,13 +1,12 @@
 #include "script/map_bindings.hpp"
 
 #include <array>
-#include <fstream>
 #include <memory>
-#include <sstream>
 #include <string>
 
 #include "core/error.hpp"
 #include "core/tilemap.hpp"
+#include "platform/vfs.hpp"
 #include "script/effect_parser.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
@@ -22,13 +21,10 @@ namespace {
 // relative to the asset dir; null for a missing optional file.
 JSValue read_text(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const std::string file = string_arg(ctx, argv[0], "file");
-  std::ifstream in(s.asset_dir / file, std::ios::binary);
-  if (!in && JS_ToBool(ctx, argv[1]) == 1) return JS_NULL;
-  if (!in) throw core::Error("cannot read \"" + file + "\" (paths are relative to the game's main file)");
-  std::ostringstream text;
-  text << in.rdbuf();
-  const std::string out = text.str();
-  return JS_NewStringLen(ctx, out.data(), out.size());
+  const auto text = platform::vfs::read_text(platform::vfs::in_pack(s.asset_dir, file));
+  if (!text && JS_ToBool(ctx, argv[1]) == 1) return JS_NULL;
+  if (!text) throw core::Error("cannot read \"" + file + "\" (paths are relative to the game's main file)");
+  return JS_NewStringLen(ctx, text->data(), text->size());
 }
 
 // Flat [dx, dy, sx, sy, ...]: cell top-left in the layer, its tile's top-left in the tileset.

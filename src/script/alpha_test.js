@@ -145,6 +145,15 @@ function savesOf(store) {
   return out;
 }
 
+// opts.appPauses: [[from, to], ...] frames during which the app is paused (window
+// lost focus, minimized, backgrounded): no steps; onPause at `from`, onResume at `to`.
+function appPausesOf(ranges) {
+  if (ranges === undefined) return [];
+  const ok = Array.isArray(ranges) && ranges.every((r) => Array.isArray(r) && r.length === 2 && r.every(Number.isInteger) && r[0] >= 0 && r[0] < r[1]);
+  if (!ok) fail(`simulate: appPauses must be [[fromFrame, toFrame], ...] with integer frames 0 <= from < to, got ${JSON.stringify(ranges)}`);
+  return ranges;
+}
+
 // Runs the game in a fresh instance and returns what tests may inspect.
 function runGame(game, opts) {
   const frames = framesOf(opts.seconds);
@@ -155,11 +164,15 @@ function runGame(game, opts) {
     sim.boot(game, opts.scene, "simulate");
     const players = playerInputs(opts.inputs, sim);
     const clicks = clicksByFrame(opts.clicks);
+    const pauses = appPausesOf(opts.appPauses);
     let error = null;
     for (let f = 0; f < frames && !error; ++f) {
       N.stepBudget();
       for (const target of clicks.get(f) ?? []) click(sim, f, target);
       try {
+        const paused = pauses.some(([from, to]) => from <= f && f < to);
+        sim.app(paused);
+        if (paused) continue;
         sim.within(() => holdFrame(players, f));
         sim.step(DT);
       } catch (e) {

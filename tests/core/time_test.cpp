@@ -36,6 +36,14 @@ TEST_CASE("FixedStep caps steps after a stall and drops the backlog") {
   CHECK(fs.advance(0.0) == 0);
 }
 
+TEST_CASE("FixedStep reset drops the accumulated time: resuming never bursts") {
+  FixedStep fs(0.25, 8);
+  fs.advance(0.2);
+  fs.reset();
+  CHECK(fs.fraction() == 0.0);
+  CHECK(fs.advance(0.1) == 0);
+}
+
 TEST_CASE("Timers: after fires once, every repeats") {
   Timers t;
   const TimerId once = t.after(1.0);

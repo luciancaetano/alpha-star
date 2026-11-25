@@ -14,6 +14,9 @@ namespace alpha::script {
 // The main loop's file watch: when anything under the game's pack directory
 // changes (and then stays quiet), reloads the game (Host::reload). Results go
 // to stderr; a failed reload also shows over the still-running old game.
+// The files under `dir` as the pack watch compares them (through platform/vfs).
+core::PackWatch::Snapshot pack_snapshot(const std::filesystem::path& dir);
+
 class HotReload {
  public:
   // enabled = false: never watches (deterministic --frames runs).

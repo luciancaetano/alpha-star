@@ -16,8 +16,10 @@
 #include "platform/log_file.hpp"
 #include "platform/gamepads.hpp"
 #include "platform/sdl_input.hpp"
+#include "platform/vfs.hpp"
 #include "platform/window.hpp"
 #include "render/renderer.hpp"
+#include "script/app_events.hpp"
 #include "script/host.hpp"
 #include "script/hot_reload.hpp"
 
@@ -99,7 +101,7 @@ using Options = alpha::core::CliOptions;
 // Standalone pack (`alpha export --standalone`): main.js next to the executable.
 std::string fused_pack() {
   const char* base = SDL_GetBasePath();
-  if (!base || !std::filesystem::exists(std::filesystem::path(base) / "main.js")) return "";
+  if (!base || !alpha::platform::vfs::exists(std::filesystem::path(base) / "main.js")) return "";
   return base;
 }
 
@@ -122,11 +124,12 @@ void hot_plug(Devices& d, const SDL_Event& event) {
 
 // Routing: dev tools first (F1, their windows), then the game UI (in game
 // pixels), and only what neither consumed drives game actions.
-bool pump(Devices& d, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl) {
+bool pump(Devices& d, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl, alpha::script::AppEvents& app) {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_EVENT_QUIT) return false;
     hot_plug(d, event);
+    app.handle(event, host);  // focus/minimize/background: may pause (events still flow on)
     if (alpha::platform::window_event(event, host.info().window, host.window())) continue;
     if (!tools.handle(event)) continue;
     SDL_Event logical = event;
@@ -152,6 +155,9 @@ double seconds_since(Uint64& last) {
 int steps_for_frame(const Options& o, alpha::core::FixedStep& clock, Tools& tools, double elapsed) {
   return tools.steps(o.frames > 0 ? 1 : clock.advance(elapsed));
 }
+
+// A player at the keyboard: not an --frames run nor an agent (--control).
+bool interactive(const Options& o) { return o.frames == 0 && o.control_port == 0; }
 
 // How far into the next fixed step to draw (smooth motion at any refresh rate).
 // Exact state when stepping frame by frame (--frames, dev tools pause).
@@ -201,15 +207,18 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
   bool running = true;
   // dev/release: reload when the pack changes. Not in --frames runs (deterministic) nor under an
   // agent (--control): the agent reloads explicitly, so a re-export never restarts a scene mid-step.
-  alpha::script::HotReload hot_reload(host, o.frames == 0 && o.control_port == 0);
+  alpha::script::HotReload hot_reload(host, interactive(o));
   Control control = make_control(o, host, renderer, [&d] { return alpha::platform::consume(d.input, d.pads.slots()); });
-  for (int frame = 0; running && pump(d, tools, host, renderer.sdl()) && (o.frames == 0 || frame < o.frames); ++frame) {
+  alpha::script::AppEvents app(interactive(o));  // agents and --frames own time: focus never pauses
+  for (int frame = 0; running && pump(d, tools, host, renderer.sdl(), app) && (o.frames == 0 || frame < o.frames); ++frame) {
     tap(o, frame, d.input);
+    app.configure(host);
     const double elapsed = seconds_since(last);
-    const int steps = control.steps(steps_for_frame(o, clock, tools, elapsed));
+    const int steps = app.steps(clock, control.steps(steps_for_frame(o, clock, tools, elapsed)));
     for (int s = 0; s < steps; ++s) control.step();
     d.pads.rumble(host.take_rumble());
     sync_window(window, host, renderer);
+    audio.pause(app.paused());
     audio.pump(host.mixer());
     draw(host, renderer, tools, FrameStats{elapsed * 1000.0, steps}, blend_for(o, clock, tools, control));
     hot_reload.poll(host, static_cast<double>(SDL_GetTicksNS()) / 1e9);
@@ -217,6 +226,7 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
     if (!o.screenshot.empty() && frame + 1 == o.frames) renderer.save_bmp(o.screenshot);
     running = control.poll(elapsed * 1000.0);  // agent requests see this frame drawn, before present
     renderer.present();
+    app.idle();
   }
   report_render(o, renderer);
 }

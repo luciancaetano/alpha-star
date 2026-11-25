@@ -1,5 +1,6 @@
 set(ALPHA_TEST_SOURCES
   test_main.cpp
+  core/app_lifecycle_test.cpp
   core/audio_test.cpp
   core/mixer_test.cpp
   core/cli_test.cpp
@@ -27,7 +28,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     physics/queries_joints_test.cpp
     platform/assets_test.cpp
     platform/audio_decode_test.cpp
-    platform/save_file_test.cpp
+    platform/vfs_test.cpp
     platform/frame_latency_test.cpp
     platform/gamepads_test.cpp
     platform/log_file_test.cpp
@@ -36,6 +37,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     render/effects_render_test.cpp
     render/renderer_test.cpp
     render/tessellate_test.cpp
+    script/app_events_test.cpp
     script/error_overlay_test.cpp
     script/host_test.cpp
     script/host_limits_test.cpp
@@ -54,6 +56,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/console_test.cpp
     script/host_fixture.cpp
     script/ui_script_test.cpp
+    ui/pack_files_test.cpp
     ui/pad_nav_test.cpp
     ui/ui_test.cpp)
   set(ALPHA_TEST_LIBS alpha_engine)

@@ -1,26 +1,13 @@
 #include "script/bundle_map.hpp"
 
-#include <fstream>
-#include <sstream>
-
 #include "core/error.hpp"
+#include "platform/vfs.hpp"
 #include "script/js_value.hpp"
 
 namespace alpha::script {
 
-namespace {
-
-std::string read_file(const std::string& path) {
-  std::ifstream file(path, std::ios::binary);
-  std::ostringstream text;
-  if (file) text << file.rdbuf();
-  return text.str();
-}
-
-}  // namespace
-
 std::optional<core::SourceMap> load_bundle_map(JSContext* ctx, const std::string& path) {
-  const auto json = core::inline_source_map(read_file(path));
+  const auto json = core::inline_source_map(platform::vfs::read_text(path).value_or(""));
   if (!json) return std::nullopt;
   const Value map(ctx, JS_ParseJSON(ctx, json->c_str(), json->size(), "source map"));
   try {

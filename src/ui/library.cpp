@@ -5,13 +5,13 @@
 #include <RmlUi/Core/SystemInterface.h>
 #include <SDL3/SDL.h>
 
-#include <fstream>
-#include <iterator>
 #include <map>
 #include <memory>
 #include <vector>
 
 #include "core/error.hpp"
+#include "platform/vfs.hpp"
+#include "ui/pack_files.hpp"
 
 namespace alpha::ui {
 
@@ -34,6 +34,7 @@ class System final : public Rml::SystemInterface {
 
 struct Global {
   System system;
+  PackFiles files;
   // Font bytes must outlive RmlUi's use of them (until Shutdown).
   // Keyed by "family|path": loading the same font again (every simulate run
   // preloads its game's fonts) is a no-op.
@@ -49,6 +50,7 @@ Library::Library() {
   if (users++ > 0) return;
   global = std::make_unique<Global>();
   Rml::SetSystemInterface(&global->system);
+  Rml::SetFileInterface(&global->files);
   if (!Rml::Initialise()) throw core::Error("RmlUi failed to initialise: " + take_messages());
 }
 
@@ -66,9 +68,9 @@ std::string take_messages() {
 void load_font(const std::string& path, const std::string& family) {
   const std::string key = family + "|" + path;
   if (global->fonts.contains(key)) return;
-  std::ifstream in(path, std::ios::binary);
-  if (!in) throw core::Error("cannot open font file " + path);
-  std::vector<Rml::byte> bytes{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+  auto read = platform::vfs::read(path);
+  if (!read) throw core::Error("cannot open font file " + path);
+  std::vector<Rml::byte> bytes = std::move(*read);
   take_messages();
   if (!Rml::LoadFontFace({bytes.data(), bytes.size()}, family, Rml::Style::FontStyle::Normal,
                          Rml::Style::FontWeight::Auto, false)) {

@@ -5,6 +5,7 @@
 
 #include "core/error.hpp"
 #include "platform/music_stream.hpp"
+#include "platform/vfs.hpp"
 #include "script/audio_bindings.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
@@ -15,7 +16,7 @@ namespace alpha::script {
 namespace {
 
 std::string asset_path(ScriptState& s, const std::string& file) {
-  return (s.asset_dir / file).string();
+  return platform::vfs::in_pack(s.asset_dir, file).string();
 }
 
 // loadSound(name, file, bus): decoded whole at boot (.wav, .ogg, .mp3).

@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "core/particles.hpp"
+#include "platform/vfs.hpp"
 #include "render/quads.hpp"
 #include "render/text_layout.hpp"
 
@@ -152,9 +153,14 @@ void Renderer::present() { SDL_RenderPresent(sdl_); }
 
 bool Renderer::save_bmp(const std::string& path) const {
   SDL_Surface* pixels = SDL_RenderReadPixels(sdl_, nullptr);
-  const bool ok = pixels && SDL_SaveBMP(pixels, path.c_str());
+  const auto bmp = platform::vfs::written([pixels](SDL_IOStream* io) { return pixels && SDL_SaveBMP_IO(pixels, io, false); });
   SDL_DestroySurface(pixels);
-  return ok;
+  try {
+    if (bmp) platform::vfs::write_atomic(path, *bmp, platform::vfs::Backup::none);
+    return bmp.has_value();
+  } catch (const std::exception&) {
+    return false;
+  }
 }
 
 }  // namespace alpha::render

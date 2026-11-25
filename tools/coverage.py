@@ -25,9 +25,27 @@ def windows(tests, out):
     return subprocess.run(cmd, cwd=cfg.ROOT).returncode
 
 
+def orphan_notes(build):
+    """.gcno of our objects whose source is gone: <dir>/CMakeFiles/<target>.dir/<rel>.gcno -> <dir>/<rel>."""
+    for notes in build.rglob("*.gcno"):
+        parts = notes.relative_to(build).parts
+        if parts[0] not in ("src", "tests") or "CMakeFiles" not in parts:
+            continue
+        rel = parts[parts.index("CMakeFiles") + 2:]
+        source = cfg.ROOT.joinpath(*parts[:parts.index("CMakeFiles")], *rel).with_suffix("")
+        if not source.exists():
+            yield notes
+
+
 def gcov(tests, out, build):
     if shutil.which("gcovr") is None:
         sys.exit("coverage: gcovr not found (pip install gcovr)")
+    # Counters of earlier runs: they would add up, and those of objects whose source was
+    # deleted (CMake never removes such objects) make gcov fail on the missing file.
+    for stale in build.rglob("*.gcda"):
+        stale.unlink()
+    for notes in list(orphan_notes(build)):
+        notes.unlink()
     if subprocess.run([str(tests)], cwd=cfg.ROOT).returncode != 0:
         return 1
     cmd = ["gcovr", "--root", str(cfg.ROOT), "--filter", str(cfg.SRC), "--object-directory",

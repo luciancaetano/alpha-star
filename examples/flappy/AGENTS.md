@@ -78,6 +78,10 @@ the export copies each declared file into the pack and fails naming any missing 
   or `data-t="key"` on an .rml element; switch with `ctx.locale = "pt"` (saved in settings).
 - **Saves:** `ctx.save.get/set` (slot "main"), `ctx.save.slot("name")` for more; when the data's
   shape changes, bump `config.save.version` and add `config.save.migrate(data, fromVersion)`.
+- **Pause on focus loss:** the game pauses (no steps, no audio) when the window loses focus, is
+  minimized or the phone backgrounds it; `ctx.onPause(fn)` / `ctx.onResume(fn)` in a scene's `enter`,
+  `ctx.app.paused`; `config.pauseOnFocusLoss: false` keeps it running unfocused. Test with
+  `simulate(game, { appPauses: [[from, to]] })`.
 - **Accessibility:** `ctx.settings.uiScale` (sizes in `dp`), `ctx.settings.highContrast` (style
   `.high-contrast ...` in `flappy.rcss`), `ctx.settings.reducedMotion`; `ctx.input.rebind(action, inputs)`.
 - **New image:** add to `images` in `types.ts`, the file (PNG/JPG/BMP) in `main.ts` `assets.images`,

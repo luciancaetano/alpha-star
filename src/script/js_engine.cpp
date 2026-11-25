@@ -1,7 +1,6 @@
 #include "script/js_engine.hpp"
 
-#include <fstream>
-#include <sstream>
+#include "platform/vfs.hpp"
 
 namespace alpha::script {
 
@@ -50,11 +49,9 @@ std::string Engine::public_builtins() const {
 
 std::string Engine::source_of(const std::string& name) const {
   if (const auto it = builtins_.find(name); it != builtins_.end()) return it->second;
-  std::ifstream file(name, std::ios::binary);
-  if (!file) throw core::Error("cannot open module \"" + name + "\" (no such file; " + public_builtins() + ")");
-  std::ostringstream text;
-  text << file.rdbuf();
-  return text.str();
+  auto text = platform::vfs::read_text(name);
+  if (!text) throw core::Error("cannot open module \"" + name + "\" (no such file; " + public_builtins() + ")");
+  return std::move(*text);
 }
 
 JSValue Engine::compile(const std::string& name) {

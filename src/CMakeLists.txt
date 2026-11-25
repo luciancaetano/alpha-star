@@ -1,5 +1,6 @@
 # core: pure, dependency-free domain code. Tested by the fast harness preset.
 add_library(alpha_core
+  core/app_lifecycle.cpp
   core/axes.cpp
   core/camera.cpp
   core/cli.cpp
@@ -71,15 +72,17 @@ add_library(alpha_engine
   platform/frame_latency.cpp
   platform/gamepads.cpp
   platform/glyphs.cpp
+  platform/lifecycle.cpp
   platform/log_file.cpp
   platform/music_stream.cpp
-  platform/save_file.cpp
   platform/sdl_input.cpp
+  platform/vfs.cpp
   platform/window.cpp
   render/quads.cpp
   render/renderer.cpp
   render/tessellate.cpp
   render/text_layout.cpp
+  script/app_events.cpp
   script/asset_bindings.cpp
   script/audio_bindings.cpp
   script/error_overlay.cpp
@@ -110,6 +113,7 @@ add_library(alpha_engine
   script/world_bindings.cpp
   ui/input.cpp
   ui/library.cpp
+  ui/pack_files.cpp
   ui/pad_nav.cpp
   ui/rml_renderer.cpp
   ui/translate.cpp

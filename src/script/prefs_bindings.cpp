@@ -6,7 +6,7 @@
 #include <filesystem>
 
 #include "core/error.hpp"
-#include "platform/save_file.hpp"
+#include "platform/vfs.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
 
@@ -30,13 +30,13 @@ std::filesystem::path prefs_file(JSContext* ctx, ScriptState& s, JSValueConst* a
 JSValue prefs_read(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   std::filesystem::path path = prefs_file(ctx, s, argv);
   if (JS_ToBool(ctx, argv[2]) == 1) path += ".bak";
-  const auto text = platform::read_file(path);
+  const auto text = platform::vfs::read_text(path);
   return text ? JS_NewStringLen(ctx, text->data(), text->size()) : JS_NULL;
 }
 
 // prefsWrite(title, name, text): atomic, keeping the previous file as .bak.
 JSValue prefs_write(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  platform::write_atomic(prefs_file(ctx, s, argv), string_arg(ctx, argv[2], "save data"));
+  platform::vfs::write_atomic(prefs_file(ctx, s, argv), string_arg(ctx, argv[2], "save data"));
   return JS_UNDEFINED;
 }
 

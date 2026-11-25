@@ -55,6 +55,9 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
   goes away with the last particle); `entity.emit(n)` bursts on demand. World text:
   `shape: { text, font: "pixel", size, color }`, `entity.text = "..."`, fade with `entity.alpha`.
   `config.window.scaling: "integer"` keeps pixels square (Alt+Enter: fullscreen).
+- **Pause on focus loss:** losing focus, minimizing or backgrounding pauses the game (steps + audio);
+  scene hooks `ctx.onPause(fn)` / `ctx.onResume(fn)` / `ctx.onLowMemory(fn)`, `ctx.app.paused`;
+  `config.pauseOnFocusLoss: false` opts out. Tests: `simulate(game, { appPauses: [[from, to]] })`.
 - **Tests:** `expect.animation("player").equals("run")`, `expect.particles().atLeast(n)`, `expect.count("coin")`, held movement with
   `inputs: { axes: { moveX: [[0, 1]] } }` (value held from that frame on). Same inputs, same run.
 

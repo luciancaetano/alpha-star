@@ -752,6 +752,19 @@ declare module "alpha" {
     /** Overlap with a sensor ends (both still alive). */
     onExit(tagA: G["tags"], tagB: G["tags"], fn: PairHandler<G["tags"]>): void;
 
+    /**
+     * The app paused: window lost focus or was minimized (unless `config.pauseOnFocusLoss` is
+     * false) or the OS sent it to the background. No steps run and audio stops until it resumes.
+     * Save here if progress must survive the OS killing a backgrounded game. Scene-scoped.
+     */
+    onPause(fn: (ctx: Context<G, S>) => void): void;
+    /** The app runs again (no catch-up: the paused time is skipped). Scene-scoped. */
+    onResume(fn: (ctx: Context<G, S>) => void): void;
+    /** The OS is low on memory (mobile): free what you can. Scene-scoped. */
+    onLowMemory(fn: (ctx: Context<G, S>) => void): void;
+    /** App state: `paused` is true between onPause and onResume. */
+    readonly app: { readonly paused: boolean };
+
     /** First solid collider on the segment (sensors ignored), or null. */
     raycast(from: Vec2, to: Vec2, opts?: QueryFilter<G["tags"], CategoryOf<G>>): RayHit<G["tags"]> | null;
     /** Every solid collider on the segment, nearest first. */
@@ -829,6 +842,8 @@ declare module "alpha" {
     /** Named draw layers, e.g. `{ bg: { z: -100, parallax: 0.2 }, fx: { z: 100 } }`. */
     layers?: Record<LayerOf<G>, LayerDef>;
     window?: WindowConfig;
+    /** Pause (ctx.onPause) when the window loses focus or is minimized. Default true. */
+    pauseOnFocusLoss?: boolean;
     /** Extra volume buses next to master, music, sfx and voice, e.g. `{ buses: ["ambience"] }`. */
     audio?: { buses?: Exclude<BusOf<G>, "master" | "music" | "sfx" | "voice">[] };
     /** Save versioning and migration. */
@@ -963,6 +978,8 @@ declare module "alpha/test" {
     }>;
     /** Save slots at boot: `{ main: data, slotName: data }` (main = ctx.save). */
     saves?: { [slot: string]: { [k: string]: unknown } };
+    /** `[[from, to], ...]` frames during which the app is paused (focus lost, background): no steps, onPause at `from`, onResume at `to`. */
+    appPauses?: [number, number][];
   }
 
   export interface Expect<G extends GameTypes> {

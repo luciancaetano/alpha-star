@@ -49,6 +49,11 @@ TEST_CASE("audio out tops up the device queue from the mixer, in stereo frames")
     CHECK(out.queued() > 0);
     CHECK(out.queued() <= platform::AudioOut::kLatency);
     CHECK(mixer.voices() == 0);  // whole sound consumed into the queue
+    out.pause(true);
+    CHECK(out.paused());
+    out.pause(true);  // repeated: no change
+    out.pause(false);
+    CHECK_FALSE(out.paused());
   }
   SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }

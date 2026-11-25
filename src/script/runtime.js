@@ -456,6 +456,10 @@ function makeCtx(s) {
     onEnter: (tagA, tagB, fn) => s.handlers.push({ kind: "enters", tagA, tagB, fn }),
     onHitEnd: (tagA, tagB, fn) => s.handlers.push({ kind: "hitEnds", tagA, tagB, fn }),
     onExit: (tagA, tagB, fn) => s.handlers.push({ kind: "exits", tagA, tagB, fn }),
+    onPause: appHook(s, "pause", "onPause"),
+    onResume: appHook(s, "resume", "onResume"),
+    onLowMemory: appHook(s, "lowMemory", "onLowMemory"),
+    app: { get paused() { return s.appPaused; } },
     every: (seconds, fn) => addTimer(N.timerEvery(seconds), fn),
     after(seconds, fn) {
       const id = N.timerAfter(seconds);
@@ -468,6 +472,25 @@ function makeCtx(s) {
       s.pending = { name: checkScene(s.game, name, "go"), params };
     },
   };
+}
+
+// ctx.onPause / onResume / onLowMemory(fn): scene-scoped like onHit (cleared on scene change).
+function appHook(s, kind, what) {
+  return (fn) => {
+    if (typeof fn !== "function") fail(`${what}(fn): fn must be a function, got ${show(fn)}`);
+    s.handlers.push({ kind, fn });
+  };
+}
+
+function runHooks(s, ctx, kind) {
+  for (const h of s.handlers.filter((x) => x.kind === kind)) h.fn(ctx);
+}
+
+// The app paused (focus lost, minimized, background) or resumed; repeated news is ignored.
+function appChanged(s, ctx, paused) {
+  if (s.appPaused === paused) return;
+  s.appPaused = paused;
+  runHooks(s, ctx, paused ? "pause" : "resume");
 }
 
 function checkScene(game, name, what) {
@@ -534,6 +557,9 @@ function startOf(s, start, what, from) {
 function bootGame(s, ctx, g, start, what, from) {
   s.game = validate(g);
   const c = s.game.config;
+  if (c.pauseOnFocusLoss !== undefined && typeof c.pauseOnFocusLoss !== "boolean") {
+    fail(`config.pauseOnFocusLoss must be true (pause when the window loses focus or is minimized; the default) or false, got ${show(c.pauseOnFocusLoss)}`);
+  }
   N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]), c.size[0], c.size[1]);
   N.uiCreate(c.size[0], c.size[1]);
   N.collisionCategories(collisionCategories(c.collision));
@@ -549,7 +575,7 @@ function bootGame(s, ctx, g, start, what, from) {
   applySettings(s);
   const at = startOf(s, start, what, from);
   enter(s, ctx, at.scene, at.params, at);
-  return { title: c.title ?? "alpha-star", size: c.size, background: c.background ?? "#000000", window: c.window };
+  return { title: c.title ?? "alpha-star", size: c.size, background: c.background ?? "#000000", window: c.window, pauseOnFocusLoss: c.pauseOnFocusLoss };
 }
 
 // config.collision: { categories: [names] } for body.category / collidesWith and query filters.
@@ -617,7 +643,7 @@ function within(id, fn) {
 export function createInstance(id, store) {
   const s = {
     game: null, current: null, currentName: null, currentParams: undefined, pending: null, handlers: [], uiHandlers: new Map(),
-    store, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60,
+    store, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60, appPaused: false,
     timers: new Map(), entities: makeEntities(), maps: new Map(), tweens: makeTweens(tweenAccess),
   };
   const ctx = makeCtx(s);
@@ -626,6 +652,8 @@ export function createInstance(id, store) {
     boot: (g, start, what, from) => within(id, () => bootGame(s, ctx, g, start, what, from)),
     carried: () => carried(s, ctx),
     step: (dt) => within(id, () => stepGame(s, ctx, dt)),
+    app: (paused) => within(id, () => appChanged(s, ctx, paused)),
+    lowMemory: () => within(id, () => runHooks(s, ctx, "lowMemory")),
     // Runs fn with this instance active (for the headless test runner).
     within: (fn) => within(id, fn),
     actions: () => Object.keys(s.game?.config.actions ?? {}),
@@ -656,6 +684,14 @@ export function carriedScene() {
 
 export function step(dt) {
   main.step(dt);
+}
+
+export function appPaused(paused) {
+  main.app(paused);
+}
+
+export function lowMemory() {
+  main.lowMemory();
 }
 
 export function sceneName() {

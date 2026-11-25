@@ -4,6 +4,8 @@
 
 #include <cstdio>
 
+#include "platform/vfs.hpp"
+
 namespace alpha::platform {
 
 namespace {
@@ -12,15 +14,6 @@ namespace {
 void to_stderr(void*, int, SDL_LogPriority, const char* message) {
   std::fprintf(stderr, "%s\n", message);
   std::fflush(stderr);
-}
-
-bool reopen_stderr(const std::string& path) {
-#if defined(_WIN32)
-  std::FILE* file = nullptr;
-  return freopen_s(&file, path.c_str(), "w", stderr) == 0;
-#else
-  return std::freopen(path.c_str(), "w", stderr) != nullptr;
-#endif
 }
 
 }  // namespace
@@ -43,7 +36,7 @@ std::string text_of(const core::LogRing& ring) {
 }
 
 bool redirect_logs(const std::string& path, const core::LogRing& earlier) {
-  if (!reopen_stderr(path)) return false;  // also for "" (no pref dir)
+  if (!vfs::redirect_stderr(path)) return false;  // also for "" (no pref dir)
   std::setvbuf(stderr, nullptr, _IONBF, 0);  // a killed game still leaves its log
   std::fputs(text_of(earlier).c_str(), stderr);
   std::fflush(stderr);

@@ -6,7 +6,7 @@
 #include <string>
 
 #include "host_fixture.hpp"
-#include "platform/save_file.hpp"
+#include "platform/vfs.hpp"
 
 using alpha::script::Host;
 using alpha::test::Sandbox;
@@ -32,7 +32,7 @@ std::string run(const Sandbox& box, const std::string& source) {
 }
 
 std::string file(const Sandbox& box, const std::string& name) {
-  return alpha::platform::read_file(box.dir / name).value_or("(missing)");
+  return alpha::platform::vfs::read_text(box.dir / name).value_or("(missing)");
 }
 
 }  // namespace

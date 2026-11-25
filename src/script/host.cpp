@@ -2,6 +2,7 @@
 
 #include <array>
 
+#include "platform/vfs.hpp"
 #include "script/error_overlay.hpp"
 #include "script/input_bindings.hpp"
 #include "ui/input.hpp"
@@ -52,6 +53,7 @@ GameInfo game_info(JSContext* ctx, const Value& info) {
   out.height = static_cast<int>(wh.y);
   out.background = color_field(ctx, info, "background", "config.background");
   out.window = window_config(ctx, info);
+  out.pause_on_focus_loss = flag_or(ctx, info, "pauseOnFocusLoss", true);
   return out;
 }
 
@@ -65,7 +67,7 @@ Host::~Host() = default;
 GameInfo Host::load(const std::string& path) {
   // A pack directory (from `alpha export`) or its main.js directly.
   const std::filesystem::path pack(path);
-  main_path_ = std::filesystem::is_directory(pack) ? (pack / "main.js").string() : path;
+  main_path_ = platform::vfs::is_directory(pack) ?(pack / "main.js").string() : path;
   pack_dir_ = std::filesystem::path(main_path_).parent_path();
   try {
     info_ = boot(*vm_, main_path_, "");
@@ -93,6 +95,26 @@ void Host::step(const core::InputFrame& input, float dt) {
     std::array<JSValueConst, 1> args{JS_NewFloat64(vm_->engine->ctx(), dt)};
     vm_->engine->call(*vm_->step_fn, args);
     step_ms_ = vm_->engine->last_call_ms();
+  } catch (const std::exception& e) {
+    pause(e);
+  }
+}
+
+void Host::set_app_paused(bool paused) {
+  app_paused_ = paused;
+  notify("appPaused", JS_NewBool(vm_->engine->ctx(), paused));
+}
+
+void Host::low_memory() {
+  log_.push(core::LogLevel::Warn, "the system is low on memory");
+  notify("lowMemory", JS_UNDEFINED);
+}
+
+void Host::notify(const char* name, JSValue arg) {
+  if (paused()) return;
+  try {
+    std::array<JSValueConst, 1> args{arg};
+    vm_->engine->call(vm_->runtime(name), args);
   } catch (const std::exception& e) {
     pause(e);
   }
@@ -189,6 +211,7 @@ std::string Host::reload() {
     info_ = info;
     error_.clear();
     reload_error_.clear();
+    if (app_paused_) set_app_paused(true);  // the new game knows it is paused
   } catch (const std::exception& e) {
     reload_error_ = "reload failed; the previous game keeps running:\n" + next->located(e);
     log_.push(core::LogLevel::Error, reload_error_);

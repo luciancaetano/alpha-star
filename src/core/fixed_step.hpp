@@ -14,6 +14,8 @@ class FixedStep {
   // How far into the next step real time is, in [0, 1): the render blend
   // factor between the previous and the current simulation state.
   double fraction() const { return accumulated_ / dt_; }
+  // Forget accumulated time (the app resumes: no catch-up burst of steps).
+  void reset() { accumulated_ = 0.0; }
 
  private:
   double dt_;

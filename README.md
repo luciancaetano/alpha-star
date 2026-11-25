@@ -133,7 +133,7 @@ Console access will depend on SDK availability, platform-holder authorization, a
 | Discoverability | Machine-readable APIs, typed declarations and versioned documentation. |
 | Observability | Runtime state, logs and visual output accessible to development tools. |
 | Performance | Keep expensive systems native and minimize unnecessary JS/C++ boundary crossings. |
-| Portability | Abstract platform-specific services behind shared interfaces. |
+| Portability | Abstract platform-specific services behind shared interfaces: every file goes through one SDL_IOStream layer (folders, APK assets, archives), and games pause/resume with the app lifecycle (`ctx.onPause`, `ctx.onResume`, `config.pauseOnFocusLoss`). |
 | Ownership | Keep game projects editable and independent of mandatory AI services. |
 
 ## Roadmap

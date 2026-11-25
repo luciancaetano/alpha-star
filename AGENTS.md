@@ -61,6 +61,13 @@ stb_vorbis / dr_mp3 in `alpha_codecs`) decoded in `mix()` on the main thread; st
 streams, so `main` stops them before `SDL_Quit`. Saves/settings/locales are the embedded `alpha:prefs`
 and `alpha:i18n` modules (files through `prefsRead`/`prefsWrite`: atomic + `.bak`); `alpha:audio` builds
 `ctx.audio`. Never put data-shape rules for these in runtime.js.
+Files: every file read/write/list in `src/` goes through `platform/vfs` (SDL_IOStream / SDL filesystem;
+whole-file reads closed at once, decoders read from memory, atomic writes, `in_pack(root, name)` for
+assets; RmlUi reads through `ui/PackFiles`). `tools/check_file_access.py` (in the gate) fails on any direct
+file API (`std::ifstream`, `fopen`, `IMG_Load(path)`, `SDL_LoadFile`, `FT_New_Face`, `fs::exists`, ...)
+outside `src/platform/vfs.cpp`. App lifecycle: `core::AppLifecycle` (pure) <- `platform::app_event`
+(SDL events) <- `script::AppEvents` in the loop: focus lost / minimized (`config.pauseOnFocusLoss`) and
+background pause steps + audio, resume resets the fixed-step clock, hooks `ctx.onPause/onResume/onLowMemory`.
 Builds and gates: `CMAKE_BUILD_PARALLEL_LEVEL=8` (the Linux gate also runs with `--cpus 8`); one build at a time.
 
 Dev tools (Dear ImGui, F1; `--devtools` opens them at start) build only with `ALPHA_DEVTOOLS`:

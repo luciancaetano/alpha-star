@@ -21,6 +21,10 @@ class AudioOut {
   bool ok() const { return stream_ != nullptr; }
   // Tops the device queue up to ~kLatency frames from the mixer. Call every frame.
   void pump(core::Mixer& mixer);
+  // The app paused: the device stops and pump() mixes nothing (music keeps
+  // its place); false resumes. Repeating the current state does nothing.
+  void pause(bool paused);
+  bool paused() const { return paused_; }
   // Stereo frames queued in the device and not yet played.
   int queued() const;
   static constexpr int kFrameBytes = 2 * static_cast<int>(sizeof(float));
@@ -34,6 +38,7 @@ class AudioOut {
  private:
   SDL_AudioStream* stream_ = nullptr;
   std::vector<float> buffer_;
+  bool paused_ = false;
 };
 
 }  // namespace alpha::platform
