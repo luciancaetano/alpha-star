@@ -1,3 +1,0 @@
-ninja_dyndep_version = 1.0
-build CMakeFiles/alpha_rmlui_sdl.dir/_deps/rmlui-src/Backends/RmlUi_Platform_SDL.cpp.o: dyndep
-

@@ -1,3 +1,0 @@
-C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/monocypher-subbuild/CMakeFiles/monocypher-populate.dir
-C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/monocypher-subbuild/CMakeFiles/edit_cache.dir
-C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/monocypher-subbuild/CMakeFiles/rebuild_cache.dir

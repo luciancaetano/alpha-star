@@ -1,9 +1,0 @@
-{
-  "revision": 0,
-  "rules": [
-    {
-      "primary-output": "src\\CMakeFiles\\alpha_engine.dir\\platform\\glyph_atlas.cpp.o"
-    }
-  ],
-  "version": 1
-}

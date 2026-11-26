@@ -1,9 +1,0 @@
-{
-  "revision": 0,
-  "rules": [
-    {
-      "primary-output": "src\\CMakeFiles\\alpha_engine.dir\\ui\\font_engine.cpp.o"
-    }
-  ],
-  "version": 1
-}

@@ -1,9 +1,0 @@
-{
-  "revision": 0,
-  "rules": [
-    {
-      "primary-output": "src\\CMakeFiles\\alpha_devtools.dir\\devtools\\routing.cpp.o"
-    }
-  ],
-  "version": 1
-}

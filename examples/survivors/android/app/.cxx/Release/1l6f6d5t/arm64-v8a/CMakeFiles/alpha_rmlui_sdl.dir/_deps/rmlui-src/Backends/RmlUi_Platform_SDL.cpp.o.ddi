@@ -1,9 +1,0 @@
-{
-  "revision": 0,
-  "rules": [
-    {
-      "primary-output": "CMakeFiles\\alpha_rmlui_sdl.dir\\_deps\\rmlui-src\\Backends\\RmlUi_Platform_SDL.cpp.o"
-    }
-  ],
-  "version": 1
-}

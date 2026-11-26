@@ -1,9 +1,0 @@
-{
-  "revision": 0,
-  "rules": [
-    {
-      "primary-output": "_deps\\sdl3-build\\CMakeFiles\\SDL3-shared.dir\\src\\hidapi\\android\\hid.cpp.o"
-    }
-  ],
-  "version": 1
-}
