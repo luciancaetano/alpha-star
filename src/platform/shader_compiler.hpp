@@ -8,13 +8,14 @@
 namespace alpha::platform {
 
 // Runtime shader compilation (debug-tools builds only; shipping engines only
-// read compiled blobs): runs the shadercross tool that sits next to the engine
-// (HLSL -> SPIR-V, DXIL, MSL), never linked into it.
+// read compiled blobs): runs glslang's standalone compiler that sits next to the
+// engine (Vulkan GLSL fragment shader -> SPIR-V), never linked into it.
 bool shader_compiler_available();
 // "" or a note for "no blobs" errors (where the missing tool was looked for).
 std::string shader_compiler_hint();
-// All three blobs for the HLSL fragment shader at `source`. Throws core::Error
-// with `what` and the compiler's own message on a compile error.
-core::ShaderBlobs compile_shader(const std::filesystem::path& source, const std::string& what);
+// The blobs for the GLSL fragment shader at `source` (`file`: its pack-relative
+// name). Throws core::Error with `what` and the compiler's errors as
+// "<file>:<line>: <message>" on a compile error.
+core::ShaderBlobs compile_shader(const std::filesystem::path& source, const std::string& file, const std::string& what);
 
 }  // namespace alpha::platform

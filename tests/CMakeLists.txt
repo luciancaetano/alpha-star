@@ -110,9 +110,9 @@ target_include_directories(alpha_tests PRIVATE script)
 target_compile_definitions(alpha_tests PRIVATE DOCTEST_CONFIG_USE_STD_HEADERS
   ALPHA_TEST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures"
   ALPHA_TEST_FONT="${PROJECT_SOURCE_DIR}/examples/flappy/assets/fonts/PressStart2P-Regular.ttf")
-if(TARGET shadercross)  # the debug-engine compile path, against the built tool
-  target_compile_definitions(alpha_tests PRIVATE ALPHA_TEST_SHADERCROSS="$<TARGET_FILE:shadercross>")
-  add_dependencies(alpha_tests alpha_shadercross)
+if(TARGET glslang-standalone)  # the debug-engine compile path, against the built tool
+  target_compile_definitions(alpha_tests PRIVATE ALPHA_TEST_GLSLANG="$<TARGET_FILE:glslang-standalone>")
+  add_dependencies(alpha_tests glslang-standalone)
 endif()
 alpha_set_warnings(alpha_tests)
 add_test(NAME alpha_tests COMMAND alpha_tests)

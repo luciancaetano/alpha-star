@@ -18,9 +18,12 @@ struct WindowSetup {
   core::Vec2 game;  // config.size
   core::WindowConfig config;
   bool hidden = false;  // agent runs
-  bool gpu = false;     // assets.shaders: SDL's GPU renderer (custom shaders), else SDL's default
+  bool gpu = false;     // assets.shaders: SDL's GPU renderer on Vulkan (custom shaders), else SDL's default
 };
 
+// SDL's GPU renderer on the Vulkan driver, told we bring SPIR-V shaders
+// (custom shaders run only there); nullptr when Vulkan is unavailable (SDL_GetError).
+SDL_Renderer* vulkan_renderer(SDL_Window* window);
 // Creates the window (sized for the scaling mode; fullscreen, resizable,
 // borderless, alwaysOnTop and maximized from config.window) and its renderer. False on failure (SDL_GetError).
 bool open_window(const WindowSetup& setup, SDL_Window** window, SDL_Renderer** renderer);

@@ -10,6 +10,8 @@ namespace alpha::core {
 
 namespace {
 
+constexpr std::string_view kSourceExt = ".frag";
+
 std::string uniform_names(const Shader& s) {
   std::string out;
   for (const auto& [name, value] : s.uniforms) out += (out.empty() ? "" : " ") + name;
@@ -30,23 +32,35 @@ void check_uniform_count(const std::string& what, std::size_t count) {
 Shader make_shader(std::string name, std::string file, std::vector<std::pair<std::string, float>> uniforms) {
   const std::string where = "assets.shaders." + name;
   if (effect_kind(name)) throw Error(where + ": \"" + name + "\" is a built-in postfx effect; pick another name");
-  if (file.size() < 6 || file.substr(file.size() - 5) != ".hlsl") {
-    throw Error(where + ".file must be an HLSL fragment shader (.hlsl), got \"" + file + "\"");
+  if (!file.ends_with(kSourceExt) || file.size() == kSourceExt.size()) {
+    throw Error(where + ".file must be a GLSL fragment shader (.frag), got \"" + file + "\"");
   }
   check_uniform_count(where + ".uniforms", uniforms.size());
   for (const auto& [key, value] : uniforms) check_finite(value, where + ".uniforms." + key);
   return Shader{std::move(name), std::move(file), std::move(uniforms), {}};
 }
 
-std::string blob_file(std::string_view hlsl, ShaderFormat format) {
-  const std::string_view stem = hlsl.substr(0, hlsl.size() - std::string_view(".hlsl").size());
-  const char* ext = format == ShaderFormat::Spirv ? ".spv" : format == ShaderFormat::Dxil ? ".dxil" : ".msl";
-  return std::string(stem) + ext;
+std::string blob_file(std::string_view source, ShaderFormat) {
+  return std::string(source.substr(0, source.size() - kSourceExt.size())) + ".spv";
 }
 
-std::string_view format_name(ShaderFormat format) {
-  if (format == ShaderFormat::Spirv) return "spirv";
-  return format == ShaderFormat::Dxil ? "dxil" : "msl";
+std::string_view format_name(ShaderFormat) { return "spirv"; }
+
+std::string compiler_message(std::string_view log, std::string_view path, std::string_view file) {
+  std::string out;
+  std::size_t start = 0;
+  while (start < log.size()) {
+    const std::size_t end = std::min(log.find('\n', start), log.size());
+    std::string_view line = log.substr(start, end - start);
+    start = end + 1;
+    if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
+    const std::size_t at = line.find(path);
+    const bool shown = (line.starts_with("ERROR: ") || line.starts_with("WARNING: ")) && at != line.npos;
+    if (!shown) continue;
+    out += (out.empty() ? "" : "\n") + std::string(line.substr(0, at)) + std::string(file) +
+           std::string(line.substr(at + path.size()));
+  }
+  return out.empty() ? std::string(log) : out;
 }
 
 std::optional<ShaderFormat> pick_format(std::uint32_t device_formats, const ShaderBlobs& blobs) {

@@ -49,7 +49,7 @@ JSValue load_music(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-// assets.shaders.<name>.uniforms: { name: default } in cbuffer order.
+// assets.shaders.<name>.uniforms: { name: default } in uniform block order.
 std::vector<std::pair<std::string, float>> uniforms_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
   std::vector<std::pair<std::string, float>> out;
   if (JS_IsUndefined(v)) return out;
@@ -66,7 +66,7 @@ std::vector<std::pair<std::string, float>> uniforms_arg(JSContext* ctx, JSValueC
 JSValue load_shader(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const std::string name = string_arg(ctx, argv[0], "shader name");
   const std::string what = "assets.shaders." + name;
-  if (!JS_IsObject(argv[1])) throw core::Error(what + " must be { file: \"x.hlsl\", uniforms?: { name: number } }, got " + describe(ctx, argv[1]));
+  if (!JS_IsObject(argv[1])) throw core::Error(what + " must be { file: \"x.frag\", uniforms?: { name: number } }, got " + describe(ctx, argv[1]));
   if (s.shaders.size() >= core::kMaxShaders) throw core::Error(what + ": at most " + std::to_string(core::kMaxShaders) + " shaders");
   core::Shader shader = core::make_shader(name, string_arg(ctx, field(ctx, argv[1], "file").get(), what + ".file"),
                                           uniforms_arg(ctx, field(ctx, argv[1], "uniforms").get(), what + ".uniforms"));

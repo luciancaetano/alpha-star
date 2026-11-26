@@ -18,7 +18,7 @@ include(Dependencies)
 
 add_subdirectory(src)
 if(ALPHA_WITH_RUNTIME_DEPS)
-  include(Shadercross)
+  include(Glslang)
 endif()
 
 if(ALPHA_BUILD_TESTS)

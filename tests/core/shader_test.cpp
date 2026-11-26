@@ -23,41 +23,42 @@ std::string error_of(const std::function<void()>& fn) {
 }
 
 ShaderPtr wave() {
-  return std::make_shared<const Shader>(make_shader("wave", "fx/wave.hlsl", {{"amount", 0.5f}, {"time", 0.0f}}));
+  return std::make_shared<const Shader>(make_shader("wave", "fx/wave.frag", {{"amount", 0.5f}, {"time", 0.0f}}));
 }
 
 }  // namespace
 
 TEST_CASE("make_shader keeps uniforms in order and validates the entry") {
-  const Shader s = make_shader("wave", "fx/wave.hlsl", {{"amount", 0.5f}, {"time", 2.0f}});
+  const Shader s = make_shader("wave", "fx/wave.frag", {{"amount", 0.5f}, {"time", 2.0f}});
   CHECK(s.uniforms[1].first == "time");
-  CHECK(error_of([] { make_shader("crt", "a.hlsl", {}); }) ==
+  CHECK(error_of([] { make_shader("crt", "a.frag", {}); }) ==
         "assets.shaders.crt: \"crt\" is a built-in postfx effect; pick another name");
   CHECK(error_of([] { make_shader("w", "a.glsl", {}); }) ==
-        "assets.shaders.w.file must be an HLSL fragment shader (.hlsl), got \"a.glsl\"");
+        "assets.shaders.w.file must be a GLSL fragment shader (.frag), got \"a.glsl\"");
   std::vector<std::pair<std::string, float>> many(kMaxShaderUniforms + 1, {"u", 1.0f});
-  CHECK(error_of([&] { make_shader("w", "a.hlsl", many); }) == "assets.shaders.w.uniforms: 17 uniforms; at most 16 floats");
+  CHECK(error_of([&] { make_shader("w", "a.frag", many); }) == "assets.shaders.w.uniforms: 17 uniforms; at most 16 floats");
   const float inf = std::numeric_limits<float>::infinity();
-  CHECK(error_of([&] { make_shader("w", "a.hlsl", {{"x", inf}}); }).find("assets.shaders.w.uniforms.x must be a finite") == 0);
+  CHECK(error_of([&] { make_shader("w", "a.frag", {{"x", inf}}); }).find("assets.shaders.w.uniforms.x must be a finite") == 0);
 }
 
-TEST_CASE("blob files sit next to the source, one per backend format") {
-  CHECK(blob_file("fx/wave.hlsl", ShaderFormat::Spirv) == "fx/wave.spv");
-  CHECK(blob_file("fx/wave.hlsl", ShaderFormat::Dxil) == "fx/wave.dxil");
-  CHECK(blob_file("fx/wave.hlsl", ShaderFormat::Msl) == "fx/wave.msl");
-  CHECK(format_name(ShaderFormat::Msl) == "msl");
+TEST_CASE("the SPIR-V blob sits next to the source") {
+  CHECK(blob_file("fx/wave.frag", ShaderFormat::Spirv) == "fx/wave.spv");
   CHECK(format_name(ShaderFormat::Spirv) == "spirv");
+  CHECK(error_of([] { make_shader("w", ".frag", {}); }).find(".file must be a GLSL") != std::string::npos);
 }
 
-TEST_CASE("pick_format takes the first format both the device and the shader have") {
-  const ShaderBlobs all{{ShaderFormat::Spirv, {1}}, {ShaderFormat::Dxil, {2}}, {ShaderFormat::Msl, {3}}};
-  CHECK(pick_format(format_bit(ShaderFormat::Dxil), all) == ShaderFormat::Dxil);
-  CHECK(pick_format(format_bit(ShaderFormat::Msl), all) == ShaderFormat::Msl);
-  const std::uint32_t both = format_bit(ShaderFormat::Spirv) | format_bit(ShaderFormat::Dxil);
-  CHECK(pick_format(both, all) == ShaderFormat::Spirv);
-  CHECK(pick_format(both, {{ShaderFormat::Dxil, {2}}}) == ShaderFormat::Dxil);
-  CHECK_FALSE(pick_format(format_bit(ShaderFormat::Msl), {{ShaderFormat::Dxil, {2}}}).has_value());
-  CHECK_FALSE(pick_format(0, all).has_value());
+TEST_CASE("pick_format takes SPIR-V only when the device takes it and the shader has it") {
+  const ShaderBlobs spirv{{ShaderFormat::Spirv, {1}}};
+  CHECK(pick_format(format_bit(ShaderFormat::Spirv), spirv) == ShaderFormat::Spirv);
+  CHECK_FALSE(pick_format(format_bit(ShaderFormat::Spirv), {}).has_value());
+  CHECK_FALSE(pick_format(0, spirv).has_value());
+}
+
+TEST_CASE("compiler_message keeps glslang's errors with the pack-relative file") {
+  const std::string log = "C:/g/fx/wave.frag\r\nERROR: C:/g/fx/wave.frag:3: 'nope' : undeclared identifier\r\n"
+                          "ERROR: 1 compilation errors.  No code generated.\r\n";
+  CHECK(compiler_message(log, "C:/g/fx/wave.frag", "fx/wave.frag") == "ERROR: fx/wave.frag:3: 'nope' : undeclared identifier");
+  CHECK(compiler_message("cannot start glslang", "C:/g/fx/wave.frag", "fx/wave.frag") == "cannot start glslang");
 }
 
 TEST_CASE("shader effects: defaults, params by name, agent-facing errors, chain by name") {

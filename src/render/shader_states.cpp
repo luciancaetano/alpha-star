@@ -15,15 +15,12 @@ std::uint32_t device_formats(SDL_GPUDevice* device) {
   const auto bit = [f](SDL_GPUShaderFormat sdl, core::ShaderFormat ours) {
     return static_cast<std::uint32_t>((f & sdl) != 0) * core::format_bit(ours);
   };
-  return bit(SDL_GPU_SHADERFORMAT_SPIRV, core::ShaderFormat::Spirv) | bit(SDL_GPU_SHADERFORMAT_DXIL, core::ShaderFormat::Dxil) |
-         bit(SDL_GPU_SHADERFORMAT_MSL, core::ShaderFormat::Msl);
+  return bit(SDL_GPU_SHADERFORMAT_SPIRV, core::ShaderFormat::Spirv);
 }
 
-// Per core::ShaderFormat (kShaderFormats order): SDL's format and the entry point
-// (SPIRV-Cross renames `main` to `main0` for MSL).
-constexpr std::array<SDL_GPUShaderFormat, 3> kSdlFormats{SDL_GPU_SHADERFORMAT_SPIRV, SDL_GPU_SHADERFORMAT_DXIL,
-                                                         SDL_GPU_SHADERFORMAT_MSL};
-constexpr std::array<const char*, 3> kEntryPoints{"main", "main", "main0"};
+// Per core::ShaderFormat (kShaderFormats order): SDL's format and the entry point.
+constexpr std::array<SDL_GPUShaderFormat, 1> kSdlFormats{SDL_GPU_SHADERFORMAT_SPIRV};
+constexpr std::array<const char*, 1> kEntryPoints{"main"};
 
 }  // namespace
 
@@ -46,11 +43,12 @@ ShaderStates::Entry ShaderStates::make(const core::ShaderPtr& shader) {
   Entry e{shader};
   SDL_GPUDevice* device = SDL_GetGPURendererDevice(sdl_);
   if (!device) {
-    warn(*shader, std::string("custom shaders need the GPU renderer; this one is \"") + SDL_GetRendererName(sdl_) + "\"");
+    warn(*shader, std::string("custom shaders need Vulkan (SDL's GPU renderer on the vulkan driver); this renderer is \"") +
+                          SDL_GetRendererName(sdl_) + "\"");
     return e;
   }
   const auto format = core::pick_format(device_formats(device), shader->blobs);
-  if (!format) return warn(*shader, "no compiled blob for this GPU's shader formats"), e;
+  if (!format) return warn(*shader, "this GPU takes no SPIR-V (custom shaders run on Vulkan only)"), e;
   return create(device, std::move(e), *format);
 }
 

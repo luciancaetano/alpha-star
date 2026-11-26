@@ -61,45 +61,87 @@ render targets, lighting, `bloom` and `pixelate` are skipped with one logged not
 
 ## Custom shaders: `assets.shaders`
 
-Write your own full-screen effect as an HLSL fragment shader, declare it, and use it through
-`ctx.postfx` like a built-in:
+Write your own full-screen effect as a Vulkan GLSL fragment shader (`.frag`), declare it, and use
+it through `ctx.postfx` like a built-in:
 
 ```ts
-// types.ts: shaders: { wave: "amount" | "time" }
+// types.ts: shaders: { wave: "amount" | "time"; gray: "amount" }
 assets: {
-  shaders: { wave: { file: "shaders/wave.hlsl", uniforms: { amount: 0.5, time: 0 } } },
+  shaders: {
+    wave: { file: "shaders/wave.frag", uniforms: { amount: 0.5, time: 0 } },
+    gray: { file: "shaders/gray.frag", uniforms: { amount: 1 } },
+  },
 },
 // a scene
 enter(ctx) { ctx.postfx.add("wave", { amount: 0.8 }); },
 update(ctx) { ctx.postfx.set("wave", { amount: 0.8, time: ctx.time }); },
 ```
 
-The shader contract (SDL's GPU renderer conventions): the frame is `t0, space2` with its sampler at
-`s0, space2`; the uniforms are one `cbuffer` at `b0, space3` holding the declared floats **in the
-order of `uniforms`** (at most 16); the entry point is `main`.
+The shader contract (SDL_GPU's fragment shader rules for SPIR-V):
 
-```hlsl
-cbuffer Params : register(b0, space3) { float amount; float time; };
-Texture2D u_texture : register(t0, space2);
-SamplerState u_sampler : register(s0, space2);
-struct PSInput { float4 v_color : COLOR0; float2 v_uv : TEXCOORD0; };
+- `#version 450`; the entry point is `main`.
+- Inputs: `layout(location = 0) in vec4` (vertex color) and `layout(location = 1) in vec2` (frame
+  coordinates); output: `layout(location = 0) out vec4`.
+- The frame is a `sampler2D` at `layout(set = 2, binding = 0)`.
+- Uniforms are one `std140` block at `layout(set = 3, binding = 0)` holding **only `float`s, in the
+  order of `uniforms`** (at most 16; no `vec2`/`vec4` members: use two or four floats). Leave the
+  block out when the shader has no uniforms.
 
-float4 main(PSInput input) : SV_Target {
-    float2 uv = input.v_uv + float2(sin(input.v_uv.y * 40.0 + time * 6.0) * 0.004 * amount, 0);
-    return u_texture.Sample(u_sampler, uv) * input.v_color;
+A wave that bends the frame over time:
+
+```glsl
+#version 450
+layout(location = 0) in vec4 v_color;                    // vertex color
+layout(location = 1) in vec2 v_uv;                       // frame coordinates
+layout(location = 0) out vec4 o_color;
+layout(set = 2, binding = 0) uniform sampler2D u_frame;  // the frame
+layout(set = 3, binding = 0, std140) uniform Params {    // floats, in `uniforms` order
+    float amount;
+    float time;
+};
+
+void main() {
+    vec2 uv = v_uv + vec2(sin(v_uv.y * 40.0 + time * 6.0) * 0.004 * amount, 0.0);
+    o_color = texture(u_frame, uv) * v_color;
 }
 ```
 
-- **One source, every GPU.** [SDL_shadercross](https://github.com/libsdl-org/SDL_shadercross)
-  compiles the HLSL to SPIR-V (Vulkan, Android), DXIL (Direct3D 12) and MSL (Metal).
-- **`alpha run`** compiles the `.hlsl` when the game boots and again on every save (hot reload);
-  a compile error pauses the game with the compiler's message, naming `assets.shaders.<name>`.
-- **`alpha export`** puts the compiled blobs (`shaders/wave.spv`, `.dxil`, `.msl`) in the pack
-  instead of the `.hlsl`; shipping engines only load blobs and contain no compiler.
-- Custom shaders need **SDL's GPU renderer**, which a game with `assets.shaders` asks for at start.
-  If it is not available (no Vulkan / D3D12 / Metal device), or the renderer is another one (the
-  software renderer of headless tests), the effect is **skipped** with one logged warning; the game
-  keeps running and the built-in effects still work.
+Grayscale, mixed by `amount`:
+
+```glsl
+#version 450
+layout(location = 0) in vec4 v_color;
+layout(location = 1) in vec2 v_uv;
+layout(location = 0) out vec4 o_color;
+layout(set = 2, binding = 0) uniform sampler2D u_frame;
+layout(set = 3, binding = 0, std140) uniform Params { float amount; };
+
+void main() {
+    vec4 c = texture(u_frame, v_uv) * v_color;
+    float g = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+    o_color = vec4(mix(c.rgb, vec3(g), amount), c.a);
+}
+```
+
+- **Compiled by glslang.** [glslang](https://github.com/KhronosGroup/glslang) (built with the
+  engine, staged next to the release engine) compiles the GLSL to SPIR-V.
+- **`alpha run`** compiles the `.frag` when the game boots and again on every save (hot reload);
+  a compile error pauses the game naming `assets.shaders.<name>`, the file and the line
+  (`shaders/wave.frag:3: 'nope' : undeclared identifier`).
+- **`alpha export`** puts the compiled `shaders/wave.spv` in the pack instead of the `.frag`;
+  shipping engines only load `.spv` and contain no compiler.
+- Custom shaders run on **Vulkan**: a game with `assets.shaders` asks for SDL's GPU renderer on the
+  Vulkan driver at start. Without Vulkan (or on the software renderer of headless tests) the game
+  uses SDL's default renderer and each custom effect is **skipped** with one logged warning; the
+  game keeps running and the built-in effects still work.
+
+| Platform | Custom shaders |
+|---|---|
+| Windows | Vulkan (needs a Vulkan driver; most GPUs since ~2016 have one) |
+| Linux | Vulkan |
+| Android | Vulkan (Android 7+ devices with Vulkan) |
+| macOS / iOS | not yet: planned through Metal (SPIR-V -> MSL at export); the effect is skipped |
+
 - Effect names share one namespace: a shader may not be called like a built-in (`crt`, ...).
   Unknown uniforms, non-numbers and more than 16 uniforms are boot or script errors that list what
   the shader has.

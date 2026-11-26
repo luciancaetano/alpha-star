@@ -23,14 +23,14 @@ namespace alpha::platform {
 namespace {
 
 #ifdef _WIN32
-constexpr const char* kTool = "shadercross.exe";
+constexpr const char* kTool = "glslang.exe";
 #else
-constexpr const char* kTool = "shadercross";
+constexpr const char* kTool = "glslang";
 #endif
 
-// $ALPHA_SHADERCROSS, else the tool next to the engine.
+// $ALPHA_GLSLANG, else the tool next to the engine.
 std::filesystem::path tool() {
-  if (const char* env = SDL_getenv("ALPHA_SHADERCROSS"); env && *env) return env;
+  if (const char* env = SDL_getenv("ALPHA_GLSLANG"); env && *env) return env;
   const char* base = SDL_GetBasePath();
   return std::filesystem::path(base ? base : "") / kTool;
 }
@@ -56,11 +56,6 @@ std::pair<bool, std::string> run(const std::vector<std::string>& args) {
   return {code == 0, out};
 }
 
-const char* dest(core::ShaderFormat f) {
-  if (f == core::ShaderFormat::Spirv) return "SPIRV";
-  return f == core::ShaderFormat::Dxil ? "DXIL" : "MSL";
-}
-
 // Where one compile lands: the system temp folder, one name per source + format.
 std::filesystem::path output(const std::filesystem::path& source, core::ShaderFormat f) {
   const std::size_t key = std::hash<std::string>{}(source.generic_string());
@@ -68,14 +63,16 @@ std::filesystem::path output(const std::filesystem::path& source, core::ShaderFo
          ("alpha-shader-" + std::to_string(key) + "." + std::string(core::format_name(f)));
 }
 
-core::ShaderBlobs compile_all(const std::filesystem::path& source, const std::string& what) {
+core::ShaderBlobs compile_all(const std::filesystem::path& source, const std::string& file, const std::string& what) {
   core::ShaderBlobs out;
   for (const core::ShaderFormat f : core::kShaderFormats) {
     const std::filesystem::path to = output(source, f);
-    const auto [ok, log] = run({tool().string(), source.string(), "-s", "HLSL", "-d", dest(f), "-t", "fragment", "-o",
-                                to.string()});
+    const auto [ok, log] = run({tool().string(), "-V", "--target-env", "vulkan1.0", "-S", "frag", "-e", "main", "-o",
+                                to.string(), source.string()});
     auto bytes = ok ? vfs::read(to) : std::nullopt;
-    if (!bytes || bytes->empty()) throw core::Error(what + ": " + source.filename().string() + " did not compile:\n" + log);
+    if (!bytes || bytes->empty()) {
+      throw core::Error(what + ": " + file + " did not compile:\n" + core::compiler_message(log, source.string(), file));
+    }
     out[f] = std::move(*bytes);
   }
   return out;
@@ -87,13 +84,13 @@ bool shader_compiler_available() { return vfs::exists(tool()); }
 
 std::string shader_compiler_hint() { return "; no shader compiler at " + tool().string(); }
 
-core::ShaderBlobs compile_shader(const std::filesystem::path& source, const std::string& what) {
+core::ShaderBlobs compile_shader(const std::filesystem::path& source, const std::string& file, const std::string& what) {
   // One compile per source edit: simulate instances and reboots reuse it.
   static std::map<std::string, std::pair<std::int64_t, core::ShaderBlobs>, std::less<>> cache;
   const std::int64_t modified = vfs::info(source).value_or(vfs::Info{}).modified;
   const auto hit = cache.find(source.generic_string());
   if (hit != cache.end() && hit->second.first == modified && modified != 0) return hit->second.second;
-  core::ShaderBlobs out = compile_all(source, what);
+  core::ShaderBlobs out = compile_all(source, file, what);
   cache[source.generic_string()] = {modified, out};
   return out;
 }
@@ -104,7 +101,7 @@ bool shader_compiler_available() { return false; }
 
 std::string shader_compiler_hint() { return ""; }
 
-core::ShaderBlobs compile_shader(const std::filesystem::path&, const std::string& what) {
+core::ShaderBlobs compile_shader(const std::filesystem::path&, const std::string&, const std::string& what) {
   throw core::Error(what + ": this engine only loads compiled shaders");
 }
 

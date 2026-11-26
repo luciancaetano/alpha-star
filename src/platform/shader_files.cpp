@@ -28,12 +28,12 @@ core::ShaderBlobs packed_blobs(const std::filesystem::path& root, const std::str
 
 core::ShaderBlobs load_shader_blobs(const std::filesystem::path& root, const std::string& file, const std::string& what) {
   const std::filesystem::path source = vfs::in_pack(root, file);
-  if (shader_compiler_available() && vfs::exists(source)) return compile_shader(source, what);
+  if (shader_compiler_available() && vfs::exists(source)) return compile_shader(source, file, what);
   core::ShaderBlobs blobs = packed_blobs(root, file, what);
   if (blobs.empty()) {
     throw core::Error(what + ": no compiled shader for \"" + file + "\" (looked for " +
-                      core::blob_file(file, core::ShaderFormat::Spirv) + ", .dxil, .msl" + shader_compiler_hint() +
-                      "); alpha export writes them, alpha run compiles the .hlsl");
+                      core::blob_file(file, core::ShaderFormat::Spirv) + shader_compiler_hint() +
+                      "); alpha export writes it, alpha run compiles the .frag");
   }
   return blobs;
 }

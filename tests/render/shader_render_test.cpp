@@ -8,6 +8,7 @@
 
 #include "core/postfx.hpp"
 #include "platform/shader_files.hpp"
+#include "platform/window.hpp"
 #include "render/renderer.hpp"
 
 using namespace alpha::core;
@@ -19,9 +20,9 @@ namespace {
 
 const Color kGray{100, 100, 100, 255};
 
-// The fixture's blobs, read as a pack would be (no .hlsl next to them is needed).
+// The fixture's blobs, read as a pack would be (no .frag next to them is needed).
 Effect invert(float amount) {
-  Shader s = make_shader("invert", "invert.hlsl", {{"amount", 1.0f}});
+  Shader s = make_shader("invert", "invert.frag", {{"amount", 1.0f}});
   s.blobs = alpha::platform::load_shader_blobs(std::filesystem::path(ALPHA_TEST_FIXTURES) / "shaders", s.file,
                                                "assets.shaders.invert");
   return make_shader_effect(std::make_shared<const Shader>(std::move(s)), {{"amount", amount}});
@@ -56,11 +57,11 @@ TEST_CASE("a shader effect on the software renderer is skipped; the frame stays 
   SDL_DestroySurface(surface);
 }
 
-TEST_CASE("on the GPU renderer a shader effect runs over the frame with its uniforms") {
+TEST_CASE("on the Vulkan GPU renderer a shader effect runs over the frame with its uniforms") {
   SDL_Window* window = SDL_CreateWindow("shader test", 64, 32, SDL_WINDOW_HIDDEN);
-  SDL_Renderer* sdl = window ? SDL_CreateRenderer(window, SDL_GPU_RENDERER) : nullptr;
+  SDL_Renderer* sdl = window ? alpha::platform::vulkan_renderer(window) : nullptr;
   if (!sdl) {
-    MESSAGE("no GPU renderer here (" << std::string(SDL_GetError()) << "): skipped");
+    MESSAGE("no Vulkan GPU renderer here (" << std::string(SDL_GetError()) << "): skipped");
     SDL_DestroyWindow(window);
     return;
   }

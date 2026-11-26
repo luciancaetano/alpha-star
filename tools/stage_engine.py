@@ -27,7 +27,7 @@ def target():
     return f"{system}-{ARCH.get(platform.machine().lower(), platform.machine().lower())}"
 
 
-SHADER_TOOLS = ["shadercross.exe", "dxcompiler.dll", "dxil.dll"] if os.name == "nt" else     ["shadercross", "libdxcompiler.so", "libdxil.so"]
+SHADER_TOOLS = ["glslang.exe"] if os.name == "nt" else ["glslang"]
 FLAVORS = {"release": "", "shipping": "shipping"}  # preset -> subdir of engine/<target>
 
 

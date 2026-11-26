@@ -3,7 +3,7 @@
 //   <out>/<asset paths>  every file declared in game.assets, plus the files UI
 //                        documents reference (<link href>, src=, url(), image()),
 //                        BMFont pages and font license files, same relative paths
-//   <out>/<shader>.spv|.dxil|.msl compiled assets.shaders (lib/shaders.mjs; no .hlsl)
+//   <out>/<shader>.spv compiled assets.shaders (lib/shaders.mjs; no .frag)
 //   <out>/THIRD_PARTY_NOTICES.txt  engine dependency notices + font licenses
 // The engine runs a pack with: alpha_star <out>
 import fs from "node:fs";
@@ -16,7 +16,7 @@ import { build } from "./build.mjs";
 import { mapReferences } from "./maps.mjs";
 import { BYTECODE_FILE, compileBytecode } from "./bytecode.mjs";
 import { bundledEngine, describeTargets, engineFile, shippingEngine } from "./engine.mjs";
-import { compileShaders, shadercrossTool } from "./shaders.mjs";
+import { compileShaders, glslangTool } from "./shaders.mjs";
 
 const SHIM = path.join(path.dirname(fileURLToPath(import.meta.url)), "alpha-shim.mjs");
 
@@ -238,10 +238,10 @@ function gameFile(staging, standalone, { bytecode, compiler, bytecodeBits }) {
 // bytecode: standalone packs ship game.jsbc (no JS source, no source map) compiled by
 // `compiler` (default: this machine's release engine). bytecodeBits: also ship game.jsbc
 // without an engine binary, for a target built from source with that pointer width
-// (Android). shaderTool: shadercross for assets.shaders (default: next to the release engine).
+// (Android). shaderTool: glslang for assets.shaders (default: next to the release engine).
 // Returns { ok, problems, files }. Writes nothing unless everything checks out.
 export async function exportPack({ root, entry, out, target = null, atlas = true, bytecode = true,
-                                   compiler = bundledEngine(), bytecodeBits = null, shaderTool = shadercrossTool() }) {
+                                   compiler = bundledEngine(), bytecodeBits = null, shaderTool = glslangTool() }) {
   const standalone = target ? engineFor(target) : {};
   if (standalone.problem) return { ok: false, problems: [standalone.problem], files: [] };
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-pack-"));

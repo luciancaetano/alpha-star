@@ -12,21 +12,24 @@ core::PixelGrid output_grid(SDL_Renderer* renderer) {
   return core::pixel_grid({shown.x, shown.y}, {shown.w, shown.h}, {static_cast<float>(w), static_cast<float>(h)});
 }
 
-namespace {
-
-// SDL's GPU renderer, told we bring SPIR-V / DXIL / MSL shaders; SDL's default
-// renderer (custom shader effects then skip with a warning) when there is none.
-SDL_Renderer* gpu_renderer(SDL_Window* window) {
+SDL_Renderer* vulkan_renderer(SDL_Window* window) {
   const SDL_PropertiesID props = SDL_CreateProperties();
   SDL_SetPointerProperty(props, SDL_PROP_RENDERER_CREATE_WINDOW_POINTER, window);
   SDL_SetStringProperty(props, SDL_PROP_RENDERER_CREATE_NAME_STRING, SDL_GPU_RENDERER);
+  SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, "vulkan");
   SDL_SetBooleanProperty(props, SDL_PROP_RENDERER_CREATE_GPU_SHADERS_SPIRV_BOOLEAN, true);
-  SDL_SetBooleanProperty(props, SDL_PROP_RENDERER_CREATE_GPU_SHADERS_DXIL_BOOLEAN, true);
-  SDL_SetBooleanProperty(props, SDL_PROP_RENDERER_CREATE_GPU_SHADERS_MSL_BOOLEAN, true);
   SDL_Renderer* r = SDL_CreateRendererWithProperties(props);
   SDL_DestroyProperties(props);
-  if (r) return r;
-  SDL_Log("assets.shaders: no GPU renderer (%s); custom shader effects are skipped", SDL_GetError());
+  return r;
+}
+
+namespace {
+
+// The Vulkan GPU renderer; SDL's default renderer (custom shader effects then
+// skip with a warning) without Vulkan.
+SDL_Renderer* gpu_renderer(SDL_Window* window) {
+  if (SDL_Renderer* r = vulkan_renderer(window)) return r;
+  SDL_Log("assets.shaders: no Vulkan GPU renderer (%s); custom shader effects are skipped", SDL_GetError());
   return SDL_CreateRenderer(window, nullptr);
 }
 

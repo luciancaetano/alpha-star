@@ -74,9 +74,10 @@ Physics lives in `src/physics/` (Box2D v3: `physics_world` bodies/contacts/pre-s
 and the embedded `physics.js` / `tween.js` modules. Texture filtering is per image
 (`core::Image::smooth`, from `pixelMode`); never set a global scale mode.
 Lighting/post effects: `render::Compositor` (built-ins: render targets + add/modulate blends + vertex colors on SDL_Renderer,
-no shaders); data in `core/postfx` + `core/lighting`, render-only. Custom shaders (`assets.shaders`, `core/shader`): HLSL
-compiled by the SDL_shadercross tool (`cmake/Shadercross.cmake`, dev/release only; `alpha export` packs blobs), run with
-`SDL_GPURenderState` on SDL 3.4's GPU renderer (`render::ShaderStates`); skipped with a warning on any other renderer.
+no shaders); data in `core/postfx` + `core/lighting`, render-only. Custom shaders (`assets.shaders`, `core/shader`): Vulkan
+GLSL compiled to SPIR-V by the glslang tool (`cmake/Glslang.cmake`, dev/release only; `alpha export` packs `.spv`), run with
+`SDL_GPURenderState` on SDL 3.4's GPU renderer on the Vulkan driver (`render::ShaderStates`); skipped with a warning
+without Vulkan. `core::ShaderFormat`/`pick_format` is the one seam for more formats (Metal planned).
 Input order: dev tools → game UI (`ui::consumes`) → game actions; what the UI consumed never drives actions.
 Audio: `core::Mixer` is stereo with volume buses; music is a `core::Stream` (`platform/music_stream`,
 stb_vorbis / dr_mp3 in `alpha_codecs`) decoded in `mix()` on the main thread; streams hold SDL audio

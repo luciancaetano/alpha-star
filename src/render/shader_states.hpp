@@ -13,8 +13,8 @@ namespace alpha::render {
 
 // GPU objects for custom shader effects (assets.shaders), made on first use
 // and freed once the game no longer holds the shader (hot reload). Needs SDL's
-// GPU renderer (SDL_GPURenderState); on any other renderer, or when no blob
-// fits the device, the effect is skipped with one logged warning per shader.
+// GPU renderer on Vulkan (SDL_GPURenderState, SPIR-V); on any other renderer,
+// or when no blob fits the device, the effect is skipped with one logged warning per shader.
 class ShaderStates {
  public:
   explicit ShaderStates(SDL_Renderer* sdl) : sdl_(sdl) {}

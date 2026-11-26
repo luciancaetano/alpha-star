@@ -252,12 +252,13 @@ declare module "alpha" {
   export type EffectParams<S, N> = N extends PostFxName ? PostFxParams[N]
     : N extends keyof S ? { [U in S[N] & string]?: number } : never;
   /**
-   * A custom full-screen shader: an HLSL fragment shader (see the shaders guide for its
-   * contract) and its float uniforms with defaults, in the order of its cbuffer
-   * (`register(b0, space3)`), at most 16. `alpha run` compiles it on load (and on every
-   * save); `alpha export` puts compiled blobs (.spv, .dxil, .msl) in the pack instead of
-   * the .hlsl. Runs only on SDL's GPU renderer (which games with shaders ask for); on any
-   * other renderer the effect is skipped with a logged warning.
+   * A custom full-screen shader: a Vulkan GLSL fragment shader (.frag; see the shaders
+   * guide for its contract) and its float uniforms with defaults, in the order of its
+   * std140 uniform block (`layout(set = 3, binding = 0)`, floats only), at most 16.
+   * `alpha run` compiles it to SPIR-V with glslang on load (and on every save);
+   * `alpha export` puts the compiled .spv in the pack instead of the .frag. Runs on
+   * Vulkan only (Windows, Linux, Android; macOS/iOS not yet), which games with shaders
+   * ask for; elsewhere the effect is skipped with a logged warning.
    */
   export interface ShaderAsset<U extends string> {
     file: string;
@@ -1022,7 +1023,7 @@ declare module "alpha" {
       /** Map name -> Tiled map (.tmj JSON; tilesets embedded or .tsj; CSV tile layers). */
       maps?: Record<MapOf<G>, ImageAsset>;
       /**
-       * Custom full-screen shader name -> `{ file: "shaders/wave.hlsl", uniforms: { amount: 0.5 } }`,
+       * Custom full-screen shader name -> `{ file: "shaders/wave.frag", uniforms: { amount: 0.5 } }`,
        * then `ctx.postfx.add("wave", { amount: 1 })`. See ShaderAsset.
        */
       shaders?: { [K in keyof ShadersOf<G>]: ShaderAsset<ShadersOf<G>[K] & string> };

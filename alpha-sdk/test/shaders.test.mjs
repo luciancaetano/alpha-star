@@ -5,11 +5,11 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { exportPack } from "../lib/pack.mjs";
-import { compileShaders, shaderFiles } from "../lib/shaders.mjs";
+import { compileShaders, compilerMessage, shaderFiles } from "../lib/shaders.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const BUILT = path.join(REPO, "build", "dev", "src", "Debug", process.platform === "win32" ? "shadercross.exe" : "shadercross");
-const FIXTURE = path.join(REPO, "tests", "fixtures", "shaders", "invert.hlsl");
+const BUILT = path.join(REPO, "build", "dev", "src", "Debug", process.platform === "win32" ? "glslang.exe" : "glslang");
+const FIXTURE = path.join(REPO, "tests", "fixtures", "shaders", "invert.frag");
 
 function project(assets, files = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-shader-"));
@@ -30,50 +30,56 @@ export default game({ config: { title: "t", size: [10, 10], seed: 1, actions: {}
   return { root, entry: path.join(root, "src", "main.ts"), out: path.join(root, "dist") };
 }
 
-const ASSETS = `{ sounds: {}, shaders: { invert: { file: "fx/invert.hlsl", uniforms: { amount: 1 } } } }`;
+const ASSETS = `{ sounds: {}, shaders: { invert: { file: "fx/invert.frag", uniforms: { amount: 1 } } } }`;
 
-// A stand-in compiler: writes "<format>" into the -o file.
+// A stand-in compiler: writes "spv" into the -o file.
 const fakeRun = (calls) => (tool, args) => {
   calls.push(args);
-  fs.writeFileSync(args[args.indexOf("-o") + 1], args[args.indexOf("-d") + 1]);
+  fs.writeFileSync(args[args.indexOf("-o") + 1], "spv");
   return { status: 0, stdout: "", stderr: "" };
 };
 
-test("export compiles each shader to .spv/.dxil/.msl in the pack and leaves the .hlsl out", async () => {
-  const p = project(ASSETS, { "fx/invert.hlsl": "float4 main() : SV_Target { return 1; }" });
+const FRAG = "#version 450\nlayout(location = 0) out vec4 o_color;\nvoid main() { o_color = vec4(1.0); }\n";
+
+test("export compiles each shader to .spv in the pack and leaves the .frag out", async () => {
+  const p = project(ASSETS, { "fx/invert.frag": FRAG });
   const calls = [];
-  const tool = path.join(p.root, "shadercross");
+  const tool = path.join(p.root, "glslang");
   const r = await exportPack({ ...p, bytecode: false, shaderTool: tool });
   assert.equal(r.ok, false, "the real spawn of a missing tool fails");
-  const def = { assets: { shaders: { invert: { file: "fx/invert.hlsl" } } } };
+  const def = { assets: { shaders: { invert: { file: "fx/invert.frag" } } } };
   assert.deepEqual(compileShaders({ root: p.root, def, out: p.out, tool, run: fakeRun(calls) }), []);
-  assert.deepEqual(calls.map((a) => a[a.indexOf("-d") + 1]), ["SPIRV", "DXIL", "MSL"]);
-  assert.ok(calls.every((a) => a.includes("fragment") && a.includes("HLSL")));
-  for (const [ext, fmt] of [[".spv", "SPIRV"], [".dxil", "DXIL"], [".msl", "MSL"]]) {
-    assert.equal(fs.readFileSync(path.join(p.out, "fx", `invert${ext}`), "utf8"), fmt);
-  }
-  assert.equal(fs.existsSync(path.join(p.out, "fx", "invert.hlsl")), false);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].slice(0, 7), ["-V", "--target-env", "vulkan1.0", "-S", "frag", "-e", "main"]);
+  assert.equal(fs.readFileSync(path.join(p.out, "fx", "invert.spv"), "utf8"), "spv");
+  assert.deepEqual(fs.readdirSync(path.join(p.out, "fx")), ["invert.spv"]);
 });
 
-test("shader problems name the asset and what is missing", () => {
+test("shader problems name the asset, the file and the line", () => {
   const p = project(ASSETS);
-  const def = { assets: { shaders: { invert: { file: "fx/invert.hlsl" } } } };
+  const def = { assets: { shaders: { invert: { file: "fx/invert.frag" } } } };
   assert.match(compileShaders({ root: p.root, def, out: p.out, tool: "x" })[0].message,
-               /assets\.shaders\.invert: "fx\/invert\.hlsl" is not an \.hlsl file inside the project/);
+               /assets\.shaders\.invert: "fx\/invert\.frag" is not a \.frag file inside the project/);
   fs.mkdirSync(path.join(p.root, "fx"));
-  fs.writeFileSync(path.join(p.root, "fx", "invert.hlsl"), "x");
-  assert.match(compileShaders({ root: p.root, def, out: p.out, tool: null })[0].message, /no shadercross/);
-  const failing = () => ({ status: 1, stdout: "error: nope", stderr: "" });
-  assert.match(compileShaders({ root: p.root, def, out: p.out, tool: "x", run: failing })[0].message,
-               /assets\.shaders\.invert: fx\/invert\.hlsl did not compile to SPIRV:\nerror: nope/);
+  fs.writeFileSync(path.join(p.root, "fx", "invert.frag"), "x");
+  assert.match(compileShaders({ root: p.root, def, out: p.out, tool: null })[0].message, /no glslang/);
+  const src = path.join(p.root, "fx/invert.frag");
+  const failing = () => ({ status: 1, stdout: `${src}\nERROR: ${src}:3: 'nope' : undeclared identifier\nERROR: 1 compilation errors.\n`, stderr: "" });
+  assert.equal(compileShaders({ root: p.root, def, out: p.out, tool: "x", run: failing })[0].message,
+               "assets.shaders.invert: fx/invert.frag did not compile:\nERROR: fx/invert.frag:3: 'nope' : undeclared identifier");
+  assert.equal(compilerMessage("cannot start\n", "a", "b"), "cannot start");
   assert.deepEqual(shaderFiles({}), []);
   assert.deepEqual(compileShaders({ root: p.root, def: {}, out: p.out, tool: null }), []);
 });
 
-test("export with the built shadercross writes real blobs", { skip: !fs.existsSync(BUILT) }, async () => {
-  const p = project(ASSETS, { "fx/invert.hlsl": fs.readFileSync(FIXTURE, "utf8") });
+test("export with the built glslang writes real SPIR-V; errors carry file and line", { skip: !fs.existsSync(BUILT) }, async () => {
+  const p = project(ASSETS, { "fx/invert.frag": fs.readFileSync(FIXTURE, "utf8") });
   const r = await exportPack({ ...p, bytecode: false, shaderTool: BUILT });
   assert.deepEqual(r.problems, []);
-  for (const ext of [".spv", ".dxil", ".msl"]) assert.ok(fs.statSync(path.join(p.out, "fx", `invert${ext}`)).size > 100);
-  assert.match(fs.readFileSync(path.join(p.out, "fx", "invert.msl"), "utf8"), /fragment main0_out main0/);
+  const spv = fs.readFileSync(path.join(p.out, "fx", "invert.spv"));
+  assert.equal(spv.readUInt32LE(0), 0x07230203);
+  fs.writeFileSync(path.join(p.root, "fx", "invert.frag"), "#version 450\nlayout(location = 0) out vec4 o;\nvoid main() { o = nope; }\n");
+  const def = { assets: { shaders: { invert: { file: "fx/invert.frag" } } } };
+  const [bad] = compileShaders({ root: p.root, def, out: p.out, tool: BUILT });
+  assert.match(bad.message, /fx\/invert\.frag:3: 'nope' : undeclared identifier/);
 });

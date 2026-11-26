@@ -28,18 +28,17 @@ cmake --build --preset dev        # -> build/dev/src/Debug/alpha_star.exe
 
 Same for the other presets (`cmake --preset release && cmake --build --preset release`).
 
-## Shader compiler (shadercross)
+## Shader compiler (glslang)
 
-Custom shaders (`assets.shaders`) are compiled by [SDL_shadercross](https://github.com/libsdl-org/SDL_shadercross)
-(`cmake/Shadercross.cmake`, pinned commit): HLSL -> SPIR-V, DXIL, MSL. The `dev` and `release` builds put the
-`shadercross` tool, `dxcompiler` and `dxil` next to `alpha_star` (building the engine builds it);
-`tools/stage_engine.py` stages them with the release engine for `alpha run` / `alpha export`. The `shipping`
-and Android builds never build it (`-DALPHA_SHADERCROSS=OFF` turns it off anywhere).
+Custom shaders (`assets.shaders`) are Vulkan GLSL compiled to SPIR-V by
+[glslang](https://github.com/KhronosGroup/glslang) (`cmake/Glslang.cmake`, built from source at a pinned tag,
+without SPIRV-Tools or the HLSL front end). The `dev` and `release` builds put the `glslang` tool next to
+`alpha_star` (building the engine builds it); `tools/stage_engine.py` stages it with the release engine for
+`alpha run` / `alpha export`. The `shipping`, Android and Apple builds never build it (`-DALPHA_GLSLANG=OFF`
+turns it off anywhere).
 
-- SPIRV-Cross is built from source (static, at shadercross's own submodule commit).
-- DXC is Microsoft's prebuilt release (`v1.9.2602`, SHA-256 pinned, the archive shadercross's own download
-  script uses): building DXC means building LLVM, about an hour and several GB per preset.
-- `ALPHA_SHADERCROSS=<path>` points a dev/release engine at another `shadercross` binary.
+- `ALPHA_GLSLANG=<path>` points a dev/release engine at another `glslang` binary.
+- Metal (macOS/iOS) is planned: SPIR-V -> MSL through SPIRV-Cross at export.
 
 ## Update the SDK engine (needed for `npm run start` in the examples)
 
