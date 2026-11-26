@@ -1,69 +1,152 @@
 # Android
 
-`alpha export --target android-arm64` turns a game into an Android Studio / Gradle project; with
-the Android toolchain installed it also builds the APK.
+The same game runs on Android phones. `alpha export --target android-arm64` writes an Android
+Studio / Gradle project and, with the Android toolchain installed, builds the APK. The engine
+comes prebuilt with the SDK: no NDK, CMake or C++ needed.
 
-```
-alpha export --target android-arm64 --out build/android
-```
+## From game to phone
 
-The project holds:
-
-- the game pack (`game.jsbc` + `assets/...`) in `app/src/main/assets`: the engine reads it from the
-  APK through SDL, the same code that reads a pack folder on desktop. `game.jsbc` is compiled by
-  the SDK's release engine for this machine: the bytecode format is the same on every
-  little-endian 64-bit platform, and the engine built for the APK from the same source carries the
-  same build id (QuickJS source hash + `-64`). It is encrypted with the engine key, which every
-  engine of one SDK version shares (the packages are built together by GitHub Actions; the export
-  checks the key and says what to reinstall when they differ). `--no-bytecode` ships `main.js` instead;
-- SDL 3.4.20's Java glue (`SDLActivity`, version-checked against the engine at start);
-- the engine, `arm64-v8a` only: the debug APK gets the dev-tools flavor, release APKs and AABs the
-  **shipping flavor** (no dev tools, MCP or debug features). It comes **prebuilt** from
-  `@alpha-star/engine-android-arm64` (an optional dependency of the SDK, installed on every OS),
-  copied to `app/src/debug/jniLibs` and `app/src/release/jniLibs`: no engine source, NDK or CMake
-  needed. To build the engine from source instead (engine work), pass `--engine-src <alpha-star
-  checkout>` or set `ALPHA_ENGINE_SRC`; Gradle then compiles it with CMake (and needs the NDK and
-  CMake below). Inside an alpha-star checkout without a staged prebuilt engine
-  (`tools/stage_android.py`), the checkout's source is used.
-
-## Game config
+**1.** Name the app in `src/main.ts` (every `android` field is optional):
 
 ```ts
 config: {
-  title: "Flappy Star",          // the app name
+  title: "Flappy Star",          // the app name on the phone
   size: [360, 640],              // taller than wide: portrait; otherwise landscape
   android: { package: "com.studio.flappy", icon: "art/icon.png", versionCode: 3, version: "1.2" },
-}
+  // ...actions, axes as before
+},
 ```
 
-All `android` fields are optional: the package id defaults to `org.alphastar.<title letters>`,
-the icon to SDL's, `versionCode` to 1 and `version` to "1.0". The screen orientation follows
-`size` (both landscape or both portrait directions, by the sensor).
+Defaults: package `org.alphastar.<title letters>`, SDL's icon, `versionCode` 1, `version` "1.0".
+The screen orientation follows `size`.
+
+**2.** Plug in the phone by USB with USB debugging on (Developer options), accept the prompt on
+the phone, and run:
+
+```
+npx alpha run --target android-arm64 --out android
+```
+
+**3. Expected:** the project is written to `android/`, the debug APK is built, installed with
+   `adb install -r` and started, and the terminal follows the phone's log (the engine's log and
+   your `console.log`) until Ctrl+C. The game runs fullscreen.
+
+Without the toolchain, step 2 writes the project and prints what is missing: see
+[Install the toolchain](#install-the-toolchain).
+
+## Step by step
+
+### Make the controls work with touch
+
+A finger is also the mouse, and the screen halves are buttons. Bind touch next to the keys:
+
+```ts
+actions: {
+  flap: ["Space", "MouseLeft", "GamepadA"],          // a tap is MouseLeft (first finger)
+  left: ["Left", "TouchLeft"],                       // a finger on the left half
+  right: ["Right", "TouchRight"],                    // ...the right half
+  back: ["Escape", "Back"],                          // the Android back button
+},
+```
+
+- `"Touch"` is held while any finger is down; `"TouchLeft"` / `"TouchRight"` while one is on that
+  half. A tap shorter than one step still presses. `ctx.input.mouse()` reads the first finger.
+- `"Back"` does **not** close the app: quit or open a menu from the game.
+
+### Show the right hints
+
+`ctx.platform` is `{ os, mobile }` (`os`: `"windows"`, `"macos"`, `"linux"`, `"android"`,
+`"ios"`, `"web"`, `"other"`; `mobile` is true on Android and iOS). Use it for hints and layout,
+never for rules, so the simulation is the same everywhere. From `examples/flappy`:
+
+```ts
+if (ctx.platform.mobile) ctx.ui.set("title", "hint", ctx.t("title.hintTouch"));   // "tap to flap"
+```
+
+Preview the phone build on the desktop, and lock it in with a test:
+
+```
+npx alpha run -- --platform android
+```
+
+```ts
+simulate(game, { seconds: 0.1, platform: "android" }).expect.text("title", "hint").equals("tap to flap");
+```
+
+### Fit any screen: aspect and the safe area
+
+The game draws edge to edge, into the display cutout, with the system bars hidden (sticky
+immersive). `config.window.aspect` decides what a phone's different shape shows: the default
+`expand` (and `keep_width` for portrait / `keep_height` for landscape games) reveals more world
+instead of bars, so size backgrounds and spawns to `ctx.camera.view`; only `keep` letterboxes.
+
+`ctx.safeArea` is `[x, y, width, height]` in game pixels: the part no cutout or rounded corner
+hides. Keep HUD text and touch buttons inside it. In UI documents, put `class="safe"` on the HUD
+root and the engine pads it.
+
+```ts
+const [x, y, w, h] = ctx.safeArea;   // the whole view on desktop
+```
+
+Test a tall phone headlessly (from `examples/shmup`):
+
+```ts
+const run = simulate(game, { seconds: 0.1, size: [1080, 2340], platform: "android" });
+```
+
+### Survive the app lifecycle
+
+Switching apps pauses the game: `ctx.onPause` runs, no steps run and audio stops until
+`ctx.onResume`. Saves and settings are written when set (atomically), so nothing is lost if
+Android kills the app in the background. Saves live in the app's private storage. Test it with
+`appPauses` ([Testing](testing.html)).
+
+## Variants: debug, release, store
+
+```
+npx alpha export --target android-arm64 --out android --variant debug     # APK with dev tools, for your phone
+npx alpha export --target android-arm64 --out android --variant release   # APK, shipping engine (side-load, other stores)
+npx alpha export --target android-arm64 --out android --variant bundle    # AAB for Google Play, shipping engine
+npx alpha export --target android-arm64 --out android --no-build          # the project only
+npx alpha run --target android-arm64 --out android --device SERIAL        # pick a phone from `adb devices`
+```
+
+`alpha run` always uses the debug variant (an AAB cannot be installed). The native libraries are
+16 KB-aligned, as Google Play requires for apps targeting Android 15+.
+
+`examples/flappy/package.json` wires these as npm scripts you can copy:
+
+```json
+"android:project": "alpha export --target android-arm64 --out android --no-build",
+"android:run": "alpha run --target android-arm64 --out android",
+"android:debug": "alpha export --target android-arm64 --out android --variant debug",
+"android:release": "alpha export --target android-arm64 --out android --variant release",
+"android:bundle": "alpha export --target android-arm64 --out android --variant bundle",
+"start:mobile": "alpha run -- --platform android"
+```
 
 ## Install the toolchain
-
-Without it the exporter writes the project and prints what is missing. You need:
 
 1. A JDK 17 or newer (`JAVA_HOME`).
 2. The Android SDK command-line tools, unpacked to `<sdk>/cmdline-tools/latest`
    (`%LOCALAPPDATA%\Android\Sdk` on Windows, or set `ANDROID_HOME`).
-3. The packages the project pins (the NDK and CMake only when building the engine from source):
+3. The packages the project pins:
 
 ```
 sdkmanager "platforms;android-35" "build-tools;36.0.0"
-sdkmanager "ndk;27.2.12479018" "cmake;3.31.6"     # only with --engine-src
+sdkmanager "ndk;27.2.12479018" "cmake;3.31.6"     # only to build the engine from source (--engine-src)
 ```
 
 Newer command-line tools (the `android sdk` CLI) name packages with `/` instead of `;`
-(`"ndk/27.2.12479018"`); with `;` they answer `Package ... not found`.
-
-Gradle 8.12 comes with the project's wrapper (it downloads itself on the first build). The first
-build from source also fetches the engine's dependencies (SDL, Box2D, QuickJS, RmlUi, HarfBuzz...).
+(`"ndk/27.2.12479018"`); with `;` they answer `Package ... not found`. Gradle 8.12 comes with the
+project's wrapper and downloads itself on the first build.
 
 ## Build and install
 
+To build by hand from the exported project:
+
 ```
-cd build/android
+cd android
 gradlew.bat assembleRelease          # ./gradlew on Linux/macOS
 adb install -r app/build/outputs/apk/release/app-release.apk
 adb logcat -s SDL SDL/APP            # the engine's log and console.log
@@ -88,9 +171,7 @@ app on Google Play (use Play App Signing).
 ## Keep the project in your repository
 
 The exported project can be committed, like React Native's `android/` folder: export into the
-game (`--out android`) and version everything but what each build regenerates. The engine path in
-`app/build.gradle` is relative to the project, so it builds in any clone at the same place.
-`examples/flappy/android` is one:
+game (`--out android`) and ignore what each build regenerates. `examples/flappy/android` is one:
 
 ```
 # android/.gitignore
@@ -104,92 +185,42 @@ app/src/release/jniLibs/
 ```
 
 Exporting again writes the SDK template over the project (your edits to template files are
-replaced; Gradle's `build/` and `.cxx/` caches stay, so the engine is not rebuilt from scratch) and
-replaces the game pack in `app/src/main/assets` whole.
-
-## Variants: debug, release, store
-
-```
-alpha export --target android-arm64 --out android --variant debug     # APK with dev tools, for your phone
-alpha export --target android-arm64 --out android --variant release   # APK, shipping engine (side-load, other stores)
-alpha export --target android-arm64 --out android --variant bundle    # AAB for Google Play, shipping engine
-alpha export --target android-arm64 --out android --no-build          # the project only
-alpha run --target android-arm64 --out android [--device SERIAL]      # debug APK on the connected phone + its log
-```
-
-`alpha run` builds the debug variant, installs it with `adb install -r`, starts it and follows
-`adb logcat` (the engine's log and `console.log`) until Ctrl+C. Plug the phone in by USB with USB
-debugging on (Developer options) and accept the prompt on the phone; with several devices, pass
-`--device` with a serial from `adb devices`. Keep the phone unlocked: a locked phone gives no
-window (`Could not fetch native window`).
-
-The native libraries are built with 16 KB-aligned segments (`ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES`),
-which Google Play requires for apps targeting Android 15+.
-
-`examples/flappy/package.json` wires these as npm scripts: `android:project`, `android:run`,
-`android:debug`, `android:release`, `android:bundle`, and `start:mobile` (desktop preview below).
-
-## Fullscreen and the safe area
-
-Every exported game runs fullscreen on the phone: the engine opens its window fullscreen on
-Android whatever `config.window.fullscreen` says, so SDL hides the status and navigation bars
-(sticky immersive: a swipe from the edge shows them for a moment, then they hide again, also after
-the app comes back from the background). The game draws edge to edge, into the display cutout
-(`windowLayoutInDisplayCutoutMode` = `shortEdges` in the template's theme from Android 9, SDL sets
-`always` from Android 11), so the frame and every postfx or shader pass cover the whole screen.
-`config.window.aspect` decides what a different aspect shows: the default `expand` (and
-`keep_width` for portrait / `keep_height` for landscape games) reveals more world instead of
-bars, so size backgrounds and spawns to `ctx.camera.view`; only `keep` letterboxes.
-
-`ctx.safeArea` is `[x, y, width, height]` in screen (game) pixels: the part of the screen no cutout
-or rounded corner hides. Keep HUD text and touch buttons inside it (UI documents: put
-`class="safe"` on the HUD root and the engine pads it):
-
-```ts
-const [x, y, w, h] = ctx.safeArea;   // the whole view on desktop
-```
+replaced; Gradle's caches stay) and replaces the game pack in `app/src/main/assets` whole.
 
 ## Dev tools on the phone
 
-The debug variant carries the engine dev tools (Dear ImGui). Open and close them the way React
-Native opens its dev menu: **shake the phone** firmly side to side (a few quick back-and-forth jolts
-above ~2 g within a second; taps, tilts and walking are ignored, and a toggle is followed by a 1.5 s
-cooldown), or send the Menu key from the computer with
+The debug variant carries the engine dev tools. Open and close them the way React Native opens its
+dev menu: **shake the phone** firmly side to side, or send the Menu key with
 `adb shell input keyevent 82` (Ctrl+M in the emulator). A gamepad's Back+Start works too. Release
-APKs and AABs have no dev tools at all. The debug APK has no MCP channel (`alpha mcp` drives desktop
-engines); its panels scale with the screen (the larger of the OS content scale and the shorter side / 1080) and
-open tiled inside the safe area (clear of the display cutout).
+APKs and AABs have no dev tools at all, and the debug APK has no MCP channel (`alpha mcp` drives
+desktop engines).
 
-## Hints per platform
+## What is inside the project
 
-`ctx.platform` says where the game runs: `{ os, mobile }`, with `os` one of `"windows"`,
-`"macos"`, `"linux"`, `"android"`, `"ios"`, `"web"`, `"other"` and `mobile` true on Android and iOS.
-Use it for hints and layout ("tap to flap" instead of "press Space"), never for game rules: the
-simulation stays the same everywhere.
+- The game pack (`game.jsbc` + assets) in `app/src/main/assets`; the engine reads it from the APK.
+  `game.jsbc` is compiled by the SDK's release engine on your machine (the bytecode is the same on
+  every little-endian 64-bit platform) and encrypted with the key every engine of one SDK version
+  shares. `--no-bytecode` ships `main.js` instead.
+- SDL's Java glue (`SDLActivity`, version-checked against the engine at start).
+- The engine for `arm64-v8a`, prebuilt from `@alpha-star/engine-android-arm64` (an optional
+  dependency of the SDK, installed on every OS): the dev-tools flavor in `app/src/debug/jniLibs`,
+  the shipping flavor in `app/src/release/jniLibs`. To build it from source instead (engine
+  work), pass `--engine-src <alpha-star checkout>` or set `ALPHA_ENGINE_SRC`; Gradle then needs
+  the NDK and CMake above.
 
-```ts
-if (ctx.platform.mobile) ctx.ui.set("title", "hint", ctx.t("title.hintTouch"));
-```
+## Gotchas
 
-Preview the phone UI on the desktop with `alpha run -- --platform android`, and test it with
-`simulate(game, { platform: "android" })`.
+- **Keep the phone unlocked** while `alpha run` starts the game: a locked phone gives no window
+  (`Could not fetch native window`).
+- **Several devices:** pass `--device` with a serial from `adb devices`.
+- **`arm64-v8a` only** (every current phone); there is no x86 emulator image.
+- **Rules must not depend on the platform**; only hints and layout should.
+- If `npm install` ran with `--omit=optional`, the prebuilt Android engine is missing: reinstall
+  with optional dependencies.
 
-## Touch, back button, lifecycle
+## See also
 
-- A finger is also the mouse: `"MouseLeft"` and `ctx.input.mouse()` work unchanged (first finger).
-- `"Touch"` is held while any finger is down; `"TouchLeft"` / `"TouchRight"` while one is on that
-  half of the screen (two-button games: `left: ["Left", "TouchLeft"]`). A tap shorter than one
-  step still presses.
-- The back button is the `"Back"` input; it does not close the app. Bind it with Escape:
-  `back: ["Escape", "Back"]`, and quit or open a menu from the game.
-- Switching apps pauses the game: `ctx.onPause` runs, no steps run and audio stops until
-  `ctx.onResume`. Saves and settings are written when set (atomically), so nothing is lost if
-  Android kills the app in the background. The engine stops stepping the moment Android
-  announces the background, before its event is polled.
-- Saves live in the app's private storage (`SDL_GetPrefPath`); the log goes to logcat.
-
-## Limitations
-
-- `arm64-v8a` only (every current phone); no x86 emulator image.
-- No prebuilt Android engine in the SDK yet: the build compiles it (several minutes the first time).
-- Not tested on a device in this release; report problems with `adb logcat` output.
+- [Input](input.html): actions, touch and gamepads.
+- [Game UI](ui.html): the `safe` class and scaling.
+- [Exporting](exporting.html): desktop builds and what the bytecode protects.
+- [Testing](testing.html): `platform`, `size` and `appPauses`.

@@ -1,38 +1,298 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sprites, camera, LDtk levels - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html" class="here">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html" class="here">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="sprites-camera-ldtk-levels">Sprites, camera, LDtk levels</h1>
-<h2 id="sprite-sheets">Sprite sheets</h2>
-<pre><code>// types.ts
-sheets: { hero: "idle" | "run" | "jump" };
-// main.ts
-assets: { sheets: { hero: { image: "assets/img/hero.png", frame: [16, 16],
-  animations: { idle: { frames: [0] }, run: { frames: [1, 2, 3, 4], fps: 12 }, jump: { frames: [5], loop: false } } } } }</code></pre>
-<pre><code>const hero = ctx.spawn({ tags: ["player"], pos, shape: { sheet: "hero", animation: "idle" } });
-hero.animation = "run";   // switches; setting the playing name again keeps it going
-hero.play("run");         // restarts</code></pre>
-<p>A sheet with one-frame animations is a tile set (<code>examples/puzzle</code>). <code>alpha export</code> packs images into atlas pages. <code>config.pixelMode</code> picks the default filtering; a world overrides it for its tileset images with <code>{ file, filter: "nearest" | "linear" | "sharp" }</code>.</p>
-<h2 id="camera">Camera</h2>
-<pre><code>ctx.camera.follow(hero, { lerp: 0.15, deadzone: [48, 32] });
-ctx.camera.bounds([0, 0, level.size[0], level.size[1]]);
-ctx.camera.shake(3, 0.25);
-ctx.camera.zoom = 2;
-ctx.camera.toWorld(ctx.input.mouse());</code></pre>
-<h2 id="ldtk-levels">LDtk levels</h2>
-<p>Make levels in <a href="https://ldtk.io">LDtk</a> (1.0 or newer, one world per project) and save the <code>.ldtk</code> project inside the game folder; tileset images and external levels (<code>.ldtkl</code>) come along on export.</p>
-<pre><code>// types.ts
-worlds: "main";
-// main.ts
-assets: { worlds: { main: "assets/levels/world.ldtk" } }   // or { file, filter }</code></pre>
-<pre><code>const level = ctx.spawnLevel("main", "Level_0", {
-  collide: { Walls: "walls" },                          // IntGrid layer -&gt; merged static boxes tagged "walls"
-  entities: { Player: (e) =&gt; player(e.pos), Coin: coin }, // LDtk entity -&gt; spawn spec(s) or null
+<p><strong>What you'll build:</strong> an animated hero (idle / run / jump / fall from a sprite sheet) that runs through a level three screens wide, with spinning coins, a still image, a camera that follows smoothly, stays inside the level, shakes on pickups and zooms on Z. Then the same hero in a level made with <a href="https://ldtk.io">LDtk</a>.</p>
+<p>Put the art next to your code: <code>assets/img/hero.png</code> (7 frames of 16x16 in one row), <code>assets/img/coin.png</code> (4 frames of 8x8) and any 16x16 <code>assets/img/npc.png</code>. The first two are in <code>examples/platformer/assets/img/</code>. Then replace <code>src/main.ts</code> and run <code>npm start</code>:</p>
+<pre><code>import { define } from "alpha";
+
+interface Sprites {
+  actions: "jump" | "zoom";
+  axes: "moveX";
+  sounds: never;
+  images: "npc";
+  tags: "hero" | "ground" | "coin" | "npc";
+  sheets: { hero: "idle" | "run" | "jump" | "fall"; coin: "spin" };
+  ui: {};
+  scenes: { play: undefined };
+}
+
+const { scene, game } = define&lt;Sprites&gt;();
+const WORLD = { width: 960, height: 180 };
+
+const play = scene("play", {
+  enter(ctx) {
+    ctx.spawn({ tags: ["ground"], pos: [WORLD.width / 2, 172], shape: { rect: [WORLD.width, 16], color: "#5f574f" }, body: { type: "static", collider: { rect: [WORLD.width, 16] } } });
+    // A sheet sprite: starts playing "idle".
+    const hero = ctx.spawn({ tags: ["hero"], pos: [40, 140], shape: { sheet: "hero", animation: "idle" }, body: { type: "dynamic", fixedRotation: true, collider: { rect: [12, 16], friction: 0 } } });
+    // Sheet sprites drawn bigger than their frame, and a plain image.
+    for (let x = 120; x &lt; WORLD.width; x += 80) ctx.spawn({ tags: ["coin"], pos: [x, 150], shape: { sheet: "coin", animation: "spin", size: [12, 12] } });
+    ctx.spawn({ tags: ["npc"], pos: [300, 148], shape: { image: "npc" } });
+
+    // The camera follows the hero smoothly and never shows outside the level.
+    ctx.camera.follow(hero, { lerp: 0.15, deadzone: [40, 30] });
+    ctx.camera.bounds([0, 0, WORLD.width, WORLD.height]);
+  },
+
+  update(ctx) {
+    const hero = ctx.find("hero");
+    const move = ctx.input.axis("moveX");
+    let vy = hero.body.velocity.y;
+    const onGround = Math.abs(vy) &lt; 1 &amp;&amp; hero.pos.y &gt; 150;
+    if (ctx.input.pressed("jump") &amp;&amp; onGround) vy = -300;
+    hero.body.velocity = [move * 100, vy];
+
+    if (move !== 0) hero.flipX = move &lt; 0;            // face where it walks
+    if (!onGround) hero.animation = vy &lt; 0 ? "jump" : "fall";
+    else hero.animation = move !== 0 ? "run" : "idle"; // same name again = keeps playing
+
+    if (ctx.input.pressed("zoom")) ctx.camera.zoom = ctx.camera.zoom === 1 ? 2 : 1;
+    for (const c of ctx.findAll("coin")) {
+      if (Math.abs(c.pos.x - hero.pos.x) &lt; 10 &amp;&amp; Math.abs(c.pos.y - hero.pos.y) &lt; 16) {
+        ctx.destroy(c);
+        ctx.camera.shake(2, 0.15);
+      }
+    }
+  },
 });
-level.int("Walls", 3, 7);            // IntGrid value (0 = empty or outside)
-level.tile("Ground", 3, 7);          // { id, flipX, flipY, tags, data } or null
-level.setInt("Walls", 3, 7, "brick"); // colliders of that layer rebuild
-level.setTile("Ground", 3, 7, 2);    // redraws in place
-ctx.world("main").levels;            // data only: level(id), levelAt(pos), entity(iid)</code></pre>
-<ul><li><strong>Colliders:</strong> <code>collide</code> takes a tag for every non-zero value, or a rule per value / identifier: <code>{ Walls: { ground: "walls", platform: { tag: "ledge", oneWay: true } } }</code> (also <code>sensor</code>, <code>friction</code>, <code>restitution</code>). Cells merge into a few static boxes.</li><li><strong>Entities:</strong> each factory gets a <code>LevelEntity</code>: <code>pos</code> in world pixels (pivot point), <code>local</code>, <code>grid</code>, <code>size</code>, <code>pivot</code>, <code>tags</code> and typed <code>fields</code> (enums as strings, Color <code>"#rrggbb"</code>, Point <code>[cx, cy]</code>, EntityRef iids resolved with <code>level.entity(iid)</code>, FilePath resolved, Tile <code>{ tileset, rect }</code>).</li><li><strong>Drawing:</strong> each tile layer is one batched, culled entity; flips and opacity follow LDtk. Animate a tile with tileset custom data <code>{"frames": [4, 5], "fps": 2}</code>. <code>z</code>, <code>layer</code> and <code>layers</code> (per LDtk layer, e.g. a parallax <code>config.layers</code> entry) place them; <code>background: true</code> fills the level color. Background images, IntGrid colors and LDtk parallax factors are not drawn.</li><li><strong>Several levels:</strong> <code>pos</code> defaults to the level's LDtk world position (Free / GridVania; Linear layouts end to end); use <code>neighbours</code> and <code>world.levelAt(pos)</code> to stream them.</li><li>Not supported (clear error): multi-world projects, LDtk older than 1.0, tilesets without an image.</li></ul>
-<p>See <code>examples/platformer</code>.</p></main></body></html>
+
+export default game({
+  config: {
+    title: "Sprites",
+    size: [320, 180],
+    background: "#87ceeb",
+    seed: 1,
+    gravity: [0, 900],
+    actions: { jump: ["Space", "W", "Up", "GamepadA"], zoom: ["Z", "GamepadY"] },
+    axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"] },
+  },
+  start: "play",
+  scenes: { play },
+  assets: {
+    sounds: {},
+    images: { npc: "assets/img/npc.png" },
+    // hero.png: 7 frames of 16x16 in a row; coin.png: 4 frames of 8x8.
+    sheets: {
+      hero: {
+        image: "assets/img/hero.png",
+        frame: [16, 16],
+        animations: {
+          idle: { frames: [0] },
+          run: { frames: [1, 2, 3, 4], fps: 12 },
+          jump: { frames: [5] },
+          fall: { frames: [6] },
+        },
+      },
+      coin: { image: "assets/img/coin.png", frame: [8, 8], animations: { spin: { frames: [0, 1, 2, 3], fps: 8 } } },
+    },
+  },
+});</code></pre>
+<p>Expected: the hero stands idle, runs (facing the way it goes) with the arrows, shows the jump frame going up and the fall frame coming down; coins spin; the camera trails the hero, stops at the level's ends, shakes a little per coin and doubles in size with Z.</p>
+<h2 id="step-by-step">Step by step</h2>
+<h3 id="images">Images</h3>
+<pre><code>// types: images: "npc" | "sky";
+assets: { images: {
+  npc: "assets/img/npc.png",
+  sky: { file: "assets/img/sky.png", filter: "linear" },   // smooth art; "nearest" crisp; "sharp" pixel art at any scale/angle
+} }</code></pre>
+<pre><code>ctx.spawn({ tags: ["npc"], pos: [300, 148], shape: { image: "npc" } });                   // its own pixel size
+ctx.spawn({ tags: ["sky"], pos: [160, 90], shape: { image: "sky", size: [320, 180] }, z: -10 });</code></pre>
+<p>Expected: the image is centered on <code>pos</code>. Without <code>filter</code>, <code>config.pixelMode</code> decides (default <code>true</code>: crisp). <code>alpha export</code> packs every PNG into atlas pages.</p>
+<h3 id="sprite-sheets-and-animations">Sprite sheets and animations</h3>
+<pre><code>// types: sheets: { hero: "idle" | "run" | "jump" | "fall" };
+sheets: {
+  hero: {
+    image: "assets/img/hero.png",
+    frame: [16, 16],                           // cell size; frame 0 is top-left, row-major
+    animations: {
+      idle: { frames: [0] },
+      run: { frames: [1, 2, 3, 4], fps: 12 },  // fps default 10
+      jump: { frames: [5], loop: false },      // a one-shot holds its last frame
+    },
+  },
+}</code></pre>
+<pre><code>const hero = ctx.spawn({ tags: ["hero"], pos: [40, 140], shape: { sheet: "hero", animation: "idle" } });
+hero.animation = "run";   // switch (from its first frame); setting the same name keeps it going
+hero.play("run");         // restart even if already playing
+hero.animation;           // "run" ("" before any)
+hero.flipX = true;        // face left</code></pre>
+<p><code>size: [w, h]</code> draws a frame at another size; <code>flipX</code> / <code>flipY</code> can be in the spec too. A sheet whose animations are one frame each is a tile set (<code>examples/puzzle</code>). An unknown animation name is an error that lists the sheet's animations.</p>
+<h3 id="look-of-a-sprite">Look of a sprite</h3>
+<pre><code>hero.tint = "#ff8080";   // multiply color ("#rrggbbaa" works)
+hero.alpha = 0.5;
+hero.scale = 2;
+hero.rotation = 15;</code></pre>
+<p>More in <a href="particles.html#looks">Particles and effects</a>.</p>
+<h3 id="camera-follow">Camera follow</h3>
+<pre><code>ctx.camera.follow(hero);                                   // locked on
+ctx.camera.follow(hero, { lerp: 0.15, deadzone: [40, 30] }); // smooth; free box in the middle
+ctx.camera.follow(null);                                   // stop following</code></pre>
+<p><code>lerp</code> is the fraction of the remaining distance covered per step (0..1]. Inside the <code>deadzone</code> box the hero moves without moving the camera.</p>
+<h3 id="camera-bounds-zoom-rotation-position">Camera bounds, zoom, rotation, position</h3>
+<pre><code>ctx.camera.bounds([0, 0, 960, 180]);   // never show outside this rect; null removes it
+ctx.camera.zoom = 2;                   // everything twice as big
+ctx.camera.rotation = 5;               // degrees
+ctx.camera.pos.x = 480;                // world point at the screen center (when not following)
+const [vx, vy, vw, vh] = ctx.camera.view;   // the world rect visible right now</code></pre>
+<p>Each scene starts with the camera centered on <code>config.size</code>, zoom 1. Read <code>ctx.camera.view</code> each time you need the visible area: it changes with zoom, movement and window size.</p>
+<h3 id="screen-shake">Screen shake</h3>
+<pre><code>ctx.camera.shake(4, 0.3);   // up to 4 px, fading out over 0.3 s</code></pre>
+<p>Deterministic, and scaled down when the player turns on <code>ctx.settings.reducedMotion</code>.</p>
+<h3 id="mouse-to-world">Mouse to world</h3>
+<pre><code>const world = ctx.camera.toWorld(ctx.input.mouse());   // where the pointer is in the level</code></pre>
+<h2 id="ldtk-levels">LDtk levels</h2>
+<p>Draw levels in <a href="https://ldtk.io">LDtk</a> (1.0 or newer, one world per project) and save the <code>.ldtk</code> project inside the game folder; its tileset images and external levels (<code>.ldtkl</code>) come along on export. This is the hero from above in the <code>examples/platformer</code> world (copy <code>examples/platformer/assets/levels/</code> and <code>assets/tiles/</code>): an IntGrid layer <code>Walls</code>, tile layers, and <code>Player</code> / <code>Coin</code> entities.</p>
+<pre><code>import { define, type EntitySpec, type LevelEntity } from "alpha";
+
+interface Levels {
+  actions: "jump";
+  axes: "moveX";
+  sounds: never;
+  images: never;
+  tags: "player" | "coin" | "walls";
+  sheets: { hero: "idle" | "run"; coin: "spin" };
+  worlds: "main";
+  ui: {};
+  scenes: { boot: undefined; play: { level: string } };
+}
+
+const { scene, game } = define&lt;Levels&gt;();
+type Spec = EntitySpec&lt;Levels["tags"], never, Levels["sheets"]&gt;;
+
+// Factories: one LDtk entity -&gt; a spawn spec (or several, or null to skip it).
+const player = (e: LevelEntity): Spec =&gt; ({
+  tags: ["player"], pos: e.pos, shape: { sheet: "hero", animation: "idle" },
+  body: { type: "dynamic", fixedRotation: true, collider: { rect: [12, 16], friction: 0 } },
+});
+const coin = (e: LevelEntity): Spec =&gt; ({
+  tags: ["coin"], pos: e.pos, shape: { sheet: "coin", animation: "spin" },
+  body: { type: "static", collider: { circle: 4, sensor: true } },
+});
+
+const boot = scene("boot", { enter: (ctx) =&gt; ctx.go("play", { level: "Level_0" }) });
+
+const play = scene("play", {
+  enter(ctx, { level: id }) {
+    const level = ctx.spawnLevel("main", id, {
+      collide: { Walls: "walls" },                  // IntGrid layer -&gt; merged static colliders tagged "walls"
+      entities: { Player: player, Coin: coin },     // LDtk entity identifier -&gt; factory
+      background: true,                             // fill the level's LDtk background color
+    });
+    ctx.camera.follow(ctx.find("player"), { lerp: 0.15 });
+    ctx.camera.bounds([level.pos[0], level.pos[1], level.size[0], level.size[1]]);
+    ctx.onEnter("player", "coin", (_p, c) =&gt; ctx.destroy(c));
+  },
+  update(ctx) {
+    const p = ctx.find("player");
+    p.body.velocity = [ctx.input.axis("moveX") * 100, p.body.velocity.y];
+  },
+});
+
+export default game({
+  config: {
+    title: "Levels",
+    size: [320, 180],
+    seed: 1,
+    gravity: [0, 900],
+    actions: { jump: ["Space"] },
+    axes: { moveX: ["A/D", "Left/Right", "GamepadLeftX"] },
+  },
+  start: "boot",
+  scenes: { boot, play },
+  assets: {
+    sounds: {},
+    worlds: { main: "assets/levels/world.ldtk" },   // or { file, filter } for its tilesets
+    sheets: {
+      hero: { image: "assets/img/hero.png", frame: [16, 16], animations: { idle: { frames: [0] }, run: { frames: [1, 2, 3, 4], fps: 12 } } },
+      coin: { image: "assets/img/coin.png", frame: [8, 8], animations: { spin: { frames: [0, 1, 2, 3], fps: 8 } } },
+    },
+  },
+});</code></pre>
+<p>Expected: the level's tiles draw, the hero lands on the <code>Walls</code> cells, eight coins spin where they were placed in LDtk and vanish when touched, and the camera stays inside the level.</p>
+<h3 id="colliders-from-intgrid">Colliders from IntGrid</h3>
+<pre><code>collide: { Walls: "walls" }   // every non-zero value -&gt; static colliders tagged "walls"
+// or one rule per IntGrid value (its identifier or number):
+collide: { Walls: { ground: "walls", brick: { tag: "ledge", oneWay: true } } }</code></pre>
+<p>A rule takes <code>tag</code> plus <code>oneWay</code>, <code>sensor</code>, <code>friction</code>, <code>restitution</code>. Neighbouring cells merge into a few big static boxes, so the tag works with <code>onHit</code>, <code>raycast</code> and queries like any body.</p>
+<h3 id="entities-and-their-fields">Entities and their fields</h3>
+<pre><code>entities: {
+  Player: player,
+  Coin: (e) =&gt; (e.fields.hidden === true ? null : coin(e)),   // skip some
+  Door: (e) =&gt; ({ tags: ["door"], pos: e.pos, body: { type: "static", collider: { rect: e.size, sensor: true } },
+                  data: { to: e.fields.to as string } }),
+}</code></pre>
+<p>A factory gets a <code>LevelEntity</code>: <code>id</code> ("Coin"), <code>iid</code>, <code>pos</code> (world pixels of its pivot), <code>local</code>, <code>grid</code> (cell), <code>size</code>, <code>pivot</code>, <code>layer</code>, <code>tags</code>, <code>tile</code> and <code>fields</code>. Field values are plain data: numbers, strings (enums and colors <code>"#rrggbb"</code> too), booleans, null, Point as <code>[cx, cy]</code>, Tile as <code>{ tileset, rect }</code>, arrays, and EntityRef as <code>{ entity, layer, level }</code> iids:</p>
+<pre><code>const ref = level.entities("Lever")[0].fields.door;
+if (ref &amp;&amp; typeof ref === "object" &amp;&amp; "entity" in ref) level.entity(ref.entity);   // the spawned door</code></pre>
+<h3 id="reading-and-editing-cells">Reading and editing cells</h3>
+<pre><code>level.int("Walls", 3, 7);                          // IntGrid value (0 = empty or outside)
+level.tile("Ground", 3, 7);                        // { id, flipX, flipY, tags, data } or null
+const cell = level.toCell([100, 120], "Walls");    // world point -&gt; [cx, cy]
+level.toWorld(cell, "Walls");                      // cell center in world pixels
+level.setInt("Walls", cell[0], cell[1], 0);        // clear: that layer's colliders rebuild
+level.setTile("Ground", cell[0], cell[1], null);   // and its tile, redrawn in place
+level.setInt("Walls", 5, 5, "brick");              // by identifier
+level.setTile("Ground", 5, 5, 2, { flipX: true }); // tile id 2 of the layer's tileset
+level.entities("Coin");                            // copies of the LDtk instances
+level.destroy();                                   // tiles, colliders, background and factory entities</code></pre>
+<p>Auto-layer tiles are not re-run by <code>setInt</code>: change the look with <code>setTile</code>.</p>
+<h3 id="drawing-order-and-parallax">Drawing order and parallax</h3>
+<pre><code>// types: layers: "far";  config: { layers: { far: { z: -100, parallax: 0.3 } } }
+ctx.spawnLevel("main", "Level_0", { layers: { Deco: "far" }, z: -1 });</code></pre>
+<p>Each tile layer is one batched, culled entity; LDtk flips and opacity apply. <code>z</code> places every tile layer, <code>layer</code> puts all of them on a <code>config.layers</code> layer, <code>layers</code> maps single LDtk layers (e.g. a parallax backdrop). Animate a tile with tileset custom data <code>{"frames": [4, 5], "fps": 2}</code>. Background images, IntGrid colors and LDtk's own parallax factors are not drawn.</p>
+<h3 id="world-data-without-spawning">World data without spawning</h3>
+<pre><code>const world = ctx.world("main");
+world.levels;                      // ["Level_0", ...] in project order
+world.layout;                      // "Free" | "GridVania" | "LinearHorizontal" | "LinearVertical"
+world.level("Level_0").size;       // any level's data: entities, int, tile, fields, neighbours
+world.levelAt([500, 100]);         // the level under a world point, or null
+world.entity(iid);                 // an instance anywhere, with its level id</code></pre>
+<h2 id="recipes">Recipes</h2>
+<h3 id="room-transitions-rooms-streamed-as-you-walk">Room transitions (rooms streamed as you walk)</h3>
+<pre><code>// state: () =&gt; ({ room: null as Level&lt;MyGame["tags"]&gt; | null })
+function enterRoom(ctx: Play, id: string) {
+  ctx.state.room?.destroy();
+  const room = ctx.spawnLevel("main", id, { collide: { Walls: "walls" }, entities: { Coin: coin } });
+  ctx.state.room = room;
+  ctx.camera.bounds([room.pos[0], room.pos[1], room.size[0], room.size[1]]);
+}
+
+// enter: the hero lives outside any room, so destroying a room keeps it
+const start = ctx.world("main").level("Level_0").entities("Player")[0];
+ctx.camera.follow(ctx.spawn(player(start)), { lerp: 0.2 });
+enterRoom(ctx, "Level_0");
+
+// update:
+const p = ctx.find("player");
+const here = ctx.world("main").levelAt([p.pos.x, p.pos.y]);
+if (here &amp;&amp; here.id !== ctx.state.room?.id) enterRoom(ctx, here.id);</code></pre>
+<p>Levels spawn at their LDtk world position (Free / GridVania; Linear layouts end to end), so neighbours line up. <code>level.neighbours</code> lists adjacent level ids and directions.</p>
+<h3 id="door-to-another-level-scene-restart">Door to another level (scene restart)</h3>
+<pre><code>ctx.onEnter("player", "door", (_p, d) =&gt; ctx.go("play", { level: d.data.to as string }));</code></pre>
+<h3 id="dig-through-bricks">Dig through bricks</h3>
+<pre><code>if (ctx.input.pressed("dig")) {
+  const [cx, cy] = level.toCell([p.pos.x, p.pos.y + 16], "Walls");
+  if (level.int("Walls", cx, cy) === 2) {       // 2 = "brick"
+    level.setInt("Walls", cx, cy, 0);
+    level.setTile("Ground", cx, cy, null);
+  }
+}</code></pre>
+<h3 id="facing-and-animation-state-in-one-place">Facing and animation state in one place</h3>
+<pre><code>type Hero = Entity&lt;MyGame["tags"], "idle" | "run" | "jump" | "fall"&gt;;   // import type { Entity } from "alpha"
+
+function animate(hero: Hero, move: number, grounded: boolean) {
+  if (move !== 0) hero.flipX = move &lt; 0;
+  if (!grounded) hero.animation = hero.body.velocity.y &lt; 0 ? "jump" : "fall";
+  else hero.animation = move !== 0 ? "run" : "idle";
+}</code></pre>
+<p>Assigning every step is fine: the same name keeps the animation going.</p>
+<h3 id="look-ahead-camera">Look-ahead camera</h3>
+<pre><code>ctx.camera.follow(null);
+const target = hero.pos.x + (hero.flipX ? -40 : 40);
+ctx.camera.pos.x += (target - ctx.camera.pos.x) * 0.1;
+ctx.camera.pos.y = hero.pos.y;</code></pre>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li><code>size</code> on a sheet or image changes how big it draws, not its collider.</li><li>Set an animation every step if you like; use <code>play()</code> only to restart one.</li><li>Read <code>ctx.camera.view</code> instead of assuming <code>config.size</code>: phones and resized windows show more.</li><li>Factory entities belong to the level: <code>level.destroy()</code> removes those still alive.</li><li>Not supported (clear error): multi-world LDtk projects, LDtk older than 1.0, tilesets without an image.</li></ul>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="physics.html">Physics</a>: ground checks, one-way ledges, sensors for coins and doors.</li><li><a href="particles.html">Particles and effects</a>: layers, parallax, tweens, shake.</li><li><a href="concepts.html#later-topics">Concepts</a>: image filtering and window stretch.</li><li><code>examples/platformer</code> (sheets, LDtk, camera, lift), <code>examples/puzzle</code> (sheet as tile set).</li></ul></main></body></html>

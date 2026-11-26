@@ -1,35 +1,234 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Physics - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html" class="here">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html" class="here">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="physics">Physics</h1>
-<p>Box2D v3 under a small API. Units are pixels, degrees and kg (50 px = 1 m inside).</p>
-<pre><code>config: { gravity: [0, 900], collision: { categories: ["ship", "enemy", "shot"] } }
+<p><strong>What you'll build:</strong> a small platformer room: a hero that runs and jumps, a stack of crates it can push, a one-way ledge it jumps up through, coins it collects (sensors) and a spike that restarts the room.</p>
+<p>Physics is Box2D v3 under a small API: give an entity a <code>body</code> and the engine moves it, collides it and tells you about contacts. Units are pixels, degrees and seconds. Replace <code>src/main.ts</code> with this and run <code>npm start</code>:</p>
+<pre><code>import { define, type Context } from "alpha";
 
-body: { type: "dynamic", fixedRotation: true, gravityScale: 1, bullet: false,
-        category: "ship", collidesWith: ["enemy"],
-        collider: { rect: [12, 16], friction: 0.6, restitution: 0, density: 1 } }
-// static (walls), kinematic (moved by velocity only: lifts, enemies on paths), dynamic
-// collider: { circle: r } or { rect: [w, h] }; sensor: true (overlaps only); oneWay: true (jump up through)</code></pre>
-<h2 id="contacts">Contacts</h2>
-<pre><code>ctx.onHit("hero", "enemy", (h, e, contact) =&gt; { /* contact.normal h -&gt; e, point, speed */ });
-ctx.onHitEnd("hero", "ground", (h, g) =&gt; {});
-ctx.onEnter("player", "coin", (p, c) =&gt; {});   // a sensor overlap starts
-ctx.onExit("player", "zone", (p, z) =&gt; {});</code></pre>
-<p>Several contacts can arrive in one step: check <code>e.alive</code> before acting on an entity a previous handler may have destroyed. Categories need both sides to accept each other.</p>
-<h2 id="queries">Queries</h2>
-<pre><code>ctx.raycast([x, y], [x, y + 12], { tags: ["walls"] });   // { entity, point, normal, fraction } | null
-ctx.raycastAll(from, to, { categories: ["enemy"] });
-ctx.queryCircle(center, radius, { tags: ["enemy"] });    // sensors included
-ctx.queryRect([x, y, w, h]);</code></pre>
-<p>Raycasts ignore sensors; area queries include them.</p>
-<h2 id="bodies-and-joints">Bodies and joints</h2>
-<pre><code>hero.body.velocity = [vx, vy];
-hero.body.applyImpulse([0, -hero.body.mass * 300]);   // changes velocity by 300 px/s
-const rope = ctx.joint({ type: "rope", a: hook, b: crate, length: 80 });   // revolute | distance | weld | prismatic
-rope.destroy();</code></pre>
-<h2 id="tweens-and-vectors">Tweens and vectors</h2>
-<pre><code>import { vec } from "alpha";   // add sub scale len norm dot lerp angle fromAngle dist
-ctx.tween(lift, { to: { x: 470 }, seconds: 2.5, ease: "sineInOut", yoyo: true, repeat: Infinity });
-ctx.tween(coin, { to: { scale: 2.5, alpha: 0 }, seconds: 0.25, onDone: () =&gt; ctx.destroy(coin) });</code></pre>
-<p>A tweened kinematic body moves by velocity, so riders are carried (<code>examples/platformer</code> lift).</p></main></body></html>
+interface Phys {
+  actions: "jump";
+  axes: "moveX";
+  sounds: "coin";
+  images: never;
+  tags: "hero" | "ground" | "ledge" | "crate" | "coin" | "spike";
+  ui: {};
+  scenes: { play: undefined };
+}
+
+const { scene, game } = define&lt;Phys&gt;();
+type Play = Context&lt;Phys, { coins: number }&gt;;
+
+// Standing on something: a short ray down from the feet hits a solid that is not the hero.
+function grounded(ctx: Play): boolean {
+  const h = ctx.find("hero");
+  return ctx.raycast([h.pos.x, h.pos.y + 7], [h.pos.x, h.pos.y + 12], { tags: ["ground", "ledge", "crate"] }) !== null;
+}
+
+const play = scene("play", {
+  state: () =&gt; ({ coins: 0 }),
+
+  enter(ctx) {
+    // Static: never moves. The floor and a one-way ledge you can jump up through.
+    ctx.spawn({ tags: ["ground"], pos: [160, 172], shape: { rect: [320, 16], color: "#5f574f" }, body: { type: "static", collider: { rect: [320, 16] } } });
+    ctx.spawn({ tags: ["ledge"], pos: [220, 110], shape: { rect: [60, 4], color: "#ab5236" }, body: { type: "static", collider: { rect: [60, 4], oneWay: true } } });
+    // Dynamic: gravity, collisions, pushes. The hero never tips over.
+    ctx.spawn({ tags: ["hero"], pos: [40, 140], shape: { rect: [12, 16], color: "#29adff" }, body: { type: "dynamic", fixedRotation: true, collider: { rect: [12, 16], friction: 0 } } });
+    for (let i = 0; i &lt; 3; i++) {
+      ctx.spawn({ tags: ["crate"], pos: [120, 156 - i * 16], shape: { rect: [16, 16], color: "#ffa300" }, body: { type: "dynamic", collider: { rect: [16, 16], density: 0.5 } } });
+    }
+    // Sensors: overlaps only, nothing bumps into them.
+    for (const x of [220, 240]) {
+      ctx.spawn({ tags: ["coin"], pos: [x, 96], shape: { circle: 4, color: "#ffec27" }, body: { type: "static", collider: { circle: 4, sensor: true } } });
+    }
+    ctx.spawn({ tags: ["spike"], pos: [290, 160], shape: { rect: [16, 8], color: "#ff004d" }, body: { type: "static", collider: { rect: [16, 8] } } });
+
+    ctx.onEnter("hero", "coin", (_h, c) =&gt; {
+      ctx.destroy(c);
+      ctx.state.coins += 1;
+      ctx.audio.play("coin");
+    });
+    ctx.onHit("hero", "spike", () =&gt; ctx.go("play"));
+  },
+
+  update(ctx) {
+    const h = ctx.find("hero");
+    let vy = h.body.velocity.y;
+    if (ctx.input.pressed("jump") &amp;&amp; grounded(ctx)) vy = -330;
+    h.body.velocity = [ctx.input.axis("moveX") * 110, vy];
+  },
+});
+
+export default game({
+  config: {
+    title: "Physics",
+    size: [320, 180],
+    background: "#1d2b53",
+    seed: 1,
+    gravity: [0, 900],
+    actions: { jump: ["Space", "W", "Up", "GamepadA"] },
+    axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"] },
+  },
+  start: "play",
+  scenes: { play },
+  assets: { sounds: { coin: { wave: "triangle", freq: 1200, duration: 0.08, volume: 0.3 } } },
+});</code></pre>
+<p>Expected: the hero drops onto the floor; walking right shoves the crates; Space jumps (also off the crates); the ledge lets you jump up through it and stand on it; its two coins vanish with a blip; touching the red spike restarts the room.</p>
+<h2 id="step-by-step">Step by step</h2>
+<h3 id="gravity">Gravity</h3>
+<pre><code>config: { gravity: [0, 900] }   // px/s² (+y down). Omit it for none (top-down, space games).</code></pre>
+<h3 id="three-body-types">Three body types</h3>
+<pre><code>// static: never moves (walls, floors, spikes)
+ctx.spawn({ tags: ["wall"], pos: [0, 90], body: { type: "static", collider: { rect: [8, 180] } } });
+// kinematic: moves only by its velocity (or a tween); pushes dynamics, ignores forces and gravity
+ctx.spawn({ tags: ["lift"], pos: [100, 120], shape: { rect: [40, 6], color: "#c2c3c7" }, body: { type: "kinematic", collider: { rect: [40, 6] }, velocity: [30, 0] } });
+// dynamic: gravity, forces, collisions
+ctx.spawn({ tags: ["ball"], pos: [160, 20], shape: { circle: 6, color: "#ff77a8" }, body: { type: "dynamic", collider: { circle: 6 } } });</code></pre>
+<p>The body sits at <code>pos</code> (the center). <code>shape</code> is only how it looks; <code>collider</code> is what collides, so keep their sizes in step.</p>
+<h3 id="colliders-and-materials">Colliders and materials</h3>
+<pre><code>ctx.spawn({ tags: ["ground"], pos: [160, 170], shape: { rect: [320, 20], color: "#c2c3c7" },
+  body: { type: "static", collider: { rect: [320, 20], friction: 0.05 } } });          // ice
+ctx.spawn({ tags: ["ball"], pos: [100, 20], shape: { circle: 6, color: "#ff77a8" },
+  body: { type: "dynamic", collider: { circle: 6, restitution: 0.9, density: 2 } } }); // bouncy, heavy
+ctx.spawn({ tags: ["crate"], pos: [140, 20], shape: { rect: [16, 16], color: "#ffa300" },
+  body: { type: "dynamic", gravityScale: 0.3, collider: { rect: [16, 16] } } });       // floaty</code></pre>
+<table><thead><tr><th>Collider field</th><th>Default</th><th>Meaning</th></tr></thead><tbody><tr><td><code>circle: r</code> / <code>rect: [w, h]</code></td><td></td><td>the shape</td></tr><tr><td><code>friction</code></td><td>0.6</td><td>0 = slides forever</td></tr><tr><td><code>restitution</code></td><td>0</td><td>bounciness 0..1</td></tr><tr><td><code>density</code></td><td>1</td><td>kg per m² (50 px = 1 m): heavier pushes harder</td></tr><tr><td><code>sensor</code></td><td>false</td><td>overlaps only (<code>onEnter</code> / <code>onExit</code>)</td></tr><tr><td><code>oneWay</code></td><td>false</td><td>solid only from above: jump up through it</td></tr></tbody></table>
+<table><thead><tr><th>Body field</th><th>Meaning</th></tr></thead><tbody><tr><td><code>velocity</code></td><td>starting velocity in px/s</td></tr><tr><td><code>fixedRotation</code></td><td>never rotates (platformer heroes)</td></tr><tr><td><code>gravityScale</code></td><td>multiplies <code>config.gravity</code> (0 = floats)</td></tr><tr><td><code>bullet</code></td><td>continuous collision for fast projectiles</td></tr><tr><td><code>category</code>, <code>collidesWith</code></td><td>who collides with whom (below)</td></tr></tbody></table>
+<h3 id="moving-a-body">Moving a body</h3>
+<pre><code>const b = ctx.find("ball").body;
+b.velocity = [120, -200];             // set directly: the usual way to steer heroes
+b.velocity.x;                         // read
+b.applyImpulse([0, -b.mass * 300]);   // instant: changes velocity by 300 px/s up
+b.applyForce([b.mass * 500, 0]);      // this step: accelerates by 500 px/s² right
+b.applyTorque(50);
+b.angularVelocity = 180;              // degrees per second, clockwise</code></pre>
+<p>Setting <code>entity.pos</code> teleports a body; prefer velocity for anything that should collide on the way.</p>
+<h3 id="solid-contacts-onhit">Solid contacts: onHit</h3>
+<pre><code>ctx.onHit("hero", "enemy", (hero, enemy, contact) =&gt; {
+  if (contact.normal[1] &gt; 0.7) {           // normal points hero -&gt; enemy: enemy is below = a stomp
+    ctx.destroy(enemy);
+    hero.body.velocity = [hero.body.velocity.x, -250];
+  } else {
+    ctx.go("play");                        // hit from the side: start over
+  }
+});
+ctx.onHitEnd("hero", "ground", () =&gt; console.log("left the ground"));
+ctx.onHit("crate", "ground", (_c, _g, contact) =&gt; {
+  if (contact.speed &gt; 300) console.log("crash at", contact.point);
+});</code></pre>
+<p>Register handlers once, in <code>enter</code>. The first argument always has the first tag. <code>contact</code> has <code>normal</code> (unit, first -&gt; second), <code>point</code> and <code>speed</code> (approach speed in px/s).</p>
+<h3 id="sensors-onenter-onexit">Sensors: onEnter / onExit</h3>
+<pre><code>ctx.spawn({ tags: ["zone"], pos: [200, 150], shape: { rect: [40, 40], color: "#00e43640" },
+  body: { type: "static", collider: { rect: [40, 40], sensor: true } } });
+ctx.onEnter("hero", "zone", () =&gt; { ctx.state.inZone = true; });
+ctx.onExit("hero", "zone", () =&gt; { ctx.state.inZone = false; });</code></pre>
+<p>Expected: nothing bumps into the zone; the flag is true while the hero overlaps it. Use sensors for pickups, triggers, doors, hurtboxes and bullets that should not push.</p>
+<h3 id="one-way-platforms">One-way platforms</h3>
+<pre><code>ctx.spawn({ tags: ["ledge"], pos: [220, 110], shape: { rect: [60, 4], color: "#ab5236" },
+  body: { type: "static", collider: { rect: [60, 4], oneWay: true } } });</code></pre>
+<p>Bodies coming from above land on it; from below or the side they pass through.</p>
+<h3 id="collision-categories">Collision categories</h3>
+<pre><code>// types: categories: "player" | "foe" | "shot" | "world";
+config: { collision: { categories: ["player", "foe", "shot", "world"] } }</code></pre>
+<pre><code>ctx.spawn({ tags: ["hero"], pos: [40, 100], shape: { rect: [12, 16], color: "#29adff" },
+  body: { type: "dynamic", category: "player", collidesWith: ["foe", "world"], collider: { rect: [12, 16] } } });
+ctx.spawn({ tags: ["enemy"], pos: [80, 100], shape: { rect: [12, 12], color: "#ff004d" },
+  body: { type: "dynamic", category: "foe", collidesWith: ["player", "shot", "world"], collider: { rect: [12, 12] } } });</code></pre>
+<p>Two bodies collide only when <strong>both</strong> accept each other. Without <code>collidesWith</code> a body accepts all. A prefab type with categories: <code>EntitySpec&lt;MyGame["tags"], never, {}, never, never, MyGame["categories"]&gt;</code>.</p>
+<h3 id="raycasts-and-area-queries">Raycasts and area queries</h3>
+<pre><code>const h = ctx.find("hero");
+const hit = ctx.raycast([h.pos.x, h.pos.y], [h.pos.x + 200, h.pos.y], { tags: ["wall", "enemy"] });
+if (hit) console.log(hit.entity.tags, hit.point, hit.normal, hit.fraction);   // nearest solid
+for (const r of ctx.raycastAll([0, 90], [320, 90], { categories: ["foe"] })) r.entity.tint = "#ff0000";
+const near = ctx.queryCircle([h.pos.x, h.pos.y], 48, { tags: ["enemy"] });       // overlapping a circle
+const inBox = ctx.queryRect([100, 50, 60, 40]);                                   // [x, y, w, h], top-left</code></pre>
+<p>Raycasts ignore sensors and a ray that starts inside a collider does not hit it; area queries include sensors. Filters take <code>tags</code> and/or <code>categories</code>.</p>
+<h3 id="joints">Joints</h3>
+<pre><code>const pin = ctx.spawn({ tags: ["anchor"], pos: [160, 20], body: { type: "static", collider: { circle: 2 } } });
+const bob = ctx.spawn({ tags: ["ball"], pos: [220, 20], shape: { circle: 8, color: "#ff77a8" }, body: { type: "dynamic", collider: { circle: 8 } } });
+
+ctx.joint({ type: "revolute", a: pin, b: bob, anchor: [160, 20] });  // hinge around a world point
+ctx.joint({ type: "distance", a: pin, b: bob, length: 60 });         // rigid stick
+const rope = ctx.joint({ type: "rope", a: pin, b: bob, length: 80 }); // at most 80 apart, slack allowed
+ctx.joint({ type: "weld", a: pin, b: bob });                          // glued
+if (rope.alive) rope.destroy();</code></pre>
+<p>Use one of these per pair (they are alternatives). Limits and motors:</p>
+<pre><code>// A cart on a rail: slides 0..120 px along x, driven at 60 px/s
+const rail = ctx.spawn({ tags: ["rail"], pos: [60, 150], body: { type: "static", collider: { rect: [4, 4] } } });
+const car = ctx.spawn({ tags: ["car"], pos: [60, 150], shape: { rect: [20, 10], color: "#ffa300" }, body: { type: "dynamic", collider: { rect: [20, 10] } } });
+ctx.joint({ type: "prismatic", a: rail, b: car, axis: [1, 0], limits: [0, 120], motor: { speed: 60, max: 1000 } });
+
+// A spinning arm (windmill): 90 degrees per second
+const hub = ctx.spawn({ tags: ["anchor"], pos: [250, 120], body: { type: "static", collider: { circle: 2 } } });
+const arm = ctx.spawn({ tags: ["wheel"], pos: [250, 120], shape: { rect: [60, 6], color: "#c2c3c7" }, body: { type: "dynamic", collider: { rect: [60, 6] } } });
+ctx.joint({ type: "revolute", a: hub, b: arm, motor: { speed: 90, max: 100000 } });</code></pre>
+<p>Revolute <code>limits</code> are degrees (<code>[-45, 45]</code>), prismatic ones pixels along <code>axis</code>, distance ones <code>[min, max]</code> length. <code>collide: true</code> lets the two bodies still touch. A joint goes away with either body or the scene.</p>
+<h3 id="moving-platforms-that-carry-riders">Moving platforms that carry riders</h3>
+<pre><code>const lift = ctx.spawn({ tags: ["lift"], pos: [80, 120], shape: { rect: [48, 6], color: "#c2c3c7" },
+  body: { type: "kinematic", collider: { rect: [48, 6], friction: 1 } } });
+ctx.tween(lift, { to: { x: 240 }, seconds: 3, ease: "sineInOut", yoyo: true, repeat: Infinity });</code></pre>
+<p>A tweened kinematic body moves by velocity, so dynamic bodies on it ride along. A hero that sets its own <code>velocity</code> each step should add the platform's: <code>ground.body.velocity.x</code> (see <code>examples/platformer</code>).</p>
+<h2 id="recipes">Recipes</h2>
+<h3 id="double-jump">Double jump</h3>
+<pre><code>// state: () =&gt; ({ jumps: 0 }); grounded() as in the full example
+const h = ctx.find("hero");
+if (grounded(ctx)) ctx.state.jumps = 2;
+if (ctx.input.pressed("jump") &amp;&amp; ctx.state.jumps &gt; 0) {
+  ctx.state.jumps -= 1;
+  h.body.velocity = [h.body.velocity.x, -300];
+}</code></pre>
+<h3 id="enemy-patrol-that-turns-at-walls-and-edges">Enemy patrol that turns at walls and edges</h3>
+<pre><code>for (const e of ctx.findAll("enemy")) {
+  let dir = (e.data.dir as number | undefined) ?? 1;
+  const ahead = e.pos.x + dir * 10;
+  const floor = ctx.raycast([ahead, e.pos.y], [ahead, e.pos.y + 16], { tags: ["ground"] });
+  const wall = ctx.raycast([e.pos.x, e.pos.y], [ahead + dir * 2, e.pos.y], { tags: ["wall"] });
+  if (!floor || wall) dir = -dir;
+  e.data.dir = dir;
+  e.body.velocity = [dir * 40, e.body.velocity.y];
+}</code></pre>
+<h3 id="bullets">Bullets</h3>
+<pre><code>function bullet(from: Vec2, dir: Vec2): Spec {
+  return {
+    tags: ["bullet"], pos: from, shape: { circle: 2, color: "#ffec27" },
+    body: { type: "dynamic", bullet: true, gravityScale: 0, collider: { circle: 2, sensor: true },
+            velocity: vec.scale(vec.norm(dir), 300) },
+  };
+}
+// enter:
+ctx.onEnter("bullet", "enemy", (b, e) =&gt; { ctx.destroy(b); ctx.destroy(e); });
+ctx.onEnter("bullet", "wall", (b) =&gt; ctx.destroy(b));
+// update:
+if (ctx.input.pressed("fire")) ctx.spawn(bullet([h.pos.x, h.pos.y], [h.flipX ? -1 : 1, 0]));</code></pre>
+<p>A sensor bullet passes through what it hits instead of knocking it; <code>bullet: true</code> keeps fast shots from tunneling.</p>
+<h3 id="explosion-that-throws-crates">Explosion that throws crates</h3>
+<pre><code>function explosion(ctx: Play, at: Vec2) {
+  for (const e of ctx.queryCircle(at, 64, { tags: ["crate", "enemy"] })) {
+    if (e.body.type !== "dynamic") continue;
+    const away = vec.norm(vec.sub([e.pos.x, e.pos.y], at));
+    e.body.applyImpulse(vec.scale(away, e.body.mass * 400));   // +400 px/s away from the blast
+  }
+  ctx.camera.shake(4, 0.3);
+}</code></pre>
+<h3 id="door-trigger-and-press-to-enter">Door trigger and press-to-enter</h3>
+<pre><code>ctx.spawn({ tags: ["door"], pos: [300, 150], shape: { rect: [16, 24], color: "#ab5236" },
+  body: { type: "static", collider: { rect: [16, 24], sensor: true } } });
+ctx.onEnter("hero", "door", () =&gt; ctx.go("cave", { from: "east" }));   // walk in
+
+// or: track the overlap with onEnter/onExit (Sensors above), then in update:
+if (ctx.input.pressed("use") &amp;&amp; ctx.state.inZone) ctx.go("cave", { from: "door" });</code></pre>
+<h3 id="grappling-rope">Grappling rope</h3>
+<pre><code>const h = ctx.find("hero");
+const hit = ctx.raycast([h.pos.x, h.pos.y], [h.pos.x + 80, h.pos.y - 120], { tags: ["hook"] });
+if (hit &amp;&amp; ctx.input.pressed("use")) {
+  ctx.joint({ type: "rope", a: hit.entity, b: h, anchors: [hit.point, [h.pos.x, h.pos.y]] });
+}</code></pre>
+<h3 id="breakable-crates">Breakable crates</h3>
+<pre><code>ctx.onHit("ball", "crate", (_b, crate, contact) =&gt; {
+  if (contact.speed &gt; 250 &amp;&amp; crate.alive) ctx.destroy(crate);
+});</code></pre>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li>Several contacts can arrive in one step: check <code>alive</code> before acting on an entity a previous handler destroyed.</li><li><code>entity.body</code> throws for an entity spawned without <code>body</code>.</li><li><code>onHit</code> is for solids, <code>onEnter</code> for sensors: a pair with a sensor never fires <code>onHit</code>.</li><li>Categories need both sides to accept each other.</li><li>Set the hero's horizontal velocity each step and keep its vertical one, or gravity stops working.</li><li>Dynamic heroes want <code>fixedRotation: true</code> and usually <code>friction: 0</code> (no sticking to walls).</li><li>Big masses: impulses scale with <code>body.mass</code>, so write them as <code>mass * Δv</code>.</li></ul>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="input.html">Input</a>: coyote time, jump buffering, variable jump height.</li><li><a href="tilemaps.html">Sprites, camera, LDtk</a>: colliders from LDtk IntGrid layers.</li><li><a href="particles.html">Particles and effects</a>: tweens, dust, screen shake.</li><li><code>examples/platformer</code> (ground rays, lift, one-way ledges), <code>examples/topdown</code> (queries, bombs), <code>examples/shmup</code> (categories, bullets).</li></ul></main></body></html>

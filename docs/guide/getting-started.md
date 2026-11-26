@@ -1,52 +1,48 @@
 # Getting started
 
-Make a small 2D game, run it, then change how it plays. You write TypeScript (JavaScript with checks that catch mistakes); alpha-star opens the game window and runs your code. You do not need C++ or an AI assistant to follow this guide.
+Make a small 2D game, run it, then change it. You write TypeScript (JavaScript with checks that
+catch mistakes); alpha-star opens the window and runs your code. No C++ or AI assistant needed.
 
-**Your path:** install → play → [change your first game](first-game.md) → [learn the concepts](concepts.md). Leave the API reference for when you need to look something up.
+**Your path:** install → play → [the one-file tutorial](tutorial-hop.md) → [change your first
+game](first-game.md) → [learn the concepts](concepts.md). Keep the API reference for looking
+things up.
 
 ## 1. Check your tools
 
-You need a code editor, **Node.js 20 or newer**, and a terminal (the window where you type commands). This guide uses the prebuilt engine for **Windows x64 or Linux x64**.
-
-Open a terminal and run these commands one at a time:
+You need a code editor, **Node.js 20 or newer** and a terminal. The prebuilt engine runs on
+**Windows x64 and Linux x64**.
 
 ```sh
 node --version
 npm --version
 ```
 
-**Expected:** two version numbers. Node must be v20 or newer. If a command is not found, install Node.js with npm, then reopen the terminal.
-
-`npm` installs project tools. `npx` runs a tool without a global installation. The SDK is the package containing alpha-star's commands and TypeScript definitions; npm also downloads the engine packages.
+**Expected:** two version numbers, Node v20 or newer. If a command is not found, install Node.js
+(it includes npm) and reopen the terminal.
 
 ## 2. Create a project
 
-In the folder where you keep projects, run:
+In the folder where you keep projects:
 
 ```sh
 npx @alpha-star/sdk init my-game --template blank
-```
-
-If npm asks to install the SDK, accept. This creates a folder called `my-game`. The `blank` template already has a movable character, a sound and tests.
-
-Enter that folder and install its dependencies:
-
-```sh
 cd my-game
 npm install
 ```
 
-**Expected:** `package.json`, `src`, `assets` and `test` inside `my-game`. Run all following commands in that folder. Keep optional dependencies enabled: `--omit=optional` or `--no-optional` skips the engine.
+Accept if npm asks to install the SDK. **Expected:** a `my-game` folder with `package.json`,
+`src`, `assets` and `test`; `npm install` downloads the tools and the engine. Run every following
+command inside `my-game`.
 
-## 3. Open your game
+## 3. Play it
 
 ```sh
 npm start
 ```
 
-**Expected:** a character in the middle of a dark blue window. Click the window to focus it. Move with arrow keys or WASD. Press Space to hear a blip and briefly enlarge the character. The action called `jump` here is a visual effect, not a physics jump.
-
-Close the game window to return to the terminal. If a command is still running, press Ctrl+C in the terminal.
+**Expected:** a character in the middle of a dark blue window. Click the window, move with the
+arrow keys or WASD, press Space to hear a blip and see the character grow for a moment. Close the
+window (or press Ctrl+C in the terminal) to stop.
 
 ## 4. Check that it works
 
@@ -55,66 +51,69 @@ npm run check
 npm test
 ```
 
-The first command checks TypeScript for mistakes. The second runs the starter's tests: programs that check starting position, movement and the Space effect without opening a game window. Both should finish without errors.
+**Expected:** `check` prints nothing (no type errors) and `test` ends with
+`3 passed, 0 failed`: the starter's tests play the game without a window and check the start
+position, movement and the Space effect. See [Testing](testing.md).
 
 ## 5. Make your first change
 
-Open `my-game` in your editor. In `src/main.ts`, find:
-
-```ts
-title: "My Game",
-```
-
-Replace that line with:
+In `src/main.ts`, change the title line:
 
 ```ts
 title: "My First Game",
 ```
 
-Save and run `npm start` again. **Expected:** your new title in the window's title bar.
+Save and run `npm start`. **Expected:** the new title in the window's title bar.
 
-Continue with [Your first game](first-game.md) to change speed, understand movement, add feedback and test the result using complete, commented code.
+Now try hot reload: run `npx alpha run --watch`, open `src/tuning.ts`, change `speed: 120` to
+`speed: 300` and save. **Expected:** the game restarts in the same window, and the character is
+much faster. See [Hot reload](hot-reload.md).
+
+Continue with [Your first game](first-game.md) for complete, commented code.
 
 ## Where to edit
-
-Start with the first two rows; you do not need to understand every file today.
 
 | File | What you change there |
 |---|---|
 | `src/main.ts` | Title, background, controls and assets |
-| `src/tuning.ts` | Speed, game size and animation duration |
-| `src/scenes/play.ts` | What happens when play starts and while it runs |
-| `src/prefabs/player.ts` | Data used to create the character |
-| `src/types.ts` | Allowed names for controls, assets, tags and scenes |
-| `src/alpha.ts` | Connects those names to the game and scene builders; leave it as generated for now |
-| `test/main.test.ts` | Automated checks for game behavior |
+| `src/tuning.ts` | Speeds, game size and timings |
+| `src/scenes/play.ts` | What happens when play starts (`enter`) and every step (`update`) |
+| `src/prefabs/player.ts` | The data that creates the character |
+| `src/types.ts` | Every name the game uses: controls, assets, tags, scenes |
+| `src/alpha.ts` | Binds those names to the `game` and `scene` builders; leave it as generated |
+| `test/main.test.ts` | Automated checks of game behavior |
 
 ## If something goes wrong
 
-| What you see | What to do next |
+| What you see | What to do |
 |---|---|
-| `node`, `npm` or `npx` not found | Install Node.js with npm, then reopen the terminal. |
-| PowerShell says `npm.ps1` cannot run | Use `npm.cmd` and `npx.cmd`, or use Command Prompt. |
+| `node`, `npm` or `npx` not found | Install Node.js, then reopen the terminal. |
+| PowerShell says `npm.ps1` cannot run | Use `npm.cmd` and `npx.cmd`, or Command Prompt. |
 | Folder exists and is not empty | Pick a new name, such as `my-second-game`. Existing files are kept. |
-| npm cannot find `package.json` | Run `cd my-game` before project commands. |
-| Engine not found | Check your OS/architecture and reinstall with `npm install --include=optional`. |
-| TypeScript error with a file and line | Open that location, fix the first error, save and run `npm run check` again. |
-| Changes do not appear | Save the source file and restart with `npm start`; do not edit generated files in `dist`. |
+| npm cannot find `package.json` | Run `cd my-game` first. |
+| Engine not found | Check your OS/architecture and run `npm install --include=optional` (`--omit=optional` skips the engine). |
+| TypeScript error with a file and line | Fix the first error at that location, save, run `npm run check` again. |
+| Changes do not appear | Save the file and restart `npm start`; never edit the generated `dist/`. |
 
-On macOS or Linux arm64, the SDK checks and exports code, but there is no prebuilt desktop engine for those platforms. See [building from source](https://github.com/luciancaetano/alpha-star/blob/main/BUILDING.md), then pass `--engine <path>` or set `ALPHA_STAR`.
+On macOS or Linux arm64 the SDK checks and exports code, but there is no prebuilt desktop engine:
+[build one from source](https://github.com/luciancaetano/alpha-star/blob/main/BUILDING.md) and
+pass `--engine <path>` or set `ALPHA_STAR`.
 
 ## Commands to keep handy
 
-| Goal | Command inside your game folder |
+| Goal | Command (inside your game folder) |
 |---|---|
 | Play | `npm start` |
 | Check TypeScript | `npm run check` |
 | Run tests | `npm test` |
-| Play and reload after saving | `npx alpha run --watch` |
-| Prepare a game for players | `npx alpha export --standalone` — see [Exporting](exporting.md) |
-| See SDK version | `npx alpha --version` |
-| Set up an AI coding assistant | `npx alpha skills` — see [Agent instructions](agents.md) |
+| Play and reload on save | `npx alpha run --watch` |
+| Build for players | `npx alpha export --standalone` ([Exporting](exporting.md)) |
+| SDK version | `npx alpha --version` |
+| Set up an AI coding assistant | `npx alpha skills` ([AGENTS.md for games](agents.md)) |
 
-Already have a project? Use `npm install --save-dev @alpha-star/sdk`; [Concepts](concepts.md) explains the files it needs. Upgrade with `npm install --save-dev @alpha-star/sdk@latest`. For a global `alpha` command, use `npm install --global @alpha-star/sdk`.
+Already have a project? `npm install --save-dev @alpha-star/sdk` ([Concepts](concepts.md) lists
+the files it needs). Upgrade with `npm install --save-dev @alpha-star/sdk@latest`; for a global
+`alpha` command, `npm install --global @alpha-star/sdk`.
 
-**Next:** [Your first game](first-game.md). Explore larger games later in [Examples](examples.md) or the [showcase](index.html).
+**Next:** [Tutorial: a one-file game](tutorial-hop.md), then [Your first game](first-game.md).
+Browse bigger games in [Examples](examples.md) or the [showcase](index.html).

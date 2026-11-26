@@ -1,25 +1,135 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Audio and music - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html" class="here">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html" class="here">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="audio-and-music">Audio and music</h1>
-<pre><code>assets: {
-  sounds: {
-    jump: "assets/sfx/jump.ogg",                                     // .wav / .ogg / .mp3, decoded at boot
-    line: { file: "assets/vo/line1.mp3", bus: "voice" },
-    blip: { wave: "square", freq: [440, 880], duration: 0.08, volume: 0.3 },   // synthesized
-    coin: [{ wave: "triangle", freq: 988, duration: 0.05 }, { wave: "triangle", freq: 1319, duration: 0.1 }],
-  },
-  music: { theme: "assets/music/theme.ogg" },                         // streamed, never loaded whole
+<p><strong>What you'll build:</strong> a jump sound panned to where the player is, a two-note coin, a noise hit, and a mute key, all synthesized (no sound files).</p>
+<p>Sounds come from <code>.wav</code> / <code>.ogg</code> / <code>.mp3</code> files or from a synth spec; music streams from a file. Everything goes through volume buses. Audio is output only: the simulation never depends on it.</p>
+<h2 id="complete-example">Complete example</h2>
+<p><code>src/main.ts</code>:</p>
+<pre><code>import { define } from "alpha";
+
+interface Jukebox {
+  actions: "jump" | "coin" | "hurt" | "mute";
+  sounds: "jump" | "coin" | "hurt";
+  images: never;
+  tags: "player";
+  scenes: { play: undefined };
+  ui: {};
 }
-config: { audio: { buses: ["ambience"] } }</code></pre>
-<pre><code>ctx.audio.play("jump", { volume: 0.5, pitch: 1.2, pan: -0.5 });   // pan -1 left .. 1 right
-ctx.audio.tone({ wave: "sine", freq: 660, duration: 0.1 });        // on the fly
-ctx.audio.music("theme", { fadeIn: 1, volume: 0.6 });
-ctx.audio.crossfade("boss", 2);
-ctx.audio.stopMusic(1.5);
-ctx.audio.bus("music").volume = 0.5;   // master, music, sfx, voice + config.audio.buses; persisted</code></pre>
-<p>Synth waves: <code>sine</code>, <code>square</code>, <code>triangle</code>, <code>saw</code>, <code>noise</code>; <code>freq</code> in Hz or <code>[from, to]</code> for a slide. The same spec is always the same sound. One music track plays at a time (a crossfade overlaps two). Audio is output only: the simulation never depends on it.</p>
-<p>Examples: <code>flappy</code> (OGG music, volume settings), <code>shmup</code> (a generated WAV loop, fades, panning).</p>
-<h2 id="in-tests">In tests</h2>
-<p><code>simulate</code> has no audio output but tracks music and buses: <code>run.expect.music("theme")</code>, <code>run.expect.music(null)</code>, <code>run.music</code>, <code>run.settings.volumes</code>.</p></main></body></html>
+
+const { scene, game } = define&lt;Jukebox&gt;();
+
+const play = scene("play", {
+  enter(ctx) {
+    ctx.spawn({ tags: ["player"], pos: [160, 90], shape: { rect: [16, 16], color: "#29adff" } });
+  },
+  update(ctx) {
+    const p = ctx.find("player");
+    const pan = (p.pos.x - 160) / 160;                       // -1 left .. 1 right
+    if (ctx.input.pressed("jump")) ctx.audio.play("jump", { pan });
+    if (ctx.input.pressed("coin")) ctx.audio.play("coin", { pitch: ctx.random.range(0.95, 1.05) });
+    if (ctx.input.pressed("hurt")) ctx.audio.play("hurt", { volume: 0.7 });
+    if (ctx.input.pressed("mute")) {
+      const master = ctx.audio.bus("master");
+      master.volume = master.volume &gt; 0 ? 0 : 1;             // persisted in settings.json
+    }
+  },
+});
+
+export default game({
+  config: {
+    title: "Jukebox", size: [320, 180], seed: 1,
+    actions: { jump: ["Space"], coin: ["C"], hurt: ["H"], mute: ["M"] },
+  },
+  start: "play",
+  scenes: { play },
+  assets: {
+    sounds: {
+      jump: { wave: "square", freq: [220, 660], duration: 0.12, volume: 0.25 },
+      coin: [
+        { wave: "triangle", freq: 988, duration: 0.05 },
+        { wave: "triangle", freq: 1319, duration: 0.12 },
+      ],
+      hurt: { wave: "noise", freq: 1, duration: 0.2, volume: 0.3, release: 0.15 },
+    },
+  },
+});</code></pre>
+<p><code>test/main.test.ts</code>:</p>
+<pre><code>import { simulate } from "alpha/test";
+import game from "../src/main";
+
+export function muteSilencesMaster() {
+  const run = simulate(game, { seconds: 0.5, inputs: { jump: [0], coin: [2], hurt: [4], mute: [6] } });
+  run.expect.noErrors();
+  if (run.settings.volumes.master !== 0) throw new Error(`master ${run.settings.volumes.master}`);
+}</code></pre>
+<h2 id="step-by-step">Step by step</h2>
+<h3 id="1-synthesized-sounds">1. Synthesized sounds</h3>
+<pre><code>sounds: {
+  jump: { wave: "square", freq: [220, 660], duration: 0.12, volume: 0.25 },     // a slide up
+  coin: [                                                                         // notes in a row
+    { wave: "triangle", freq: 988, duration: 0.05 },
+    { wave: "triangle", freq: 1319, duration: 0.12 },
+  ],
+  laser: { synth: { wave: "saw", freq: [1200, 200], duration: 0.15, volume: 0.3, attack: 0, release: 0.1 } },
+  explode: { synth: { wave: "noise", freq: 1, duration: 0.4, release: 0.3 }, bus: "sfx" },
+},</code></pre>
+<table><thead><tr><th>Note field</th><th>Meaning</th></tr></thead><tbody><tr><td><code>wave</code></td><td><code>"sine"</code>, <code>"square"</code>, <code>"triangle"</code>, <code>"saw"</code>, <code>"noise"</code></td></tr><tr><td><code>freq</code></td><td>Hz, or <code>[from, to]</code> for a slide</td></tr><tr><td><code>duration</code></td><td>seconds</td></tr><tr><td><code>volume</code></td><td>0..1, default 0.5</td></tr><tr><td><code>attack</code> / <code>release</code></td><td>fade in / out seconds, defaults 0.005 / 0.05</td></tr></tbody></table>
+<p>The same spec is always the same sound. <code>{ synth, bus }</code> puts it on another bus.</p>
+<h3 id="2-sound-files">2. Sound files</h3>
+<pre><code>sounds: {
+  shot: "assets/sfx/shot.wav",                                // .wav / .ogg / .mp3, decoded at boot
+  line: { file: "assets/vo/line1.ogg", bus: "voice" },
+},</code></pre>
+<p>A missing file stops boot with its name.</p>
+<h3 id="3-play">3. Play</h3>
+<pre><code>ctx.audio.play("jump");
+ctx.audio.play("shot", { volume: 0.5, pitch: 1.2, pan: -0.5 });</code></pre>
+<p><code>volume</code> 0..1, <code>pitch</code> is playback speed (2 = an octave up), <code>pan</code> -1 (left) .. 1 (right).</p>
+<h3 id="4-loops-and-stopping">4. Loops and stopping</h3>
+<pre><code>const wind = ctx.audio.play("wind", { loop: true, volume: 0.4 });
+// later
+if (wind.playing) wind.stop();      // stopping twice is a no-op
+ctx.audio.stopAll();                // every sound and the music</code></pre>
+<h3 id="5-one-off-tones">5. One-off tones</h3>
+<pre><code>ctx.audio.tone({ wave: "sine", freq: 660, duration: 0.1 });
+ctx.audio.tone([{ wave: "square", freq: 523, duration: 0.08 }, { wave: "square", freq: 784, duration: 0.16 }], { volume: 0.5 });</code></pre>
+<p>Synthesized on the fly on the sfx bus: good for values that change (a pitch from the combo count).</p>
+<h3 id="6-music">6. Music</h3>
+<pre><code>// GameTypes: music: "theme" | "boss"
+assets: { music: { theme: "assets/music/theme.ogg", boss: "assets/music/boss.mp3" } },
+// a scene
+ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });   // loops by default
+ctx.audio.crossfade("boss", 2);                          // theme fades out, boss in, over 2 s
+ctx.audio.stopMusic(1.5);                                // fade out over 1.5 s</code></pre>
+<p>Music is streamed (decoded a little at a time, never loaded whole). One track plays at a time: <code>music()</code> stops whatever played at once. <code>ctx.audio.musicPlaying</code> is the current track or null.</p>
+<h3 id="7-buses-and-volumes">7. Buses and volumes</h3>
+<pre><code>// GameTypes: buses: "ambience";  config: { audio: { buses: ["ambience"] } }
+wind: { file: "assets/sfx/wind.ogg", bus: "ambience" },
+
+ctx.audio.bus("music").volume = 0.5;
+ctx.audio.bus("ambience").volume = 0.3;
+for (const b of ctx.audio.buses) console.log(b, ctx.audio.bus(b).volume);</code></pre>
+<p>Buses: <code>master</code>, <code>music</code>, <code>sfx</code>, <code>voice</code>, plus <code>config.audio.buses</code>. Sounds go to <code>sfx</code> unless they name a bus; music goes to <code>music</code>; everything goes through <code>master</code>. Volumes are persisted in settings and applied at boot; <code>ctx.settings.volumes</code> reads them all.</p>
+<h2 id="recipes">Recipes</h2>
+<h3 id="keep-the-title-music-playing-across-scenes">Keep the title music playing across scenes</h3>
+<pre><code>enter(ctx) {
+  if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });
+},</code></pre>
+<p>(<code>examples/flappy/src/scenes/title.ts</code>.)</p>
+<h3 id="boss-fight-music">Boss fight music</h3>
+<pre><code>ctx.onHit("player", "bossDoor", () =&gt; ctx.audio.crossfade("boss", 2));</code></pre>
+<h3 id="pitch-that-climbs-with-a-combo">Pitch that climbs with a combo</h3>
+<pre><code>ctx.audio.play("coin", { pitch: 1 + Math.min(ctx.state.combo, 12) / 12 });</code></pre>
+<h3 id="varied-footsteps">Varied footsteps</h3>
+<pre><code>ctx.audio.play("step", { pitch: ctx.random.range(0.9, 1.1), volume: ctx.random.range(0.6, 0.8) });</code></pre>
+<p>The seeded random keeps it deterministic.</p>
+<h3 id="volume-settings-screen">Volume settings screen</h3>
+<p><code>-</code> / <code>+</code> buttons that nudge <code>ctx.audio.bus("music").volume</code> in steps of 0.1: see the <a href="ui.html#settings-screen-with-volume-sliders">UI settings recipe</a> and <code>examples/flappy/src/scenes/settings.ts</code>.</p>
+<h3 id="mute-toggle">Mute toggle</h3>
+<p>The <code>mute</code> key in the complete example: <code>ctx.audio.bus("master").volume = 0</code> or <code>1</code>.</p>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li><code>play</code> takes only names from <code>assets.sounds</code> (a typo is a compile error); use <code>tone</code> for sounds built at runtime.</li><li><code>music()</code> cuts the current track at once; use <code>crossfade</code> for a smooth change.</li><li>When the app pauses (focus lost, minimized, backgrounded) audio stops with the game and resumes with it.</li><li>Tests have no audio output, but music and buses are tracked: <code>run.expect.music("theme")</code>, <code>run.expect.music(null)</code>, <code>run.music</code>, <code>run.settings.volumes</code>; seed volumes with <code>simulate(game, { settings: { volumes: { music: 0.5 } } })</code>.</li></ul>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="ui.html">Game UI</a> for the settings screen.</li><li><a href="saves.html">Saves, settings, i18n</a>: volumes are settings.</li><li><code>examples/flappy</code> (OGG music, volume settings), <code>examples/shmup</code> (a generated WAV loop, fades, panning), <code>examples/puzzle</code> (all-synth sounds).</li><li>In <code>alpha.d.ts</code>: <code>Audio</code>, <code>Note</code>, <code>Synth</code>, <code>SoundAsset</code>, <code>PlayOptions</code>, <code>Bus</code>, <code>Voice</code>.</li></ul></main></body></html>

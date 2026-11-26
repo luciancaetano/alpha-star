@@ -26,3 +26,6 @@ images without cropping HUDs. Asset licenses remain in the respective examples.
 
 Shader Lab used `npm start -- -- --frames 150 --screenshot <absolute-path>/screenshot-shaders.png`
 under `tools/resource_guard.py`. The log reported `renderer gpu`; the capture confirms the wave effect.
+
+Tutorial Hop (`tutorial-hop.png`): the tutorial's final `src/main.ts`, exported, run as
+`alpha_star <pack> --frames 150 --tap Space --tap-every 38 --screenshot <path>.bmp`, converted to PNG.

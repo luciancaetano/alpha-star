@@ -1,9 +1,49 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hot reload - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html" class="here">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html" class="here">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="hot-reload">Hot reload</h1>
+<p>Keep the game open while you edit it. Every save rebuilds the game and swaps the new code into the running engine in a moment, without closing the window.</p>
 <pre><code>npx alpha run --watch</code></pre>
-<p>Every save re-exports the pack (200 ms after the last change; <code>dist/</code>, <code>build/</code>, <code>node_modules/</code> and <code>.git/</code> are not watched) and the running engine reloads the game. A type error is printed and the pack is not rewritten, so the game keeps running the last good code.</p>
-<p>What survives a reload: the save; the current scene and its params (if plain JSON); <code>ctx.state</code> if it is plain JSON and the scene still declares <code>state</code>. The world is rebuilt: <code>enter</code> spawns the entities again. Keep long-lived values in <code>ctx.state</code>, not in entity data.</p>
-<p>A reload that fails while booting the new code keeps the old game running and shows the error. Agents reload on demand with the MCP tool <code>game_reload</code> instead (an agent-driven engine does not watch files). Shipping engines have no hot reload, and neither does a bundled pack (an Android APK or an exe-fused game): only a pack folder named on the command line, as <code>alpha run</code> passes, is watched.</p></main></body></html>
+<h2 id="try-it-change-the-speed-while-playing">Try it: change the speed while playing</h2>
+<p>In a project made with <code>alpha init my-game --template blank</code>:</p>
+<p><strong>1.</strong> Run <code>npx alpha run --watch</code>. The game opens; move the character with the arrow keys.</p>
+<p><strong>2.</strong> Open <code>src/tuning.ts</code> and change the speed, then save:</p>
+<pre><code>export const PLAYER = { speed: 300, hop: 0.15 };  // was 120</code></pre>
+<p><strong>3. Expected:</strong> within about half a second the scene restarts in the same window and the character moves more than twice as fast. The terminal stays open, watching for the next save.</p>
+<h2 id="what-survives-a-reload">What survives a reload</h2>
+<p>A reload rebuilds the world: the current scene's <code>enter</code> runs again and spawns its entities from scratch. These are carried over:</p>
+<table><thead><tr><th>Kept</th><th>Condition</th></tr></thead><tbody><tr><td>The current scene and its <code>enter</code> params</td><td>params are plain JSON (otherwise the game restarts at <code>start</code>)</td></tr><tr><td><code>ctx.state</code></td><td>plain JSON (no functions, class instances, <code>undefined</code>, NaN) and the scene still declares <code>state</code>; otherwise <code>state(params)</code> runs again</td></tr><tr><td>The save (<code>ctx.save</code>)</td><td>always</td></tr></tbody></table>
+<p>Entity positions, entity <code>data</code>, timers and tweens are <strong>not</strong> kept. So keep values that must survive in <code>ctx.state</code>:</p>
+<pre><code>// src/scenes/play.ts
+export default scene("play", {
+  // Plain JSON: survives a hot reload.
+  state: () =&gt; ({ jumps: 0 }),
+
+  enter(ctx) {
+    // Runs again after every reload: the world is rebuilt from here.
+    ctx.spawn(player([VIEW.width / 2, VIEW.height / 2]));
+  },
+
+  update(ctx) {
+    if (ctx.input.pressed("jump")) {
+      ctx.state.jumps += 1;
+      console.log(`jumps: ${ctx.state.jumps}`);
+    }
+    // ...movement as before
+  },
+});</code></pre>
+<p><strong>Expected:</strong> press Space a few times, edit any file and save. The player is back in the middle (re-spawned by <code>enter</code>), and the next jump logs the count continuing from where it was.</p>
+<h2 id="when-the-new-code-is-broken">When the new code is broken</h2>
+<ul><li><strong>A type error:</strong> the terminal prints <code>file:line:col message</code>, the pack is <strong>not</strong> rewritten, and the game keeps running the last good code. Fix and save again.</li><li><strong>An error while the new code boots</strong> (in <code>enter</code>, for example): the old game keeps running and the error is shown.</li><li><strong>An error at runtime</strong> pauses the game with the message, as always; fix the code and save to reload.</li></ul>
+<h2 id="what-is-watched">What is watched</h2>
+<p>The whole project folder, except <code>dist/</code>, <code>build/</code>, <code>node_modules/</code> and <code>.git/</code>. A burst of saves triggers one rebuild, 200 ms after the last change; the engine polls its pack and reloads once it has been quiet for 0.3 s, so one export is one reload. Assets count too: replace an image or a sound and save, and the reload picks it up. Shader sources (<code>.frag</code>) are recompiled the same way (see <a href="shaders.html">Shaders and lighting</a>).</p>
+<p><code>--watch</code> combines with the other <code>run</code> options:</p>
+<pre><code>npx alpha run --watch --out build/dev          # pack somewhere other than dist/
+npx alpha run --watch -- --devtools            # also open the F12 dev tools at start</code></pre>
+<h2 id="recipes">Recipes</h2>
+<ul><li><strong>Tune feel live:</strong> put every gameplay number in <code>src/tuning.ts</code> (the templates do) and keep that file open next to the game.</li><li><strong>Iterate on one scene:</strong> make it the game's <code>start</code> while you work on it, so each reload lands there.</li><li><strong>Agents:</strong> an agent drives the engine through MCP and reloads on demand with <code>game_reload</code> (an agent-driven engine does not watch files). See <a href="mcp.html">MCP for agents</a>.</li></ul>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li>Shipping engines have no hot reload, and neither does a bundled pack (an Android APK or a standalone export): only a pack folder named on the command line, as <code>alpha run</code> passes, is watched.</li><li>A value stored in a module-level variable (<code>let score = 0</code> outside the scene) resets on every reload. Use <code>ctx.state</code>.</li><li>The window size and title are fixed at launch: changing <code>config.size</code> or <code>config.title</code> needs a restart.</li><li>If <code>ctx.state</code> holds something that is not plain JSON (a class instance, a function, an entity), it starts fresh after the reload.</li></ul>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="concepts.html">Concepts</a>: scenes, <code>state</code>, <code>enter</code> and <code>update</code>.</li><li><a href="testing.html">Testing</a>: lock in what you tuned with a headless test.</li><li><a href="mcp.html">MCP for agents</a>: <code>game_reload</code> for agents.</li></ul></main></body></html>

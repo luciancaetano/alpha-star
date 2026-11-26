@@ -1,29 +1,184 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Input - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html" class="here">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html" class="here">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="input">Input</h1>
-<p>Games read <strong>actions</strong> and <strong>axes</strong>, never devices. <code>config.actions</code> maps each action to inputs; <code>config.axes</code> maps each axis to sources.</p>
-<pre><code>config: {
-  actions: { jump: ["Space", "W", "GamepadA"], fire: ["MouseLeft", "GamepadRT"] },
-  axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"], moveY: ["GamepadLeftY", "W/S", "Up/Down"] },
-  deadzone: 0.2,
+<p><strong>What you'll build:</strong> a circle that walks in eight directions, dashes on Space, charges a shot while J (or the right mouse button) is held and fires it toward the mouse on release, and marks every click. It works the same on keyboard, mouse, gamepad and touch.</p>
+<p>Games read <strong>actions</strong> (buttons) and <strong>axes</strong> (analog values), never devices. <code>config.actions</code> and <code>config.axes</code> map them to inputs. Replace <code>src/main.ts</code> with this and run <code>npm start</code>:</p>
+<pre><code>import { define, vec } from "alpha";
+
+interface Arena {
+  actions: "dash" | "fire" | "charge";
+  axes: "moveX" | "moveY";
+  sounds: never;
+  images: never;
+  tags: "hero" | "shot" | "mark";
+  ui: {};
+  scenes: { play: undefined };
+}
+
+const { scene, game } = define&lt;Arena&gt;();
+
+const play = scene("play", {
+  state: () =&gt; ({ dash: 0, charge: 0 }),
+
+  enter(ctx) {
+    ctx.spawn({ tags: ["hero"], pos: [160, 90], shape: { circle: 8, color: "#29adff" } });
+  },
+
+  update(ctx) {
+    const hero = ctx.find("hero");
+    // Axes: -1..1. Normalize so diagonals are not faster.
+    const dir = vec.norm([ctx.input.axis("moveX"), ctx.input.axis("moveY")]);
+    // Actions: pressed = this step only, down = while held, released = the step it goes up.
+    if (ctx.input.pressed("dash")) ctx.state.dash = 0.15;
+    ctx.state.dash = Math.max(0, ctx.state.dash - ctx.dt);
+    const speed = ctx.state.dash &gt; 0 ? 400 : 100;
+    hero.pos.x += dir[0] * speed * ctx.dt;
+    hero.pos.y += dir[1] * speed * ctx.dt;
+
+    // Hold to charge, release to shoot toward the mouse (bigger when charged longer).
+    if (ctx.input.down("charge")) ctx.state.charge = Math.min(1, ctx.state.charge + ctx.dt);
+    if (ctx.input.released("charge")) {
+      const target = ctx.camera.toWorld(ctx.input.mouse());
+      const aim = vec.norm(vec.sub(target, [hero.pos.x, hero.pos.y]));
+      ctx.spawn({ tags: ["shot"], pos: [hero.pos.x, hero.pos.y], shape: { circle: 2 + ctx.state.charge * 6, color: "#ffec27" }, data: { vx: aim[0] * 200, vy: aim[1] * 200 } });
+      ctx.state.charge = 0;
+      ctx.input.rumble(0.4, 0.1);
+    }
+    // A click marks the spot under the mouse.
+    if (ctx.input.pressed("fire")) ctx.spawn({ tags: ["mark"], pos: ctx.camera.toWorld(ctx.input.mouse()), shape: { rect: [4, 4], color: "#ff004d" } });
+
+    for (const s of ctx.findAll("shot")) {
+      s.pos.x += (s.data.vx as number) * ctx.dt;
+      s.pos.y += (s.data.vy as number) * ctx.dt;
+      if (Math.abs(s.pos.x - 160) &gt; 200 || Math.abs(s.pos.y - 90) &gt; 120) ctx.destroy(s);
+    }
+  },
+});
+
+export default game({
+  config: {
+    title: "Input",
+    size: [320, 180],
+    background: "#1d2b53",
+    seed: 1,
+    actions: {
+      dash: ["Space", "LeftShift", "GamepadA"],
+      fire: ["MouseLeft", "Touch"],
+      charge: ["J", "MouseRight", "GamepadRT"],
+    },
+    axes: {
+      moveX: ["GamepadLeftX", "A/D", "Left/Right"],
+      moveY: ["GamepadLeftY", "W/S", "Up/Down"],
+    },
+  },
+  start: "play",
+  scenes: { play },
+  assets: { sounds: {} },
+});</code></pre>
+<p>Expected: WASD, the arrows or the left stick move the circle at the same speed in every direction; Space bursts it forward; holding J grows the next shot; clicks drop red marks.</p>
+<h2 id="step-by-step">Step by step</h2>
+<h3 id="actions-buttons">Actions: buttons</h3>
+<pre><code>// types: actions: "jump" | "fire";
+config: {
+  actions: { jump: ["Space", "W", "Up", "GamepadA"], fire: ["MouseLeft", "GamepadRT"] },
 }</code></pre>
-<pre><code>ctx.input.pressed("jump");   // only on the step it went down
-ctx.input.down("fire");      // while held
-ctx.input.released("jump");
-ctx.input.axis("moveX");     // -1..1 after the deadzone (+x right, +y down)
-ctx.input.mouse();           // game pixels; ctx.camera.toWorld(...) for the world</code></pre>
-<p>Gamepad names: <code>GamepadA B X Y</code>, <code>GamepadLB RB LT RT LS RS</code>, <code>GamepadStart Back</code>, <code>GamepadUp Down Left Right</code>, axes <code>GamepadLeftX LeftY RightX RightY</code>, and stick directions as buttons (<code>GamepadLeftY-</code> = left stick up). Keys use SDL names (<code>Space</code>, <code>Left</code>, <code>A</code>, <code>Backspace</code>...). Touch screens: <code>Touch</code> (any finger), <code>TouchLeft</code> / <code>TouchRight</code> (a finger on that half of the screen), and a finger is also <code>MouseLeft</code>; <code>Back</code> is the Android back button. See <a href="android.html">Android</a>.</p>
-<h2 id="players">Players</h2>
-<p>Player 1 has the keyboard, the mouse and the first gamepad; each further gamepad is the next player (a reconnected pad gets its slot back). <code>ctx.input.player(2).axis("moveX")</code> reads one player; on <code>ctx.input</code> itself an action is any player's and an axis is the strongest one. <code>ctx.input.players()</code> is how many players have a device. See <code>examples/topdown</code>.</p>
-<h2 id="rumble-and-rebinding">Rumble and rebinding</h2>
-<pre><code>ctx.input.rumble(0.6, 0.2, 1);                 // strength, seconds, player (all if omitted)
-ctx.input.rebind("jump", ["W", "GamepadA"]);   // persisted in settings
-ctx.input.bindings("jump");</code></pre>
-<h2 id="in-tests">In tests</h2>
+<pre><code>ctx.input.pressed("jump");   // true only on the step it went down: jumps, menu choices
+ctx.input.down("fire");      // true while held: auto-fire, charging, running
+ctx.input.released("jump");  // true only on the step it went up: variable jump height, release to shoot</code></pre>
+<p>Expected: one key press gives exactly one <code>pressed</code> step, however long it is held. Any input in the list triggers the action; every player's devices count on <code>ctx.input</code> itself.</p>
+<h3 id="axes-analog-values">Axes: analog values</h3>
+<pre><code>// types: axes: "moveX" | "moveY" | "throttle";
+config: {
+  axes: {
+    moveX: ["GamepadLeftX", "A/D", "Left/Right"],   // stick, or a "Negative/Positive" key pair
+    moveY: ["GamepadLeftY", "W/S", "Up/Down"],
+    throttle: ["GamepadRT"],                          // triggers: 0..1
+  },
+  deadzone: 0.2,                                      // stick and trigger deadzone (default 0.2)
+}</code></pre>
+<pre><code>const x = ctx.input.axis("moveX");   // -1..1: +x right
+const y = ctx.input.axis("moveY");   // -1..1: +y down</code></pre>
+<p>Expected: keys give exactly -1, 0 or 1; a stick gives anything in between. The axis reads the strongest source. Diagonal keys give <code>[1, 1]</code>: normalize with <code>vec.norm</code> for equal speed.</p>
+<h3 id="mouse-and-touch">Mouse and touch</h3>
+<pre><code>const screen = ctx.input.mouse();           // game pixels on screen
+const world = ctx.camera.toWorld(screen);   // where that is in the world (camera moved/zoomed)
+ctx.find("cursor").pos.x = world[0];
+ctx.find("cursor").pos.y = world[1];</code></pre>
+<p>Buttons are actions: <code>"MouseLeft"</code>, <code>"MouseRight"</code>, <code>"MouseMiddle"</code>. On touch screens <code>"Touch"</code> is any finger, <code>"TouchLeft"</code> / <code>"TouchRight"</code> a finger on that half of the screen, and a finger is also <code>"MouseLeft"</code> at <code>ctx.input.mouse()</code>. <code>"Back"</code> is the Android back button.</p>
+<h3 id="several-players">Several players</h3>
+<pre><code>for (let n = 1; n &lt;= ctx.input.players(); n++) {
+  const p = ctx.input.player(n as Player);         // import type { Player } from "alpha"
+  if (p.pressed("jump")) console.log(`player ${n} jumped`);
+  p.axis("moveX");
+}</code></pre>
+<p>Player 1 has the keyboard, the mouse and the first gamepad; each further gamepad is the next player, and a reconnected pad gets its slot back. On <code>ctx.input</code> itself an action is any player's and an axis is the strongest one. See <code>examples/topdown</code> for drop-in co-op.</p>
+<h3 id="rumble">Rumble</h3>
+<pre><code>ctx.input.rumble(0.8, 0.3, 2);   // strength 0..1, seconds 0..10, player 2
+ctx.input.rumble(0.5, 0.2);      // every player
+ctx.input.rumble(0, 0);          // stop</code></pre>
+<p>No-op without a gamepad, so call it freely.</p>
+<h3 id="rebinding-a-controls-menu">Rebinding (a controls menu)</h3>
+<pre><code>ctx.input.rebind("jump", ["W", "GamepadA"]);   // replaces config.actions' list; saved in settings
+ctx.input.bindings("jump");                    // ["W", "GamepadA"]
+ctx.settings.reset();                          // everything back to defaults (bindings too)</code></pre>
+<p>Bindings persist across restarts and are applied at boot. Build the menu with <a href="ui.html">UI</a>.</p>
+<h3 id="platform-hints">Platform hints</h3>
+<pre><code>const hint = ctx.platform.mobile ? "tap to jump" : "press Space to jump";
+ctx.spawn({ tags: ["label"], pos: [160, 20], shape: { text: hint } });</code></pre>
+<p><code>ctx.platform</code> is <code>{ os, mobile }</code>, for hints and layout only, never game rules. Preview with <code>npx alpha run -- --platform android</code>.</p>
+<h3 id="input-in-tests">Input in tests</h3>
 <pre><code>simulate(game, { seconds: 2, inputs: { jump: [30, 60], axes: { moveX: [[0, 1], [90, 0]] } } });
 simulate(game, { seconds: 2, inputs: [{ fire: [0] }, { axes: { moveX: [[0, -1]] } }] });  // players 1, 2</code></pre>
-<p>Action frames press for one step each; axis entries hold a value from that frame on. Input the game UI consumed (a clicked button, navigation) never also triggers game actions.</p>
-<h2 id="per-platform-hints">Per-platform hints</h2>
-<p><code>ctx.platform</code> (<code>{ os, mobile }</code>) tells hints and layout where the game runs: show "tap" on phones (<code>ctx.platform.mobile</code>) and "press Space" elsewhere. Never use it for game rules. Preview with <code>alpha run -- --platform android</code>; test with <code>simulate(game, { platform: "android" })</code>. See <a href="android.html">Android</a>.</p></main></body></html>
+<p>Action frames press for one step each (frame 30 = 0.5 s); axis entries hold a value from that frame on. See <a href="testing.html">Testing</a>.</p>
+<h2 id="recipes">Recipes</h2>
+<h3 id="coyote-time-and-jump-buffering">Coyote time and jump buffering</h3>
+<p>Accept a jump pressed a little before landing, or a little after walking off a ledge:</p>
+<pre><code>// state: () =&gt; ({ coyote: 0, buffer: 0 }); `grounded` from a ground check (see Physics)
+const s = ctx.state;
+s.coyote = grounded ? 0.1 : Math.max(0, s.coyote - ctx.dt);
+s.buffer = ctx.input.pressed("jump") ? 0.1 : Math.max(0, s.buffer - ctx.dt);
+if (s.buffer &gt; 0 &amp;&amp; s.coyote &gt; 0) {
+  s.buffer = 0;
+  s.coyote = 0;
+  hero.body.velocity = [hero.body.velocity.x, -300];
+}</code></pre>
+<h3 id="variable-jump-height">Variable jump height</h3>
+<pre><code>const hero = ctx.find("hero");
+if (ctx.input.released("jump") &amp;&amp; hero.body.velocity.y &lt; 0) {
+  hero.body.velocity = [hero.body.velocity.x, hero.body.velocity.y * 0.5];   // cut the rise short
+}</code></pre>
+<h3 id="grid-movement-one-cell-per-step-held-keys-repeat">Grid movement (one cell per step, held keys repeat)</h3>
+<pre><code>// actions: "left" | "right" | "up" | "down"; state: () =&gt; ({ cell: [0, 0] as [number, number], moveCooldown: 0 })
+const s = ctx.state;
+s.moveCooldown = Math.max(0, s.moveCooldown - ctx.dt);
+const dx = ctx.input.down("right") ? 1 : ctx.input.down("left") ? -1 : 0;
+const dy = dx !== 0 ? 0 : ctx.input.down("down") ? 1 : ctx.input.down("up") ? -1 : 0;
+if ((dx || dy) &amp;&amp; s.moveCooldown === 0) {
+  s.cell = [s.cell[0] + dx, s.cell[1] + dy];
+  s.moveCooldown = 0.15;
+  const hero = ctx.find("hero");
+  ctx.tween(hero, { to: { x: s.cell[0] * 16 + 8, y: s.cell[1] * 16 + 8 }, seconds: 0.12, ease: "quadOut" });
+}</code></pre>
+<h3 id="twin-stick-aim">Twin-stick aim</h3>
+<pre><code>// axes: aimX: ["GamepadRightX"], aimY: ["GamepadRightY"]
+const aim: Vec2 = [ctx.input.axis("aimX"), ctx.input.axis("aimY")];
+if (vec.len(aim) &gt; 0.3) ctx.find("hero").rotation = vec.angle(aim);</code></pre>
+<h3 id="click-to-select">Click to select</h3>
+<pre><code>if (ctx.input.pressed("fire")) {
+  const [hit] = ctx.queryCircle(ctx.camera.toWorld(ctx.input.mouse()), 1, { tags: ["hero"] });
+  if (hit) hit.tint = "#ffec27";
+}</code></pre>
+<p>Area queries see colliders, so the clickable entity needs a <code>body</code> (a <code>sensor</code> is enough; see <a href="physics.html">Physics</a>).</p>
+<h3 id="back-pause-button-on-every-platform">Back / pause button on every platform</h3>
+<pre><code>config: { actions: { back: ["Escape", "Back", "GamepadStart"] } }
+// in update:
+if (ctx.input.pressed("back")) ctx.go("title");</code></pre>
+<h2 id="every-input-name">Every input name</h2>
+<table><thead><tr><th>Kind</th><th>Names</th></tr></thead><tbody><tr><td>Keys</td><td><code>A</code>..<code>Z</code>, <code>0</code>..<code>9</code>, <code>Space</code>, <code>Enter</code>, <code>Escape</code>, <code>Tab</code>, <code>Backspace</code>, <code>Left</code>, <code>Right</code>, <code>Up</code>, <code>Down</code>, <code>LeftShift</code>, <code>RightShift</code>, <code>LeftCtrl</code>, <code>RightCtrl</code></td></tr><tr><td>Mouse</td><td><code>MouseLeft</code>, <code>MouseRight</code>, <code>MouseMiddle</code></td></tr><tr><td>Gamepad buttons</td><td><code>GamepadA</code>, <code>GamepadB</code>, <code>GamepadX</code>, <code>GamepadY</code>, <code>GamepadStart</code>, <code>GamepadBack</code>, <code>GamepadUp</code>, <code>GamepadDown</code>, <code>GamepadLeft</code>, <code>GamepadRight</code>, <code>GamepadLB</code>, <code>GamepadRB</code>, <code>GamepadLS</code>, <code>GamepadRS</code>, <code>GamepadLT</code>, <code>GamepadRT</code></td></tr><tr><td>Sticks as buttons</td><td><code>GamepadLeftX-</code>, <code>GamepadLeftX+</code>, <code>GamepadLeftY-</code> (up), <code>GamepadLeftY+</code>, <code>GamepadRightX-</code>, <code>GamepadRightX+</code>, <code>GamepadRightY-</code>, <code>GamepadRightY+</code></td></tr><tr><td>Touch / phone</td><td><code>Touch</code>, <code>TouchLeft</code>, <code>TouchRight</code>, <code>Back</code></td></tr><tr><td>Axis sources</td><td><code>GamepadLeftX</code>, <code>GamepadLeftY</code>, <code>GamepadRightX</code>, <code>GamepadRightY</code>, <code>GamepadLT</code>, <code>GamepadRT</code>, or a key pair <code>"Neg/Pos"</code> such as <code>"A/D"</code></td></tr></tbody></table>
+<p>A misspelled name is an error at boot that lists every valid one.</p>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li>Read <code>pressed</code> / <code>released</code> in <code>update</code>: inside <code>ctx.every</code> or <code>ctx.after</code> you will miss them.</li><li><code>config.actions</code> must map every declared action; the action name <code>axes</code> is reserved.</li><li>What the game UI used (a clicked button, menu navigation) never also triggers game actions.</li><li><code>ctx.input.mouse()</code> is screen space: use <code>ctx.camera.toWorld</code> once the camera moves or zooms.</li><li>Use <code>ctx.platform</code> for hints only; the simulation must be the same on every OS.</li></ul>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="physics.html">Physics</a>: ground checks and jumping with bodies.</li><li><a href="ui.html">UI</a>: menus, focus and gamepad navigation; <a href="android.html">Android</a>: touch and the back button.</li><li><a href="testing.html">Testing</a>: scripted inputs; <code>examples/topdown</code>: two players and rumble.</li></ul></main></body></html>

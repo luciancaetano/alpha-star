@@ -1,36 +1,79 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AGENTS.md for games - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html" class="here">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html" class="here">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="agents-md-for-game-projects">AGENTS.md for game projects</h1>
-<p>Every template and example has an <code>AGENTS.md</code> at its root: the file AI coding agents read first. It should tell an agent, in one screen, how to build and check its work and where each decision lives. <code>alpha init</code> writes one; keep it current as the game grows.</p>
-<h2 id="what-to-put-in-it">What to put in it</h2>
-<ul><li><strong>One line on the game</strong> and its controls.</li><li><strong>Where the truth is:</strong> <code>node_modules/@alpha-star/sdk/types/alpha.d.ts</code> (the API) and this site.</li><li><strong>Commands</strong> and the definition of done: <code>npm run check</code> clean and <code>npm test</code> passing.</li><li><strong>Layout:</strong> a table of files and what each holds (<code>types.ts</code> first: every name).</li><li><strong>How things work here:</strong> the few patterns specific to this game (e.g. "rules are pure functions in rules.ts", "stars move through ctx.positions").</li><li><strong>Rules:</strong> <code>ctx.random</code> only, write the failing test first, F12 dev tools are not in shipped games.</li></ul>
-<h2 id="starting-point">Starting point</h2>
-<pre><code># AGENTS.md — &lt;Game&gt; (alpha-star game)
-
-&lt;One line: what the game is, controls.&gt;
+<p><code>AGENTS.md</code> is the file AI coding agents (Claude Code, Codex, Cursor, Copilot, Gemini CLI...) read first when they open your project. A good one tells the agent, in one screen, how to check its work and where each decision lives. <code>alpha init</code> writes one for you; keep it current as the game grows.</p>
+<h2 id="a-complete-agents-md">A complete AGENTS.md</h2>
+<p>This is the one <code>alpha init my-game --template blank</code> writes. Every template and example starts from it:</p>
+<pre><code># AGENTS.md - alpha-star game
 
 You are editing a game for the alpha-star engine. Write TypeScript in `src/`; `alpha export`
-type-checks it and bundles it into one JS module that the engine runs. The API types live in
-`node_modules/@alpha-star/sdk/types/alpha.d.ts`: read that file when unsure.
+type-checks it and bundles it into one JS module (`dist/main.js`) that the engine runs. The API
+types live in `node_modules/@alpha-star/sdk/types/alpha.d.ts`: read that file when unsure, it is
+the source of truth (the SDK README and docs site explain each feature).
 
 ## Commands
-npm run check / npm test / npm start / npx alpha run --watch / npx alpha mcp
+
+    npm install                 # once
+    npm run check               # type-check only (fast)
+    npm test                    # headless simulate() tests (test/main.test.ts)
+    npm start                   # export, then play
+    npx alpha run --watch       # every save re-exports and the game hot-reloads
+    npx alpha run -- --frames 120 --hidden --screenshot s.bmp   # headless screenshot
+    npx alpha mcp               # MCP server: start, drive and observe the game as an agent
+    npx alpha export --standalone --out build/game              # pack + player engine: runs by itself
+
+(In the real file the commands sit in their own code fence.)
 
 A change is done only when `npm run check` is clean and `npm test` passes.
 
-## Layout
+## Layout (one way to do each thing)
+
 | File | Holds |
 |---|---|
-| src/types.ts | Every name. Edit first. |
-| src/tuning.ts | Numbers that set the feel. |
-| src/prefabs/*.ts | Entity specs (plain data). |
-| src/scenes/*.ts | Scenes. |
-| test/main.test.ts | simulate() tests. |
+| `src/types.ts` | Every name the game uses (actions, axes, sounds, images, tags, UI ids, scenes). Edit first. |
+| `src/alpha.ts` | `define&lt;Game&gt;()`: the `scene` and `game` builders bound to those names. |
+| `src/tuning.ts` | Numbers that set the feel (speeds, sizes, timings). |
+| `src/prefabs/*.ts` | Functions returning `EntitySpec` data (shape, body, emitter, data). |
+| `src/scenes/*.ts` | `scene(name, { state, enter, update, exit })`. |
+| `src/main.ts` | `game({ config, start, scenes, assets })`. |
+| `test/main.test.ts` | Exported functions; each runs `simulate(game, {...})` and checks with `expect`. |
+| `assets/` | Images, sounds, fonts, maps, UI (`.rml`/`.rcss`), locales. Declared in `main.ts`. |
 
-## How things work here
-- ...</code></pre>
-<h2 id="working-with-an-agent">Working with an agent</h2>
-<p>Give the agent the MCP server (<code>npx alpha mcp</code>, see <a href="mcp.html">MCP for agents</a>) so it can play what it builds: start the game hidden, step it, read the state, take screenshots. Determinism makes its tests exact, and script errors pause the game with messages written for it to fix.</p>
-<p>Install the SDK's agent skills with <code>npx alpha skills</code>. It lists the agents and asks which ones to set up; press Enter for the defaults, Claude Code (<code>.claude/skills</code>) and the shared <code>.agents/skills</code> folder (Codex, Gemini CLI, Cursor, Copilot, OpenCode, Amp). <code>--agents claude,cursor</code> skips the question, <code>--list</code> shows what is available. Rerun it after updating the SDK to update the skills. Then ask the agent to run the <code>alpha-harness</code> skill: it copies the API docs for LLMs into <code>docs/llm/</code> and writes an index of them, plus code-size rules, into the game's <code>AGENTS.md</code>.</p></main></body></html>
+## Rules
+
+- Declare a name in `types.ts` before using it; misspelled names are compile errors.
+- Randomness only through `ctx.random` (seeded by `config.seed`); never `Math.random`.
+- Write the failing test first (`simulate` with `inputs`, then `run.expect...` or `run.entities`).
+- A script error pauses the game with a message naming what failed and what exists; fix the cause.
+- F12 opens the dev tools while the game runs (not in exported standalone games).</code></pre>
+<h2 id="make-it-yours-step-by-step">Make it yours, step by step</h2>
+<h3 id="1-say-what-the-game-is">1. Say what the game is</h3>
+<p>Replace the title and add one line on the game and its controls:</p>
+<pre><code># AGENTS.md - Star Hop (alpha-star game)
+
+A one-screen platformer: collect every star before the timer ends. Arrows/A-D move, Space jumps.</code></pre>
+<h3 id="2-add-how-things-work-here">2. Add how things work here</h3>
+<p>The generic rules cover the engine. Add the few patterns specific to your game, so the agent follows them instead of inventing new ones. Lines in the spirit of the examples' <code>AGENTS.md</code>:</p>
+<pre><code>## How things work here
+- Rules are pure functions in `src/rules.ts`; the scene only draws what they return (puzzle).
+- The 120 stars move through `ctx.positions("star")`, not one entity at a time (shmup).
+- Two players: each hero's `data.player` picks `ctx.input.player(n)` (topdown).</code></pre>
+<h3 id="3-grow-the-layout-table-with-the-game">3. Grow the layout table with the game</h3>
+<p>When you add <code>src/levels.ts</code> or a new scene, add its row. The table is the agent's map: a file missing from it is a file the agent will not think of.</p>
+<h3 id="4-keep-the-definition-of-done">4. Keep the definition of done</h3>
+<p>Leave the line "A change is done only when <code>npm run check</code> is clean and <code>npm test</code> passes". It is what makes an agent run the tests instead of declaring victory.</p>
+<h2 id="give-the-agent-the-engine-skills">Give the agent the engine skills</h2>
+<pre><code>npx alpha skills</code></pre>
+<p>It lists the agents and asks which ones to set up; press Enter for the defaults, Claude Code (<code>.claude/skills</code>) and the shared <code>.agents/skills</code> folder (Codex, Gemini CLI, Cursor, Copilot, OpenCode, Amp). <code>--agents claude,cursor</code> skips the question and <code>--list</code> shows what is available. Rerun it after updating the SDK to update the skills.</p>
+<p>Then ask the agent to run the **<code>alpha-harness</code>** skill. It copies the SDK's API docs for LLMs into <code>docs/llm/</code> and writes an index of them, plus code-size rules, into your <code>AGENTS.md</code>.</p>
+<h2 id="let-the-agent-play-the-game">Let the agent play the game</h2>
+<p>Give the agent the MCP server (<a href="mcp.html">MCP for agents</a>): it can start the game hidden, send input, step frames, read the state and take screenshots. Determinism makes its tests exact, and script errors pause the game with messages written for it to fix.</p>
+<p>A request that works well:</p>
+<pre><code>Add a double jump. Write a failing test in test/main.test.ts first, make it pass,
+then verify it in the running game with the alpha MCP tools and show me a screenshot.</code></pre>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li><strong>Stale is worse than missing.</strong> An <code>AGENTS.md</code> that names files that no longer exist sends the agent the wrong way. Update it in the same change as the code.</li><li><strong>Keep it short.</strong> One screen. Point to <code>alpha.d.ts</code> and these docs for details instead of copying them.</li><li><strong>The types are the truth.</strong> If the doc and <code>alpha.d.ts</code> disagree, the agent should trust the types; say so in the file (the template does).</li></ul>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="mcp.html">MCP for agents</a>: the tools the agent uses to play.</li><li><a href="testing.html">Testing</a>: what "<code>npm test</code> passes" means.</li><li><a href="examples.html">Examples</a>: six projects, each with its own <code>AGENTS.md</code>.</li></ul></main></body></html>

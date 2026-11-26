@@ -1,28 +1,236 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Game UI - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html" class="here">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html" class="here">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="game-ui">Game UI</h1>
-<p>Game UI is <a href="https://mikke89.github.io/RmlUiDoc/">RmlUi</a>: HTML/CSS-like <code>.rml</code> documents with <code>.rcss</code> styles, declared in <code>assets.ui</code> and loaded hidden before the first scene.</p>
-<pre><code>// types.ts: document -&gt; ids scripts touch
-ui: { hud: "score"; over: "score" | "again" };
-// main.ts
-assets: { ui: { hud: "assets/ui/hud.rml", over: "assets/ui/over.rml" } }</code></pre>
+<p><strong>What you'll build:</strong> a tap-for-points game with a score/time HUD and a pause menu (Resume, Restart) that works with mouse, touch, keyboard and gamepad.</p>
+<p>Game UI is <a href="https://mikke89.github.io/RmlUiDoc/">RmlUi</a>: HTML/CSS-like <code>.rml</code> documents styled by <code>.rcss</code>, declared in <code>assets.ui</code>, loaded hidden before the first scene and drawn over the game. Scripts only do four things with it: <code>show</code>, <code>hide</code>, <code>set</code> text, and <code>on</code> click/back.</p>
+<h2 id="complete-example">Complete example</h2>
+<p><code>src/main.ts</code>:</p>
+<pre><code>import { define } from "alpha";
+
+interface Clicker {
+  actions: "tap" | "pause";
+  sounds: "pop";
+  images: never;
+  tags: "target";
+  scenes: { play: undefined };
+  ui: {
+    hud: "score" | "time";             // document -&gt; ids of the elements scripts touch
+    pause: "resume" | "restart";
+  };
+}
+
+const { scene, game } = define&lt;Clicker&gt;();
+
+const play = scene("play", {
+  state: () =&gt; ({ score: 0, left: 30, paused: false }),
+  enter(ctx) {
+    ctx.spawn({ tags: ["target"], pos: [160, 90], shape: { circle: 16, color: "#ffd166" } });
+    ctx.ui.show("hud");
+    ctx.ui.set("hud", "score", 0);
+
+    const resume = () =&gt; { ctx.state.paused = false; ctx.ui.hide("pause"); };
+    ctx.ui.on("pause", "resume", "click", resume);
+    ctx.ui.on("pause", "resume", "back", resume);           // Escape / gamepad B
+    ctx.ui.on("pause", "restart", "click", () =&gt; ctx.go("play"));
+  },
+  update(ctx) {
+    if (ctx.input.pressed("pause") &amp;&amp; !ctx.state.paused) {
+      ctx.state.paused = true;
+      ctx.ui.show("pause");
+    }
+    if (ctx.state.paused) return;
+
+    ctx.state.left = Math.max(0, ctx.state.left - ctx.dt);
+    ctx.ui.set("hud", "time", Math.ceil(ctx.state.left));
+    if (ctx.input.pressed("tap") &amp;&amp; ctx.state.left &gt; 0) {
+      ctx.state.score += 1;
+      ctx.ui.set("hud", "score", ctx.state.score);
+      ctx.audio.play("pop");
+    }
+  },
+});
+
+export default game({
+  config: {
+    title: "Clicker",
+    size: [320, 180],
+    background: "#1d2b53",
+    seed: 1,
+    actions: { tap: ["Space", "MouseLeft", "Touch", "GamepadA"], pause: ["Escape", "P", "GamepadStart", "Back"] },
+  },
+  start: "play",
+  scenes: { play },
+  assets: {
+    sounds: { pop: { wave: "square", freq: [440, 880], duration: 0.06, volume: 0.2 } },
+    ui: { hud: "assets/ui/hud.rml", pause: "assets/ui/pause.rml" },
+  },
+});</code></pre>
+<p><code>assets/ui/hud.rml</code>:</p>
 <pre><code>&lt;rml&gt;
 &lt;head&gt;&lt;link type="text/rcss" href="game.rcss"/&gt;&lt;/head&gt;
-&lt;body&gt;
-  &lt;p id="score"&gt;0&lt;/p&gt;
-  &lt;button id="again" autofocus&gt;AGAIN&lt;/button&gt;
+&lt;body class="safe"&gt;
+  &lt;p class="bar"&gt;SCORE &lt;span id="score"&gt;0&lt;/span&gt;   TIME &lt;span id="time"&gt;30&lt;/span&gt;&lt;/p&gt;
 &lt;/body&gt;
 &lt;/rml&gt;</code></pre>
+<p><code>assets/ui/pause.rml</code>:</p>
+<pre><code>&lt;rml&gt;
+&lt;head&gt;&lt;link type="text/rcss" href="game.rcss"/&gt;&lt;/head&gt;
+&lt;body class="safe"&gt;
+  &lt;div class="panel"&gt;
+    &lt;h1&gt;PAUSED&lt;/h1&gt;
+    &lt;button id="resume" autofocus&gt;RESUME&lt;/button&gt;
+    &lt;button id="restart"&gt;RESTART&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+&lt;/rml&gt;</code></pre>
+<p><code>assets/ui/game.rcss</code>:</p>
+<pre><code>body { width: 100%; height: 100%; box-sizing: border-box; font-size: 8dp; color: #ffffff; }
+p { display: block; }
+.bar { margin: 4dp 8dp; }
+.panel { display: block; width: 140dp; margin: 40dp auto 0dp auto; padding: 10dp; background-color: #000000cc; text-align: center; }
+h1 { display: block; font-size: 16dp; margin-bottom: 8dp; }
+button { display: block; margin-top: 6dp; padding: 4dp; background-color: #29366f; tab-index: auto; }
+button:hover, button:focus { background-color: #ef7d57; }
+.high-contrast .panel { background-color: #000000; border: 1dp #ffffff; }</code></pre>
+<p><code>test/main.test.ts</code>:</p>
+<pre><code>import { simulate } from "alpha/test";
+import game from "../src/main";
+
+export function tapsScore() {
+  const run = simulate(game, { seconds: 1, inputs: { tap: [0, 10, 20] } });
+  run.expect.noErrors();
+  run.expect.text("hud", "score").equals("3");
+}
+
+export function pauseFreezesTime() {
+  const run = simulate(game, { seconds: 2, inputs: { pause: [0] } });
+  run.expect.shown("pause");
+  run.expect.text("hud", "time").equals("30");
+}
+
+export function resumeClosesTheMenu() {
+  const run = simulate(game, { seconds: 1, inputs: { pause: [5] }, clicks: { "pause#resume": [30] } });
+  run.expect.noErrors();
+}</code></pre>
+<p>No fonts are declared, so the built-in 8x8 font draws everything: keep font sizes at multiples of 8 (<code>8dp</code>, <code>16dp</code>). <code>npx alpha run</code> to play, <code>npx alpha test</code> to test.</p>
+<h2 id="step-by-step">Step by step</h2>
+<h3 id="1-declare-documents-and-their-ids">1. Declare documents and their ids</h3>
+<pre><code>// GameTypes: every document, and the ids of elements scripts touch
+ui: {
+  hud: "score" | "lives";
+  title: "play" | "settings";
+  loading: never;          // a document scripts only show/hide
+};
+// game({ assets })
+ui: { hud: "assets/ui/hud.rml", title: "assets/ui/title.rml", loading: "assets/ui/loading.rml" },</code></pre>
+<p>A game without UI writes <code>ui: {}</code>. A misspelled document or id is a compile error. Files the <code>.rml</code> links (<code>&lt;link href&gt;</code>, <code>src=</code>, RCSS <code>url()</code>) are packed by <code>alpha export</code> too.</p>
+<h3 id="2-show-hide-set-text">2. Show, hide, set text</h3>
 <pre><code>ctx.ui.show("hud");
-ctx.ui.set("hud", "score", ctx.state.score);   // plain text, never parsed as markup
-ctx.ui.on("over", "again", "click", () =&gt; ctx.go("play"));
-ctx.ui.on("settings", "back", "back", () =&gt; ctx.go("title"));   // Escape / gamepad B</code></pre>
-<ul><li>Buttons need <code>tab-index: auto</code> in the RCSS to be focusable; style <code>:hover</code>, <code>:focus</code>, <code>:active</code>.</li><li>Gamepad: D-pad / left stick move focus, A clicks, B is "back". Mouse and touch click.</li><li>On every scene change the documents reload hidden and handlers are dropped.</li><li>Sizes in <code>dp</code> follow <code>ctx.settings.uiScale</code>; <code>.high-contrast</code> is set on every body when <code>ctx.settings.highContrast</code> is on.</li><li>Text is rasterized at the screen's real resolution: sharp at any window size.</li><li>Documents cover the whole screen, including what <code>config.window.aspect</code> reveals beyond <code>config.size</code>, so edge-anchored HUDs sit at the real edges; <code>class="safe"</code> pads an element by <code>ctx.safeArea</code> (cutouts, rounded corners). Use <code>box-sizing: border-box</code> on a padded full-size body.</li></ul>
-<h2 id="fonts">Fonts</h2>
-<p><code>assets.fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", license: "assets/fonts/OFL.txt" } }</code>; the name is the <code>font-family</code> in RCSS and <code>font</code> of world text. TTF/OTF or BMFont <code>.fnt</code>. With no fonts at all, every family falls back to the built-in 8x8 font (public domain): use sizes in multiples of 8 (<code>examples/topdown</code>, <code>shmup</code> do). Any language: fonts take <code>fallbacks</code>, text is shaped and ordered right to left where needed, <code>direction: rtl</code> sets it in RCSS, and CJK paragraphs wrap with <code>word-break: break-all</code> (<a href="text.html">Text and languages</a>).</p>
-<h2 id="in-tests">In tests</h2>
-<pre><code>simulate(game, { seconds: 3, clicks: { "over#again": [120] } }).expect.scene("play");
-run.expect.text("hud", "score").equals("3");
-run.expect.shown("over");</code></pre></main></body></html>
+ctx.ui.set("hud", "score", 120);     // numbers are fine
+ctx.ui.set("hud", "lives", "x3");    // plain text, never parsed as markup
+ctx.ui.hide("hud");</code></pre>
+<p>Result: the element's content becomes exactly that text. Several documents can be shown at once (a HUD under a pause panel).</p>
+<h3 id="3-buttons">3. Buttons</h3>
+<pre><code>&lt;button id="play" autofocus&gt;PLAY&lt;/button&gt;
+&lt;button id="settings"&gt;SETTINGS&lt;/button&gt;</code></pre>
+<pre><code>button { tab-index: auto; }                         /* required: makes it focusable */
+button:hover, button:focus { background-color: #ef7d57; }
+button:active { background-color: #16394c; }</code></pre>
+<pre><code>ctx.ui.on("title", "play", "click", () =&gt; ctx.go("play", { level: 1 }));
+ctx.ui.on("title", "settings", "click", () =&gt; ctx.go("settings"));</code></pre>
+<p><code>"click"</code> fires for a mouse click, a touch, or Enter / Space / gamepad A on the focused element. D-pad and left stick move focus; <code>autofocus</code> picks the first focused button. Handlers run at the start of the next step.</p>
+<h3 id="4-back-escape-gamepad-b-android-back">4. Back (Escape, gamepad B, Android back)</h3>
+<pre><code>ctx.ui.on("settings", "back", "back", () =&gt; ctx.go("title"));   // any id of the shown document</code></pre>
+<p><code>"back"</code> fires while that document is shown. Input the UI uses never also triggers game actions, so the same Escape does not open your pause menu again.</p>
+<h3 id="5-layout-full-screen-safe-area-dp">5. Layout: full screen, safe area, dp</h3>
+<pre><code>body { width: 100%; height: 100%; box-sizing: border-box; }   /* with class="safe" on &lt;body&gt; */
+.corner { position: absolute; top: 4dp; right: 4dp; }</code></pre>
+<ul><li>Documents cover the whole screen, including what <code>config.window.aspect</code> reveals beyond <code>config.size</code>, so edge-anchored elements sit at the real edges.</li><li><code>class="safe"</code> pads an element by <code>ctx.safeArea</code> (phone cutouts, rounded corners). Put it on <code>&lt;body&gt;</code> and use <code>box-sizing: border-box</code>.</li><li>Use <code>dp</code> units: they follow <code>ctx.settings.uiScale</code>.</li><li>Text is rasterized at the screen's real resolution: sharp at any window size.</li></ul>
+<h3 id="6-fonts">6. Fonts</h3>
+<pre><code>assets: { fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", pixelMode: true, license: "assets/fonts/OFL.txt" } } },</code></pre>
+<pre><code>body { font-family: pixel; font-size: 8dp; }</code></pre>
+<p>The <code>assets.fonts</code> name is the <code>font-family</code>. TTF/OTF or BMFont <code>.fnt</code>. Without any fonts every family falls back to the built-in 8x8 font. Other scripts, right-to-left, CJK wrapping: <a href="text.html">Text and languages</a>.</p>
+<h3 id="7-translated-text">7. Translated text</h3>
+<pre><code>&lt;h1 data-t="menu.title"&gt;MENU&lt;/h1&gt;</code></pre>
+<p>Elements with <code>data-t="key"</code> show <code>ctx.t(key)</code> and re-translate when <code>ctx.locale</code> changes. See <a href="saves.html">Saves, settings, i18n</a>.</p>
+<h2 id="recipes">Recipes</h2>
+<h3 id="score-hud-with-lives">Score HUD with lives</h3>
+<pre><code>// types: ui: { hud: "score" | "lives" }
+enter(ctx) {
+  ctx.ui.show("hud");
+  ctx.ui.set("hud", "score", 0);
+  ctx.ui.set("hud", "lives", "x3");
+},
+// whenever it changes, not every frame:
+function addScore(ctx: Ctx, n: number) {
+  ctx.state.score += n;
+  ctx.ui.set("hud", "score", ctx.state.score);
+}</code></pre>
+<h3 id="title-menu">Title menu</h3>
+<pre><code>&lt;body class="safe"&gt;
+  &lt;div class="panel"&gt;
+    &lt;h1&gt;MY GAME&lt;/h1&gt;
+    &lt;button id="play" autofocus&gt;PLAY&lt;/button&gt;
+    &lt;button id="settings"&gt;SETTINGS&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/body&gt;</code></pre>
+<pre><code>export default scene("title", {
+  enter(ctx) {
+    ctx.ui.show("title");
+    ctx.ui.on("title", "play", "click", () =&gt; ctx.go("play", { level: 1 }));
+    ctx.ui.on("title", "settings", "click", () =&gt; ctx.go("settings"));
+  },
+});</code></pre>
+<h3 id="game-over-with-play-again">Game over with "play again"</h3>
+<pre><code>export default scene("over", {
+  enter(ctx, { score }) {
+    ctx.ui.set("over", "score", score);
+    ctx.ui.show("over");
+    ctx.ui.on("over", "again", "click", () =&gt; ctx.go("play"));
+  },
+});</code></pre>
+<p>(<code>examples/flappy/src/scenes/over.ts</code>, which also saves the best score.)</p>
+<h3 id="settings-screen-with-volume-sliders">Settings screen with volume "sliders"</h3>
+<p>Scripts cannot read form controls, so volumes are <code>-</code> / <code>+</code> buttons around a value:</p>
+<pre><code>&lt;p&gt;MUSIC &lt;button id="music-down" autofocus&gt;-&lt;/button&gt;&lt;span id="music"&gt;100%&lt;/span&gt;&lt;button id="music-up"&gt;+&lt;/button&gt;&lt;/p&gt;
+&lt;p&gt;EFFECTS &lt;button id="sfx-down"&gt;-&lt;/button&gt;&lt;span id="sfx"&gt;100%&lt;/span&gt;&lt;button id="sfx-up"&gt;+&lt;/button&gt;&lt;/p&gt;
+&lt;button id="contrast"&gt;HIGH CONTRAST: &lt;span id="contrast-value"&gt;OFF&lt;/span&gt;&lt;/button&gt;
+&lt;button id="back"&gt;BACK&lt;/button&gt;</code></pre>
+<pre><code>type Bus = "music" | "sfx";
+function nudge(ctx: SettingsCtx, bus: Bus, by: number) {
+  const v = Math.round((ctx.audio.bus(bus).volume + by) * 10) / 10;   // no drift
+  ctx.audio.bus(bus).volume = Math.min(1, Math.max(0, v));             // persisted
+  ctx.ui.set("settings", bus, `${Math.round(ctx.audio.bus(bus).volume * 100)}%`);
+}
+
+export default scene("settings", {
+  enter(ctx) {
+    ctx.ui.show("settings");
+    for (const bus of ["music", "sfx"] as const) {
+      nudge(ctx, bus, 0);                                     // show the current value
+      ctx.ui.on("settings", `${bus}-down`, "click", () =&gt; nudge(ctx, bus, -0.1));
+      ctx.ui.on("settings", `${bus}-up`, "click", () =&gt; nudge(ctx, bus, 0.1));
+    }
+    ctx.ui.on("settings", "contrast", "click", () =&gt; {
+      ctx.settings.highContrast = !ctx.settings.highContrast;
+      ctx.ui.set("settings", "contrast-value", ctx.settings.highContrast ? "ON" : "OFF");
+    });
+    ctx.ui.on("settings", "back", "click", () =&gt; ctx.go("title"));
+    ctx.ui.on("settings", "back", "back", () =&gt; ctx.go("title"));
+  },
+});</code></pre>
+<p>Full version: <code>examples/flappy/src/scenes/settings.ts</code> and <code>assets/ui/settings.rml</code>.</p>
+<h3 id="high-contrast-styles">High contrast styles</h3>
+<p><code>ctx.settings.highContrast = true</code> adds class <code>high-contrast</code> to every document's body:</p>
+<pre><code>.high-contrast .panel { background-color: #000000; border-color: #ffffff; }
+.high-contrast button:focus { background-color: #ffff00; color: #000000; }</code></pre>
+<h3 id="touch-hint-vs-keyboard-hint">Touch hint vs keyboard hint</h3>
+<pre><code>ctx.ui.set("title", "hint", ctx.platform.mobile ? "TAP TO START" : "PRESS SPACE");</code></pre>
+<h3 id="hud-drawn-in-the-world-instead">HUD drawn in the world instead</h3>
+<p>For a number that follows an entity (a health bar over an enemy), use world text, not UI: <a href="text.html">Text and languages</a>.</p>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li>Buttons without <code>tab-index: auto</code> in the RCSS never get focus (no keyboard or gamepad).</li><li>Every scene change reloads all documents hidden, with the file's texts, and drops all handlers: <code>show</code> and <code>on</code> again in <code>enter</code>.</li><li><code>ui.set</code> replaces the element's whole content: put the changing part in its own <code>&lt;span id&gt;</code>.</li><li>Only text and visibility of whole documents are scriptable: no reading inputs or sliders, no changing classes or styles from scripts. Use a second document for a panel that comes and goes.</li><li><code>font-effect</code> (shadow/outline) is not drawn.</li><li>The UI keeps running while your game "pauses" itself: pausing is your own state flag.</li><li>In tests, clicking a hidden document or an unknown id fails the test.</li></ul>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="text.html">Text and languages</a>: fonts, RTL, CJK in UI and world text.</li><li><a href="saves.html">Saves, settings, i18n</a>: <code>data-t</code>, <code>ctx.settings</code>.</li><li><a href="audio.html">Audio</a>: volume buses behind the settings screen.</li><li><code>examples/flappy</code> (title, HUD, game over, settings), <code>examples/puzzle</code> (localized HUD), <code>examples/shaders</code> (touch buttons).</li><li>In <code>alpha.d.ts</code>: <code>UI</code>, <code>Settings</code>, <code>Context.safeArea</code>; tests: <code>SimulateOptions.clicks</code>, <code>Expect.text</code>, <code>Expect.shown</code>.</li></ul></main></body></html>

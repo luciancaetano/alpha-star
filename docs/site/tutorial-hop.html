@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial: a one-file game - alpha-star</title><link rel="stylesheet" href="style.css"></head>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html" class="here">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<main><h1 id="tutorial-hop-a-whole-game-in-one-file">Tutorial: Hop, a whole game in one file</h1>
+<p>Build <strong>Hop</strong>: tap to hop a little square through gaps between moving columns. One file (<code>src/main.ts</code>), shapes only (no images), synthesized sounds (no audio files), a title screen, a score, a saved best score, sparks, screen shake and automated tests. About 170 lines.</p>
+<p>!<a href="tutorial-hop.png">Hop: a yellow square between two columns</a></p>
+<p><strong>Before you start:</strong> follow <a href="getting-started.html">Getting started</a> up to <code>npm start</code> working.</p>
+<h2 id="0-a-fresh-project-with-one-file">0. A fresh project with one file</h2>
+<pre><code>npx @alpha-star/sdk init hop
+cd hop
+npm install</code></pre>
+<p>The <code>blank</code> template splits a game into several files. Hop keeps everything in <code>src/main.ts</code>, so delete the rest of <code>src/</code> and the starter art:</p>
+<pre><code>rm -r src/alpha.ts src/types.ts src/tuning.ts src/prefabs src/scenes assets tools</code></pre>
+<p>(On Windows PowerShell: <code>Remove-Item -Recurse src/alpha.ts, src/types.ts, src/tuning.ts, src/prefabs, src/scenes, assets, tools</code>.)</p>
+<p>Every step below adds to <code>src/main.ts</code>. Run <code>npm start</code> after each one; the window hot-reloads when you save. The complete file is at the end of the page.</p>
+<h2 id="1-names-first">1. Names first</h2>
+<p>The engine type-checks every name: actions, sounds, tags, scenes. Declare them once in an interface and bind <code>scene</code> / <code>game</code> to it with <code>define</code>. A typo such as <code>ctx.find("hoper")</code> is then a compile error instead of a bug.</p>
+<pre><code>import { define, type Context, type EntitySpec } from "alpha";
+
+interface Hop {
+  actions: "hop";                          // input actions (bound to keys in config)
+  sounds: "hop" | "point" | "crash";       // assets.sounds names
+  images: never;                           // no images: shapes only
+  tags: "hopper" | "column" | "gap" | "floor" | "label";
+  ui: {};                                  // no RmlUi documents
+  scenes: { title: undefined; play: undefined; over: { score: number } };  // scene -&gt; params
+}
+
+const { scene, game } = define&lt;Hop&gt;();
+type Spec = EntitySpec&lt;Hop["tags"]&gt;;</code></pre>
+<p>Put the numbers that shape the feel together, so tuning never means hunting through scenes:</p>
+<pre><code>const W = 320;
+const H = 180;
+const FLOOR_Y = 168;
+const HOPPER = { x: 80, size: 10, hop: -230 };
+const COLUMNS = { width: 22, gap: 56, speed: 90, every: 1.6, margin: 24 };</code></pre>
+<h2 id="2-a-floor-and-a-falling-square">2. A floor and a falling square</h2>
+<p>Entities are plain objects (<strong>spawn specs</strong>): <code>tags</code>, <code>pos</code> (the center), a <code>shape</code> to draw and an optional <code>body</code> for physics. Functions that return specs are called <strong>prefabs</strong>.</p>
+<pre><code>function floor(): Spec {
+  return {
+    tags: ["floor"],
+    pos: [W / 2, (FLOOR_Y + H) / 2],
+    shape: { rect: [W, H - FLOOR_Y], color: "#2a9d8f" },
+    body: { type: "static", collider: { rect: [W, H - FLOOR_Y] } },   // never moves
+  };
+}
+
+function hopper(): Spec {
+  return {
+    tags: ["hopper"],
+    pos: [HOPPER.x, H / 2],
+    z: 2,                                                             // drawn over columns
+    shape: { rect: [HOPPER.size, HOPPER.size], color: "#ffd166" },
+    body: { type: "dynamic", velocity: [0, HOPPER.hop], collider: { rect: [HOPPER.size, HOPPER.size] }, fixedRotation: true },
+  };
+}
+
+const play = scene("play", {
+  enter(ctx) {                 // runs once when the scene starts
+    ctx.spawn(floor());
+    ctx.spawn(hopper());
+  },
+});
+
+export default game({
+  config: { title: "Hop", size: [W, H], background: "#1d3557", seed: 7, gravity: [0, 700], actions: { hop: ["Space"] } },
+  start: "play",
+  scenes: { play },
+});</code></pre>
+<p><strong>Expected:</strong> the square jumps up once (its starting <code>velocity</code>), falls under <code>gravity</code> and lands on the floor. <code>dynamic</code> bodies are moved by physics; <code>static</code> ones never move.</p>
+<h2 id="3-hop-on-space-with-sound-and-sparks">3. Hop on Space, with sound and sparks</h2>
+<p><code>update</code> runs every fixed step (60 per second). <code>ctx.input.pressed(action)</code> is true on the step the key goes down. Setting <code>body.velocity</code> makes the hop independent of how fast it was falling.</p>
+<p>Bind more keys to the action, and declare synthesized sounds (a waveform swept between two frequencies, so no files are needed):</p>
+<pre><code>  config: {
+    // ...
+    actions: { hop: ["Space", "Up", "W", "MouseLeft", "GamepadA"] },
+  },
+  assets: {
+    sounds: {
+      hop: { wave: "square", freq: [520, 780], duration: 0.07, volume: 0.25 },
+      point: { wave: "sine", freq: [880, 1320], duration: 0.1, volume: 0.3 },
+      crash: { wave: "noise", freq: [400, 80], duration: 0.3, volume: 0.35 },
+    },
+  },</code></pre>
+<p>Give the hopper a particle <strong>emitter</strong> (it emits nothing until asked) and burst it on each hop:</p>
+<pre><code>    // in hopper(), next to body:
+    emitter: { lifetime: [0.2, 0.4], speed: [40, 90], angle: [100, 260], size: [3, 1], color: ["#ffd166", "#ef476f00"], max: 32 },</code></pre>
+<pre><code>  update(ctx) {
+    const h = ctx.find("hopper");
+    if (ctx.input.pressed("hop")) {
+      h.body.velocity = [0, HOPPER.hop];
+      h.emit(12);                       // 12 sparks from the emitter
+      ctx.audio.play("hop");
+    }
+    h.rotation = Math.max(-25, Math.min(60, h.body.velocity.y * 0.15));  // tilt with speed (degrees)
+  },</code></pre>
+<p>Ranges like <code>[0.2, 0.4]</code> pick a random value per particle; pairs like <code>size: [3, 1]</code> and the two colors go from start to end of each particle's life (<code>#ef476f00</code> fades to transparent).</p>
+<h2 id="4-columns-that-scroll-in">4. Columns that scroll in</h2>
+<p>A <strong>kinematic</strong> body moves at its <code>velocity</code> and ignores gravity: ideal for obstacles. Each pair is two columns plus an invisible <strong>sensor</strong> in the gap (a sensor reports overlaps but nothing bounces off it). That sensor is how we score.</p>
+<pre><code>function column(x: number, top: number, bottom: number): Spec {
+  const size: [number, number] = [COLUMNS.width, bottom - top];
+  return {
+    tags: ["column"],
+    pos: [x, (top + bottom) / 2],
+    shape: { rect: size, color: "#264653", outline: "#e9c46a" },
+    body: { type: "kinematic", velocity: [-COLUMNS.speed, 0], collider: { rect: size } },
+  };
+}
+
+function columnPair(gapY: number): Spec[] {
+  const x = W + COLUMNS.width;            // just off the right edge
+  const half = COLUMNS.gap / 2;
+  return [
+    column(x, 0, gapY - half),
+    column(x, gapY + half, FLOOR_Y),
+    { tags: ["gap"], pos: [x, gapY], body: { type: "kinematic", velocity: [-COLUMNS.speed, 0], collider: { rect: [4, COLUMNS.gap], sensor: true } } },
+  ];
+}</code></pre>
+<p>Spawn a pair now and then on a timer. <code>ctx.random</code> is seeded by <code>config.seed</code>, so every run (and every test) sees the same gaps:</p>
+<pre><code>  enter(ctx) {
+    // ...
+    const spawnPair = () =&gt; {
+      const half = COLUMNS.gap / 2;
+      const gapY = ctx.random.range(COLUMNS.margin + half, FLOOR_Y - COLUMNS.margin - half);
+      for (const spec of columnPair(gapY)) ctx.spawn(spec);
+    };
+    spawnPair();
+    ctx.every(COLUMNS.every, spawnPair);   // scene timers stop when the scene ends
+  },</code></pre>
+<p>Destroy columns once they leave the screen, in <code>update</code>:</p>
+<pre><code>    for (const c of ctx.findAll("column")) if (c.pos.x &lt; -COLUMNS.width) ctx.destroy(c);</code></pre>
+<h2 id="5-crashing-and-scoring">5. Crashing and scoring</h2>
+<p><code>ctx.onHit(tagA, tagB, fn)</code> runs when two solid bodies touch; <code>ctx.onEnter</code> when a body enters a sensor. The score is drawn as <strong>world text</strong>: a <code>text</code> shape, changed later through <code>entity.text</code>.</p>
+<pre><code>function label(text: string, y: number, size = 16): Spec {
+  return { tags: ["label"], pos: [W / 2, y], z: 10, shape: { text, size, color: "#ffffff" } };
+}
+
+type Play = Context&lt;Hop, { score: number }&gt;;
+
+function crash(ctx: Play) {
+  ctx.audio.play("crash");
+  ctx.camera.shake(4, 0.3);                      // 4 px for 0.3 s
+  ctx.go("over", { score: ctx.state.score });   // next scene, with its params
+}
+
+const play = scene("play", {
+  state: () =&gt; ({ score: 0 }),                   // fresh every time the scene starts
+
+  enter(ctx) {
+    ctx.spawn(floor());
+    ctx.spawn(hopper());
+    const score = ctx.spawn(label("0", 20));
+
+    ctx.onHit("hopper", "column", () =&gt; crash(ctx));
+    ctx.onHit("hopper", "floor", () =&gt; crash(ctx));
+    ctx.onEnter("hopper", "gap", (_h, gap) =&gt; {
+      ctx.state.score += 1;
+      score.text = String(ctx.state.score);
+      ctx.audio.play("point");
+      ctx.destroy(gap);                          // score each gap once
+    });
+    // ... the column timer from step 4
+  },</code></pre>
+<p>And in <code>update</code>, flying off the top also ends the run: <code>if (h.pos.y &lt; 0) crash(ctx);</code></p>
+<h2 id="6-title-and-game-over-with-a-saved-best-score">6. Title and game over, with a saved best score</h2>
+<p>Scenes are the game's screens. <code>ctx.go(name, params)</code> switches; the typed params arrive in the next scene's <code>enter</code>. <code>ctx.save</code> is a small key/value store written to disk at once.</p>
+<pre><code>const title = scene("title", {
+  enter(ctx) {
+    ctx.spawn(floor());
+    ctx.spawn(label("HOP", 60, 32));
+    ctx.spawn(label("press Space to start", 110, 8));
+    ctx.spawn(label(`best ${ctx.save.get("best", 0)}`, 130, 8));
+  },
+  update(ctx) {
+    if (ctx.input.pressed("hop")) ctx.go("play");
+  },
+});
+
+const over = scene("over", {
+  enter(ctx, { score }) {
+    const best = Math.max(score, ctx.save.get("best", 0));
+    ctx.save.set("best", best);
+    ctx.spawn(floor());
+    ctx.spawn(label("GAME OVER", 60, 24));
+    ctx.spawn(label(`score ${score}   best ${best}`, 100, 8));
+    ctx.spawn(label("press Space", 125, 8));
+  },
+  update(ctx) {
+    if (ctx.time &gt; 0.4 &amp;&amp; ctx.input.pressed("hop")) ctx.go("play");   // a short pause first
+  },
+});</code></pre>
+<p>Register them and start on the title: <code>start: "title", scenes: { title, play, over }</code>.</p>
+<h2 id="7-tests-that-play-the-game-for-you">7. Tests that play the game for you</h2>
+<p><code>simulate</code> runs the game headless, frame by frame, with scripted input; the same seed and inputs give the same result every time. Replace <code>test/main.test.ts</code>:</p>
+<pre><code>// Headless tests (`npm test`): same seed + same inputs =&gt; same result, every run.
+import { simulate } from "alpha/test";
+import game from "../src/main";
+
+// Frames at 60 per second: a hop every 39 frames (rise and fall take ~0.66 s) holds the height.
+const STEADY = Array.from({ length: 12 }, (_, i) =&gt; i * 39);
+
+export function titleWaitsForSpace() {
+  simulate(game, { seconds: 1 }).expect.scene("title");
+}
+
+export function withoutHoppingTheHopperFallsAndTheRunEnds() {
+  simulate(game, { scene: "play", seconds: 2 }).expect.scene("over");
+}
+
+export function columnsArriveInPairsWithAGap() {
+  const run = simulate(game, { scene: "play", seconds: 1, inputs: { hop: STEADY } });
+  run.expect.scene("play");
+  run.expect.count("column").equals(2);
+  run.expect.count("gap").equals(1);
+}
+
+export function noErrorsWhileHopping() {
+  const run = simulate(game, { scene: "play", seconds: 3, inputs: { hop: STEADY } });
+  run.expect.noErrors();
+}</code></pre>
+<pre><code>npm test</code></pre>
+<p><strong>Expected:</strong> <code>4 passed, 0 failed</code>. Change <code>HOPPER.hop</code> to <code>-150</code> and run again: the steady-hop test now fails, which is how tests catch a tuning change that breaks the game.</p>
+<h2 id="8-ship-it">8. Ship it</h2>
+<pre><code>npx alpha export --standalone      # a folder with the engine and your game, ready to zip</code></pre>
+<p>See <a href="exporting.html">Exporting</a> and <a href="android.html">Android</a>.</p>
+<h2 id="the-complete-file">The complete file</h2>
+<p><code>src/main.ts</code>, exactly as tested:</p>
+<pre><code>// Hop: tap to hop a little square through gaps between columns.
+// The whole game in one file, drawn with shapes only (no images).
+import { define, type Context, type EntitySpec } from "alpha";
+
+// 1. Names: every action, sound, tag and scene the game uses.
+interface Hop {
+  actions: "hop";
+  sounds: "hop" | "point" | "crash";
+  images: never;
+  tags: "hopper" | "column" | "gap" | "floor" | "label";
+  ui: {};
+  scenes: { title: undefined; play: undefined; over: { score: number } };
+}
+
+const { scene, game } = define&lt;Hop&gt;();
+type Spec = EntitySpec&lt;Hop["tags"]&gt;;
+
+// 2. Tuning: every number that changes the feel, in one place.
+const W = 320;
+const H = 180;
+const FLOOR_Y = 168;
+const HOPPER = { x: 80, size: 10, hop: -230 };
+const COLUMNS = { width: 22, gap: 56, speed: 90, every: 1.6, margin: 24 };
+
+// 3. Prefabs: functions that return spawn specs.
+function hopper(): Spec {
+  return {
+    tags: ["hopper"],
+    pos: [HOPPER.x, H / 2],
+    z: 2,
+    shape: { rect: [HOPPER.size, HOPPER.size], color: "#ffd166" },
+    // Starts with one hop, so the player has a moment before the first fall.
+    body: { type: "dynamic", velocity: [0, HOPPER.hop], collider: { rect: [HOPPER.size, HOPPER.size] }, fixedRotation: true },
+    // A puff of sparks; play() bursts it on every hop.
+    emitter: { lifetime: [0.2, 0.4], speed: [40, 90], angle: [100, 260], size: [3, 1], color: ["#ffd166", "#ef476f00"], max: 32 },
+  };
+}
+
+function floor(): Spec {
+  return {
+    tags: ["floor"],
+    pos: [W / 2, (FLOOR_Y + H) / 2],
+    shape: { rect: [W, H - FLOOR_Y], color: "#2a9d8f" },
+    body: { type: "static", collider: { rect: [W, H - FLOOR_Y] } },
+  };
+}
+
+// A column moving left: kinematic bodies move at their velocity and ignore gravity.
+function column(x: number, top: number, bottom: number): Spec {
+  const size: [number, number] = [COLUMNS.width, bottom - top];
+  return {
+    tags: ["column"],
+    pos: [x, (top + bottom) / 2],
+    shape: { rect: size, color: "#264653", outline: "#e9c46a" },
+    body: { type: "kinematic", velocity: [-COLUMNS.speed, 0], collider: { rect: size } },
+  };
+}
+
+// Two columns and an invisible sensor in the gap that scores once.
+function columnPair(gapY: number): Spec[] {
+  const x = W + COLUMNS.width;
+  const half = COLUMNS.gap / 2;
+  return [
+    column(x, 0, gapY - half),
+    column(x, gapY + half, FLOOR_Y),
+    { tags: ["gap"], pos: [x, gapY], body: { type: "kinematic", velocity: [-COLUMNS.speed, 0], collider: { rect: [4, COLUMNS.gap], sensor: true } } },
+  ];
+}
+
+function label(text: string, y: number, size = 16): Spec {
+  return { tags: ["label"], pos: [W / 2, y], z: 10, shape: { text, size, color: "#ffffff" } };
+}
+
+// 4. Scenes.
+const title = scene("title", {
+  enter(ctx) {
+    ctx.spawn(floor());
+    ctx.spawn(label("HOP", 60, 32));
+    ctx.spawn(label("press Space to start", 110, 8));
+    ctx.spawn(label(`best ${ctx.save.get("best", 0)}`, 130, 8));
+  },
+  update(ctx) {
+    if (ctx.input.pressed("hop")) ctx.go("play");
+  },
+});
+
+type Play = Context&lt;Hop, { score: number }&gt;;
+
+function crash(ctx: Play) {
+  ctx.audio.play("crash");
+  ctx.camera.shake(4, 0.3);
+  ctx.go("over", { score: ctx.state.score });
+}
+
+const play = scene("play", {
+  state: () =&gt; ({ score: 0 }),
+
+  enter(ctx) {
+    ctx.spawn(floor());
+    ctx.spawn(hopper());
+    const score = ctx.spawn(label("0", 20));
+
+    // Collisions: solid hits end the run, entering a gap scores.
+    ctx.onHit("hopper", "column", () =&gt; crash(ctx));
+    ctx.onHit("hopper", "floor", () =&gt; crash(ctx));
+    ctx.onEnter("hopper", "gap", (_h, gap) =&gt; {
+      ctx.state.score += 1;
+      score.text = String(ctx.state.score);
+      ctx.audio.play("point");
+      ctx.destroy(gap);
+    });
+
+    // A new pair on a timer; ctx.random is seeded, so tests see the same gaps every run.
+    const spawnPair = () =&gt; {
+      const half = COLUMNS.gap / 2;
+      const gapY = ctx.random.range(COLUMNS.margin + half, FLOOR_Y - COLUMNS.margin - half);
+      for (const spec of columnPair(gapY)) ctx.spawn(spec);
+    };
+    spawnPair();
+    ctx.every(COLUMNS.every, spawnPair);
+  },
+
+  update(ctx) {
+    const h = ctx.find("hopper");
+    if (ctx.input.pressed("hop")) {
+      h.body.velocity = [0, HOPPER.hop];
+      h.emit(12);
+      ctx.audio.play("hop");
+    }
+    h.rotation = Math.max(-25, Math.min(60, h.body.velocity.y * 0.15));  // tilt with speed
+    if (h.pos.y &lt; 0) crash(ctx);  // flew off the top
+
+    // Columns that left the screen are gone for good.
+    for (const c of ctx.findAll("column")) if (c.pos.x &lt; -COLUMNS.width) ctx.destroy(c);
+  },
+});
+
+const over = scene("over", {
+  enter(ctx, { score }) {
+    const best = Math.max(score, ctx.save.get("best", 0));
+    ctx.save.set("best", best);  // written to disk at once
+    ctx.spawn(floor());
+    ctx.spawn(label("GAME OVER", 60, 24));
+    ctx.spawn(label(`score ${score}   best ${best}`, 100, 8));
+    ctx.spawn(label("press Space", 125, 8));
+  },
+  update(ctx) {
+    // A short pause so a hop held from the crash does not restart at once.
+    if (ctx.time &gt; 0.4 &amp;&amp; ctx.input.pressed("hop")) ctx.go("play");
+  },
+});
+
+// 5. The game: config, scenes and synthesized sounds (no audio files needed).
+export default game({
+  config: {
+    title: "Hop",
+    size: [W, H],
+    background: "#1d3557",
+    seed: 7,
+    gravity: [0, 700],
+    actions: { hop: ["Space", "Up", "W", "MouseLeft", "GamepadA"] },
+  },
+  start: "title",
+  scenes: { title, play, over },
+  assets: {
+    sounds: {
+      hop: { wave: "square", freq: [520, 780], duration: 0.07, volume: 0.25 },
+      point: { wave: "sine", freq: [880, 1320], duration: 0.1, volume: 0.3 },
+      crash: { wave: "noise", freq: [400, 80], duration: 0.3, volume: 0.35 },
+    },
+  },
+});</code></pre>
+<h2 id="where-to-go-next">Where to go next</h2>
+<ul><li>Swap shapes for images and animated sprite sheets: <a href="tilemaps.html">Sprites, camera, LDtk levels</a>.</li><li>A HUD and menus with buttons: <a href="ui.html">Game UI</a>.</li><li>Music, volume settings and languages: <a href="audio.html">Audio</a>, <a href="saves.html">Saves, settings, i18n</a>.</li><li>The bigger version of this game, split into files: the <code>flappy</code> example in <a href="examples.html">Examples</a>.</li></ul></main></body></html>

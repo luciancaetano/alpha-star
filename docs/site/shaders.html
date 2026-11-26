@@ -1,42 +1,67 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shaders and lighting - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html" class="here">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html" class="here">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="shaders-and-lighting">Shaders and lighting</h1>
-<p>Post effects and 2D lights are <strong>render-only</strong>: they change how a frame looks, never the game. <code>simulate()</code>, <code>alpha test</code> and saved state cannot see them, so turning one on cannot make a test flaky. They work on every renderer the engine uses (Direct3D, Vulkan, Metal, OpenGL, GLES and the software renderer that headless tests and <code>--hidden</code> screenshots use), and MCP / <code>--screenshot</code> captures include them. Game UI (RmlUi) and dev tools are drawn on top, unaffected.</p>
-<h2 id="post-effects-ctx-postfx">Post effects: <code>ctx.postfx</code></h2>
-<pre><code>enter(ctx) {
-  ctx.postfx.add("bloom", { strength: 0.9, radius: 3 });  // glow around bright pixels
-  ctx.postfx.add("crt");                                    // scanlines + dark edges
-},
-update(ctx) {
-  if (ctx.input.pressed("crt")) ctx.postfx.list().includes("crt") ? ctx.postfx.remove("crt") : ctx.postfx.add("crt");
-},</code></pre>
-<table><thead><tr><th>Effect</th><th>Params (default)</th></tr></thead><tbody><tr><td><code>bloom</code></td><td><code>strength</code> 0..2 (0.6), <code>radius</code> 1..16 game px (4)</td></tr><tr><td><code>crt</code></td><td><code>strength</code> 0..1 (0.5)</td></tr><tr><td><code>pixelate</code></td><td><code>size</code> 1..64 game px (4)</td></tr><tr><td><code>tint</code></td><td><code>color</code> (<code>"#ffffff"</code>), <code>strength</code> 0..1 (1): the screen multiplied by the color</td></tr><tr><td><code>vignette</code></td><td><code>strength</code> 0..1 (0.5), <code>radius</code> 0..1 (0.5): clear part from the center</td></tr></tbody></table>
-<ul><li>Effects run in the order they were <strong>first</strong> added; <code>add</code> on an effect already there replaces its params in place. <code>set(name, params)</code> does the same but fails when the effect was not added. <code>remove(name)</code> returns false when it was not there; <code>clear()</code>; <code>list()</code> gives names in draw order.</li><li>Each scene starts with no effects (they belong to the scene, like the camera).</li><li>Unknown effects or params and out-of-range values pause the game with an error that lists what is allowed, e.g. <code>postfx "crt": unknown param "amount"; have: strength</code>.</li><li><code>bloom</code> and <code>pixelate</code> draw the world into an offscreen texture at the game's size first; world text is then rasterized at game size rather than window size while they are on.</li></ul>
-<h2 id="2d-lighting">2D lighting</h2>
-<pre><code>config: { lighting: { ambient: "#404858" } },   // the color where no light reaches
-// ...
-ctx.spawn({ tags: ["torch"], pos: [100, 80], light: { radius: 110, color: "#ffd9a0", intensity: 1.5 } });</code></pre>
-<p>With <code>config.lighting</code>, the world is multiplied by a lightmap: <code>ambient</code> everywhere, plus each entity's <code>light</code> (full <code>color</code> x <code>intensity</code> at the entity, fading to nothing at <code>radius</code> world pixels). Lights add up, follow their entity (interpolated like shapes), its layer's parallax and the camera zoom. Without <code>config.lighting</code>, lights are ignored. A light needs no shape: spawn <code>{ tags, pos, light }</code> for a lamp. Limits: <code>radius</code> 1..4096, <code>intensity</code> 0..8.</p>
-<p>Lighting is applied before post effects, so <code>bloom</code> makes lit areas glow.</p>
-<h2 id="how-the-built-in-effects-work">How the built-in effects work</h2>
-<p>The engine renders with SDL 3.4's <code>SDL_Renderer</code> on every platform. The built-in effects use only what every SDL renderer supports: offscreen render targets, blend modes (add, modulate) and vertex colors, so they behave the same on a GPU and on the software renderer. If a renderer cannot make render targets, lighting, <code>bloom</code> and <code>pixelate</code> are skipped with one logged notice; the overlays (<code>crt</code>, <code>vignette</code>, <code>tint</code>) still draw.</p>
-<h2 id="custom-shaders-assets-shaders">Custom shaders: <code>assets.shaders</code></h2>
-<p>Write your own full-screen effect as a Vulkan GLSL fragment shader (<code>.frag</code>), declare it, and use it through <code>ctx.postfx</code> like a built-in:</p>
-<pre><code>// types.ts: shaders: { wave: "amount" | "time"; gray: "amount" }
-assets: {
-  shaders: {
-    wave: { file: "shaders/wave.frag", uniforms: { amount: 0.5, time: 0 } },
-    gray: { file: "shaders/gray.frag", uniforms: { amount: 1 } },
+<p><strong>What you'll build:</strong> a dark scene lit by torches and a player lamp, with bloom and a vignette, a CRT toggle, and a red "hit flash" that also bends the screen through a custom GLSL shader.</p>
+<p>Post effects (<code>ctx.postfx</code>) and 2D lights are <strong>render-only</strong>: they change how a frame looks, never the game. <code>simulate()</code>, <code>alpha test</code> and saved state cannot see them, so they cannot make a test flaky. Game UI and dev tools are drawn on top, unaffected.</p>
+<h2 id="complete-example">Complete example</h2>
+<p><code>src/main.ts</code>:</p>
+<pre><code>import { define } from "alpha";
+
+interface Night {
+  actions: "flash" | "crt";
+  sounds: never;
+  images: never;
+  tags: "player" | "torch" | "crate";
+  scenes: { play: undefined };
+  ui: {};
+  shaders: { wave: "amount" | "time" };      // custom shader -&gt; its uniforms
+}
+
+const { scene, game } = define&lt;Night&gt;();
+
+const play = scene("play", {
+  state: () =&gt; ({ flash: 0 }),
+  enter(ctx) {
+    for (const x of [60, 160, 260]) {
+      ctx.spawn({ tags: ["crate"], pos: [x, 130], shape: { rect: [24, 24], color: "#ab5236" } });
+      ctx.spawn({ tags: ["torch"], pos: [x, 60], shape: { circle: 3, color: "#ffec27" },
+        light: { radius: 70, color: "#ffb060", intensity: 1.2 } });
+    }
+    ctx.spawn({ tags: ["player"], pos: [40, 120], shape: { rect: [12, 16], color: "#29adff" },
+      light: { radius: 50, color: "#a0c8ff" } });
+    ctx.postfx.add("bloom", { strength: 0.8, radius: 3 });
+    ctx.postfx.add("vignette", { strength: 0.6 });
+    ctx.postfx.add("wave", { amount: 0 });
   },
-},
-// a scene
-enter(ctx) { ctx.postfx.add("wave", { amount: 0.8 }); },
-update(ctx) { ctx.postfx.set("wave", { amount: 0.8, time: ctx.time }); },</code></pre>
-<p>The shader contract (SDL_GPU's fragment shader rules for SPIR-V):</p>
-<ul><li><code>#version 450</code>; the entry point is <code>main</code>.</li><li>Inputs: <code>layout(location = 0) in vec4</code> (vertex color) and <code>layout(location = 1) in vec2</code> (frame coordinates); output: <code>layout(location = 0) out vec4</code>.</li><li>The frame is a <code>sampler2D</code> at <code>layout(set = 2, binding = 0)</code>.</li><li>Uniforms are one <code>std140</code> block at <code>layout(set = 3, binding = 0)</code> holding **only <code>float</code>s, in the order of <code>uniforms</code>** (at most 16; no <code>vec2</code>/<code>vec4</code> members: use two or four floats). Leave the block out when the shader has no uniforms.</li></ul>
-<p>A wave that bends the frame over time:</p>
+  update(ctx) {
+    ctx.find("player").pos.x = 40 + ((ctx.time * 60) % 240);
+    if (ctx.input.pressed("crt")) {
+      if (!ctx.postfx.remove("crt")) ctx.postfx.add("crt", { strength: 0.7 });
+    }
+    if (ctx.input.pressed("flash")) ctx.state.flash = 1;
+    ctx.state.flash = Math.max(0, ctx.state.flash - ctx.dt * 3);
+    ctx.postfx.set("wave", { amount: ctx.state.flash, time: ctx.time });
+    if (ctx.state.flash &gt; 0) ctx.postfx.add("tint", { color: "#ff4040", strength: ctx.state.flash });
+    else ctx.postfx.remove("tint");
+  },
+});
+
+export default game({
+  config: {
+    title: "Night", size: [320, 180], background: "#5f574f", seed: 1,
+    lighting: { ambient: "#202840" },          // the color where no light reaches
+    actions: { flash: ["Space"], crt: ["C"] },
+  },
+  start: "play",
+  scenes: { play },
+  assets: {
+    sounds: {},
+    shaders: { wave: { file: "assets/shaders/wave.frag", uniforms: { amount: 0.5, time: 0 } } },
+  },
+});</code></pre>
+<p><code>assets/shaders/wave.frag</code>:</p>
 <pre><code>#version 450
 layout(location = 0) in vec4 v_color;                    // vertex color
 layout(location = 1) in vec2 v_uv;                       // frame coordinates
@@ -51,7 +76,41 @@ void main() {
     vec2 uv = v_uv + vec2(sin(v_uv.y * 40.0 + time * 6.0) * 0.004 * amount, 0.0);
     o_color = texture(u_frame, uv) * v_color;
 }</code></pre>
-<p>Grayscale, mixed by <code>amount</code>:</p>
+<p><code>test/main.test.ts</code>:</p>
+<pre><code>import { simulate } from "alpha/test";
+import game from "../src/main";
+
+export function effectsNeverBreakTheGame() {
+  const run = simulate(game, { seconds: 1, inputs: { flash: [0, 40], crt: [5, 20] } });
+  run.expect.noErrors();
+  run.expect.count("torch").equals(3);
+}</code></pre>
+<p>Without Vulkan (and in headless tests) the <code>wave</code> shader is skipped with one logged warning; the built-in effects and lighting still draw.</p>
+<h2 id="step-by-step">Step by step</h2>
+<h3 id="1-built-in-post-effects">1. Built-in post effects</h3>
+<pre><code>enter(ctx) {
+  ctx.postfx.add("bloom", { strength: 0.9, radius: 3 });  // glow around bright pixels
+  ctx.postfx.add("crt");                                   // scanlines + dark edges, defaults
+},</code></pre>
+<table><thead><tr><th>Effect</th><th>Params (default)</th></tr></thead><tbody><tr><td><code>bloom</code></td><td><code>strength</code> 0..2 (0.6), <code>radius</code> 1..16 game px (4)</td></tr><tr><td><code>crt</code></td><td><code>strength</code> 0..1 (0.5)</td></tr><tr><td><code>pixelate</code></td><td><code>size</code> 1..64 game px (4)</td></tr><tr><td><code>tint</code></td><td><code>color</code> (<code>"#ffffff"</code>), <code>strength</code> 0..1 (1): the screen multiplied by the color</td></tr><tr><td><code>vignette</code></td><td><code>strength</code> 0..1 (0.5), <code>radius</code> 0..1 (0.5): clear part from the center</td></tr></tbody></table>
+<h3 id="2-change-remove-list">2. Change, remove, list</h3>
+<pre><code>ctx.postfx.add("vignette", { strength: 0.5 });
+ctx.postfx.add("vignette", { strength: 0.8 });   // already added: replaces params, keeps its place
+ctx.postfx.set("vignette", { strength: 0.8 });   // same, but an error if it was not added
+ctx.postfx.remove("crt");                        // false when it was not there
+ctx.postfx.list();                               // names in draw order
+ctx.postfx.clear();</code></pre>
+<p>Effects draw in the order they were <strong>first</strong> added. Params left out take their defaults (with <code>set</code> too). Each scene starts with none.</p>
+<h3 id="3-2d-lights">3. 2D lights</h3>
+<pre><code>config: { lighting: { ambient: "#404858" } },
+// a scene: a light on any entity, or a lamp with no shape
+ctx.spawn({ tags: ["lamp"], pos: [100, 80], light: { radius: 110, color: "#ffd9a0", intensity: 1.5 } });</code></pre>
+<p>With <code>config.lighting</code> the world is multiplied by a lightmap: <code>ambient</code> everywhere, plus each light (full <code>color</code> x <code>intensity</code> at the entity, fading to nothing at <code>radius</code> world pixels). Lights add up, follow their entity, its layer's parallax and the camera zoom. <code>radius</code> 1..4096, <code>intensity</code> 0..8. Without <code>config.lighting</code>, lights are ignored. Lighting is applied before post effects, so <code>bloom</code> makes lit areas glow.</p>
+<h3 id="4-a-custom-shader">4. A custom shader</h3>
+<pre><code>// GameTypes: shaders: { gray: "amount" }
+assets: { shaders: { gray: { file: "assets/shaders/gray.frag", uniforms: { amount: 1 } } } },
+// a scene: same calls as the built-ins, uniforms by name
+ctx.postfx.add("gray", { amount: 1 });</code></pre>
 <pre><code>#version 450
 layout(location = 0) in vec4 v_color;
 layout(location = 1) in vec2 v_uv;
@@ -64,7 +123,46 @@ void main() {
     float g = dot(c.rgb, vec3(0.299, 0.587, 0.114));
     o_color = vec4(mix(c.rgb, vec3(g), amount), c.a);
 }</code></pre>
-<ul><li><strong>One language, several GPU formats.</strong> You write GLSL only. <a href="https://github.com/KhronosGroup/glslang">glslang</a> compiles it to SPIR-V (Vulkan), then <a href="https://github.com/libsdl-org/SDL_shadercross">SDL_shadercross</a> turns that SPIR-V into MSL (Metal). Both tools are built with the engine and staged next to the release engine; shadercross is built without Microsoft's DXC (no HLSL input, no DXIL output).</li><li>**<code>alpha run</code>** compiles the <code>.frag</code> when the game boots and again on every save (hot reload); a compile error pauses the game naming <code>assets.shaders.&lt;name&gt;</code>, the file and the line (<code>shaders/wave.frag:3: 'nope' : undeclared identifier</code>).</li><li>**<code>alpha export</code>** puts the compiled <code>shaders/wave.spv</code> and <code>shaders/wave.msl</code> in the pack instead of the <code>.frag</code>; shipping engines only load these blobs and contain no compiler. The engine picks the one its GPU takes (<code>.spv</code> on Vulkan, <code>.msl</code> on Metal).</li><li>Custom shaders run on <strong>Vulkan</strong>: a game with <code>assets.shaders</code> asks for SDL's GPU renderer on the Vulkan driver at start. Without Vulkan (or on the software renderer of headless tests) the game uses SDL's default renderer and each custom effect is <strong>skipped</strong> with one logged warning; the game keeps running and the built-in effects still work.</li></ul>
-<table><thead><tr><th>Platform</th><th>Custom shaders</th></tr></thead><tbody><tr><td>Windows</td><td>Vulkan (needs a Vulkan driver; most GPUs since ~2016 have one)</td></tr><tr><td>Linux</td><td>Vulkan</td></tr><tr><td>Android</td><td>Vulkan (Android 7+ devices with Vulkan)</td></tr><tr><td>macOS / iOS</td><td>not yet: packs already carry the Metal (<code>.msl</code>) version, but there is no macOS/iOS engine yet</td></tr><tr><td>Direct3D 12 / Xbox</td><td>not yet: would be one more format made from the same SPIR-V (shadercross to HLSL, then the platform's compiler); GLSL stays the language</td></tr></tbody></table>
-<ul><li>Effect names share one namespace: a shader may not be called like a built-in (<code>crt</code>, ...). Unknown uniforms, non-numbers and more than 16 uniforms are boot or script errors that list what the shader has.</li></ul>
-<p>A complete example: <code>examples/shaders</code> (<code>alpha init --template shaders</code>) cycles six GLSL shaders with animated uniforms and tests every asset and uniform name.</p></main></body></html>
+<p>The contract (SDL_GPU fragment shader rules for SPIR-V):</p>
+<ul><li><code>#version 450</code>, entry point <code>main</code>.</li><li>Inputs <code>layout(location = 0) in vec4</code> (vertex color) and <code>layout(location = 1) in vec2</code> (frame coordinates); output <code>layout(location = 0) out vec4</code>.</li><li>The frame is a <code>sampler2D</code> at <code>layout(set = 2, binding = 0)</code>.</li><li>Uniforms: one <code>std140</code> block at <code>layout(set = 3, binding = 0)</code> holding **only <code>float</code>s, in the order of <code>uniforms</code>**, at most 16 (no <code>vec2</code>/<code>vec4</code> members: use two or four floats). Leave the block out when there are no uniforms.</li></ul>
+<h3 id="5-animate-a-uniform">5. Animate a uniform</h3>
+<pre><code>update(ctx) {
+  ctx.postfx.set("wave", { amount: 0.8, time: ctx.time });
+},</code></pre>
+<h3 id="6-how-shaders-are-built-and-shipped">6. How shaders are built and shipped</h3>
+<ul><li>You write GLSL only. <a href="https://github.com/KhronosGroup/glslang">glslang</a> compiles it to SPIR-V (Vulkan) and <a href="https://github.com/libsdl-org/SDL_shadercross">SDL_shadercross</a> to MSL (Metal); both ship with the release engine.</li><li><code>alpha run</code> compiles the <code>.frag</code> at boot and on every save (hot reload). A compile error pauses the game naming <code>assets.shaders.&lt;name&gt;</code>, the file and the line (<code>shaders/wave.frag:3: 'nope' : undeclared identifier</code>).</li><li><code>alpha export</code> puts <code>wave.spv</code> and <code>wave.msl</code> in the pack instead of the <code>.frag</code>; shipping engines contain no compiler.</li></ul>
+<table><thead><tr><th>Platform</th><th>Custom shaders</th></tr></thead><tbody><tr><td>Windows, Linux</td><td>Vulkan (needs a Vulkan driver)</td></tr><tr><td>Android</td><td>Vulkan (Android 7+ devices with Vulkan)</td></tr><tr><td>macOS / iOS</td><td>not yet (packs already carry the <code>.msl</code>)</td></tr><tr><td>Direct3D 12 / Xbox</td><td>not yet</td></tr></tbody></table>
+<p>Built-ins and lighting work on every renderer (Direct3D, Vulkan, Metal, OpenGL, GLES, software) and appear in <code>--screenshot</code> and MCP captures. A game with <code>assets.shaders</code> asks for SDL's GPU renderer on Vulkan at start; without Vulkan each custom effect is skipped with one warning.</p>
+<h2 id="recipes">Recipes</h2>
+<h3 id="hit-flash-on-one-entity">Hit flash on one entity</h3>
+<pre><code>ctx.onHit("bullet", "enemy", (_bullet, enemy) =&gt; {
+  enemy.tint = "#ff0000";
+  ctx.after(0.08, () =&gt; { if (enemy.alive) enemy.tint = "#ffffff"; });
+});</code></pre>
+<p>Or blink it: <code>ctx.tween(enemy, { to: { alpha: 0.2 }, seconds: 0.05, yoyo: true, repeat: 3 });</code>.</p>
+<h3 id="whole-screen-damage-flash">Whole-screen damage flash</h3>
+<p>The <code>flash</code> value in the complete example: a red <code>tint</code> whose strength decays, removed at 0.</p>
+<h3 id="day-night-cycle">Day / night cycle</h3>
+<p><code>config.lighting.ambient</code> is fixed, so grade the screen with <code>tint</code>:</p>
+<pre><code>const hex = (v: number) =&gt; Math.round(v).toString(16).padStart(2, "0");
+update(ctx) {
+  const day = (Math.sin(ctx.time * 0.1) + 1) / 2;     // 0 = midnight, 1 = noon
+  ctx.postfx.add("tint", {
+    color: `#${hex(60 + 195 * day)}${hex(70 + 185 * day)}${hex(140 + 115 * day)}`,
+    strength: 1,
+  });
+},</code></pre>
+<p>For lamps that only matter at night, keep <code>config.lighting</code> with a dark ambient in a night scene and none in the day scene.</p>
+<h3 id="retro-look">Retro look</h3>
+<pre><code>ctx.postfx.add("pixelate", { size: 3 });
+ctx.postfx.add("crt", { strength: 0.6 });</code></pre>
+<h3 id="toggle-an-effect-from-the-keyboard">Toggle an effect from the keyboard</h3>
+<pre><code>if (ctx.input.pressed("crt")) {
+  if (!ctx.postfx.remove("crt")) ctx.postfx.add("crt");
+}</code></pre>
+<h3 id="respect-reduced-motion">Respect reduced motion</h3>
+<pre><code>if (!ctx.settings.reducedMotion) ctx.postfx.set("wave", { amount: 0.8, time: ctx.time });</code></pre>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li>Unknown effects or params and out-of-range values pause the game with an error listing what is allowed (<code>postfx "crt": unknown param "amount"; have: strength</code>). A shader may not reuse a built-in's name.</li><li>Lights cannot be changed after spawn: destroy and respawn the entity (or a child lamp entity) to change one.</li><li><code>bloom</code> and <code>pixelate</code> draw the world at game size first: world text is then rasterized at game size, not window size.</li><li>If a renderer cannot make render targets, lighting, <code>bloom</code> and <code>pixelate</code> are skipped with one logged notice; <code>crt</code>, <code>vignette</code> and <code>tint</code> still draw.</li><li>Tests never see effects: assert game state, not looks.</li></ul>
+<h2 id="see-also">See also</h2>
+<ul><li><code>examples/shaders</code> (<code>alpha init --template shaders</code>): six GLSL shaders with animated uniforms, lighting, touch buttons.</li><li><a href="text.html">Text and languages</a> for how text interacts with bloom/pixelate.</li><li>In <code>alpha.d.ts</code>: <code>PostFx</code>, <code>PostFxParams</code>, <code>ShaderAsset</code>, <code>LightSpec</code>, <code>GameConfig.lighting</code>.</li></ul></main></body></html>

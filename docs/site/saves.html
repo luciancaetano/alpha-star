@@ -1,31 +1,202 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saves, settings, i18n - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html" class="here">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html" class="here">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="saves-settings-i18n">Saves, settings, i18n</h1>
-<h2 id="saves">Saves</h2>
-<pre><code>ctx.save.set("best", 12);
-ctx.save.get("best", 0);
-ctx.save.slot("slot2").set("level", 3);   // named slots, one file each
-config: { save: { version: 2, migrate: (data, from) =&gt; ({ ...data, gold: data.coins ?? 0 }) } }</code></pre>
-<p>Values are JSON. Each slot is a file in the player's data folder, written atomically (temp file + rename, the previous one kept as <code>.bak</code>; a damaged file falls back to it).</p>
-<h2 id="settings">Settings</h2>
-<pre><code>ctx.settings.uiScale = 1.5;          // RmlUi dp ratio
-ctx.settings.highContrast = true;    // .high-contrast on every UI body
-ctx.settings.reducedMotion = true;   // camera shake and particles to 1/4; games may snap tweens
-ctx.audio.bus("music").volume = 0.5; ctx.window.fullscreen = true; ctx.input.rebind(...); ctx.locale = "pt";
-ctx.settings.reset();</code></pre>
-<p>All persisted in <code>settings.json</code>, apart from saves, and applied at boot.</p>
-<h2 id="localization">Localization</h2>
-<pre><code>// types.ts
-locales: "en" | "pt";
-// main.ts
-assets: { locales: { en: "assets/locales/en.json", pt: "assets/locales/pt.json" } }, config: { locale: "en" }</code></pre>
-<pre><code>{ "hud": { "moves": { "zero": "NO MOVES", "one": "1 MOVE", "other": "{count} MOVES" } } }</code></pre>
-<pre><code>ctx.t("hud.moves", { count: 3 });   // "3 MOVES"; plural form picked by count
-ctx.locale = "pt";                  // re-translates every data-t element, persisted</code></pre>
-<pre><code>&lt;p data-t="hud.keys"&gt;ARROWS  Z UNDO&lt;/p&gt;</code></pre>
-<h2 id="in-tests">In tests</h2>
-<pre><code>const run = simulate(game, { seconds: 1, saves: { main: { level: 1 } }, settings: { locale: "pt", reducedMotion: true } });
-run.saves.main.best; run.locale; run.settings.volumes;</code></pre>
-<p>Each <code>simulate</code> starts from empty in-memory saves and settings unless seeded. See <code>examples/puzzle</code>.</p></main></body></html>
+<p><strong>What you'll build:</strong> a score game that keeps the best score across restarts, shows a localized HUD and game-over panel (English and Portuguese, with plural forms), and switches language with L.</p>
+<p>Three stores, each with one job:</p>
+<table><thead><tr><th>Store</th><th>API</th><th>File</th></tr></thead><tbody><tr><td>Game progress</td><td><code>ctx.save</code> (+ named slots)</td><td>one file per slot</td></tr><tr><td>Player preferences</td><td><code>ctx.settings</code>, bus volumes, <code>ctx.locale</code>, fullscreen, rebinds</td><td><code>settings.json</code></td></tr><tr><td>Texts per language</td><td><code>ctx.t</code>, <code>data-t</code> in UI</td><td><code>assets.locales</code> JSON (read-only)</td></tr></tbody></table>
+<h2 id="complete-example">Complete example</h2>
+<p><code>src/main.ts</code>:</p>
+<pre><code>import { define } from "alpha";
+
+interface Dodge {
+  actions: "point" | "die" | "language";
+  sounds: never;
+  images: never;
+  tags: "player";
+  locales: "en" | "pt";
+  scenes: { play: undefined; over: { score: number } };
+  ui: { hud: "score" | "best"; over: "result" | "again" };
+}
+
+const { scene, game } = define&lt;Dodge&gt;();
+
+const play = scene("play", {
+  state: () =&gt; ({ score: 0 }),
+  enter(ctx) {
+    ctx.ui.show("hud");
+    ctx.ui.set("hud", "score", ctx.t("hud.score", { n: 0 }));
+    ctx.ui.set("hud", "best", ctx.t("hud.best", { n: ctx.save.get("best", 0) }));
+  },
+  update(ctx) {
+    if (ctx.input.pressed("language")) ctx.locale = ctx.locale === "en" ? "pt" : "en";
+    if (ctx.input.pressed("point")) {
+      ctx.state.score += 1;
+      ctx.ui.set("hud", "score", ctx.t("hud.score", { n: ctx.state.score }));
+    }
+    if (ctx.input.pressed("die")) ctx.go("over", { score: ctx.state.score });
+  },
+});
+
+const over = scene("over", {
+  enter(ctx, { score }) {
+    const best = Math.max(score, ctx.save.get("best", 0));
+    ctx.save.set("best", best);                                  // written to disk now
+    ctx.ui.set("over", "result", ctx.t("over.result", { count: score }));
+    ctx.ui.show("over");
+    ctx.ui.on("over", "again", "click", () =&gt; ctx.go("play"));
+  },
+});
+
+export default game({
+  config: {
+    title: "Dodge", size: [320, 180], seed: 1, locale: "en",
+    actions: { point: ["Space"], die: ["X"], language: ["L"] },
+  },
+  start: "play",
+  scenes: { play, over },
+  assets: {
+    sounds: {},
+    locales: { en: "assets/locales/en.json", pt: "assets/locales/pt.json" },
+    ui: { hud: "assets/ui/hud.rml", over: "assets/ui/over.rml" },
+  },
+});</code></pre>
+<p><code>assets/locales/en.json</code>:</p>
+<pre><code>{
+  "hud": { "score": "SCORE {n}", "best": "BEST {n}", "keys": "SPACE score  X die  L language" },
+  "over": {
+    "title": "GAME OVER",
+    "result": { "zero": "NO POINTS", "one": "1 POINT", "other": "{count} POINTS" },
+    "again": "PLAY AGAIN"
+  }
+}</code></pre>
+<p><code>assets/locales/pt.json</code>:</p>
+<pre><code>{
+  "hud": { "score": "PONTOS {n}", "best": "RECORDE {n}", "keys": "ESPACO pontua  X morre  L idioma" },
+  "over": {
+    "title": "FIM DE JOGO",
+    "result": { "zero": "NENHUM PONTO", "one": "1 PONTO", "other": "{count} PONTOS" },
+    "again": "JOGAR DE NOVO"
+  }
+}</code></pre>
+<p><code>assets/ui/hud.rml</code>:</p>
+<pre><code>&lt;rml&gt;
+&lt;head&gt;&lt;link type="text/rcss" href="game.rcss"/&gt;&lt;/head&gt;
+&lt;body class="safe"&gt;
+  &lt;p class="bar"&gt;&lt;span id="score"&gt;SCORE 0&lt;/span&gt;   &lt;span id="best"&gt;BEST 0&lt;/span&gt;&lt;/p&gt;
+  &lt;p class="bar" data-t="hud.keys"&gt;SPACE score  X die  L language&lt;/p&gt;
+&lt;/body&gt;
+&lt;/rml&gt;</code></pre>
+<p><code>assets/ui/over.rml</code>:</p>
+<pre><code>&lt;rml&gt;
+&lt;head&gt;&lt;link type="text/rcss" href="game.rcss"/&gt;&lt;/head&gt;
+&lt;body class="safe"&gt;
+  &lt;div class="panel"&gt;
+    &lt;h1 data-t="over.title"&gt;GAME OVER&lt;/h1&gt;
+    &lt;p id="result"&gt;0 POINTS&lt;/p&gt;
+    &lt;button id="again" autofocus data-t="over.again"&gt;PLAY AGAIN&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+&lt;/rml&gt;</code></pre>
+<p><code>assets/ui/game.rcss</code>: the one from the <a href="ui.html#complete-example">UI page</a>.</p>
+<p><code>test/main.test.ts</code>:</p>
+<pre><code>import { simulate } from "alpha/test";
+import game from "../src/main";
+
+export function bestScoreIsSaved() {
+  const run = simulate(game, { seconds: 0.5, inputs: { point: [0, 2, 4], die: [6] } });
+  run.expect.scene("over");
+  run.expect.text("over", "result").equals("3 POINTS");
+  if (run.saves.main.best !== 3) throw new Error(`best ${run.saves.main.best}`);
+}
+
+export function aBetterOldBestIsKept() {
+  const run = simulate(game, { seconds: 0.5, saves: { main: { best: 9 } }, inputs: { point: [0], die: [2] } });
+  if (run.saves.main.best !== 9) throw new Error("best overwritten");
+  run.expect.text("over", "result").equals("1 POINT");
+}
+
+export function languageSwitchPersists() {
+  const run = simulate(game, { seconds: 0.5, inputs: { language: [0], point: [2] } });
+  if (run.settings.locale !== "pt") throw new Error(`locale ${run.settings.locale}`);
+  run.expect.text("hud", "score").equals("PONTOS 1");
+}</code></pre>
+<h2 id="step-by-step">Step by step</h2>
+<h3 id="1-save-and-load-values">1. Save and load values</h3>
+<pre><code>ctx.save.set("best", 12);                              // writes the slot file now
+const best = ctx.save.get("best", 0);                  // fallback when missing; typed by it
+const unlocked = ctx.save.get&lt;string[]&gt;("unlocked", []);
+ctx.save.set("unlocked", [...unlocked, "forest"]);
+if (ctx.save.has("best")) ctx.save.remove("best");
+ctx.save.keys();
+ctx.save.clear();</code></pre>
+<p>Values are JSON-safe: numbers, strings, booleans, null, arrays, plain objects (a copy is stored). Each write is atomic (temp file + rename, the previous file kept as <code>.bak</code>; a damaged file falls back to its <code>.bak</code> with a logged warning).</p>
+<h3 id="2-save-slots">2. Save slots</h3>
+<pre><code>const slot = ctx.save.slot("slot2");                   // 1..32 letters, digits, '-' or '_'
+slot.set("player", { hp: 3, pos: [10, 20], items: ["key"] });
+slot.get("player", null);
+slot.clear();</code></pre>
+<p><code>ctx.save</code> is <code>slot("main")</code>. One file per slot.</p>
+<h3 id="3-version-the-data">3. Version the data</h3>
+<pre><code>config: {
+  save: { version: 2, migrate: (data, from) =&gt; (from &lt; 2 ? { ...data, gold: data.coins ?? 0 } : data) },
+},</code></pre>
+<p>Bump <code>version</code> when the shape changes; <code>migrate</code> runs once per older slot when it is read (files from before versioning are version 1).</p>
+<h3 id="4-settings">4. Settings</h3>
+<pre><code>ctx.settings.uiScale = 1.5;              // 0.5..3: the UI's dp ratio
+ctx.settings.highContrast = true;        // class "high-contrast" on every UI body
+ctx.settings.reducedMotion = true;       // camera shake and particles to 1/4
+ctx.audio.bus("music").volume = 0.5;     // volumes live on their bus
+ctx.window.fullscreen = true;
+ctx.input.rebind("fire", ["X", "GamepadA"]);
+ctx.locale = "pt";
+ctx.settings.reset();                    // all back to defaults, applied and saved</code></pre>
+<p>All of these persist in <code>settings.json</code> (apart from saves) and are applied at boot. Read them back with <code>ctx.settings.volumes</code>, <code>.locale</code>, <code>.fullscreen</code>, <code>.bindings</code>. Honor <code>reducedMotion</code> in your own effects too: <code>const seconds = ctx.settings.reducedMotion ? 0 : 0.15;</code>.</p>
+<h3 id="5-locales">5. Locales</h3>
+<pre><code>// GameTypes: locales: "en" | "pt"
+assets: { locales: { en: "assets/locales/en.json", pt: "assets/locales/pt.json" } },
+config: { locale: "en" },                // default and fallback (default: the first locale)</code></pre>
+<p>Locale files are UTF-8 JSON, nested freely.</p>
+<h3 id="6-translate-in-scripts-ctx-t">6. Translate in scripts: <code>ctx.t</code></h3>
+<pre><code>ctx.t("menu.play");                      // nested keys with dots
+ctx.t("hud.score", { n: 42 });           // "SCORE {n}" -&gt; "SCORE 42"
+ctx.t("over.result", { count: 1 });      // plural entry { zero?, one, other } picked by count</code></pre>
+<p>A key missing in the current locale falls back to <code>config.locale</code>'s text; missing everywhere it shows <code>[key]</code> (logged once in dev builds).</p>
+<h3 id="7-translate-in-ui-data-t">7. Translate in UI: <code>data-t</code></h3>
+<pre><code>&lt;h1 data-t="over.title"&gt;GAME OVER&lt;/h1&gt;</code></pre>
+<p>The element shows <code>ctx.t("over.title")</code> at boot and re-translates whenever <code>ctx.locale</code> changes.</p>
+<h2 id="recipes">Recipes</h2>
+<h3 id="high-score">High score</h3>
+<pre><code>const best = Math.max(score, ctx.save.get("best", 0));
+ctx.save.set("best", best);</code></pre>
+<h3 id="best-per-level-and-continue">Best per level, and "continue"</h3>
+<pre><code>const key = `best${level}`;
+const best = ctx.save.get(key, 0);
+if (!best || moves &lt; best) ctx.save.set(key, moves);
+ctx.save.set("level", level + 1);
+// title scene:
+ctx.go("play", { level: ctx.save.get("level", 0) });</code></pre>
+<p>(<code>examples/puzzle/src/scenes/solved.ts</code>, <code>start.ts</code>.)</p>
+<h3 id="save-when-the-os-may-kill-the-game">Save when the OS may kill the game</h3>
+<pre><code>ctx.onPause(() =&gt; ctx.save.set("checkpoint", { level: ctx.state.level, hp: ctx.state.hp }));</code></pre>
+<h3 id="language-switch-button">Language switch button</h3>
+<pre><code>ctx.ui.on("settings", "lang", "click", () =&gt; {
+  const all = ["en", "pt", "ar"] as const;
+  ctx.locale = all[(all.indexOf(ctx.locale ?? "en") + 1) % all.length];
+});</code></pre>
+<pre><code>{ "settings": { "languageName": "ENGLISH" } }</code></pre>
+<pre><code>&lt;button id="lang" data-t="settings.languageName"&gt;ENGLISH&lt;/button&gt;</code></pre>
+<p>Each locale file names its own language, so the button always shows the current one.</p>
+<h3 id="accessibility-toggles">Accessibility toggles</h3>
+<pre><code>ctx.ui.on("settings", "motion", "click", () =&gt; {
+  ctx.settings.reducedMotion = !ctx.settings.reducedMotion;
+  ctx.ui.set("settings", "motion", ctx.settings.reducedMotion ? "ON" : "OFF");
+});</code></pre>
+<h3 id="controls-menu-rebinding">Controls menu (rebinding)</h3>
+<pre><code>ctx.input.rebind("fire", ["X", "GamepadA"]);    // replaces config.actions' list for "fire"
+ctx.input.bindings("fire");                      // ["X", "GamepadA"]</code></pre>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li>Text you wrote with <code>ctx.ui.set</code> or into world text does not re-translate on a locale change: set it again after changing <code>ctx.locale</code>. Only <code>data-t</code> elements update themselves.</li><li>Don't put <code>data-t</code> and a script-set <code>id</code> on the same element: give the changing part its own <code>&lt;span id&gt;</code>.</li><li><code>save.set</code> writes the file on every call: fine for events (a level won), not every frame.</li><li>Saves and settings are separate files: <code>ctx.settings.reset()</code> never touches saves, <code>save.clear()</code> never touches settings.</li><li>Tests start from empty in-memory saves and settings: seed them with <code>simulate(game, { saves: { main: { level: 1 } }, settings: { locale: "pt", reducedMotion: true } })</code>, read <code>run.saves</code>, <code>run.locale</code>, <code>run.settings</code>.</li></ul>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="ui.html">Game UI</a> for the settings screen.</li><li><a href="text.html">Text and languages</a> for fonts per script, RTL and CJK.</li><li><a href="audio.html">Audio</a> for buses.</li><li><code>examples/puzzle</code> (seven locales, best per level), <code>examples/flappy</code> (best score, settings, language switch).</li><li>In <code>alpha.d.ts</code>: <code>Save</code>, <code>SaveSlot</code>, <code>SaveConfig</code>, <code>Settings</code>, <code>Context.t</code>, <code>Context.locale</code>.</li></ul></main></body></html>

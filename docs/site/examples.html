@@ -1,40 +1,113 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Examples - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html" class="here">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html" class="here">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="examples">Examples</h1>
-<p>Learn one thing at a time by playing a game, changing one value, then seeing the result. If this is your first alpha-star project, follow <a href="getting-started.html">Getting started</a> with the <code>blank</code> template first. It has one scene and a player you can move.</p>
-<h2 id="choose-your-next-project">Choose your next project</h2>
-<table><thead><tr><th>Start with</th><th>What you will practice</th><th>First files to read</th></tr></thead><tbody><tr><td><code>blank</code></td><td>Moving a player, playing a sound and changing speed</td><td><code>src/tuning.ts</code>, <code>src/scenes/play.ts</code></td></tr><tr><td><code>puzzle</code></td><td>Moving on a grid, pushing boxes, undoing a move</td><td><code>src/levels.ts</code>, <code>src/rules.ts</code></td></tr><tr><td><code>platformer</code></td><td>Jumping, collecting coins and scrolling a level</td><td><code>src/tuning.ts</code>, <code>src/scenes/play.ts</code></td></tr><tr><td><code>topdown</code></td><td>Aiming, shooting and supporting two players</td><td><code>src/main.ts</code>, <code>src/scenes/play.ts</code></td></tr><tr><td><code>shmup</code></td><td>Spawning enemies, shots and visual effects</td><td><code>src/main.ts</code>, <code>src/scenes/play.ts</code></td></tr><tr><td><code>shaders</code></td><td>Changing the screen's appearance with GPU effects</td><td><code>src/main.ts</code>, then the shader assets it declares</td></tr></tbody></table>
-<p>Pick <code>puzzle</code> if you want to focus on game rules, or <code>platformer</code> if you want to learn movement and collisions. Save shaders for later: they involve graphics programming in addition to TypeScript.</p>
-<h2 id="step-1-create-a-separate-example-project">Step 1: create a separate example project</h2>
-<p>Open a terminal in the folder where you keep your projects, <strong>outside your current game</strong>. The command below creates a new <code>my-platformer</code> folder, so you can experiment without replacing your first project. A template is a ready-made project that you can edit.</p>
+<p>Six complete games live in the repository's <code>examples/</code> folder. Each is small, has headless tests and an <code>AGENTS.md</code>, and teaches a different part of the engine. Five of them are <code>alpha init</code> templates, so you can start your own game from one in a minute.</p>
+<h2 id="play-one-now">Play one now</h2>
 <pre><code>npx @alpha-star/sdk init my-platformer --template platformer
 cd my-platformer
-npm install</code></pre>
-<p><code>npm install</code> downloads the project's tools and engine. When it finishes successfully, stay in the <code>my-platformer</code> folder for the remaining commands.</p>
-<h2 id="step-2-play-before-reading-the-code">Step 2: play before reading the code</h2>
-<pre><code>npm start</code></pre>
-<p>You should see a small platform game. Move with Left/Right or A/D, jump with Space, and restart with R. Try collecting a coin and reaching the end. Close the game window when you are done.</p>
-<h2 id="step-3-make-one-visible-change">Step 3: make one visible change</h2>
-<p>Open <code>src/main.ts</code> in your editor. Find the <code>background</code> line inside <code>config</code> and replace just that line with:</p>
-<pre><code>background: "#1d2b53", // A dark blue sky; the value is a hexadecimal color.</code></pre>
-<p>Save the file, then run <code>npm start</code> again. <strong>Expected result:</strong> the sky is dark blue, and the player still moves and jumps. This small change confirms you are editing the right project.</p>
-<p>Next, open <code>src/tuning.ts</code>. These are the numbers that control how the game feels. Change one number at a time and play again, so you can tell which change caused the difference.</p>
-<h2 id="step-4-check-your-changes">Step 4: check your changes</h2>
-<pre><code>npx alpha check
-npm test</code></pre>
-<p>The first command checks TypeScript for mistakes. The second runs the game's automated tests without opening a game window. Both should finish successfully after the background change. If a later gameplay change fails a test, read what the test expected before changing the test: it may have caught an accidental change to the rules.</p>
-<h2 id="step-5-follow-one-behavior-through-the-files">Step 5: follow one behavior through the files</h2>
-<ul><li>Start at <code>src/main.ts</code>: find the controls, the first scene and the assets.</li><li>Open <code>src/scenes/play.ts</code>: find what happens in <code>enter</code> and <code>update</code>.</li><li>Follow one imported prefab in <code>src/prefabs/</code>: it describes an object created by the scene.</li><li>Open <code>test/main.test.ts</code>: read a test to see a rule the game promises to keep.</li></ul>
-<p>You do not need to understand every file before changing the game. For the names above, see <a href="concepts.html">Concepts</a>. Then choose a guide for the behavior you want to add: <a href="input.html">Input</a>, <a href="physics.html">Physics</a> or <a href="ui.html">Game UI</a>.</p>
-<h2 id="feature-map-for-all-six-games">Feature map for all six games</h2>
-<p>The repository's <code>examples/</code> folder has six complete games, each with tests and an <code>AGENTS.md</code> file explaining the project to coding assistants. Placeholder art is generated by scripts in <code>tools/</code> (CC0) or drawn from shapes; bundled fonts have their own license files. Five games are available as <code>alpha init</code> templates. <code>blank</code> is an additional starter template; <code>flappy</code> is available in the repository only.</p>
-<table><thead><tr><th>Example</th><th>Template</th><th>Shows</th></tr></thead><tbody><tr><td><code>flappy</code></td><td>-</td><td>Title / play / over / settings scenes, RmlUi with buttons and gamepad navigation, streamed OGG music, bus volumes, English / Portuguese, best score save, TTF pixel font</td></tr><tr><td><code>platformer</code></td><td><code>platformer</code></td><td>Sprite sheets and animation, an LDtk level with merged IntGrid colliders and entity factories, camera follow / bounds / shake, raycast ground check, one-way ledge, tweened lift, parallax layer, dust particles, world text</td></tr><tr><td><code>topdown</code></td><td><code>topdown</code></td><td>Two players (<code>ctx.input.player(n)</code>), movement axes, auto-aim, sensor bullets, <code>queryCircle</code> bomb, one-shot particle blasts, rumble, panned sounds, best score save</td></tr><tr><td><code>puzzle</code></td><td><code>puzzle</code></td><td>Sokoban rules as pure functions tested directly, undo, level progress and best moves in saves, i18n with plural forms and <code>data-t</code>, reduced motion, high contrast</td></tr><tr><td><code>shmup</code></td><td><code>shmup</code></td><td>Collision categories, kinematic enemies, fast sensor shots, 120 stars moved with the <code>ctx.positions</code> batch API, parallax and fx layers, generated WAV music with fade in / out, blink tween</td></tr><tr><td><code>shaders</code></td><td><code>shaders</code></td><td>Six custom Vulkan GLSL shaders (wave, chromatic aberration, sepia, posterize, scanlines, vignette pulse) cycled live with <code>ctx.postfx</code>, intensity and <code>ctx.time</code> uniforms, lights, emitters, on-screen buttons on phones, Android APK with <code>.spv</code> blobs</td></tr></tbody></table>
+npm install
+npm start</code></pre>
+<p><strong>Expected:</strong> a small platform game. Move with Left/Right or A/D, jump with Space, restart with R. Then run <code>npm test</code> to see the tests that keep it working.</p>
+<p>Templates: <code>blank</code> (the starter), <code>platformer</code>, <code>topdown</code>, <code>puzzle</code>, <code>shmup</code>, <code>shaders</code>. <code>flappy</code> is in the repository only (<code>cd examples/flappy &amp;&amp; npm install &amp;&amp; npm start</code> from a checkout).</p>
+<h2 id="which-one-to-read">Which one to read</h2>
+<table><thead><tr><th>You want to learn</th><th>Read</th></tr></thead><tbody><tr><td>UI menus, settings, music, two languages, a best score</td><td><a href="#flappy">flappy</a></td></tr><tr><td>Sprite animation, LDtk levels, camera, raycasts, one-way platforms</td><td><a href="#platformer">platformer</a></td></tr><tr><td>Two players, auto-aim, area queries, rumble, panned sound</td><td><a href="#topdown">topdown</a></td></tr><tr><td>Game rules as pure functions, undo, saves, plural translations</td><td><a href="#puzzle">puzzle</a></td></tr><tr><td>Collision categories, many moving things, layers, postfx</td><td><a href="#shmup">shmup</a></td></tr><tr><td>Custom GPU shaders, lights, on-screen touch buttons</td><td><a href="#shaders">shaders</a></td></tr></tbody></table>
+<p>Each section below shows the core idea with an excerpt from the real files.</p>
+<h2 id="flappy">flappy</h2>
+<p>Title, play, game-over and settings scenes; an RmlUi interface navigable by mouse, keyboard and gamepad; streamed OGG music; English and Portuguese; a TTF pixel font; the best score in the save.</p>
+<p><strong>Effects are data.</strong> The bird carries its particle emitter in its spec; the play scene bursts it on every flap (<code>src/prefabs/bird.ts</code>):</p>
+<pre><code>emitter: {
+  lifetime: [0.3, 0.6], speed: [60, 140], angle: [150, 210], gravity: [0, 30],
+  size: [4, 1], color: ["#88ffffff", "#a36bff00"], shape: "circle", max: 64,
+},
+...(physics &amp;&amp; { body: { type: "dynamic", collider: { circle: BIRD.radius } } }),</code></pre>
+<p><strong>Saves in two lines</strong> (<code>src/scenes/over.ts</code>):</p>
+<pre><code>const best = Math.max(score, ctx.save.get("best", 0));
+ctx.save.set("best", best);</code></pre>
+<p><strong>Hints per platform, text per language</strong> (<code>src/scenes/title.ts</code>):</p>
+<pre><code>ctx.ui.set("title", "hint", ctx.t("title.hintTouch"));
+if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });</code></pre>
+<p>It also ships a committed Android project (<code>examples/flappy/android</code>) and npm scripts for every Android variant. Guides: <a href="ui.html">Game UI</a>, <a href="audio.html">Audio</a>, <a href="saves.html">Saves, settings, i18n</a>, <a href="android.html">Android</a>.</p>
+<h2 id="platformer">platformer</h2>
+<p>Sprite sheets and animation, an LDtk level, camera follow with bounds and shake, a raycast ground check, a one-way ledge, a tweened lift, a parallax layer, dust particles and world text.</p>
+<p><strong>A whole level in one call</strong> (<code>src/scenes/play.ts</code>): the IntGrid layer <code>Walls</code> becomes merged static colliders tagged <code>walls</code>, and each LDtk entity goes through a factory.</p>
+<pre><code>const level = ctx.spawnLevel("main", "Level_0", { collide: { Walls: "walls" }, entities: { Player: (e) =&gt; player(e.pos), Coin: coin } });
+const lifter = ctx.spawn(lift());
+ctx.tween(lifter, { to: { x: LIFT.toX }, seconds: LIFT.seconds, ease: "sineInOut", yoyo: true, repeat: Infinity });
+
+ctx.camera.bounds([0, 0, level.size[0], level.size[1]]);
+ctx.camera.follow(hero, { lerp: CAMERA.lerp, deadzone: CAMERA.deadzone });
+ctx.onEnter("player", "coin", (_p, c) =&gt; pick(ctx, c));</code></pre>
+<p><strong>Jump up through a ledge</strong> (<code>src/prefabs/platforms.ts</code>):</p>
+<pre><code>body: { type: "static", collider: { rect: [width, 6], oneWay: true } },</code></pre>
+<p><strong>Ground check by raycast:</strong></p>
+<pre><code>const hit = ctx.raycast([p.pos.x + dx, feet - 1], [p.pos.x + dx, feet + GROUND_RAY.reach], { tags: FLOOR });</code></pre>
+<p>Guides: <a href="tilemaps.html">Sprites, camera, LDtk levels</a>, <a href="physics.html">Physics</a>, <a href="particles.html">Particles and effects</a>.</p>
+<h2 id="topdown">topdown</h2>
+<p>Two players on one machine, movement axes, auto-aim, sensor bullets, a bomb that clears an area, one-shot particle blasts, gamepad rumble and sounds panned to where they happen.</p>
+<p><strong>One input per player</strong> (<code>src/scenes/play.ts</code>): <code>ctx.input.player(n)</code> has the same <code>axis</code> / <code>down</code> / <code>pressed</code> as <code>ctx.input</code>.</p>
+<pre><code>const input = ctx.input.player(h.data.player as Player);
+const move: Vec2 = [input.axis("moveX"), input.axis("moveY")];
+h.body.velocity = vec.scale(vec.norm(move), amount * HERO.speed);
+h.animation = amount &gt; 0 ? "walk" : "idle";
+if (input.down("fire") &amp;&amp; h.data.cooldown === 0) {
+  ctx.spawn(bullet(at(h), aimFrom(ctx, h)));
+  ctx.audio.play("shot", { pan: pan(ctx, h.pos.x), volume: 0.4 });
+}</code></pre>
+<p><strong>Everything in a circle</strong> (a physics area query):</p>
+<pre><code>for (const e of ctx.queryCircle(at(h), BOMB.radius, { tags: ["enemy"] })) if (e.alive) kill(ctx, e, 1);
+ctx.camera.shake(BOMB.shake, BOMB.seconds);
+ctx.input.rumble(0.6, 0.2, h.data.player as Player);</code></pre>
+<p>Guides: <a href="input.html">Input</a>, <a href="physics.html">Physics</a>, <a href="audio.html">Audio</a>.</p>
+<h2 id="puzzle">puzzle</h2>
+<p>Sokoban. The rules are pure functions on plain data, tested directly without the engine; the scene only draws what they return. Undo, level progress and best moves in the save, i18n with plural forms and <code>data-t</code>, reduced motion and high contrast.</p>
+<p><strong>Rules with no engine calls</strong> (<code>src/rules.ts</code>):</p>
+<pre><code>/** What moves: JSON-safe, so it lives in ctx.state (kept by hot reload) and undo keeps copies. */
+export interface Position {
+  player: Cell;
+  boxes: Cell[];
+}</code></pre>
+<p><strong>Tested as plain function calls</strong> (<code>test/main.test.ts</code>):</p>
+<pre><code>const { level, start } = parse(["#####", "#@$$#", "#####"]);
+check(move(level, start, "right") === null, "two boxes in a row cannot be pushed");</code></pre>
+<p><strong>Translated text with counts</strong> (<code>src/scenes/play.ts</code>):</p>
+<pre><code>ctx.ui.set("hud", "moves", ctx.t("hud.moves", { count: ctx.state.moves }));</code></pre>
+<p>Guides: <a href="saves.html">Saves, settings, i18n</a>, <a href="text.html">Text and languages</a>, <a href="testing.html">Testing</a>.</p>
+<h2 id="shmup">shmup</h2>
+<p>A vertical shooter: collision categories, kinematic enemies, fast sensor shots, 120 stars moved in bulk, parallax and fx layers, generated music with fade in and out, a blink tween, a CRT postfx toggle.</p>
+<p><strong>Who collides with whom</strong> (<code>src/prefabs/actors.ts</code>):</p>
+<pre><code>body: { type: "kinematic", velocity: [0, fall], category: "enemy", collidesWith: ["ship", "shot"], collider: { rect: [14, 12] } },</code></pre>
+<p><strong>Moving many entities at once</strong> (<code>src/scenes/play.ts</code>): read every position into arrays, edit them, write them back once.</p>
+<pre><code>const stars = ctx.positions("star");
+for (let i = 0; i &lt; stars.count; i++) {
+  stars.y[i] += STARS.speeds[i % 3] * ctx.dt;
+  if (stars.y[i] &gt; vy + vh) stars.y[i] -= vh;
+}
+stars.write();</code></pre>
+<p><strong>Getting hit feels like it:</strong></p>
+<pre><code>ctx.camera.shake(3, 0.3);
+ctx.input.rumble(0.8, 0.25);
+ctx.tween(s, { to: { alpha: 0.2 }, seconds: SHIP.safeSeconds / 8, yoyo: true, repeat: 3 });
+if ((s.data.lives as number) &lt;= 0) ctx.after(0.5, () =&gt; ctx.go("over", { score: ctx.state.score }));</code></pre>
+<p>Guides: <a href="physics.html">Physics</a>, <a href="particles.html">Particles and effects</a>.</p>
+<h2 id="shaders">shaders</h2>
+<p>Six custom Vulkan GLSL fragment shaders (wave, chromatic aberration, sepia, posterize, scanlines, vignette pulse) switched live, with <code>intensity</code> and <code>time</code> uniforms, plus lights, emitters and on-screen buttons on phones.</p>
+<p><strong>Declare a shader with its uniforms</strong> (<code>src/main.ts</code>):</p>
+<pre><code>const shader = (name: string) =&gt; ({ file: `assets/shaders/${name}.frag`, uniforms: { intensity: INTENSITY.start, time: 0 } });</code></pre>
+<p><strong>Switch them at runtime</strong> (<code>src/scenes/lab.ts</code>):</p>
+<pre><code>ctx.postfx.remove(SHADERS[ctx.state.index]);
+ctx.state.index = cycle(ctx.state.index, step);
+ctx.postfx.add(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: ctx.time });</code></pre>
+<p><code>alpha run</code> compiles the <code>.frag</code> files with glslang (and recompiles them on save under <code>--watch</code>); <code>alpha export</code> packs SPIR-V. Guide: <a href="shaders.html">Shaders and lighting</a>.</p>
+<h2 id="change-one-thing-and-see-it">Change one thing and see it</h2>
+<p>The fastest way to learn from an example: change one value, play, run the tests.</p>
+<p>1. In <code>my-platformer/src/main.ts</code>, change <code>background</code> to <code>"#1d2b53"</code> and run <code>npm start</code>.    <strong>Expected:</strong> a dark blue sky; everything else the same. 2. Open <code>src/tuning.ts</code> and change one number (a jump height, a speed). Play again. 3. Run <code>npm run check</code> and <code>npm test</code>. If a test fails after a gameplay change, read what it    expected before editing the test: it may have caught an accidental change to the rules.</p>
 <h2 id="running-an-example-from-a-repository-checkout">Running an example from a repository checkout</h2>
-<p>Use this route if you already have the alpha-star source code. Start in the repository root, then enter the example folder:</p>
 <pre><code>cd examples/shmup
 npm install
 npm test
 npm start</code></pre>
-<p>For a new project without a repository checkout, use <code>alpha init</code> as shown above instead. You can preview the games in the <a href="index.html">showcase</a> before choosing one.</p></main></body></html>
+<p>Placeholder art is generated by scripts in <code>tools/</code> (CC0) or drawn from shapes; bundled fonts have their own license files. Preview every game in the <a href="index.html">showcase</a>.</p>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="getting-started.html">Getting started</a>: the <code>blank</code> template, step by step.</li><li><a href="concepts.html">Concepts</a>: scenes, entities, prefabs and the names in <code>types.ts</code>.</li><li><a href="testing.html">Testing</a>: every example's <code>test/main.test.ts</code> is a recipe book.</li></ul></main></body></html>

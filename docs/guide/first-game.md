@@ -79,7 +79,7 @@ export default scene("play", {
 
 Run `npm run check`, then `npm start`. **Expected:** arrows and WASD still move the character. Space makes it grow and return to normal with a sound. Holding Space does not repeat the effect; release and press again.
 
-The limit applies to the character's **center**, so part of its image can cross the edge. This lesson keeps the fixed play area even if you resize the window. [Window concepts](concepts.md#image-filtering-and-window-stretch) explain the full visible area.
+The limit applies to the character's **center**, so part of its image can cross the edge. This lesson keeps the fixed play area even if you resize the window. [Window concepts](concepts.md#later-topics) explain the full visible area.
 
 ## 3. Connect a key to an action
 

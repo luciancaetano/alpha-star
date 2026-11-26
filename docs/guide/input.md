@@ -1,58 +1,293 @@
 # Input
 
-Games read **actions** and **axes**, never devices. `config.actions` maps each action to inputs;
-`config.axes` maps each axis to sources.
+**What you'll build:** a circle that walks in eight directions, dashes on Space, charges a shot
+while J (or the right mouse button) is held and fires it toward the mouse on release, and marks
+every click. It works the same on keyboard, mouse, gamepad and touch.
+
+Games read **actions** (buttons) and **axes** (analog values), never devices. `config.actions` and
+`config.axes` map them to inputs. Replace `src/main.ts` with this and run `npm start`:
 
 ```ts
+import { define, vec } from "alpha";
+
+interface Arena {
+  actions: "dash" | "fire" | "charge";
+  axes: "moveX" | "moveY";
+  sounds: never;
+  images: never;
+  tags: "hero" | "shot" | "mark";
+  ui: {};
+  scenes: { play: undefined };
+}
+
+const { scene, game } = define<Arena>();
+
+const play = scene("play", {
+  state: () => ({ dash: 0, charge: 0 }),
+
+  enter(ctx) {
+    ctx.spawn({ tags: ["hero"], pos: [160, 90], shape: { circle: 8, color: "#29adff" } });
+  },
+
+  update(ctx) {
+    const hero = ctx.find("hero");
+    // Axes: -1..1. Normalize so diagonals are not faster.
+    const dir = vec.norm([ctx.input.axis("moveX"), ctx.input.axis("moveY")]);
+    // Actions: pressed = this step only, down = while held, released = the step it goes up.
+    if (ctx.input.pressed("dash")) ctx.state.dash = 0.15;
+    ctx.state.dash = Math.max(0, ctx.state.dash - ctx.dt);
+    const speed = ctx.state.dash > 0 ? 400 : 100;
+    hero.pos.x += dir[0] * speed * ctx.dt;
+    hero.pos.y += dir[1] * speed * ctx.dt;
+
+    // Hold to charge, release to shoot toward the mouse (bigger when charged longer).
+    if (ctx.input.down("charge")) ctx.state.charge = Math.min(1, ctx.state.charge + ctx.dt);
+    if (ctx.input.released("charge")) {
+      const target = ctx.camera.toWorld(ctx.input.mouse());
+      const aim = vec.norm(vec.sub(target, [hero.pos.x, hero.pos.y]));
+      ctx.spawn({ tags: ["shot"], pos: [hero.pos.x, hero.pos.y], shape: { circle: 2 + ctx.state.charge * 6, color: "#ffec27" }, data: { vx: aim[0] * 200, vy: aim[1] * 200 } });
+      ctx.state.charge = 0;
+      ctx.input.rumble(0.4, 0.1);
+    }
+    // A click marks the spot under the mouse.
+    if (ctx.input.pressed("fire")) ctx.spawn({ tags: ["mark"], pos: ctx.camera.toWorld(ctx.input.mouse()), shape: { rect: [4, 4], color: "#ff004d" } });
+
+    for (const s of ctx.findAll("shot")) {
+      s.pos.x += (s.data.vx as number) * ctx.dt;
+      s.pos.y += (s.data.vy as number) * ctx.dt;
+      if (Math.abs(s.pos.x - 160) > 200 || Math.abs(s.pos.y - 90) > 120) ctx.destroy(s);
+    }
+  },
+});
+
+export default game({
+  config: {
+    title: "Input",
+    size: [320, 180],
+    background: "#1d2b53",
+    seed: 1,
+    actions: {
+      dash: ["Space", "LeftShift", "GamepadA"],
+      fire: ["MouseLeft", "Touch"],
+      charge: ["J", "MouseRight", "GamepadRT"],
+    },
+    axes: {
+      moveX: ["GamepadLeftX", "A/D", "Left/Right"],
+      moveY: ["GamepadLeftY", "W/S", "Up/Down"],
+    },
+  },
+  start: "play",
+  scenes: { play },
+  assets: { sounds: {} },
+});
+```
+
+Expected: WASD, the arrows or the left stick move the circle at the same speed in every
+direction; Space bursts it forward; holding J grows the next shot; clicks drop red marks.
+
+## Step by step
+
+### Actions: buttons
+
+```ts
+// types: actions: "jump" | "fire";
 config: {
-  actions: { jump: ["Space", "W", "GamepadA"], fire: ["MouseLeft", "GamepadRT"] },
-  axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"], moveY: ["GamepadLeftY", "W/S", "Up/Down"] },
-  deadzone: 0.2,
+  actions: { jump: ["Space", "W", "Up", "GamepadA"], fire: ["MouseLeft", "GamepadRT"] },
 }
 ```
 
 ```ts
-ctx.input.pressed("jump");   // only on the step it went down
-ctx.input.down("fire");      // while held
-ctx.input.released("jump");
-ctx.input.axis("moveX");     // -1..1 after the deadzone (+x right, +y down)
-ctx.input.mouse();           // game pixels; ctx.camera.toWorld(...) for the world
+ctx.input.pressed("jump");   // true only on the step it went down: jumps, menu choices
+ctx.input.down("fire");      // true while held: auto-fire, charging, running
+ctx.input.released("jump");  // true only on the step it went up: variable jump height, release to shoot
 ```
 
-Gamepad names: `GamepadA B X Y`, `GamepadLB RB LT RT LS RS`, `GamepadStart Back`, `GamepadUp
-Down Left Right`, axes `GamepadLeftX LeftY RightX RightY`, and stick directions as buttons
-(`GamepadLeftY-` = left stick up). Keys use SDL names (`Space`, `Left`, `A`, `Backspace`...).
-Touch screens: `Touch` (any finger), `TouchLeft` / `TouchRight` (a finger on that half of the
-screen), and a finger is also `MouseLeft`; `Back` is the Android back button. See [Android](android.html).
+Expected: one key press gives exactly one `pressed` step, however long it is held. Any input in
+the list triggers the action; every player's devices count on `ctx.input` itself.
 
-## Players
-
-Player 1 has the keyboard, the mouse and the first gamepad; each further gamepad is the next
-player (a reconnected pad gets its slot back). `ctx.input.player(2).axis("moveX")` reads one
-player; on `ctx.input` itself an action is any player's and an axis is the strongest one.
-`ctx.input.players()` is how many players have a device. See `examples/topdown`.
-
-## Rumble and rebinding
+### Axes: analog values
 
 ```ts
-ctx.input.rumble(0.6, 0.2, 1);                 // strength, seconds, player (all if omitted)
-ctx.input.rebind("jump", ["W", "GamepadA"]);   // persisted in settings
-ctx.input.bindings("jump");
+// types: axes: "moveX" | "moveY" | "throttle";
+config: {
+  axes: {
+    moveX: ["GamepadLeftX", "A/D", "Left/Right"],   // stick, or a "Negative/Positive" key pair
+    moveY: ["GamepadLeftY", "W/S", "Up/Down"],
+    throttle: ["GamepadRT"],                          // triggers: 0..1
+  },
+  deadzone: 0.2,                                      // stick and trigger deadzone (default 0.2)
+}
 ```
 
-## In tests
+```ts
+const x = ctx.input.axis("moveX");   // -1..1: +x right
+const y = ctx.input.axis("moveY");   // -1..1: +y down
+```
+
+Expected: keys give exactly -1, 0 or 1; a stick gives anything in between. The axis reads the
+strongest source. Diagonal keys give `[1, 1]`: normalize with `vec.norm` for equal speed.
+
+### Mouse and touch
+
+```ts
+const screen = ctx.input.mouse();           // game pixels on screen
+const world = ctx.camera.toWorld(screen);   // where that is in the world (camera moved/zoomed)
+ctx.find("cursor").pos.x = world[0];
+ctx.find("cursor").pos.y = world[1];
+```
+
+Buttons are actions: `"MouseLeft"`, `"MouseRight"`, `"MouseMiddle"`. On touch screens `"Touch"`
+is any finger, `"TouchLeft"` / `"TouchRight"` a finger on that half of the screen, and a finger is
+also `"MouseLeft"` at `ctx.input.mouse()`. `"Back"` is the Android back button.
+
+### Several players
+
+```ts
+for (let n = 1; n <= ctx.input.players(); n++) {
+  const p = ctx.input.player(n as Player);         // import type { Player } from "alpha"
+  if (p.pressed("jump")) console.log(`player ${n} jumped`);
+  p.axis("moveX");
+}
+```
+
+Player 1 has the keyboard, the mouse and the first gamepad; each further gamepad is the next
+player, and a reconnected pad gets its slot back. On `ctx.input` itself an action is any player's
+and an axis is the strongest one. See `examples/topdown` for drop-in co-op.
+
+### Rumble
+
+```ts
+ctx.input.rumble(0.8, 0.3, 2);   // strength 0..1, seconds 0..10, player 2
+ctx.input.rumble(0.5, 0.2);      // every player
+ctx.input.rumble(0, 0);          // stop
+```
+
+No-op without a gamepad, so call it freely.
+
+### Rebinding (a controls menu)
+
+```ts
+ctx.input.rebind("jump", ["W", "GamepadA"]);   // replaces config.actions' list; saved in settings
+ctx.input.bindings("jump");                    // ["W", "GamepadA"]
+ctx.settings.reset();                          // everything back to defaults (bindings too)
+```
+
+Bindings persist across restarts and are applied at boot. Build the menu with [UI](ui.md).
+
+### Platform hints
+
+```ts
+const hint = ctx.platform.mobile ? "tap to jump" : "press Space to jump";
+ctx.spawn({ tags: ["label"], pos: [160, 20], shape: { text: hint } });
+```
+
+`ctx.platform` is `{ os, mobile }`, for hints and layout only, never game rules. Preview with
+`npx alpha run -- --platform android`.
+
+### Input in tests
 
 ```ts
 simulate(game, { seconds: 2, inputs: { jump: [30, 60], axes: { moveX: [[0, 1], [90, 0]] } } });
 simulate(game, { seconds: 2, inputs: [{ fire: [0] }, { axes: { moveX: [[0, -1]] } }] });  // players 1, 2
 ```
 
-Action frames press for one step each; axis entries hold a value from that frame on.
-Input the game UI consumed (a clicked button, navigation) never also triggers game actions.
+Action frames press for one step each (frame 30 = 0.5 s); axis entries hold a value from that
+frame on. See [Testing](testing.md).
 
-## Per-platform hints
+## Recipes
 
-`ctx.platform` (`{ os, mobile }`) tells hints and layout where the game runs: show "tap" on phones
-(`ctx.platform.mobile`) and "press Space" elsewhere. Never use it for game rules. Preview with
-`alpha run -- --platform android`; test with `simulate(game, { platform: "android" })`.
-See [Android](android.md).
+### Coyote time and jump buffering
+
+Accept a jump pressed a little before landing, or a little after walking off a ledge:
+
+```ts
+// state: () => ({ coyote: 0, buffer: 0 }); `grounded` from a ground check (see Physics)
+const s = ctx.state;
+s.coyote = grounded ? 0.1 : Math.max(0, s.coyote - ctx.dt);
+s.buffer = ctx.input.pressed("jump") ? 0.1 : Math.max(0, s.buffer - ctx.dt);
+if (s.buffer > 0 && s.coyote > 0) {
+  s.buffer = 0;
+  s.coyote = 0;
+  hero.body.velocity = [hero.body.velocity.x, -300];
+}
+```
+
+### Variable jump height
+
+```ts
+const hero = ctx.find("hero");
+if (ctx.input.released("jump") && hero.body.velocity.y < 0) {
+  hero.body.velocity = [hero.body.velocity.x, hero.body.velocity.y * 0.5];   // cut the rise short
+}
+```
+
+### Grid movement (one cell per step, held keys repeat)
+
+```ts
+// actions: "left" | "right" | "up" | "down"; state: () => ({ cell: [0, 0] as [number, number], moveCooldown: 0 })
+const s = ctx.state;
+s.moveCooldown = Math.max(0, s.moveCooldown - ctx.dt);
+const dx = ctx.input.down("right") ? 1 : ctx.input.down("left") ? -1 : 0;
+const dy = dx !== 0 ? 0 : ctx.input.down("down") ? 1 : ctx.input.down("up") ? -1 : 0;
+if ((dx || dy) && s.moveCooldown === 0) {
+  s.cell = [s.cell[0] + dx, s.cell[1] + dy];
+  s.moveCooldown = 0.15;
+  const hero = ctx.find("hero");
+  ctx.tween(hero, { to: { x: s.cell[0] * 16 + 8, y: s.cell[1] * 16 + 8 }, seconds: 0.12, ease: "quadOut" });
+}
+```
+
+### Twin-stick aim
+
+```ts
+// axes: aimX: ["GamepadRightX"], aimY: ["GamepadRightY"]
+const aim: Vec2 = [ctx.input.axis("aimX"), ctx.input.axis("aimY")];
+if (vec.len(aim) > 0.3) ctx.find("hero").rotation = vec.angle(aim);
+```
+
+### Click to select
+
+```ts
+if (ctx.input.pressed("fire")) {
+  const [hit] = ctx.queryCircle(ctx.camera.toWorld(ctx.input.mouse()), 1, { tags: ["hero"] });
+  if (hit) hit.tint = "#ffec27";
+}
+```
+
+Area queries see colliders, so the clickable entity needs a `body` (a `sensor` is enough; see
+[Physics](physics.md)).
+
+### Back / pause button on every platform
+
+```ts
+config: { actions: { back: ["Escape", "Back", "GamepadStart"] } }
+// in update:
+if (ctx.input.pressed("back")) ctx.go("title");
+```
+
+## Every input name
+
+| Kind | Names |
+|---|---|
+| Keys | `A`..`Z`, `0`..`9`, `Space`, `Enter`, `Escape`, `Tab`, `Backspace`, `Left`, `Right`, `Up`, `Down`, `LeftShift`, `RightShift`, `LeftCtrl`, `RightCtrl` |
+| Mouse | `MouseLeft`, `MouseRight`, `MouseMiddle` |
+| Gamepad buttons | `GamepadA`, `GamepadB`, `GamepadX`, `GamepadY`, `GamepadStart`, `GamepadBack`, `GamepadUp`, `GamepadDown`, `GamepadLeft`, `GamepadRight`, `GamepadLB`, `GamepadRB`, `GamepadLS`, `GamepadRS`, `GamepadLT`, `GamepadRT` |
+| Sticks as buttons | `GamepadLeftX-`, `GamepadLeftX+`, `GamepadLeftY-` (up), `GamepadLeftY+`, `GamepadRightX-`, `GamepadRightX+`, `GamepadRightY-`, `GamepadRightY+` |
+| Touch / phone | `Touch`, `TouchLeft`, `TouchRight`, `Back` |
+| Axis sources | `GamepadLeftX`, `GamepadLeftY`, `GamepadRightX`, `GamepadRightY`, `GamepadLT`, `GamepadRT`, or a key pair `"Neg/Pos"` such as `"A/D"` |
+
+A misspelled name is an error at boot that lists every valid one.
+
+## Gotchas
+
+- Read `pressed` / `released` in `update`: inside `ctx.every` or `ctx.after` you will miss them.
+- `config.actions` must map every declared action; the action name `axes` is reserved.
+- What the game UI used (a clicked button, menu navigation) never also triggers game actions.
+- `ctx.input.mouse()` is screen space: use `ctx.camera.toWorld` once the camera moves or zooms.
+- Use `ctx.platform` for hints only; the simulation must be the same on every OS.
+
+## See also
+
+- [Physics](physics.md): ground checks and jumping with bodies.
+- [UI](ui.md): menus, focus and gamepad navigation; [Android](android.md): touch and the back button.
+- [Testing](testing.md): scripted inputs; `examples/topdown`: two players and rumble.

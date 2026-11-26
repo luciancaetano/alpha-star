@@ -1,20 +1,173 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Testing - alpha-star</title><link rel="stylesheet" href="style.css"></head>
-<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html" class="here">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html" class="here">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
 <main><h1 id="testing">Testing</h1>
-<p><code>alpha test</code> type-checks and bundles <code>test/main.test.ts</code>, then runs every exported function headlessly in the engine. Each <code>simulate</code> call is a fresh game: new world, random seeded from <code>config.seed</code>, in-memory saves and settings, no window, no audio output.</p>
-<pre><code>import { simulate } from "alpha/test";
+<p><code>npm test</code> (which runs <code>alpha test</code>) plays your game <strong>headlessly</strong>: no window, no sound, as fast as the CPU allows. Every exported function in <code>test/main.test.ts</code> is one test. Each test calls <code>simulate(game, options)</code>, which boots a fresh copy of the game, feeds it scripted input for a number of seconds, and hands back what happened so you can check it.</p>
+<p>Runs are deterministic: the same game and the same options give the same result, every time, on every machine. That makes tests exact instead of flaky.</p>
+<h2 id="a-complete-test-file">A complete test file</h2>
+<p>This file runs against the <code>blank</code> template (<code>alpha init my-game --template blank</code>) as is. Copy it over <code>test/main.test.ts</code> and run <code>npm test</code>.</p>
+<pre><code>// test/main.test.ts: every exported function is one test. `npm test` runs them all headlessly.
+import { simulate, type SimulateOptions } from "alpha/test";
+import type { Game } from "../src/types";
 import game from "../src/main";
 
-export function holdingRightRuns() {
-  const run = simulate(game, { seconds: 1.5, inputs: { axes: { moveX: [[0, 1]] } } });
+// A tiny helper: a test fails by throwing.
+function check(ok: boolean, what: string) {
+  if (!ok) throw new Error(what);
+}
+
+// Frames from..to-1: "hold this action" for a stretch of steps.
+const frames = (from: number, to: number) =&gt; Array.from({ length: to - from }, (_, i) =&gt; from + i);
+
+export function startsCleanWithOnePlayer() {
+  const run = simulate(game, { seconds: 0.5 });
   run.expect.noErrors();
-  run.expect.animation("player").equals("run");
+  run.expect.scene("play");
+  run.expect.count("player").equals(1);
+}
+
+export function holdingRightMovesThePlayer() {
+  const run = simulate(game, { seconds: 0.5, inputs: { axes: { moveX: [[0, 1]] } } });
+  const [p] = run.entities("player");
+  check(p.pos[0] &gt; 210, `expected x &gt; 210, got ${p.pos[0]}`);
+}
+
+export function releasingTheAxisStopsThePlayer() {
+  const a = simulate(game, { seconds: 1, inputs: { axes: { moveX: [[0, 1], [30, 0]] } } }).entities("player")[0];
+  const b = simulate(game, { seconds: 2, inputs: { axes: { moveX: [[0, 1], [30, 0]] } } }).entities("player")[0];
+  check(a.pos[0] === b.pos[0], `player kept moving: ${a.pos[0]} -&gt; ${b.pos[0]}`);
+}
+
+export function pressingJumpSquashesThePlayer() {
+  const mid = simulate(game, { seconds: 0.1, inputs: { jump: [0] } }).entities("player")[0];
+  check(mid.scale &gt; 1, `scale should grow, got ${mid.scale}`);
+}
+
+export function mashingJumpNeverBreaksTheGame() {
+  simulate(game, { seconds: 3, inputs: { jump: frames(0, 180) } }).expect.noErrors();
+}
+
+export function sameInputsSameResult() {
+  const opts: SimulateOptions&lt;Game&gt; = { seconds: 2, inputs: { jump: [10, 40], axes: { moveX: [[0, 1], [50, -1]] } } };
+  const a = JSON.stringify(simulate(game, opts).entities("player"));
+  const b = JSON.stringify(simulate(game, opts).entities("player"));
+  check(a === b, "two runs with the same inputs differ");
+}
+
+export function runsOnATallPhone() {
+  const run = simulate(game, { seconds: 0.5, size: [1080, 2340], platform: "android" });
+  run.expect.noErrors();
+  run.expect.count("player").equals(1);
+}
+
+export function pausingTheAppStopsTime() {
+  // Frames 10..70 the app is in the background: no steps run.
+  const run = simulate(game, { seconds: 1, inputs: { axes: { moveX: [[0, 1]] } }, appPauses: [[10, 70]] });
+  run.expect.noErrors();
+}
+
+export function settingsAndSavesBoot() {
+  const run = simulate(game, { seconds: 0.1, saves: { main: { best: 7 } }, settings: { reducedMotion: true } });
+  check(run.saves.main.best === 7, JSON.stringify(run.saves));
+  check(run.settings.reducedMotion, JSON.stringify(run.settings));
 }</code></pre>
-<h2 id="options">Options</h2>
-<table><thead><tr><th>Option</th><th>Meaning</th></tr></thead><tbody><tr><td><code>seconds</code></td><td>Simulated time: <code>round(seconds * 60)</code> fixed steps</td></tr><tr><td><code>scene</code></td><td>Start scene (default: the game's <code>start</code>)</td></tr><tr><td><code>inputs</code></td><td><code>{ action: [frames], axes: { axis: [[frame, value]] } }</code>, or an array per player</td></tr><tr><td><code>clicks</code></td><td><code>{ "doc#id": [frames] }</code></td></tr><tr><td><code>saves</code> / <code>settings</code></td><td>Boot state, e.g. <code>{ main: { best: 5 } }</code>, <code>{ locale: "pt" }</code></td></tr><tr><td><code>appPauses</code></td><td><code>[[from, to]]</code> frames the app is paused (focus lost)</td></tr><tr><td><code>platform</code></td><td>the os <code>ctx.platform</code> reports (<code>"android"</code>, <code>"windows"</code>, ...; default: the machine running the test)</td></tr><tr><td><code>size</code></td><td>screen pixels to run on, e.g. a tall phone <code>[1080, 2340]</code>: <code>ctx.camera.view</code>, <code>ctx.safeArea</code> and the UI grow as <code>config.window.aspect</code> says (default: <code>config.size</code>)</td></tr></tbody></table>
-<h2 id="checks">Checks</h2>
-<p><code>run.expect.scene(name)</code>, <code>noErrors()</code>, <code>count(tag).equals(n)</code> / <code>atLeast(n)</code>, <code>text(doc, id).equals(s)</code>, <code>shown(doc)</code>, <code>animation(tag).equals(name)</code>, <code>particles()</code>, <code>music(name | null)</code>. Plain data: <code>run.entities(tag)</code> (pos, rotation, scale, alpha, data, velocity), <code>run.state</code>, <code>run.saves</code>, <code>run.settings</code>, <code>run.locale</code>, <code>run.music</code>. A test fails by throwing.</p>
-<p>Pure game logic can be tested directly as plain function calls in the same file (<code>examples/puzzle</code> tests its rules that way).</p>
-<p>Write the failing test first, see it fail for the expected reason, then make it pass. Test what the player sees (scenes, counts, texts, positions), not how the code is arranged.</p></main></body></html>
+<p><strong>Expected output:</strong></p>
+<pre><code>PASS holdingRightMovesThePlayer
+PASS mashingJumpNeverBreaksTheGame
+...
+PASS startsCleanWithOnePlayer
+9 passed, 0 failed</code></pre>
+<p>A failing check names what it expected and where:</p>
+<pre><code>FAIL deliberatelyFails
+    Error: expected 2 "player" after 6 frames, got 1
+        at deliberatelyFails (test/main.test.ts:68:95)
+9 passed, 1 failed</code></pre>
+<p><code>npm test</code> exits non-zero when any test fails, so it works as a CI step as is.</p>
+<h2 id="step-by-step">Step by step</h2>
+<h3 id="1-time-seconds-and-frames">1. Time: <code>seconds</code> and frames</h3>
+<p>The engine runs a fixed step of 1/60 s. <code>seconds: 1.5</code> runs <code>round(1.5 * 60)</code> = 90 steps. Every frame number in the other options counts those steps from <strong>0</strong>: frame 60 is one second in.</p>
+<pre><code>simulate(game, { seconds: 2 });                 // 120 steps from the game's `start` scene
+simulate(game, { scene: "play", seconds: 2 });  // skip the title: start in "play"</code></pre>
+<p><code>scene</code> starts in any scene; its <code>enter</code> gets no params (<code>undefined</code>).</p>
+<h3 id="2-pressing-and-holding-actions">2. Pressing and holding actions</h3>
+<p><code>inputs</code> maps each <strong>action</strong> (from <code>config.actions</code>) to the frames it is pressed on. Each listed frame is one step with the action down, so <code>ctx.input.pressed()</code> fires on it.</p>
+<pre><code>simulate(game, { seconds: 1, inputs: { jump: [0] } });            // tap jump on the first step
+simulate(game, { seconds: 2, inputs: { jump: [0, 60] } });        // tap at 0 s and at 1 s
+simulate(game, { seconds: 1, inputs: { fire: frames(0, 30) } });  // hold fire for half a second</code></pre>
+<p>To <strong>hold</strong> an action, list consecutive frames (the <code>frames</code> helper above). Between two listed frames that are not consecutive, the action is released, so each one is a new press.</p>
+<h3 id="3-moving-with-axes">3. Moving with axes</h3>
+<p><code>inputs.axes</code> maps each <strong>axis</strong> (from <code>config.axes</code>) to <code>[frame, value]</code> pairs. The value (-1..1) stays until the next pair.</p>
+<pre><code>// Right from the start, stop at 0.5 s, left from 1 s.
+simulate(game, { seconds: 2, inputs: { axes: { moveX: [[0, 1], [30, 0], [60, -1]] } } });</code></pre>
+<p>Both go together in one object: <code>{ jump: [50], axes: { moveX: [[0, 1], [52, 0]] } }</code> (from <code>examples/platformer</code>: run right, jump at frame 50, stop at 52).</p>
+<h3 id="4-several-players">4. Several players</h3>
+<p>Pass an array, one entry per player (1..4). The game reads them through <code>ctx.input.player(n)</code>:</p>
+<pre><code>simulate(game, { seconds: 1, inputs: [{ axes: { moveX: [[0, 1]] } }, { axes: { moveX: [[0, -1]] } }] });</code></pre>
+<h3 id="5-clicking-ui-buttons">5. Clicking UI buttons</h3>
+<p><code>clicks</code> maps <code>"document#elementId"</code> to the frames it is clicked on, before that step runs. A hidden document or an unknown id fails the test, so a click that cannot happen never passes silently. From <code>examples/flappy</code>:</p>
+<pre><code>export function settingsMenuSetsVolumeAndLanguage() {
+  const run = simulate(game, {
+    seconds: 0.3,
+    inputs: { settings: [0] },                    // S / Start opens the menu
+    clicks: { "settings#music-down": [5, 6], "settings#sfx-up": [7], "settings#language": [8] },
+  });
+  run.expect.scene("settings");
+  run.expect.text("settings", "music").equals("80%");
+  if (run.settings.volumes.music !== 0.8 || run.locale !== "pt") throw new Error(JSON.stringify(run.settings));
+}</code></pre>
+<h3 id="6-checking-results-run-expect">6. Checking results: <code>run.expect</code></h3>
+<table><thead><tr><th>Check</th><th>Passes when, at the end of the run</th></tr></thead><tbody><tr><td><code>noErrors()</code></td><td>no script error happened (a script error also stops the run)</td></tr><tr><td><code>scene("over")</code></td><td>that scene is current</td></tr><tr><td><code>count("enemy").equals(3)</code> / <code>.atLeast(3)</code></td><td>that many living entities carry the tag</td></tr><tr><td><code>text("hud", "score").equals("12")</code></td><td>the UI element's plain text matches</td></tr><tr><td><code>shown("hud")</code></td><td>the UI document is shown</td></tr><tr><td><code>animation("player").equals("run")</code></td><td>the oldest entity with the tag plays that animation (<code>""</code> = none)</td></tr><tr><td><code>particles().equals(0)</code> / <code>.atLeast(5)</code></td><td>live particles across every emitter</td></tr><tr><td><code>music("theme")</code> / <code>music(null)</code></td><td>that music is playing / none is</td></tr></tbody></table>
+<p>Names are type-checked against <code>src/types.ts</code>: a typo in a tag, scene, UI id or animation is a compile error, not a test that passes by accident.</p>
+<h3 id="7-reading-plain-data">7. Reading plain data</h3>
+<p>When a ready-made check does not fit, read the data and throw:</p>
+<table><thead><tr><th>Field</th><th>Holds</th></tr></thead><tbody><tr><td><code>run.entities(tag)</code></td><td>living entities, oldest first: <code>{ id, pos, rotation, scale, alpha, data, velocity }</code> (<code>velocity</code> is <code>null</code> without a body)</td></tr><tr><td><code>run.state</code></td><td>the scene's <code>ctx.state</code> (a JSON copy)</td></tr><tr><td><code>run.saves</code></td><td>every save slot: <code>run.saves.main</code> is <code>ctx.save</code></td></tr><tr><td><code>run.settings</code></td><td><code>{ volumes, locale, uiScale, highContrast, reducedMotion, bindings }</code></td></tr><tr><td><code>run.locale</code>, <code>run.music</code></td><td>the current locale and music (or <code>null</code>)</td></tr><tr><td><code>run.frames</code></td><td>steps run</td></tr></tbody></table>
+<p><code>run.state</code> is typed <code>unknown</code>; cast it to the shape your scene declares:</p>
+<pre><code>const score = (state: unknown) =&gt; (state as { score: number }).score;   // examples/topdown
+if (score(run.state) &lt; 2) throw new Error(`expected some kills, score ${score(run.state)}`);</code></pre>
+<h3 id="8-boot-state-saves-and-settings">8. Boot state: saves and settings</h3>
+<p>Each run starts with empty in-memory saves and default settings. Seed them to test a returning player. From <code>examples/puzzle</code> and <code>examples/flappy</code>:</p>
+<pre><code>simulate(game, { seconds: 0.2, saves: { main: { level: 1 } } }).expect.text("hud", "level").equals("LEVEL 2/3");
+simulate(game, { seconds: 0.1, settings: { locale: "pt" } }).expect.text("title", "hint").equals("aperte para voar");</code></pre>
+<p><code>settings</code> takes <code>volumes</code>, <code>locale</code>, <code>fullscreen</code>, <code>bindings</code>, <code>uiScale</code>, <code>highContrast</code> and <code>reducedMotion</code>, as <code>settings.json</code> holds them. Nothing is read from or written to disk.</p>
+<h3 id="9-platform-and-screen-size">9. Platform and screen size</h3>
+<p><code>platform</code> sets what <code>ctx.platform.os</code> reports (<code>ctx.platform.mobile</code> follows it); <code>size</code> runs on a screen of that many pixels, so <code>ctx.camera.view</code>, <code>ctx.safeArea</code> and the UI grow the way <code>config.window.aspect</code> says. Defaults: the machine running the test, and <code>config.size</code>.</p>
+<pre><code>// examples/flappy: the hint follows the platform.
+simulate(game, { seconds: 0.1, platform: "windows" }).expect.text("title", "hint").equals("press flap");
+simulate(game, { seconds: 0.1, platform: "android" }).expect.text("title", "hint").equals("tap to flap");
+
+// A 1080x2340 phone shows more world; the pipes (the difficulty) must not change.
+const phone = simulate(game, { scene: "play", seconds: 3.1, size: [1080, 2340], platform: "android" });</code></pre>
+<h3 id="10-app-pauses">10. App pauses</h3>
+<p><code>appPauses: [[from, to]]</code> puts the app in the background between those frames (focus lost, phone switched app): <code>ctx.onPause</code> runs at <code>from</code>, no steps run, <code>ctx.onResume</code> runs at <code>to</code>.</p>
+<h2 id="recipes">Recipes</h2>
+<p><strong>Test pure rules without the engine.</strong> Logic that is a plain function needs no <code>simulate</code> (<code>examples/puzzle</code> tests its Sokoban rules this way):</p>
+<pre><code>import { move, parse } from "../src/rules";
+
+export function twoBoxesInARowCannotBePushed() {
+  const { level, start } = parse(["#####", "#@$$#", "#####"]);
+  if (move(level, start, "right") !== null) throw new Error("pushed two boxes");
+}</code></pre>
+<p><strong>Check something at two moments.</strong> Each run is fresh, so run twice with different <code>seconds</code> (from <code>examples/platformer</code>):</p>
+<pre><code>const at = (seconds: number) =&gt; simulate(game, { seconds }).entities("lift")[0].pos[0];
+if (Math.abs(at(2.5) - 470) &gt; 1) throw new Error(`lift should reach x 470 at 2.5 s, got ${at(2.5)}`);
+if (Math.abs(at(5) - 340) &gt; 1) throw new Error(`lift should be back at x 340 at 5 s, got ${at(5)}`);</code></pre>
+<p><strong>Assert an invariant over a long run.</strong> Mash inputs for seconds and check every entity:</p>
+<pre><code>const run = simulate(game, { seconds: 3, inputs: { jump: [60, 120], axes: { moveX: [[0, 1]] } } });
+for (const p of run.entities("player")) if (p.rotation !== 0) throw new Error(`player rotated to ${p.rotation}`);</code></pre>
+<p><strong>Full play-through.</strong> Script a whole level and check the scene and the save:</p>
+<pre><code>const run = simulate(game, { seconds: 1, inputs: { right: [5] } });   // examples/puzzle, level 1
+run.expect.scene("solved");
+if (run.saves.main.best0 !== 1) throw new Error(JSON.stringify(run.saves));</code></pre>
+<p><strong>Effects clear themselves.</strong> Particles and popups should be gone after a while:</p>
+<pre><code>simulate(game, { seconds: 0.3 }).expect.particles().atLeast(5);
+simulate(game, { seconds: 1 }).expect.particles().equals(0);</code></pre>
+<h2 id="gotchas">Gotchas</h2>
+<ul><li><strong>Shared option objects need a type.</strong> <code>const opts = { ... } as const</code> makes the arrays readonly and fails to compile. Annotate instead: <code>const opts: SimulateOptions&lt;Game&gt; = { ... }</code> (import <code>SimulateOptions</code> from <code>"alpha/test"</code> and <code>Game</code> from <code>../src/types</code>).</li><li><strong>Frames start at 0</strong> and the last frame of <code>seconds: 1</code> is 59. An input listed past the end never happens.</li><li>**Randomness comes from <code>config.seed</code>.** Use <code>ctx.random</code> in the game, never <code>Math.random</code>, or runs stop being reproducible.</li><li><strong>Positions are exact numbers.</strong> Compare with a tolerance when physics is involved (<code>Math.abs(y - 113) &gt; 1</code>).</li><li><strong>Test what the player sees</strong> (scenes, counts, texts, positions), not how the code is arranged: a test that would still pass if the game did nothing is not a test.</li><li><strong>Write the failing test first</strong>, see it fail for the expected reason, then make it pass.</li></ul>
+<h2 id="commands">Commands</h2>
+<pre><code>npm test                                   # = alpha test: test/main.test.ts
+npx alpha test --entry test/levels.test.ts # another test file
+npx alpha test --engine path/to/alpha_star # a specific engine build</code></pre>
+<p>Agents run the same tests through the MCP tool <code>alpha_test</code> (<a href="mcp.html">MCP for agents</a>).</p>
+<h2 id="see-also">See also</h2>
+<ul><li><a href="input.html">Input</a>: actions, axes and players the tests drive.</li><li><a href="ui.html">Game UI</a>: the documents and ids <code>clicks</code> and <code>text</code> use.</li><li><a href="mcp.html">MCP for agents</a>: play the real game step by step instead of headlessly.</li><li><a href="examples.html">Examples</a>: every example has a <code>test/main.test.ts</code> worth reading.</li><li><a href="reference.html">API reference</a>: <code>simulate</code>, <code>SimulateOptions</code>, <code>Run</code>, <code>Expect</code>.</li></ul></main></body></html>

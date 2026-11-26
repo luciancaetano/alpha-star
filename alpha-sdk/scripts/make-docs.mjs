@@ -20,11 +20,13 @@ const MASCOT = path.join(REPO, "aster.png");
 
 // Navigation: [section, [[file (without .md), title]]]. reference is generated.
 export const NAV = [
-  ["Start", [["getting-started", "Getting started"], ["first-game", "Your first game"], ["concepts", "Concepts"], ["examples", "Examples"]]],
-  ["Guides", [["input", "Input"], ["ui", "Game UI"], ["text", "Text and languages"], ["audio", "Audio and music"], ["physics", "Physics"],
-              ["particles", "Particles, looks, layers"], ["shaders", "Shaders and lighting"], ["tilemaps", "Sprites, camera, LDtk levels"],
-              ["saves", "Saves, settings, i18n"], ["hot-reload", "Hot reload"], ["mcp", "MCP for agents"],
-              ["testing", "Testing"], ["exporting", "Exporting"], ["android", "Android"]]],
+  ["Start", [["getting-started", "Getting started"], ["tutorial-hop", "Tutorial: a one-file game"], ["first-game", "Your first game"],
+             ["concepts", "Concepts"], ["examples", "Examples"]]],
+  ["Build your game", [["input", "Input"], ["physics", "Physics"], ["tilemaps", "Sprites, camera, LDtk levels"],
+                       ["particles", "Particles and effects"], ["audio", "Audio and music"], ["ui", "Game UI"],
+                       ["text", "Text and languages"], ["saves", "Saves, settings, i18n"], ["shaders", "Shaders and lighting"]]],
+  ["Ship and automate", [["testing", "Testing"], ["hot-reload", "Hot reload"], ["exporting", "Exporting"],
+                         ["android", "Android"], ["mcp", "MCP for agents"]]],
   ["Reference", [["reference", "API reference"], ["agents", "AGENTS.md for games"]]],
 ];
 
