@@ -67,7 +67,8 @@ bool form_control(const Rml::Element* e) {
 
 void Ui::Listener::ProcessEvent(Rml::Event& event) { ui_.clicked(event.GetTargetElement()); }
 
-Ui::Ui(int width, int height) : context_name_("game-ui-" + std::to_string(++contexts_made)) {
+Ui::Ui(int width, int height, core::Filter images) : context_name_("game-ui-" + std::to_string(++contexts_made)) {
+  renderer_.set_filter(images);
   context_ = Rml::CreateContext(context_name_, {width, height}, &renderer_);
   if (!context_) throw core::Error("cannot create the game UI: " + take_messages());
 }

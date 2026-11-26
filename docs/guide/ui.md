@@ -360,6 +360,10 @@ For a number that follows an entity (a health bar over an enemy), use world text
 - Only text and visibility of whole documents are scriptable: no reading inputs or sliders, no
   changing classes or styles from scripts. Use a second document for a panel that comes and goes.
 - `font-effect` (shadow/outline) is not drawn.
+- UI images (`<img>`, `decorator: image(...)`) follow `config.pixelMode`: crisp (`"nearest"`)
+  by default, smooth with `pixelMode: false`. Override with `config.uiFilter: "nearest"`,
+  `"linear"` or `"sharp"` (crisp pixels, soft edges at any scale). Images referenced as
+  `image(file fit)`, `url(...)` and `@spritesheet { src: file; }` are packed by `alpha export`.
 - The UI keeps running while your game "pauses" itself: pausing is your own state flag.
 - In tests, clicking a hidden document or an unknown id fails the test.
 

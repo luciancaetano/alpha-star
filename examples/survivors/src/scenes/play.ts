@@ -1,142 +1,101 @@
-import type { Context, Entity, Player, Vec2 } from "alpha";
+// One night in the bog: walk, survive, grow. Systems live in src/game/; this wires them per step.
+import type { Player, Vec2 } from "alpha";
 import { vec } from "alpha";
 import { scene } from "../alpha";
-import { bullet, enemy, hero, walls } from "../prefabs/actors";
-import { blast, label } from "../prefabs/effects";
-import { BOMB, BULLET, ENEMY, HERO, LABEL, WALL } from "../tuning";
-import type { Arena } from "../types";
+import { updateEnemies } from "../game/enemies";
+import { boltHit, freeze, updateProjectiles } from "../game/projectiles";
+import { choose, hud, nextMenu, pause, wireMenus } from "../game/menus";
+import { updatePickups } from "../game/pickups";
+import { newRun, type Play, type RunState, stats } from "../game/run";
+import { fireWeapons } from "../game/weapons";
+import { buildWorld, updateWorld } from "../game/world";
+import { hero, HP_SEGMENTS, hpBar } from "../prefabs/actors";
+import { RUN } from "../tuning";
+import type { Ent, HeroId, RunResult } from "../types";
 
-type State = { score: number };
-type Play = Context<Arena, State>;
-type Hero = Entity<Arena["tags"], any>;
-
-const at = (e: Hero): Vec2 => [e.pos.x, e.pos.y];
-// Left speaker .. right speaker across the visible world.
-const pan = (ctx: Play, x: number) => {
-  const [vx, , vw] = ctx.camera.view;
-  return ((x - vx) / vw) * 2 - 1;
+const result = (ctx: Play, dawn: boolean): RunResult => {
+  const s = ctx.state;
+  return { hero: s.hero, seconds: Math.floor(s.time), level: s.level, kills: s.kills, gold: s.gold + Math.floor(s.kills / 10), dawn };
 };
 
-function hud(ctx: Play) {
-  const heroes = ctx.findAll("hero");
-  ctx.ui.set("hud", "score", `SCORE ${ctx.state.score}`);
-  ctx.ui.set("hud", "hp", `HP ${heroes.map((h) => h.data.hp).join(" / ")}`);
-  ctx.ui.set("hud", "bombs", `BOMBS ${heroes.map((h) => h.data.bombs).join(" / ")}`);
-}
-
-// A random point just inside one of the four walls (which line the visible world).
-function edgePoint(ctx: Play): Vec2 {
-  const m = WALL + ENEMY.radius + 2;
-  const [vx, vy, vw, vh] = ctx.camera.view;
-  const side = ctx.random.int(0, 3);
-  const x = ctx.random.range(vx + m, vx + vw - m);
-  const y = ctx.random.range(vy + m, vy + vh - m);
-  return [[x, vy + m], [x, vy + vh - m], [vx + m, y], [vx + vw - m, y]][side] as Vec2;
-}
-
-// Player n joins when a device for them exists (player 2 = the second gamepad).
-function joinPlayers(ctx: Play) {
-  const have = new Set(ctx.findAll("hero").map((h) => h.data.player));
-  for (let n = 1; n <= Math.min(2, ctx.input.players()); n++) {
-    if (!have.has(n) && ctx.time < 0.5) ctx.spawn(hero(n, HERO.starts[n - 1]));
-  }
-}
-
-function kill(ctx: Play, e: Hero, points: number) {
-  ctx.spawn(blast(at(e)));
-  ctx.audio.play("boom", { pan: pan(ctx, e.pos.x), volume: 0.6 });
-  const l = ctx.spawn(label([e.pos.x, e.pos.y - 8], `+${points}`));
-  ctx.tween(l, { to: { y: e.pos.y - 8 - LABEL.rise, alpha: 0 }, seconds: LABEL.seconds, onDone: () => ctx.destroy(l) });
-  ctx.destroy(e);
-  ctx.state.score += points;
-}
-
-// Every enemy in the circle goes (a physics area query).
-function bomb(ctx: Play, h: Hero) {
-  h.data.bombs = (h.data.bombs as number) - 1;
-  for (const e of ctx.queryCircle(at(h), BOMB.radius, { tags: ["enemy"] })) if (e.alive) kill(ctx, e, 1);
-  ctx.spawn(blast(at(h), true));
-  ctx.camera.shake(BOMB.shake, BOMB.seconds);
-  ctx.input.rumble(0.6, 0.2, h.data.player as Player);
-}
-
-// Auto-aim: toward the nearest enemy, or where the hero last walked when there is none.
-function aimFrom(ctx: Play, h: Hero): Vec2 {
-  const enemies = ctx.findAll("enemy");
-  if (!enemies.length) return h.data.aim as Vec2;
-  const near = enemies.reduce((a, b) => (vec.dist(at(a), at(h)) <= vec.dist(at(b), at(h)) ? a : b));
-  return vec.norm(vec.sub(at(near), at(h)));
-}
-
-function steer(ctx: Play, h: Hero) {
-  const input = ctx.input.player(h.data.player as Player);
+function walk(ctx: Play, h: Ent, speed: number) {
+  const input = ctx.input.player(1 as Player);
   const move: Vec2 = [input.axis("moveX"), input.axis("moveY")];
   const amount = Math.min(1, vec.len(move));
-  h.body.velocity = vec.scale(vec.norm(move), amount * HERO.speed);
-  if (amount > 0) h.data.aim = vec.norm(move);
-  if (move[0] !== 0) h.flipX = move[0] < 0;
+  h.body.velocity = vec.scale(vec.norm(move), amount * speed);
+  if (move[0] !== 0) {
+    ctx.state.facing = move[0] < 0 ? -1 : 1;
+    h.flipX = move[0] < 0;
+  }
   h.animation = amount > 0 ? "walk" : "idle";
-  h.data.cooldown = Math.max(0, (h.data.cooldown as number) - ctx.dt);
-  if (input.down("fire") && h.data.cooldown === 0) {
-    ctx.spawn(bullet(at(h), aimFrom(ctx, h)));
-    ctx.audio.play("shot", { pan: pan(ctx, h.pos.x), volume: 0.4 });
-    h.data.cooldown = BULLET.cooldown;
-  }
-  if (input.pressed("bomb") && (h.data.bombs as number) > 0) bomb(ctx, h);
 }
 
-// Enemies walk toward the nearest hero.
-function chase(ctx: Play, heroes: Hero[]) {
-  for (const e of ctx.findAll("enemy")) {
-    const target = heroes.reduce((a, b) => (vec.dist(at(a), at(e)) <= vec.dist(at(b), at(e)) ? a : b));
-    e.body.velocity = vec.scale(vec.norm(vec.sub(at(target), at(e))), ENEMY.speed);
-  }
+function showHp(ctx: Play, maxHp: number) {
+  const on = Math.ceil((Math.max(0, ctx.state.hp) / maxHp) * HP_SEGMENTS);
+  for (const seg of ctx.findAll("hpbar")) if (seg.data.seg !== undefined) seg.alpha = (seg.data.seg as number) < on ? 1 : 0;
 }
 
-function ageBullets(ctx: Play) {
-  for (const b of ctx.findAll("bullet")) {
-    b.data.life = (b.data.life as number) - ctx.dt;
-    if ((b.data.life as number) <= 0) ctx.destroy(b);
-  }
+function menuKeys(ctx: Play) {
+  if (ctx.state.mode === "levelup") (["pick1", "pick2", "pick3"] as const).forEach((a, i) => ctx.input.pressed(a) && choose(ctx, i));
 }
 
-// Several contacts can arrive in one step: an enemy already used up hurts no one.
-function hurt(ctx: Play, h: Hero, e: Hero) {
-  if (!e.alive || !h.alive) return;
-  ctx.spawn(blast(at(e)));
-  ctx.destroy(e);
-  ctx.audio.play("hit");
-  ctx.camera.shake(2, 0.15);
-  h.data.hp = (h.data.hp as number) - 1;
-  if ((h.data.hp as number) <= 0) ctx.destroy(h);
+function step(ctx: Play, h: Ent) {
+  const s = ctx.state;
+  const st = stats(s);
+  s.time += ctx.dt;
+  s.hp = Math.min(st.maxHp, s.hp + st.regen * ctx.dt);
+  walk(ctx, h, st.speed);
+  fireWeapons(ctx, h, st);
+  updateProjectiles(ctx, h, st);
+  updateEnemies(ctx, h, st);
+  updatePickups(ctx, h, st);
+  showHp(ctx, st.maxHp);
+  if (s.hp <= 0) {
+    ctx.audio.play("death");
+    ctx.go("over", result(ctx, s.time >= RUN.seconds));
+    s.over = true;
+    return;
+  }
+  if (ctx.input.pressed("pause")) pause(ctx);
+  else nextMenu(ctx, h);
 }
 
 export default scene("play", {
-  state: () => ({ score: 0 }),
+  state: (p?: { hero: HeroId }): RunState => newRun(p?.hero ?? "wick", {}),
 
   enter(ctx) {
-    for (const w of walls(ctx.camera.view)) ctx.spawn(w);
-    ctx.spawn(hero(1, HERO.starts[0]));
-    ctx.every(ENEMY.every, () => {
-      if (ctx.findAll("enemy").length < ENEMY.max) ctx.spawn(enemy(edgePoint(ctx)));
-    });
-    ctx.onEnter("bullet", "enemy", (b, e) => {
-      if (!e.alive || !b.alive) return;
-      ctx.destroy(b);
-      kill(ctx, e, 1);
-    });
-    ctx.onHit("hero", "enemy", (h, e) => hurt(ctx, h, e));
+    ctx.state.shop = ctx.save.get("shop", {});
+    if (ctx.state.time === 0) ctx.state.hp = stats(ctx.state).maxHp;
+    buildWorld(ctx);
+    const h = ctx.spawn(hero(ctx.state.hero, [0, 0]));
+    ctx.spawn({ ...hpBar(-1), parent: h });
+    for (let i = 0; i < HP_SEGMENTS; i++) ctx.spawn({ ...hpBar(i), parent: h });
+    // Locked on the hero (no lag): camera and hero are drawn with the same interpolation, so the hero
+    // holds still on screen. Rounding the camera made the hero shake half a pixel while walking.
+    ctx.camera.follow(h, { lerp: 1 });
+    ctx.onEnter("shot", "enemy", (s, e) => boltHit(ctx, s, e));
+    wireMenus(ctx, () => ctx.go("over", result(ctx, false)));
     ctx.ui.show("hud");
+    ctx.postfx.add("bloom", { strength: 0.7, radius: 4 });
+    ctx.postfx.add("vignette", { strength: 0.55, radius: 0.55 });
+    ctx.audio.play("theme", { loop: true, volume: 0.35 });
   },
 
   update(ctx) {
-    joinPlayers(ctx);
-    const heroes = ctx.findAll("hero").filter((h) => h.alive);
-    if (!heroes.length) return ctx.go("over", { score: ctx.state.score });
-    for (const h of heroes) steer(ctx, h);
-    chase(ctx, heroes);
-    ageBullets(ctx);
+    const h = ctx.findAll("hero")[0];
+    if (!h || ctx.state.over) return;
+    if (ctx.state.mode === "play") step(ctx, h);
+    else {
+      h.body.velocity = [0, 0];
+      freeze(ctx);
+      menuKeys(ctx);
+    }
+    ctx.state.view = [...ctx.camera.view];
+    updateWorld(ctx);
     hud(ctx);
-    if (ctx.input.pressed("restart")) ctx.go("play");
+  },
+
+  exit(ctx) {
+    ctx.audio.stopAll();
   },
 });

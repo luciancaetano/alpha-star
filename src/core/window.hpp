@@ -83,7 +83,8 @@ bool starts_fullscreen(const WindowConfig& config, Os os);
 Insets safe_insets(const PixelGrid& grid, Vec2 view, Vec2 safe_min, Vec2 safe_max);
 
 // Initial window size: the game size times a scale that suits the mode
-// (integer: a whole number, so pixels stay square from the first frame).
-Vec2 initial_window_size(Vec2 game, Scale scale);
+// (integer: a whole number, so pixels stay square from the first frame), up to 2x / 1.5x,
+// fitted to 90% of `usable` (the screen without taskbars; {} = unknown). Never below 1x for integer.
+Vec2 initial_window_size(Vec2 game, Scale scale, Vec2 usable);
 
 }  // namespace alpha::core

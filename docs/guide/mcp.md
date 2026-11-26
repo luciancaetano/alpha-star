@@ -7,7 +7,8 @@ agent sees what a player sees and can prove a change works before it says "done"
 
 ## Set it up
 
-Add `.mcp.json` to the game folder (Claude Code and most MCP clients read it):
+`alpha init` writes this `.mcp.json` in the game folder (Claude Code and most MCP clients read it);
+for an older project, add it by hand:
 
 ```json
 { "mcpServers": { "alpha": { "command": "npx", "args": ["alpha", "mcp"] } } }

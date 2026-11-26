@@ -28,7 +28,6 @@
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "prepack": "node -e \"require('fs').cpSync('../skills','skills',{recursive:true})\"",
     "templates": "node scripts/sync-templates.mjs",
     "docs": "node scripts/make-docs.mjs"
   },

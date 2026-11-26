@@ -82,11 +82,16 @@ const UI_FILES = {
   "assets/fonts/p.ttf": "TTF",
   "assets/ui/hud.rml": `<rml><head><link type="text/rcss" href="../style/main.rcss"/></head>
     <body><img src="logo.png"/><a href="#top">x</a><p id="score" style="decorator: image(inline.png);"/></body></rml>`,
-  "assets/style/main.rcss": `body { decorator: image( ../img/bg.png ); } p { background: url("dot.png"); }`,
+  "assets/style/main.rcss": `body { decorator: image( ../img/bg.png ); } p { background: url("dot.png"); }
+    .card { decorator: image(card.png fill); } .b { decorator: image( "b.png" contain center bottom ); }
+    @spritesheet icons { src: sheet.png; heart: 0px 0px 16px 16px; }`,
   "assets/ui/logo.png": "LOGO",
   "assets/ui/inline.png": "IN",
   "assets/img/bg.png": "BG",
   "assets/style/dot.png": "DOT",
+  "assets/style/card.png": "CARD",
+  "assets/style/b.png": "B",
+  "assets/style/sheet.png": "SHEET",
 };
 
 test("export copies fonts, ui documents and every file they reference", async () => {

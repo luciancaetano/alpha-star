@@ -35,6 +35,8 @@ test("init writes a ready project: package name from the folder, SDK dependency,
     assert.ok(fs.existsSync(path.join(dir, f)), f);
   }
   assert.ok(!fs.existsSync(path.join(dir, "gitignore")));
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, ".mcp.json"), "utf8")),
+    { mcpServers: { alpha: { command: "npx", args: ["alpha", "mcp"] } } });
 });
 
 test("init refuses a non-empty folder and names the templates for an unknown one", () => {

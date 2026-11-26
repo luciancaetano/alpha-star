@@ -89,9 +89,20 @@ TEST_CASE("odd and empty outputs stay sane") {
   CHECK(none.scale == doctest::Approx(1));
 }
 
-TEST_CASE("the first window is 1.5x, or a whole 2x for integer scale") {
-  CHECK(alpha::core::initial_window_size({320, 180}, Scale::Fractional) == Vec2{480, 270});
-  CHECK(alpha::core::initial_window_size({320, 180}, Scale::Integer) == Vec2{640, 360});
+TEST_CASE("the first window is 1.5x, or a whole 2x for integer scale, when the screen is unknown") {
+  CHECK(alpha::core::initial_window_size({320, 180}, Scale::Fractional, {}) == Vec2{480, 270});
+  CHECK(alpha::core::initial_window_size({320, 180}, Scale::Integer, {}) == Vec2{640, 360});
+}
+
+TEST_CASE("the first window fits the screen's usable area") {
+  using alpha::core::initial_window_size;
+  CHECK(initial_window_size({384, 216}, Scale::Integer, {1920, 1080}) == Vec2{768, 432});
+  CHECK(initial_window_size({1024, 768}, Scale::Integer, {1920, 1080}) == Vec2{1024, 768});
+  const Vec2 frac = initial_window_size({1024, 768}, Scale::Fractional, {1280, 720});
+  CHECK(frac.x <= 1280);
+  CHECK(frac.y <= 720);
+  CHECK(frac.y == doctest::Approx(648));                                                   // 90% of the height
+  CHECK(initial_window_size({4000, 3000}, Scale::Integer, {1920, 1080}) == Vec2{4000, 3000});  // never below 1x
 }
 
 TEST_CASE("phones always start fullscreen; desktop follows config.window.fullscreen") {

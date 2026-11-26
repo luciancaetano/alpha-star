@@ -25,11 +25,13 @@ std::string arg(JSContext* ctx, JSValueConst* argv, int i, const char* what) {
   return string_arg(ctx, argv[i], what);
 }
 
-// uiCreate(width, height): the instance's UI context, sized to config.size.
+// uiCreate(width, height, filter): the instance's UI context, sized to config.size;
+// filter: config.uiFilter (validated by the runtime).
 JSValue ui_create(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   s.ui.reset();
   s.ui = std::make_unique<ui::Ui>(static_cast<int>(number_arg(ctx, argv[0], "config.size[0]")),
-                                  static_cast<int>(number_arg(ctx, argv[1], "config.size[1]")));
+                                  static_cast<int>(number_arg(ctx, argv[1], "config.size[1]")),
+                                  filter_arg(ctx, argv[2]));
   return JS_UNDEFINED;
 }
 
@@ -123,7 +125,7 @@ constexpr std::array<Native, 2> kTestNatives{{
 #endif
 
 constexpr std::array<Native, 9> kNatives{{
-    {"uiCreate", guarded<ui_create>, 2}, {"loadUi", guarded<load_ui>, 2},
+    {"uiCreate", guarded<ui_create>, 3}, {"loadUi", guarded<load_ui>, 2},
     {"loadFont", guarded<load_font>, 4}, {"uiShow", guarded<ui_show>, 1},
     {"uiHide", guarded<ui_hide>, 1},     {"uiSet", guarded<ui_set>, 3},
     {"uiOn", guarded<ui_on>, 3},         {"uiEvents", guarded<ui_events>, 0},

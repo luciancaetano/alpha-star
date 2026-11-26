@@ -23,6 +23,8 @@ ctx.findAll(tag): Entity[]
 ctx.positions(tag): Positions    // { count, ids, x, y: Float64Array; write() }
 ```
 
+Moves are drawn smoothly between fixed steps; setting `pos` more than a quarter of the view away is a teleport (drawn there at once, children too).
+
 Entity: `id, tags, pos (Vec2Ref {x, y}), rotation, z, body, alive, animation, play(name), flipX, flipY, tint, alpha, blend, text, layer, emit(n), emitting, particles, scale, parent, children, data`.
 
 Filled shapes: `{ circle: r, color, outline?, smooth? }`, `{ rect: [w, h], color, outline?, smooth? }`. Every shape also takes `tint?, alpha?, blend?: "alpha" | "add" | "multiply"`. Colors: `"#rrggbb"` or `"#rrggbbaa"`.

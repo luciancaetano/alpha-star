@@ -65,6 +65,8 @@ class World {
   std::vector<EntityId> entities() const;
 
   core::Vec2 position(EntityId id) const;
+  // Moves are drawn blended between steps; a jump over a quarter of the view since the
+  // last step (a teleport) is drawn there at once, children too.
   void set_position(EntityId id, core::Vec2 pos);
   float rotation(EntityId id) const;
   void set_rotation(EntityId id, float degrees);
@@ -146,6 +148,7 @@ class World {
   void put(entt::entity e, core::Vec2 pos, float degrees);  // transform + body, no relink
   void follow(entt::entity child);  // to its place under its parent
   void carry(entt::entity parent);  // every descendant follows
+  void settle(entt::entity e);  // previous = current for it and its descendants
   void follow_parents();
   std::vector<EntityId> free_doomed();
   void sync_bodies();

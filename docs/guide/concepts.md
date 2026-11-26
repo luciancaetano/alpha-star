@@ -183,6 +183,9 @@ if ((e.data.hp as number) <= 0) ctx.destroy(e);       // gone at the end of the 
 e.alive;                // false right after destroy(); safe on stale references
 ```
 
+Motion is drawn smoothly between fixed steps (so it stays fluid on 120/144 Hz screens).
+Setting `pos` more than a quarter of the view away is a teleport: drawn there at once.
+
 Shapes: `{ circle: r }`, `{ rect: [w, h] }` (both with `color`, optional `outline`), an image,
 a sheet sprite ([Sprites](tilemaps.md)) or world text:
 
@@ -359,6 +362,9 @@ Nothing in a game can depend on dev features.
 **Image filtering.** Each image, sheet or LDtk world picks `filter`: `"nearest"` (crisp),
 `"linear"` (smooth), `"sharp"` (pixel art at any size or angle; 16x texture memory). Without it,
 `config.pixelMode` decides (`true` = nearest). Shapes and emitters take `smooth`.
+
+`size` is the design canvas for the world and the UI, not the window: raise it and everything
+gets smaller on screen. The first window is 2x it (integer scale) or 1.5x, shrunk to fit the screen.
 
 **Window stretch.** `config.window` fits the design `size` to the screen:
 

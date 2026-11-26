@@ -48,6 +48,13 @@ core::Insets safe_insets(SDL_Window* window) {
   return core::safe_insets(output_grid(renderer), {static_cast<float>(w), static_cast<float>(h)}, lo, hi);
 }
 
+// The primary display's area without taskbars, in window units; {} when unknown (headless).
+core::Vec2 usable_display() {
+  SDL_Rect r{};
+  if (!SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &r)) return {};
+  return {static_cast<float>(r.w), static_cast<float>(r.h)};
+}
+
 }  // namespace
 
 bool open_window(const WindowSetup& setup, SDL_Window** window, SDL_Renderer** renderer) {
@@ -60,7 +67,7 @@ bool open_window(const WindowSetup& setup, SDL_Window** window, SDL_Renderer** r
   if (c.maximized) flags |= SDL_WINDOW_MAXIMIZED;
   if (setup.hidden) flags |= SDL_WINDOW_HIDDEN;
   flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;  // output in real pixels on high-DPI screens; text is made at that size
-  const core::Vec2 size = core::initial_window_size(setup.game, c.stretch.scale);
+  const core::Vec2 size = core::initial_window_size(setup.game, c.stretch.scale, usable_display());
   if (!setup.gpu) {
     return SDL_CreateWindowAndRenderer(setup.title.c_str(), static_cast<int>(size.x), static_cast<int>(size.y), flags,
                                        window, renderer);

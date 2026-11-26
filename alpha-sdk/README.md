@@ -26,7 +26,7 @@ from source and pass `--engine <path>` or set `ALPHA_STAR` (engine packages are 
 ## Commands
 
 ```
-alpha init <dir> [--template t]     new project: blank | platformer | topdown | puzzle | shmup | shaders
+alpha init <dir> [--template t]     new project (+ .mcp.json): blank | platformer | topdown | puzzle | shmup | shaders
 alpha --version                     SDK version (= the bundled engines' version)
 alpha check                         type-check only
 alpha export [--out dist]           type-check, bundle, copy assets into a pack
@@ -129,6 +129,8 @@ error. Fonts keep `fonts.title: { file, pixelMode }` (world-text glyph atlas).
 Particles with an image or sheet shape use their source's mode; circle/rect particles get antialiased edges
 with `pixelMode: false` (override per emitter with `emitter.smooth`). `alpha export` puts crisp
 and smooth images on separate atlas pages (`alpha-atlas-N.png`, `alpha-atlas-smooth-N.png`).
+Game UI images (RmlUi `<img>`, `decorator: image(...)`) use `config.uiFilter` instead
+(`"nearest"`, `"linear"` or `"sharp"`; default follows `pixelMode`).
 
 ## Fonts and sharp text
 
@@ -228,7 +230,7 @@ then `run.music`, `run.locale`, `run.settings`, `run.saves`, `expect.music("them
 on stdio. It lets an agent build and test the game, then start it and play it:
 send input, step frame by frame, read the state, take screenshots, read logs.
 
-Claude Code: add a `.mcp.json` to the game folder (or `claude mcp add alpha -- npx alpha mcp`):
+Claude Code: `alpha init` writes this `.mcp.json` in the game folder; for an older project add it (or `claude mcp add alpha -- npx alpha mcp`):
 
 ```json
 {

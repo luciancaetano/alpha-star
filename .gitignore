@@ -23,5 +23,3 @@ __pycache__/
 .claude/settings.local.json
 *.gcov
 
-# copied from skills/ by alpha-sdk prepack
-/alpha-sdk/skills/

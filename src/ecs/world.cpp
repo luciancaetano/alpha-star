@@ -118,13 +118,6 @@ void World::set_position(EntityId id, core::Vec2 pos) { place(id, pos, rotation(
 
 void World::set_rotation(EntityId id, float degrees) { place(id, position(id), degrees); }
 
-void World::place(EntityId id, core::Vec2 pos, float degrees) {
-  const entt::entity e = living(id);
-  if (auto* link = registry_.try_get<Parent>(e)) relink(*link, registry_.get<Transform>(to_entity(link->id)), pos, degrees);
-  put(e, pos, degrees);
-  carry(e);
-}
-
 int World::z(EntityId id) const { return registry_.get<Transform>(living(id)).z; }
 
 void World::set_z(EntityId id, int z) { registry_.get<Transform>(living(id)).z = z; }

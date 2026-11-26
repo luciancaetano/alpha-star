@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <exception>
 
+#include "core/image_filter.hpp"
 #include "platform/assets.hpp"
 
 namespace alpha::ui {
@@ -17,14 +18,15 @@ struct Mesh {
   std::vector<int> indices;
 };
 
-// A texture: premultiplied pixels kept on the CPU, uploaded on first draw.
+// A texture: premultiplied pixels kept on the CPU, uploaded on first draw
+// (sharp: already grown, so `size` is the uploaded size).
 // RmlUi loads textures during layout, which also happens headless or before
 // the window exists; a handle without pixels would be cached as a failure.
 struct Texture {
   Rml::Vector2i size;
   std::vector<Rml::byte> rgba;
   SDL_Texture* uploaded = nullptr;
-  bool nearest = false;  // generated (glyph atlases): drawn texel for pixel
+  bool nearest = false;  // glyph atlases and nearest images; else linear
 };
 
 SDL_Vertex to_sdl(const Rml::Vertex& v) {
@@ -104,7 +106,10 @@ Rml::TextureHandle RmlRenderer::LoadTexture(Rml::Vector2i& dimensions, const Rml
     core::Image image = platform::load_image(source);
     premultiply(image.rgba);
     dimensions = {image.width, image.height};
-    return reinterpret_cast<Rml::TextureHandle>(new Texture{dimensions, std::move(image.rgba)});
+    // Sharp: grown by a whole factor, drawn linear; tex coords are normalized.
+    if (filter_ == core::Filter::sharp) image = core::upscaled(image, core::sharp_factor(image.width, image.height));
+    return reinterpret_cast<Rml::TextureHandle>(
+        new Texture{{image.width, image.height}, std::move(image.rgba), nullptr, filter_ == core::Filter::nearest});
   } catch (const std::exception& e) {
     Rml::Log::Message(Rml::Log::LT_WARNING, "%s", e.what());
     return {};

@@ -1,0 +1,15 @@
+<rml><head><link type="text/rcss" href="candle.rcss"/>
+<style>
+  #logo { display: block; width: 200dp; height: 52dp; margin: 14dp auto 6dp auto; decorator: image(logo.png); }
+  #lang { position: absolute; right: 6dp; bottom: 6dp; width: 64dp; height: 17dp; line-height: 15dp; margin: 0dp; }
+  #info { margin-top: 8dp; }
+</style></head>
+<body class="safe">
+  <div id="logo"></div>
+  <button id="play" autofocus data-t="title.play">PLAY</button>
+  <button id="heroes" data-t="title.heroes">HEROES</button>
+  <button id="shop" data-t="title.shop">SHOP</button>
+  <p class="center" id="info"><span id="hero">Sir Wick</span><span class="dim" style="margin: 0dp 6dp;">|</span><span class="gold" id="gold">0 gold</span></p>
+  <p class="center dim" id="best"></p>
+  <button id="lang" data-t="title.lang">PORTUGUES</button>
+</body></rml>

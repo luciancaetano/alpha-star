@@ -7,7 +7,7 @@
 ```json
 { "mcpServers": { "alpha": { "command": "npx", "args": ["alpha", "mcp"] } } }
 ```
-Put it in `.mcp.json` in the game folder (or `claude mcp add alpha -- npx alpha mcp`). Other clients: run `npx alpha mcp` with the game folder as cwd.
+`alpha init` writes it to `.mcp.json` in the game folder; older projects add it by hand (or `claude mcp add alpha -- npx alpha mcp`). Other clients: run `npx alpha mcp` with the game folder as cwd.
 
 ## Tools
 

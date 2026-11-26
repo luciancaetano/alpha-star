@@ -1,0 +1,5 @@
+IMAGES:
+1. raw/ghoul.png — 2 walk frames in one row facing right: a hunched bog ghoul made of mud and roots, teal-green skin, moss on back, glowing green eyes, heavy and tanky.
+2. raw/wisp.png — 2 frames in one row: a mischievous will-o'-the-wisp, a cold cyan-blue flame spirit with a little skull face inside the flame.
+3. raw/gargoyle.png — 2 flying frames in one row facing right: an elite stone gargoyle with cracked gray stone skin, glowing red eyes and ember cracks, bat wings, bigger and scarier.
+4. raw/moth_queen.png — 2 frames in one row: BOSS, the Moth Queen, a huge regal moth with ornate patterned violet and gold wings, a tiny crown, many glowing eyes, wings spread wide.

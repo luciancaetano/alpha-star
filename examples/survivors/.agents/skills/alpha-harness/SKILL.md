@@ -1,6 +1,6 @@
 ---
 name: alpha-harness
-description: Set up or refresh the AI-agent harness of a game made with the alpha-star engine. It copies the SDK's LLM API docs into the project's docs/llm/ and creates or updates the project's AGENTS.md with an index of those docs (which file to read for which feature) and code quality limits (params, function and file length, complexity). Use it whenever the user works in a project that depends on @alpha-star/sdk and asks to set up agents, create or update AGENTS.md, "bring the llm docs", prepare the project for Claude/Codex/AI, or after updating the SDK version. Also use it proactively when an alpha-star game has no AGENTS.md or no docs/llm/ folder.
+description: Set up or refresh the AI-agent harness of a game made with the alpha-star engine. It copies the SDK's LLM API docs into the project's docs/llm/ and creates or updates the project's AGENTS.md with an index of those docs (which file to read for which feature), engine pitfalls (camera, pixel-perfect movement) and code quality limits (params, function and file length, complexity). Use it whenever the user works in a project that depends on @alpha-star/sdk and asks to set up agents, create or update AGENTS.md, "bring the llm docs", prepare the project for Claude/Codex/AI, or after updating the SDK version. Also use it proactively when an alpha-star game has no AGENTS.md or no docs/llm/ folder.
 ---
 
 # alpha-harness
@@ -12,7 +12,9 @@ both into the game project:
 - `docs/llm/*.md`: short per-feature API docs, copied from `@alpha-star/sdk/llm/` (the SDK is the
   source of truth, so the copies match the installed engine version).
 - A managed block in `AGENTS.md`: a table that summarizes each doc and says when to read it, plus
-  the code quality rules from `references/quality-rules.md`.
+  the engine pitfalls from `references/engine-pitfalls.md` (interpolated drawing, camera, view
+  sizes, `config.size`), lessons from a full game (`references/game-lessons.md`: queries, pausing,
+  UI, languages, pacing, art, MCP) and the code quality rules from `references/quality-rules.md`.
 
 ## Steps
 
@@ -40,7 +42,7 @@ both into the game project:
 
 - Never edit `docs/llm/` by hand in the game: changes are lost on the next sync. API doc fixes go
   to the engine repository (`alpha-sdk/llm/`). This skill itself is versioned there too, in
-  `skills/alpha-harness/`.
+  `alpha-sdk/skills/alpha-harness/` (shipped in the npm package; `alpha skills` installs it).
 - If the script says no docs were found, the installed SDK predates the LLM docs: update
   `@alpha-star/sdk` or pass `--sdk`.
 - `CLAUDE.md`: if the project has one and no `AGENTS.md` reference, add the line `@AGENTS.md`

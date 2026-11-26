@@ -178,8 +178,6 @@ def sdk_package(stage):
         target = dest / entry["path"]
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(SDK / entry["path"], target)
-    # skills/ is gitignored in alpha-sdk/ and filled by prepack, which --ignore-scripts skips: copy the source.
-    shutil.copytree(cfg.ROOT / "skills", dest / "skills", dirs_exist_ok=True)
     shutil.copy2(cfg.ROOT / "LICENSE", dest / "LICENSE")
     return dest
 

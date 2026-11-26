@@ -37,7 +37,8 @@ struct DocumentView {
 // step (deterministic, and never re-entrant into a running script).
 class Ui {
  public:
-  Ui(int width, int height);
+  // images: how UI images (img, decorators) are sampled when scaled (config.uiFilter).
+  Ui(int width, int height, core::Filter images = core::Filter::linear);
   ~Ui();
   Ui(const Ui&) = delete;
   Ui& operator=(const Ui&) = delete;

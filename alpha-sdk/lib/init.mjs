@@ -40,6 +40,9 @@ function rewritePackage(dir, sdk) {
   fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
 }
 
+// .mcp.json: registers `alpha mcp` so the agent can run, inspect and drive the game.
+const MCP = { mcpServers: { alpha: { command: "npx", args: ["alpha", "mcp"] } } };
+
 /**
  * Creates the project. `sdk` is the dependency spec written to package.json
  * (default `^<this SDK's version>`; e.g. `file:../alpha-sdk` for a local SDK).
@@ -57,5 +60,8 @@ export function initProject({ dir, template = "blank", sdk = `^${VERSION}` }) {
   const files = [];
   copyTree(path.join(TEMPLATES_DIR, template), root, files);
   rewritePackage(root, sdk);
+  const mcp = path.join(root, ".mcp.json");
+  fs.writeFileSync(mcp, JSON.stringify(MCP, null, 2) + "\n");
+  files.push(mcp);
   return { ok: true, problems: [], files };
 }

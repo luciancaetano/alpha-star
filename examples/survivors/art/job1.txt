@@ -1,0 +1,5 @@
+IMAGES:
+1. raw/hero_taper.png — sprite sheet, 4 walk-cycle frames in ONE horizontal row, facing right: "Sister Taper", a slim tall white wax candle nun with a purple hood and veil, small flame on top, holding a whip made of fire. Cute chibi proportions.
+2. raw/hero_lumen.png — sprite sheet, 4 walk-cycle frames in ONE horizontal row, facing right: "Old Lumen", a short stubby blue-wax candle old wizard with long white beard of dripping wax, a pointy teal hat with flame on top, holding a staff with a hanging glowing lantern. Cute chibi proportions.
+3. raw/moth.png — 2 frames in one row (wings up, wings down): a fuzzy dusty purple night moth monster with glowing yellow eyes, seen from above, cute-menacing.
+4. raw/shade.png — 2 frames in one row (floating bob): a small hooded shadow ghost, dark indigo body fading to wisps at the bottom, two glowing white eyes, reaching claws.

@@ -1,6 +1,7 @@
 #include "ecs/hierarchy.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -83,6 +84,23 @@ void World::carry(entt::entity parent) {
     follow(child);
     carry(child);
   }
+}
+
+void World::place(EntityId id, core::Vec2 pos, float degrees) {
+  const entt::entity e = living(id);
+  if (auto* link = registry_.try_get<Parent>(e)) relink(*link, registry_.get<Transform>(entity_of(link->id)), pos, degrees);
+  put(e, pos, degrees);
+  carry(e);
+  const core::Vec2 jump = pos - registry_.get<Previous>(e).pos;
+  if (std::hypot(jump.x, jump.y) > std::max(camera_.size.x, camera_.size.y) / 4) settle(e);  // a teleport
+}
+
+void World::settle(entt::entity e) {
+  if (auto* p = registry_.try_get<Previous>(e)) {
+    const Transform& t = registry_.get<Transform>(e);
+    *p = {t.pos, t.rotation};
+  }
+  for (const entt::entity child : children_of(registry_, id_of(e))) settle(child);
 }
 
 void World::adopt(EntityId child, EntityId parent, core::Vec2 local) {

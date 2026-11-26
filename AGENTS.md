@@ -40,7 +40,7 @@ make build-debug | build-prod | run-debug | debug   # debug = run under VS/lldb/
 make flappy                                         # build engine + examples/flappy, then play
                                                     # examples/platformer: sheets, LDtk level, camera
 make sdk-engine | sdk-engine-linux                  # stage release engine into alpha-sdk/engine/
-make deploy-engine                                  # sdk-engine + sdk-engine-linux + templates + skills + docs site + notices check + SDK tests
+make deploy-engine                                  # sdk-engine + sdk-engine-linux + templates + docs site + notices check + SDK tests
 make gate                                           # full Windows gate (tools/gate.py, resource-guarded)
 make test                                           # tests only (ctest --preset dev under resource_guard)
 make linux-gate                                     # full gate in the Linux container: run on the dedicated Linux PC, not this one
@@ -188,8 +188,8 @@ the platform package, then `alpha-sdk/engine/`) into `dist/release/` and never p
   published to GitHub Pages), SDK README, `alpha.d.ts`, GLOSSARY, `BUILDING*.md` when the build or
   toolchain changes, and the `alpha-sdk/llm/*.md` the SDK ships to agents. A change is not done while
   any of them is stale. Games pull those through
-  the `alpha-harness` skill (`skills/alpha-harness/alpha-harness.md`; skills live in
-  `skills/<name>/<name>.md`, versioned here).
+  the `alpha-harness` skill (`alpha-sdk/skills/alpha-harness/alpha-harness.md`; skills live only in
+  `alpha-sdk/skills/<name>/<name>.md`, shipped in the npm package; games get them with `alpha skills`).
 - **Git:** work on `main`; never create a branch (or worktree branch) unless the user explicitly asks for one
   (do not infer it from tooling, workflows or conventions).
 - **Keep a log:** append every action and its reason to `docs/LOG.md`; report it on completion.

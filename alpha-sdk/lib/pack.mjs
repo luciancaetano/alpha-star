@@ -74,11 +74,12 @@ export function assetFiles(def) {
   return files;
 }
 
-// Relative file references in RML (`href=`, `src=`) and RCSS (`url(...)`, `image(...)`).
-const REFERENCE = /\b(?:href|src)\s*=\s*"([^"]*)"|\b(?:url|image)\(\s*["']?([^"')\s]+)["']?\s*\)/g;
+// Relative file references in RML (`href=`, `src=`) and RCSS (`url(...)`, `image(...)`
+// with optional fit/alignment arguments after the file, `@spritesheet { src: file; }`).
+const REFERENCE = /\b(?:href|src)\s*=\s*"([^"]*)"|\b(?:url|image)\(\s*["']?([^"')\s,]+)["']?(?:[\s,][^)]*)?\)|\bsrc\s*:\s*["']?([^"';\s}]+)/g;
 
 function referencesIn(text) {
-  return [...text.matchAll(REFERENCE)].map((m) => m[1] ?? m[2])
+  return [...text.matchAll(REFERENCE)].map((m) => m[1] ?? m[2] ?? m[3])
     .filter((ref) => ref && !ref.startsWith("#") && !/^[a-z]+:/i.test(ref));
 }
 

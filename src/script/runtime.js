@@ -655,7 +655,9 @@ function bootGame(s, ctx, g, start, what, from) {
     fail(`config.pauseOnFocusLoss must be true (pause when the window loses focus or is minimized; the default) or false, got ${show(c.pauseOnFocusLoss)}`);
   }
   N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]), c.size[0], c.size[1]);
-  N.uiCreate(c.size[0], c.size[1]);
+  const uiFilter = c.uiFilter ?? (c.pixelMode === false ? "linear" : "nearest");
+  if (!FILTERS.includes(uiFilter)) fail(`config.uiFilter must be "nearest" (crisp pixel art), "linear" (smooth) or "sharp" (crisp pixels, soft edges), got ${show(uiFilter)}`);
+  N.uiCreate(c.size[0], c.size[1], uiFilter);
   N.presentView(c, ...(s.screen ?? []));
   N.collisionCategories(collisionCategories(c.collision));
   for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bind("actions", action, inputs);

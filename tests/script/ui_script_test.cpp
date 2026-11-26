@@ -136,6 +136,21 @@ TEST_CASE("script ui: a missing document or font stops boot with its name") {
             .find("fallbacks loop: a -> b -> a") != std::string::npos);
 }
 
+TEST_CASE("script ui: config.uiFilter takes an image filter and names the choices") {
+  Sandbox box;
+  const auto boot_error = [&](const std::string& filter) {
+    Host host(box.save());
+    std::string game = alpha::test::tiny("enter", "");
+    game.replace(game.find("seed: 1"), 7, "seed: 1, uiFilter: " + filter);
+    host.load(box.write("g.js", game));
+    return host.error();
+  };
+  CHECK(boot_error("'nearest'").empty());
+  CHECK(boot_error("'sharp'").empty());
+  CHECK(boot_error("'crisp'").find("config.uiFilter must be \"nearest\" (crisp pixel art), \"linear\"") !=
+        std::string::npos);
+}
+
 TEST_CASE("simulate: clicks by document#id and text expectations") {
   Sandbox box;
   const std::string game = std::filesystem::path(write_game(box)).generic_string();

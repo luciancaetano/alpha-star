@@ -1,22 +1,25 @@
-// Effects are data: a one-shot emitter (its entity goes away with the last particle) and world text.
-import type { EntitySpec, Vec2 } from "alpha";
-import type { Arena } from "../types";
+// Effects are data: one-shot emitters (gone with their last particle) and floating world text.
+import type { Vec2 } from "alpha";
+import type { Color, Spec } from "../types";
 
-type Spec = EntitySpec<Arena["tags"], never, Arena["sheets"]>;
-
-export function blast(at: Vec2, big = false): Spec {
+export function burst(at: Vec2, color: Color, count: number, speed = 70): Spec {
   return {
-    tags: ["blast"],
-    pos: at,
-    z: 3,
+    tags: ["fx"], pos: at, z: 9, layer: "fx",
     emitter: {
-      burst: big ? 60 : 14, oneShot: true, lifetime: [0.2, 0.5], speed: big ? [60, 180] : [30, 90],
-      size: [4, 1], color: ["#ffb347ff", "#e74c3c00"], blend: "add",
+      burst: count, oneShot: true, lifetime: [0.2, 0.55], speed: [speed * 0.3, speed], size: [3, 0],
+      color: [`${color}ff` as Color, `${color}00` as Color], blend: "add",
     },
   };
 }
 
-// No font named: the built-in 8x8 font, sharp at any window size.
-export function label(at: Vec2, text: string): Spec {
-  return { tags: ["label"], pos: at, z: 4, shape: { text, size: 8, color: "#ffe14d" } };
+/** A ring of sparks for level-ups, chests and evolutions. */
+export function nova(at: Vec2, color: Color): Spec {
+  return {
+    tags: ["fx"], pos: at, z: 9, layer: "fx",
+    emitter: { burst: 90, oneShot: true, lifetime: [0.5, 0.9], speed: [140, 180], size: [4, 0], color: [`${color}ff` as Color, `${color}00` as Color], blend: "add", max: 90 },
+  };
+}
+
+export function label(at: Vec2, text: string, color: Color, size = 8): Spec {
+  return { tags: ["label"], pos: at, z: 10, layer: "fx", shape: { text, font: "pixel", size, color } };
 }

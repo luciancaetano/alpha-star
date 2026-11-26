@@ -1,0 +1,192 @@
+{
+ "weapon": {
+  "bolt": {
+   "name": "Brasa Ardente",
+   "evo": "Lança Solar",
+   "evoDesc": "Lanças solares rápidas que perfuram tudo.",
+   "l1": "Atira no inimigo mais próximo.",
+   "l2": "+1 brasa.",
+   "l3": "+5 de dano.",
+   "l4": "+1 brasa, perfura 2.",
+   "l5": "Recarga mais rápida.",
+   "l6": "+1 brasa, +8 de dano."
+  },
+  "whip": {
+   "name": "Chicote de Chama",
+   "evo": "Açoite Infernal",
+   "evoDesc": "Açoites gêmeos, alcance e dano enormes.",
+   "l1": "Açoita na horizontal.",
+   "l2": "Açoita também atrás.",
+   "l3": "+8 de dano.",
+   "l4": "+20% de alcance.",
+   "l5": "+8 de dano.",
+   "l6": "Mais rápido, +10 de dano."
+  },
+  "lanterns": {
+   "name": "Lanternas Halo",
+   "evo": "Coral de Lanternas",
+   "evoDesc": "Um coral de lanternas que nunca se apaga.",
+   "l1": "Lanternas giram ao seu redor.",
+   "l2": "+1 lanterna.",
+   "l3": "+25% de órbita, +4 dano.",
+   "l4": "+1 lanterna.",
+   "l5": "Dura mais.",
+   "l6": "+1 lanterna, +6 dano."
+  },
+  "pool": {
+   "name": "Poça de Cera",
+   "evo": "Mar Derretido",
+   "evoDesc": "Lagos derretidos que dissolvem hordas.",
+   "l1": "Cera ardente sob os inimigos.",
+   "l2": "+1 poça.",
+   "l3": "+30% de tamanho.",
+   "l4": "+4 de dano.",
+   "l5": "+1 poça, dura mais.",
+   "l6": "+1 poça, +5 dano."
+  },
+  "spark": {
+   "name": "Faísca em Cadeia",
+   "evo": "Lustre da Tempestade",
+   "evoDesc": "Uma tempestade de raios sem fim.",
+   "l1": "Atinge inimigos aleatórios.",
+   "l2": "+1 raio.",
+   "l3": "+10 de dano.",
+   "l4": "+1 raio.",
+   "l5": "Explosão maior.",
+   "l6": "+2 raios, +10 dano."
+  }
+ },
+ "passive": {
+  "wick": {
+   "name": "Pavio de Ferro",
+   "desc": "+10% de dano."
+  },
+  "tome": {
+   "name": "Tomo de Sebo",
+   "desc": "-8% de recarga."
+  },
+  "glass": {
+   "name": "Lente Faiscante",
+   "desc": "+10% de área."
+  },
+  "prism": {
+   "name": "Caco de Prisma",
+   "desc": "+1 projétil."
+  },
+  "wing": {
+   "name": "Asa de Mariposa",
+   "desc": "+10% de velocidade."
+  },
+  "heart": {
+   "name": "Coração da Lareira",
+   "desc": "+20 de vida, +0,3 vida/s."
+  },
+  "lode": {
+   "name": "Magnetita",
+   "desc": "+30% de alcance de coleta."
+  }
+ },
+ "hero": {
+  "wick": {
+   "name": "Sir Pavio",
+   "desc": "Brasa Ardente. +10% velocidade."
+  },
+  "taper": {
+   "name": "Irmã Círia",
+   "desc": "Chicote de Chama. +20% de força."
+  },
+  "lumen": {
+   "name": "Velho Lúmen",
+   "desc": "Lanternas Halo. +25% de área."
+  }
+ },
+ "upgrade": {
+  "might": "Força +5%",
+  "armor": "Armadura +1",
+  "vigor": "Vida +10",
+  "haste": "Regeneração +0,1/s",
+  "swift": "Velocidade +5%",
+  "magnet": "Ímã +10%",
+  "growth": "Crescimento +6%",
+  "greed": "Ganância +10%"
+ },
+ "event": {
+  "75": "Uma nuvem de mariposas!",
+  "150": "Uma gárgula te caça",
+  "210": "As sombras se fecham",
+  "300": "A RAINHA MARIPOSA",
+  "390": "Fogos-fátuos no vento",
+  "450": "Gárgulas despertam",
+  "540": "O pântano se ergue",
+  "600": "RAINHAS GÊMEAS",
+  "690": "A grande migração",
+  "750": "Asas de pedra",
+  "810": "Última luz",
+  "840": "A hora final",
+  "900": "O APAGADOR CHEGOU"
+ },
+ "title": {
+  "play": "JOGAR",
+  "heroes": "HERÓIS",
+  "shop": "LOJA",
+  "lang": "ENGLISH",
+  "gold": "{n} ouro",
+  "best": "Recorde {time}",
+  "goal": "Sobreviva até o amanhecer"
+ },
+ "heroes": {
+  "title": "ESCOLHA SUA VELA",
+  "cost": "{n} ouro",
+  "picked": "ESCOLHIDO",
+  "back": "VOLTAR"
+ },
+ "shop": {
+  "title": "LOJA DE VELAS",
+  "max": "MÁX"
+ },
+ "hud": {
+  "foes": "{n} inimigos",
+  "gold": "{n} ouro",
+  "lv": "NV {n}"
+ },
+ "levelup": {
+  "title": "SUBIU DE NÍVEL!",
+  "hint": "clique ou aperte 1 2 3",
+  "new": "NOVO!",
+  "lv": "NV {n}"
+ },
+ "chest": {
+  "treasure": "TESOURO!",
+  "evolution": "EVOLUÇÃO!",
+  "ok": "PEGAR"
+ },
+ "paused": {
+  "title": "PAUSADO",
+  "resume": "CONTINUAR",
+  "quit": "DESISTIR",
+  "max": "MÁX"
+ },
+ "over": {
+  "dawn": "AMANHECEU",
+  "dead": "APAGADO",
+  "time": "Sobreviveu {t}",
+  "level": "Nível {n}",
+  "kills": "{n} inimigos derretidos",
+  "gold": "+{n} ouro (cofre {bank})",
+  "best": "Recorde {t}",
+  "again": "DE NOVO",
+  "menu": "MENU"
+ },
+ "loot": {
+  "purse": "Bolsa de Ouro",
+  "purseDesc": "+25 de ouro.",
+  "cake": "Bolo de Mel",
+  "cakeDesc": "Cura 30 de vida.",
+  "hoard": "Tesouro de Ouro",
+  "hoardDesc": "+60 de ouro.",
+  "coin": "+ouro",
+  "heal": "+30 vida",
+  "magnet": "ÍMÃ!",
+  "bell": "SINO SAGRADO!"
+ }
+}

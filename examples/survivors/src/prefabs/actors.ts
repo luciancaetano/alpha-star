@@ -1,55 +1,35 @@
-// Entity specs: plain data built by functions.
-import type { EntitySpec, Vec2 } from "alpha";
-import { vec } from "alpha";
-import { BULLET, ENEMY, HERO, WALL } from "../tuning";
-import type { Arena } from "../types";
+// Hero and enemies: plain data built by functions.
+import type { Vec2 } from "alpha";
+import { ENEMIES, HERO, HEROES } from "../tuning";
+import type { EnemyKind, HeroId, Spec } from "../types";
 
-type Spec = EntitySpec<Arena["tags"], never, Arena["sheets"]>;
-
-// `data.player` says which player's input drives it; `aim` is the last direction moved.
-export function hero(player: number, at: Vec2): Spec {
+export function hero(id: HeroId, at: Vec2): Spec {
   return {
-    tags: ["hero"],
-    pos: at,
-    z: 2,
-    shape: { sheet: "hero", animation: "idle", ...(player === 2 ? { tint: "#9be7ff" } : {}) },
-    body: { type: "dynamic", fixedRotation: true, collider: { circle: HERO.radius } },
-    // Each hero carries a lantern (config.lighting keeps the rest of the arena dim).
-    light: { radius: 110, color: player === 2 ? "#9be7ff" : "#ffd9a0", intensity: 1.8 },
-    data: { player, hp: HERO.hp, bombs: HERO.bombs, aim: [1, 0], cooldown: 0 },
+    tags: ["hero"], pos: at, z: 5,
+    shape: { sheet: id, animation: "idle" },
+    body: { type: "kinematic", fixedRotation: true, category: "hero", collidesWith: ["enemy"], collider: { circle: HERO.radius, sensor: true } },
+    light: { radius: HERO.light, color: HEROES[id].tint, intensity: 1.6 },
   };
 }
 
-export function enemy(at: Vec2): Spec {
-  return {
-    tags: ["enemy"],
-    pos: at,
-    z: 1,
-    shape: { circle: ENEMY.radius, color: "#e74c3c", outline: "#7b241c" },
-    body: { type: "dynamic", fixedRotation: true, collider: { circle: ENEMY.radius } },
-  };
+export const HP_SEGMENTS = 12;
+/** Under the hero: a dark plate (index -1) and 12 red segments the HUD shows or hides. */
+export function hpBar(index: number): Spec {
+  return index < 0
+    ? { tags: ["hpbar"], pos: [0, 13], z: 6, shape: { rect: [28, 4], color: "#1a1020" } }
+    : { tags: ["hpbar"], pos: [-11 + index * 2, 13], z: 7, shape: { rect: [2, 2], color: "#ff4d5e" }, data: { seg: index } };
 }
 
-// A sensor: it passes through things and reports overlaps (ctx.onEnter).
-export function bullet(from: Vec2, aim: Vec2): Spec {
+export function enemy(kind: EnemyKind, at: Vec2, hpMul: number): Spec {
+  const d = ENEMIES[kind];
+  const big = kind === "queen" || kind === "snuffer";
+  const tags: Spec["tags"] = big ? ["enemy", "boss"] : kind === "gargoyle" ? ["enemy", "elite"] : ["enemy"];
   return {
-    tags: ["bullet"],
-    pos: vec.add(from, vec.scale(aim, HERO.radius + 4)),
-    shape: { circle: BULLET.radius, color: "#ffe14d" },
-    light: { radius: 28, color: "#ffe14d" },
-    body: { type: "dynamic", bullet: true, velocity: vec.scale(aim, BULLET.speed), collider: { circle: BULLET.radius, sensor: true } },
-    data: { life: BULLET.life },
+    tags, pos: at, z: big ? 4 : 3,
+    shape: { sheet: kind, animation: "fly" },
+    body: { type: "dynamic", fixedRotation: true, category: "enemy", collidesWith: ["enemy", "shot", "hero"], collider: { circle: d.radius, density: big ? 20 : 1 } },
+    ...(kind === "wisp" ? { light: { radius: 40, color: "#5fd8ff", intensity: 0.8 } } : {}),
+    ...(big ? { light: { radius: 90, color: kind === "queen" ? "#c58bff" : "#ff3b3b", intensity: 1.2 } } : {}),
+    data: { kind, hp: Math.round(d.hp * (kind === "snuffer" ? 1 : hpMul)), kb: 0, flash: 0, hit: {} },
   };
-}
-
-// The four walls around the arena.
-/** The arena's four walls along the edges of the visible world `[x, y, w, h]` (ctx.camera.view). */
-export function walls([x, y, w, h]: readonly number[]): Spec[] {
-  const box = (pos: Vec2, size: Vec2): Spec => ({
-    tags: ["wall"], pos, shape: { rect: size, color: "#34495e" }, body: { type: "static", collider: { rect: size } },
-  });
-  const cx = x + w / 2;
-  const cy = y + h / 2;
-  return [box([cx, y + WALL / 2], [w, WALL]), box([cx, y + h - WALL / 2], [w, WALL]),
-          box([x + WALL / 2, cy], [WALL, h]), box([x + w - WALL / 2, cy], [WALL, h])];
 }

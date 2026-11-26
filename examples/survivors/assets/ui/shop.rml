@@ -1,0 +1,26 @@
+<rml><head><link type="text/rcss" href="candle.rcss"/>
+<style>
+  .panel { width: 300dp; margin-top: 16dp; }
+  .col { display: inline-block; width: 138dp; vertical-align: top; }
+  .row { display: block; width: 134dp; height: 18dp; line-height: 16dp; margin: 2dp 2dp; decorator: none;
+    background-color: #2b1d3a; border: 1dp #5a4470; color: #fff4d6; }
+  .row:hover, .row:focus { background-color: #4a2f3a; border-color: #ffcf6b; color: #ffcf6b; }
+</style></head>
+<body class="safe veil">
+  <div class="panel">
+    <h1 data-t="shop.title">CANDLE SHOP</h1>
+    <p class="gold" id="gold">0 gold</p>
+    <div class="col">
+      <button class="row" id="might" autofocus></button>
+      <button class="row" id="armor"></button>
+      <button class="row" id="vigor"></button>
+      <button class="row" id="haste"></button>
+    </div><div class="col">
+      <button class="row" id="swift"></button>
+      <button class="row" id="magnet"></button>
+      <button class="row" id="growth"></button>
+      <button class="row" id="greed"></button>
+    </div>
+    <button id="back" data-t="heroes.back">BACK</button>
+  </div>
+</body></rml>

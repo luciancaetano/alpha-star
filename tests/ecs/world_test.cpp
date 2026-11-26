@@ -168,7 +168,7 @@ TEST_CASE("colliders reports each living body's collider where the body is") {
 }
 
 TEST_CASE("draw_items blends previous and current transforms by alpha") {
-  World w({0, 0});
+  World w({0, 0}, {320, 180});
   const EntityId moved = w.spawn(plain({kSolid}, {0, 0}));
   w.snapshot();
   w.set_position(moved, {10, 20});
@@ -200,4 +200,20 @@ TEST_CASE("physics motion interpolates between steps") {
   w.snapshot();
   w.step(1.0f / 60);  // moves 1 px
   CHECK(w.draw_items(0.5f)[0].pos.x == doctest::Approx(0.5f));
+}
+
+TEST_CASE("a jump over a quarter of the view is drawn there at once, children too; small moves blend") {
+  World w({0, 0}, {320, 180});
+  const EntityId e = w.spawn(plain({kSolid}, {0, 0}));
+  const EntityId child = w.spawn(plain({kGoal}, {5, 0}));
+  w.adopt(child, e, {5, 0});
+  w.snapshot();
+  w.set_position(e, {1000, 0});
+  const auto items = w.draw_items(0.5f);
+  REQUIRE(items.size() == 2);
+  CHECK(items[0].pos == Vec2{1000, 0});
+  CHECK(items[1].pos == Vec2{1005, 0});
+  w.snapshot();
+  w.set_position(e, {1060, 0});  // 60 px < 320 / 4
+  CHECK(w.draw_items(0.5f)[0].pos == Vec2{1030, 0});
 }

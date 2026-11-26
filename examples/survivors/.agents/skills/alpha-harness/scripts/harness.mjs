@@ -76,6 +76,7 @@ const args = parseArgs(process.argv.slice(2));
 const docs = findDocs(args.project, args.sdk);
 const index = copyDocs(docs, path.join(args.project, "docs", "llm"));
 const here = path.dirname(fileURLToPath(import.meta.url));
-const rules = fs.readFileSync(path.join(here, "..", "references", "quality-rules.md"), "utf8");
+const rules = ["engine-pitfalls.md", "game-lessons.md", "quality-rules.md"]
+  .map((f) => fs.readFileSync(path.join(here, "..", "references", f), "utf8").trim()).join("\n\n");
 const file = writeAgents(args.project, block(index, rules));
 console.log(`alpha-harness: ${index.length} docs -> ${path.join(args.project, "docs", "llm")}; updated ${file}`);

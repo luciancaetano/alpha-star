@@ -1062,6 +1062,10 @@ declare module "alpha" {
 
   export interface GameConfig<G extends GameTypes> {
     title: string;
+    /**
+     * The design canvas in game pixels (world and UI units), not the window: a bigger size makes
+     * everything smaller on screen. The first window is 2x it (integer scale) or 1.5x, fitted to the screen.
+     */
     size: Vec2;
     background?: Color;
     seed: number;
@@ -1102,6 +1106,12 @@ declare module "alpha" {
      * and maps override it with `filter`; fonts with `{ file, pixelMode }`; filled shapes and emitters with `smooth`.
      */
     pixelMode?: boolean;
+    /**
+     * How game UI images (`<img>`, `image(...)` decorators) are sampled when the UI is scaled:
+     * "nearest" for pixel-art UI, "sharp" for crisp pixels with soft edges at any scale.
+     * Default: follows `pixelMode` ("nearest" when true, "linear" when false). UI text is always made at the output resolution.
+     */
+    uiFilter?: ImageFilter;
     /** Named draw layers, e.g. `{ bg: { z: -100, parallax: 0.2 }, fx: { z: 100 } }`. */
     layers?: Record<LayerOf<G>, LayerDef>;
     /**

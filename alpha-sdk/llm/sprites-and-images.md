@@ -42,7 +42,7 @@ function animate(p: Hero, ctx: Play, move: number) {
 ## Filtering
 
 - `config.pixelMode` (default `true`): `true` = nearest filtering + hard shape edges; `false` = linear + antialiased circle/rect edges.
-- Override per asset: `{ file, filter }` on images and maps (their tilesets), `filter` on sheets. Filled shapes: `smooth`. Fonts: `{ file, pixelMode }`.
+- Override per asset: `{ file, filter }` on images and maps (their tilesets), `filter` on sheets. Filled shapes: `smooth`. Fonts: `{ file, pixelMode }`. Game UI images: `config.uiFilter` (default follows `pixelMode`; ui.md).
 - `"nearest"`: crisp; uneven/jagged at non-whole scales or rotated. `"linear"`: smooth art, photos (pixel art blurs). `"sharp"`: pixel art at any size or angle (square pixels, soft ~1 px edges); 16x that image's texture memory.
 - Never put `pixelMode` on an image/sheet/map: the engine rejects it (`pixelMode is not an image option; use filter: ...`). Older README text shows that form; `filter` is current.
 - Crisp pixel art also wants `config.window.scale: "integer"` (camera-and-window.md).

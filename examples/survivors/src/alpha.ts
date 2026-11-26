@@ -1,4 +1,4 @@
 import { define } from "alpha";
-import type { Arena } from "./types";
+import type { Candle } from "./types";
 
-export const { scene, game } = define<Arena>();
+export const { scene, game } = define<Candle>();

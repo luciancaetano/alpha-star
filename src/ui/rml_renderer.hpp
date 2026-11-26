@@ -5,13 +5,14 @@
 
 #include <vector>
 
+#include "core/image.hpp"
 #include "core/pixel_grid.hpp"
 
 namespace alpha::ui {
 
 // RmlUi drawing through SDL_Renderer (adapted from RmlUi's SDL backend):
 // geometry, textures (images through our image loader, premultiplied; font
-// textures with nearest filtering, drawn 1:1) and scissor. No transforms, filters or shaders. Coordinates are the game's
+// textures with nearest filtering, drawn 1:1; images sampled by set_filter) and scissor. No transforms, filters or shaders. Coordinates are the game's
 // logical pixels: the engine's renderer sets the logical presentation.
 // Until a renderer is attached (headless runs) nothing is drawn or uploaded;
 // textures are decoded anyway (layout needs their size) and uploaded on first draw.
@@ -23,6 +24,8 @@ class RmlRenderer final : public Rml::RenderInterface {
   // Where UI pixels land on the output: geometry is moved to whole output
   // pixels, so text made at the output resolution is never resampled.
   void set_grid(const core::PixelGrid& grid) { grid_ = grid; }
+  // Sampling of images loaded from now on (glyph atlases are always nearest).
+  void set_filter(core::Filter filter) { filter_ = filter; }
   // Called around Context::Render: premultiplied blending, then restore.
   void begin();
   void end();
@@ -44,6 +47,7 @@ class RmlRenderer final : public Rml::RenderInterface {
 
   SDL_Renderer* sdl_ = nullptr;
   core::PixelGrid grid_;
+  core::Filter filter_ = core::Filter::linear;
   SDL_BlendMode premultiplied_;
   SDL_BlendMode previous_ = SDL_BLENDMODE_BLEND;
   SDL_Rect scissor_{};

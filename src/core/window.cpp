@@ -56,7 +56,12 @@ std::optional<Vec2> phone_display(Os os, Vec2 display) {
   return display;
 }
 
-Vec2 initial_window_size(Vec2 game, Scale scale) { return game * (scale == Scale::Integer ? 2.0f : 1.5f); }
+Vec2 initial_window_size(Vec2 game, Scale scale, Vec2 usable) {
+  const bool integer = scale == Scale::Integer;
+  if (usable.x <= 0 || usable.y <= 0) return game * (integer ? 2.0f : 1.5f);
+  const float fit = std::min(usable.x / game.x, usable.y / game.y) * 0.9f;  // room for the title bar
+  return game * (integer ? std::clamp(std::floor(fit), 1.0f, 2.0f) : std::min(1.5f, fit));
+}
 
 bool starts_fullscreen(const WindowConfig& config, Os os) { return config.fullscreen || is_mobile(os); }
 

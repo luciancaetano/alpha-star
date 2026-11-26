@@ -1,12 +1,13 @@
-# AGENTS.md — Arena (alpha-star game)
+# AGENTS.md — Candlewick (alpha-star game)
 
-Top-down arena shooter: walk with the stick / WASD, hold fire (shots auto-aim at the nearest
-enemy), bomb clears the enemies around you. A second gamepad joins as player 2.
+Survivors-like: Sir Wick, a living candle, walks through an endless night bog while weapons fire on
+their own. Gems -> level up -> pick 1 of 3 cards (weapons/passives). A maxed weapon + its passive
+evolves from a chest (elites and the Moth Queen drop them). The Snuffer arrives at 15:00. Gold is
+banked between runs: Candle Shop upgrades and two more heroes (title screen).
 
 You are editing a game for the alpha-star engine. Write TypeScript in `src/`; `alpha export`
-type-checks it and bundles it into one JS module (`dist/main.js`) that the engine runs. The API
-types live in `node_modules/@alpha-star/sdk/types/alpha.d.ts`: read that file when unsure, it
-is the source of truth.
+type-checks it and bundles it into one JS module (`dist/main.js`). The API types live in
+`node_modules/@alpha-star/sdk/types/alpha.d.ts`: read that file when unsure, it is the source of truth.
 
 ## Commands
 
@@ -16,9 +17,8 @@ npm run check               # type-check only (fast)
 npm test                    # headless simulate() tests (test/main.test.ts)
 npm start                   # export, then play
 npx alpha run --watch       # every save re-exports and the game hot-reloads
-npx alpha run -- --frames 120 --hidden --screenshot s.bmp   # headless screenshot
-npx alpha mcp               # MCP server: start, drive and observe the game as an agent
-node tools/make-assets.mjs  # regenerate the placeholder art (committed; CC0, made here)
+npx alpha mcp               # MCP server (.mcp.json): start, drive and observe the game as an agent
+python -I tools/process-art.py   # art/raw (Codex-generated) -> assets/img sheets, icon fonts, UI art
 ```
 
 A change is done only when `npm run export` prints `exported dist (...)` and `npm test` passes.
@@ -27,29 +27,33 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 
 | File | Holds |
 |---|---|
-| `src/types.ts` | Every name: actions, axes, sounds, tags, sheets, UI ids, scenes. Edit first. |
-| `src/tuning.ts` | Speeds, hit points, spawn rate, bomb radius. Change feel here. |
-| `src/prefabs/actors.ts` | Hero (sheet sprite, `data.player`), enemy, bullet (sensor), walls. |
-| `src/prefabs/effects.ts` | One-shot particle blast, floating "+1" world text. |
-| `src/scenes/play.ts` | Players, steering, auto-aim, bombs (`ctx.queryCircle`), chasing, damage. |
-| `src/scenes/over.ts` | Score and best score (`ctx.save`). |
-| `assets/ui/` | HUD and game-over screen (RmlUi, built-in font). |
+| `src/types.ts` | Every name: actions, sounds, tags, sheets, UI ids, scenes, item ids. Edit first. |
+| `src/tuning.ts` | Speeds, HP, XP curve, enemy and hero stats. Change feel here. |
+| `src/data/items.ts` | Weapons (per-level numbers, evolutions) and passives. |
+| `src/data/waves.ts` | Spawns per minute and timed events (swarms, rings, elites, bosses). |
+| `src/game/run.ts` | Run state (JSON, survives hot reload) and derived stats (pure). |
+| `src/game/offers.ts` | Level-up offers, chests and evolutions (pure, unit-tested). |
+| `src/game/weapons.ts`, `projectiles.ts` | Firing and what weapons leave in the world. |
+| `src/game/enemies.ts`, `combat.ts` | Horde spawns/chase/contact; damage, death, drops. |
+| `src/game/pickups.ts`, `world.ts` | Gems/items/braziers; endless ground and scenery. |
+| `src/game/menus.ts` | HUD and the level-up / chest / pause menus. |
+| `src/scenes/` | `title` (heroes, shop), `play`, `over`. |
+| `assets/ui/` | RmlUi docs; icons are glyphs of `assets/fonts/icons.fnt` / `bigicons.fnt`. |
+| `art/raw/` | Source art generated with Codex (magenta background); never edit `assets/img` by hand. |
 
 ## How things work here
 
-- **Players:** `ctx.input.player(n)` reads one player's actions and axes; player 1 has the
-  keyboard, the mouse and the first pad. Heroes carry `data.player`. Tests drive player 2 with
-  `inputs: [p1, p2]`.
-- **Hits:** bullets are sensors -> `ctx.onEnter("bullet", "enemy", ...)`; enemies are solid ->
-  `ctx.onHit("hero", "enemy", ...)`. Several contacts can arrive in one step: check `e.alive`
-  first. `ctx.destroy(e)` takes effect at once for reads (`e.pos` throws after it), so read
-  positions before destroying.
-- **Area query:** `ctx.queryCircle(center, radius, { tags: ["enemy"] })` returns what overlaps.
-- **Effects are data:** `emitter: { burst, oneShot: true, ... }` on a spec; the entity goes away
-  with its last particle. `ctx.tween(label, { to: { y, alpha: 0 }, seconds, onDone })`.
-- **Feel:** `ctx.camera.shake(px, s)`, `ctx.input.rumble(strength, s, player)`, sounds panned by
-  x (`ctx.audio.play("shot", { pan })`).
-- **Determinism:** `ctx.random` (seeded by `config.seed`), never `Math.random`. Same inputs, same run.
+- **Icons in UI:** `ctx.ui.set` is text only, so item icons are BMFont glyphs: `A-E` weapons,
+  `F-J` evolved, `a-g` passives, `$ %` coin/cake, `1-3` heroes, `#`/`-` XP bar, `*` empty slot.
+- **Menus pause the world:** `state.mode` != "play" skips the systems and freezes bodies.
+- **Queries can return foes killed this step:** always `.filter((e) => e.alive)` before `at(e)`.
+- **Languages:** every player-facing word is in `assets/locales/pt.json` + `en.json` (same keys):
+  `ctx.t(key)` in code, `data-t="key"` in RML. First launch is Portuguese; the title button toggles.
+  Pure rules take a `t` function (`offers.ts`) so tests can pass `(k) => k`.
+- **UI art is pre-enlarged x4** (kept from when the engine filtered UI images linearly; UI images now follow `pixelMode`); size UI in dp = game pixels.
+- **Camera follows the hero exactly** (`follow`, `lerp: 1`); never round it (the hero shakes). Still
+  scenery sits on whole pixels (`world.ts`) so it moves as one with a fractional camera.
+- **Determinism:** `ctx.random` only; the world scenery uses a hash of the cell, not random.
 
 F12 opens the dev tools while the game runs (not in exported standalone games).
 
@@ -82,7 +86,100 @@ rerun it after updating `@alpha-star/sdk` instead of editing them.
 | [docs/llm/tilemaps.md](docs/llm/tilemaps.md) | Loading LDtk worlds (.ldtk), spawnLevel with IntGrid colliders, entity factories, typed fields, editing cells, multi-level worlds; read when building levels. |
 | [docs/llm/troubleshooting.md](docs/llm/troubleshooting.md) | Common errors an agent hits (type errors, boot/asset errors, runtime script errors, engine/SDK version mismatches, MCP and export failures) and what each means; read when a check, test, run or export fails. |
 | [docs/llm/tweens-and-timers.md](docs/llm/tweens-and-timers.md) | ctx.tween on entities and plain objects (eases, yoyo, repeat, onDone), ctx.every/ctx.after timers and the vec helpers; read when animating values over time or scheduling work. |
-| [docs/llm/ui.md](docs/llm/ui.md) | Game UI with RmlUi .rml/.rcss documents: declaring docs and element ids, show/hide/set/on, full-screen layout and class="safe", focus and gamepad navigation, accessibility hooks and UI tests; read when building HUDs, menus or buttons. |
+| [docs/llm/ui.md](docs/llm/ui.md) | Game UI with RmlUi .rml/.rcss documents: declaring docs and element ids, show/hide/set/on, full-screen layout and class="safe", focus and gamepad navigation, pixel-art UI images (config.uiFilter), accessibility hooks and UI tests; read when building HUDs, menus or buttons. |
+
+## Pixel-perfect movement and the camera (render interpolation)
+
+The engine simulates on a fixed step and **draws every entity and the camera interpolated**
+between the previous and the current step (smooth on 120/144 Hz screens). Follow these rules or
+sprites will shake or flicker:
+
+- **Follow the player with `ctx.camera.follow(hero, { lerp: 1 })`.** Never set `ctx.camera.pos`
+  by hand every step, and never round it (`Math.round`): the camera then jumps in whole pixels
+  while the hero is drawn interpolated, and the hero shakes ~0.5 px in the walking direction.
+  Use `lerp < 1` only if you want a trailing camera (the world then seems to slide when it catches up).
+- **Put still things (scenery, props, tiles) on whole pixels** (`Math.round` their spawn position).
+  With a fractional camera they then all shift by the same fraction and move as one block.
+  Mixing fractional and whole positions makes them wobble against each other.
+- **Teleports need nothing special.** Setting `pos` more than a quarter of the view away is drawn
+  there at once (children too). A shorter jump is drawn sliding over one step, so when you recycle
+  or relocate entities, keep recycled slots fixed to a world cell (`cell mod gridSize`): only
+  off-screen slots move, and they move a whole grid.
+- **Size everything that fills the screen from `ctx.camera.view`** (ground tiles, scenery grids,
+  spawn and despawn distances), never from fixed numbers: the visible world changes with the
+  window, the monitor and the phone (`config.window.aspect`). Recompute when the view size changes.
+- **`config.size` is the design canvas, not the window resolution.** Art, UI (1dp = 1 design px),
+  lights and distances are measured in it; the engine scales it to any screen. Raising it to a
+  "bigger resolution" makes everything smaller. Pick it once for the art (e.g. 384x216 for 32 px
+  sprites) and leave it.
+- **Test sizes headless:** `simulate(game, { size: [1080, 2340] })` and check coverage against the
+  run's `ctx.camera.view` (store it in `ctx.state` to assert on it).
+
+## Lessons from building a full game (Candlewick)
+
+### Entities and queries
+- **Queries can return foes killed earlier in the same step.** A list you queried earlier
+  (`queryCircle`, `queryRect`, `findAll`) can hold entities your own code destroyed since.
+  Check `e.alive` before reading `e.pos` (it throws on a dead entity), and re-query or
+  `.filter((e) => e.alive)` after any loop that kills.
+- **Lists are stale inside a loop that kills.** If one strike can kill the next target, check
+  `t.alive` again on every iteration.
+- **Entities without a body are invisible to queries.** Orbiting lanterns, pools and slashes with
+  no `body` are not found by `queryCircle`; use `findAll(tag)`.
+- **Several contacts arrive in one step.** Guard `onEnter`/`onHit` handlers with `alive`
+  (or a `data` flag) before acting.
+
+### Pausing the world (menus, level-up)
+- There is no world pause: keep a `mode` in `ctx.state` and skip your systems while a menu is up.
+  Zero the velocities of moving bodies each step (they come back when the systems run again).
+- Prefer your own timers in `ctx.state` (counting `ctx.dt` only while playing) for anything that
+  must pause; `ctx.every`/`ctx.after` keep running during your menus.
+
+### UI (RmlUi)
+- **`ctx.ui.set` is text only.** To show item icons in the UI, make a BMFont whose glyphs are the
+  icons (`A` = sword, `B` = bow...) and `set` those letters; bars work the same way with repeated
+  glyphs (`"####----"`).
+- **Size the UI in `dp` = design pixels**, for the `config.size` canvas (a 384x216 game has
+  384dp of width). Plain RCSS panels (`background-color` + `border`) are always crisp; avoid
+  stretching one big frame image across the screen.
+- **Pixel-art UI images** are crisp by default (UI images follow `config.pixelMode`; override with
+  `config.uiFilter`). Draw UI art at its real pixel size and give elements that same size (or a
+  whole multiple).
+- `float` layouts were unreliable; use `display: inline-block` columns for grids.
+- Whitespace collapses: separate inline items with margins, not spaces.
+- Two `game_click`s in the same step may conflict: step at least one frame between clicks.
+
+### Languages
+- **Every player-facing word lives in `assets/locales/*.json`**: `ctx.t(key)` in code, `data-t`
+  in RML. Keep the same keys in every file (a quick test that compares the key sets catches gaps).
+- **Default language = `config.locale`.** Don't invent "first launch" flags in the save to pick
+  a language: they go stale and lock the player into the wrong language.
+- Pure rule functions (offers, chests) take a `t` function, so tests can pass `(k) => k` and
+  assert on keys.
+
+### Balance and pacing
+- **Spawn rate, not batches:** accumulate `rate * dt` and spawn one foe per whole unit; blend
+  rate and cap from one minute to the next. Batches every N seconds read as "all at once".
+- **Contact damage must add up per touching foe**, with a short invulnerability (~0.3 s). One hit
+  at a time from the strongest foe makes standing still immortal.
+- Write a test that a hero who never moves dies, and one that pacing never jumps
+  (`waveAt(t)` vs `waveAt(t - 1)`).
+- Relocate foes left far behind **well past the view corners** (half the view diagonal + margin),
+  or they pop in right next to the player.
+
+### Art pipeline (generated images)
+- Generate sprites on a flat magenta background; key it out and slice frames at the widest gaps
+  (the expected count is known), then downscale with a premultiplied box filter and hard alpha.
+- One fixed cell size per sheet; scale every frame of a sheet by the same factor.
+- Keep the raw images in the repo and the processing as a script (`tools/process-art.py`):
+  never hand-edit the generated sheets.
+
+### Working with the MCP
+- Play-test with a scripted bot: `game_input` axis + `press` + `game_step`, `game_screenshot`
+  at key moments. Long runs find real crashes (the stale-target bug was found this way).
+- To debug movement, step 1 frame at a time with `game_state` and diff positions between frames:
+  it separates simulation bugs (positions jump) from drawing bugs (positions fine, screen wrong).
+- Put debug-relevant values in `ctx.state` or entity `data`: `game_state` and tests can read them.
 
 ## Code quality rules
 

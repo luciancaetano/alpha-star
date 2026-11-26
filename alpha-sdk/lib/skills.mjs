@@ -18,10 +18,10 @@ export const AGENTS = [
   { id: "opencode", dir: ".opencode/skills", label: "OpenCode (own folder)" },
 ];
 
-// The SDK's skills: the packaged copy, or the repo's skills/ in a checkout.
+// The SDK's skills (skills/ in the package; the only copy in the repo too).
 export function skillsSource(sdk = SDK) {
-  const dirs = [path.join(sdk, "skills"), path.join(sdk, "..", "skills")];
-  return dirs.find((d) => fs.existsSync(d)) ?? null;
+  const dir = path.join(sdk, "skills");
+  return fs.existsSync(dir) ? dir : null;
 }
 
 export function listSkills(source) {

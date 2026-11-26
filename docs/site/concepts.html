@@ -137,6 +137,7 @@ e.alpha = 0.5;
 e.data.hp = (e.data.hp as number) - 1;
 if ((e.data.hp as number) &lt;= 0) ctx.destroy(e);       // gone at the end of the step
 e.alive;                // false right after destroy(); safe on stale references</code></pre>
+<p>Motion is drawn smoothly between fixed steps (so it stays fluid on 120/144 Hz screens). Setting <code>pos</code> more than a quarter of the view away is a teleport: drawn there at once.</p>
 <p>Shapes: <code>{ circle: r }</code>, <code>{ rect: [w, h] }</code> (both with <code>color</code>, optional <code>outline</code>), an image, a sheet sprite (<a href="tilemaps.html">Sprites</a>) or world text:</p>
 <pre><code>ctx.spawn({ tags: ["solid"], pos: [40, 40], shape: { circle: 10, color: "#00e436" } });
 ctx.spawn({ tags: ["solid"], pos: [80, 40], shape: { rect: [30, 10], color: "#ffa300", outline: "#ffffff" } });
@@ -235,6 +236,7 @@ ctx.every(5, () =&gt; {
 <p><strong>Pack.</strong> <code>npx alpha export</code> type-checks, bundles <code>src/main.ts</code> and its imports into <code>dist/main.js</code> (with a source map, so errors point at your TypeScript), packs PNGs into atlas pages and copies declared assets. See <a href="exporting.html">Exporting</a>.</p>
 <p><strong>Build flavors.</strong> <code>alpha run</code> / <code>alpha test</code> / <code>alpha mcp</code> use the *release* engine (dev tools on F12, MCP, test runner); <code>alpha export --standalone</code> ships the *shipping* engine (none of those). Nothing in a game can depend on dev features.</p>
 <p><strong>Image filtering.</strong> Each image, sheet or LDtk world picks <code>filter</code>: <code>"nearest"</code> (crisp), <code>"linear"</code> (smooth), <code>"sharp"</code> (pixel art at any size or angle; 16x texture memory). Without it, <code>config.pixelMode</code> decides (<code>true</code> = nearest). Shapes and emitters take <code>smooth</code>.</p>
+<p><code>size</code> is the design canvas for the world and the UI, not the window: raise it and everything gets smaller on screen. The first window is 2x it (integer scale) or 1.5x, shrunk to fit the screen.</p>
 <p><strong>Window stretch.</strong> <code>config.window</code> fits the design <code>size</code> to the screen:</p>
 <pre><code>window: { aspect: "expand", scale: "fractional" }  // aspect: expand | keep_width | keep_height | keep; scale: fractional | integer</code></pre>
 <table><thead><tr><th>aspect</th><th>screen wider than the design</th><th>screen taller than the design</th></tr></thead><tbody><tr><td><code>expand</code> (default)</td><td>more world left and right</td><td>more world above and below</td></tr><tr><td><code>keep_width</code></td><td>side bars</td><td>more world above and below</td></tr><tr><td><code>keep_height</code></td><td>more world left and right</td><td>bars above and below</td></tr><tr><td><code>keep</code></td><td>side bars</td><td>bars above and below</td></tr></tbody></table>

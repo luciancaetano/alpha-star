@@ -1,13 +1,13 @@
 # UI (RmlUi)
 
-> summary: Game UI with RmlUi .rml/.rcss documents: declaring docs and element ids, show/hide/set/on, full-screen layout and class="safe", focus and gamepad navigation, accessibility hooks and UI tests; read when building HUDs, menus or buttons.
+> summary: Game UI with RmlUi .rml/.rcss documents: declaring docs and element ids, show/hide/set/on, full-screen layout and class="safe", focus and gamepad navigation, pixel-art UI images (config.uiFilter), accessibility hooks and UI tests; read when building HUDs, menus or buttons.
 
 ## API
 
 ```ts
 // types.ts: document -> ids that scripts touch (`never` = show/hide only, `{}` = no UI)
 ui: { hud: "level" | "moves" | "best"; solved: "moves" | "next" };
-// main.ts assets: files they link (<link href>, src=, rcss url()) are packed too
+// main.ts assets: files they link (<link href>, src=, rcss url()/image(file fit...), @spritesheet src:) are packed too
 ui: { hud: "assets/ui/hud.rml", solved: "assets/ui/solved.rml" },
 
 ctx.ui.show(doc); ctx.ui.hide(doc);
@@ -48,6 +48,7 @@ ctx.ui.on(doc, id, "click" | "back", fn);     // handlers run at the start of th
 - `data-t="key"` elements show `ctx.t(key)` and re-translate when `ctx.locale` changes (saves-and-i18n.md).
 - `ctx.settings.uiScale` (0.5..3) is the RmlUi dp ratio: size things in `dp`. `ctx.settings.highContrast` adds class `high-contrast` to every body: style `.high-contrast ...`.
 - Fonts: `font-family` = an `assets.fonts` name (its `fallbacks` apply); none declared = built-in 8x8 font (multiples of 8). `direction: rtl` for right-to-left paragraphs, `word-break: break-all` to wrap CJK; `font-effect` is not drawn (text-and-fonts.md).
+- UI images (`<img>`, `decorator: image(...)`) are sampled by `config.uiFilter`: `"nearest"` (pixel-art UI; default when `config.pixelMode` is true, the default), `"linear"` (smooth; default with `pixelMode: false`), `"sharp"` (crisp pixels, soft edges at any scale). UI text is always made at the output resolution.
 - Use RmlUi for game UI; Dear ImGui (F12) is engine dev tools only and absent from shipped games.
 - Errors in ui calls name the call: `ui.set("hud", "x", ...): ...`.
 - Tests: `simulate(game, { seconds: 3, clicks: { "solved#next": [120] } })`; `run.expect.text("hud", "moves").equals("3 MOVES")`, `run.expect.shown("solved")`. Clicking a hidden doc or unknown id fails the test.
