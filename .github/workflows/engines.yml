@@ -1,20 +1,28 @@
 # Engine builds on every push to main: Windows debug (preset dev), Windows release, Linux release,
+# the prebuilt Android engine (tools/stage_android.py),
 # then the SDK with those engines staged into alpha-sdk/engine/<target>/ (as tools/stage_engine.py
 # lays them out). Artifacts: the engines and the npm tarballs from tools/pack_release.py.
-# The gates (tests, coverage, limits) stay in ci.yml; nothing here publishes.
+# The gates (tests, coverage, limits) stay in ci.yml; nothing here publishes (release.yml calls this
+# workflow and publishes its sdk-release artifact).
 name: engines
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
+# In a call, github.workflow is the caller's name, so release.yml never cancels this push's own run.
 concurrency:
-  group: engines-${{ github.ref }}
+  group: ${{ github.workflow }}-engines-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   CMAKE_BUILD_PARALLEL_LEVEL: "8"
+  # One game.jsbc key for every engine (cmake/BytecodeKey.cmake): the desktop release engine encrypts
+  # what the shipping and Android engines decrypt. Without the secret each job picks its own key
+  # (fine for these artifacts; pack_release then refuses the Android package and release.yml stops).
+  ALPHA_JSBC_SECRET: ${{ secrets.ALPHA_JSBC_SECRET }}
 
 jobs:
   windows-debug:
@@ -88,8 +96,36 @@ jobs:
           path: alpha-sdk/engine/linux-x64/
           retention-days: 14
 
+  android:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - name: NDK and CMake pinned by alpha-sdk/android/app/build.gradle
+        run: |
+          ndk=$(sed -n 's/.*ndkVersion "\(.*\)".*/\1/p' alpha-sdk/android/app/build.gradle)
+          cmake=$(sed -n 's/.*version "\([0-9.]*\)".*/\1/p' alpha-sdk/android/app/build.gradle | head -1)
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$ndk" "cmake;$cmake" >/dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk" >> "$GITHUB_ENV"
+          echo "$ANDROID_HOME/cmake/$cmake/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            build/android-debug/_deps
+            build/android-shipping/_deps
+          key: deps-android-${{ hashFiles('cmake/**', 'CMakeLists.txt') }}
+      - run: python3 tools/stage_android.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engine-android-arm64
+          path: alpha-sdk/engine/android-arm64/
+          retention-days: 14
+
   sdk:
-    needs: [windows-release, linux-release]
+    needs: [windows-release, linux-release, android]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -107,15 +143,22 @@ jobs:
         with:
           name: engine-linux-x64
           path: alpha-sdk/engine/linux-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: engine-android-arm64
+          path: alpha-sdk/engine/android-arm64
       # Artifacts drop the executable bit.
-      - run: chmod +x alpha-sdk/engine/linux-x64/alpha_star alpha-sdk/engine/linux-x64/shipping/alpha_star
+      - run: chmod +x alpha-sdk/engine/linux-x64/alpha_star alpha-sdk/engine/linux-x64/glslang alpha-sdk/engine/linux-x64/shipping/alpha_star
       - name: SDK tests
         working-directory: alpha-sdk
         run: |
           npm ci
           xvfb-run -a npm test
+      - name: Sync templates from examples
+        working-directory: alpha-sdk
+        run: npm run templates
       - name: Pack (local tarballs + offline install test, not published)
-        run: xvfb-run -a python3 tools/pack_release.py --install-test --require win32-x64 --require linux-x64
+        run: xvfb-run -a python3 tools/pack_release.py --install-test --require win32-x64 --require linux-x64 --require android-arm64
       - uses: actions/upload-artifact@v4
         with:
           name: sdk-release

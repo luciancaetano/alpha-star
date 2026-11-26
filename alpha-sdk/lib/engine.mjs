@@ -59,6 +59,16 @@ export function availableTargets() {
   return knownTargets().filter((t) => bundledEngine(t));
 }
 
+// Prebuilt Android engine (tools/stage_android.py): <dir>/<debug|shipping>/{libmain.so,libSDL3.so},
+// from @alpha-star/engine-android-arm64 (installed on every OS: APKs build anywhere), then
+// engine/android-arm64/ in the SDK folder. The folder, or null when one flavor is missing.
+export const ANDROID_LIBS = ["libmain.so", "libSDL3.so"];
+export function androidEngineDir(target = "android-arm64") {
+  const dirs = [packageEngineDir(target), path.join(ENGINE_DIR, target)].filter(Boolean);
+  const complete = (d) => ["debug", "shipping"].every((f) => ANDROID_LIBS.every((l) => fs.existsSync(path.join(d, f, l))));
+  return dirs.find(complete) ?? null;
+}
+
 // Engine for `alpha run`: explicit path, then $ALPHA_STAR (both deliberate overrides),
 // then the engine for this machine (platform package, then the SDK's engine/ folder),
 // then `alpha_star` on PATH.

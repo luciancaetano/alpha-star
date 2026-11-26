@@ -23,7 +23,11 @@ ScriptState& Instances::at(std::uint32_t id) {
 
 std::uint32_t Instances::create() {
   if (states_.size() >= core::kMaxInstances) {
+#if ALPHA_DEBUG_TOOLS
     throw core::Error("at most " + std::to_string(core::kMaxInstances) + " game instances (simulate runs) at once");
+#else  // shipping strings never name debug tools (tools/check_shipping.py)
+    throw core::Error("at most " + std::to_string(core::kMaxInstances) + " game instances at once");
+#endif
   }
   auto state = std::make_unique<ScriptState>();
   state->asset_dir = main().asset_dir;

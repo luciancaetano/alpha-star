@@ -26,7 +26,8 @@ function mismatch(stamp, shipping) {
   const binary = fs.readFileSync(shipping);
   const ok = [stamp.build, stamp.engine, stamp.key].every((s) => binary.includes(s, 0, "latin1"));
   return ok ? null : problem(`the SDK's release engine (compiler, alpha-star ${stamp.engine}, build ${stamp.build}, key ${stamp.key}) ` +
-    "and its shipping engine are different builds; restage both with tools/stage_engine.py");
+    `and the engine that will run it (${shipping}) are different builds: install @alpha-star/sdk and its engine ` +
+    "packages at one version (npm install), or in a checkout restage with tools/stage_engine.py / tools/stage_android.py");
 }
 
 // A target built from source (Android): its build id is the same QuickJS source hash

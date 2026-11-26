@@ -225,9 +225,9 @@ function engineFor(target) {
 
 // The game file a pack ships: standalone packs get game.jsbc compiled from the
 // staged main.js (unless bytecode is off); every other pack keeps main.js.
-function gameFile(staging, standalone, { bytecode, compiler, bytecodeBits }) {
-  if (!bytecode || !(standalone.engine || bytecodeBits)) return { file: "main.js" };
-  const failed = compileBytecode({ compiler, shipping: standalone.engine, bits: bytecodeBits,
+function gameFile(staging, standalone, { bytecode, compiler, bytecodeBits, bytecodeRunner }) {
+  if (!bytecode || !(standalone.engine || bytecodeBits || bytecodeRunner)) return { file: "main.js" };
+  const failed = compileBytecode({ compiler, shipping: standalone.engine ?? bytecodeRunner, bits: bytecodeBits,
                                    source: path.join(staging, "main.js"), out: path.join(staging, BYTECODE_FILE) });
   return failed ? { problem: failed } : { file: BYTECODE_FILE };
 }
@@ -238,17 +238,19 @@ function gameFile(staging, standalone, { bytecode, compiler, bytecodeBits }) {
 // bytecode: standalone packs ship game.jsbc (no JS source, no source map) compiled by
 // `compiler` (default: this machine's release engine). bytecodeBits: also ship game.jsbc
 // without an engine binary, for a target built from source with that pointer width
-// (Android). shaderTool: glslang for assets.shaders (default: next to the release engine).
+// (Android), or checked against bytecodeRunner: a prebuilt engine library that will run it
+// (Android prebuilt engine; not copied into the pack). shaderTool: glslang for assets.shaders (default: next to the release engine).
 // Returns { ok, problems, files }. Writes nothing unless everything checks out.
 export async function exportPack({ root, entry, out, target = null, atlas = true, bytecode = true,
-                                   compiler = bundledEngine(), bytecodeBits = null, shaderTool = glslangTool() }) {
+                                   compiler = bundledEngine(), bytecodeBits = null, bytecodeRunner = null,
+                                   shaderTool = glslangTool() }) {
   const standalone = target ? engineFor(target) : {};
   if (standalone.problem) return { ok: false, problems: [standalone.problem], files: [] };
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-pack-"));
   try {
     const built = await build(entry, path.join(out, "main.js"), path.join(staging, "main.js"));
     if (!built.ok) return { ok: false, problems: built.problems, files: [] };
-    const game = gameFile(staging, standalone, { bytecode, compiler, bytecodeBits });
+    const game = gameFile(staging, standalone, { bytecode, compiler, bytecodeBits, bytecodeRunner });
     if (game.problem) return { ok: false, problems: [game.problem], files: [] };
     const def = await readGameDef(entry);
     if (!def) return { ok: false, problems: [problem("main module must `export default game({...})`", entry)], files: [] };

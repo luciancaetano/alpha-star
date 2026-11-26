@@ -1,6 +1,6 @@
 """Build the npm tarballs of a release locally (never publishes) and verify them.
 
-Usage: python tools/pack_release.py [--install-test] [--require linux-x64 ...]
+Usage: python tools/pack_release.py [--install-test] [--require linux-x64|win32-x64|android-arm64 ...]
 
 Writes dist/release/:
   alpha-star-sdk-<v>.tgz                 @alpha-star/sdk (CLI, types, templates, notices; no engines)
@@ -34,6 +34,10 @@ import resource_guard
 SDK = cfg.ROOT / "alpha-sdk"
 OUT = cfg.ROOT / "dist" / "release"
 TARGETS = {"win32-x64": ("win32", "x64", "alpha_star.exe"), "linux-x64": ("linux", "x64", "alpha_star")}
+GLSLANG = {"win32-x64": "glslang.exe", "linux-x64": "glslang"}  # shader compiler next to the release engine
+ANDROID = "android-arm64"  # prebuilt APK engine (tools/stage_android.py), installed on every OS
+ANDROID_FLAVORS, ANDROID_LIBS = ("debug", "shipping"), ("libmain.so", "libSDL3.so")
+ALL_TARGETS = [*TARGETS, ANDROID]
 JUNK = re.compile(r"\.(pdb|ilk|obj|o|lib|exp|log|tmp|map)$|node_modules/|CMakeFiles|__pycache__|\.DS_Store"
                   r"|^package/(test|engine|scripts)/")
 BUDGET_MB = {"sdk": 8, "engine": 40}
@@ -56,7 +60,7 @@ def version_problems(version):
     sdk = json.loads((SDK / "package.json").read_text(encoding="utf-8"))
     cmake = re.search(r"project\(alpha_star VERSION (\S+)", (cfg.ROOT / "CMakeLists.txt").read_text()).group(1)
     problems = [] if cmake == version else [f"CMakeLists.txt project VERSION {cmake} != SDK {version}"]
-    for target in TARGETS:
+    for target in ALL_TARGETS:
         dep = sdk.get("optionalDependencies", {}).get(f"@alpha-star/engine-{target}")
         if dep != version:
             problems.append(f"SDK optionalDependencies @alpha-star/engine-{target} is {dep!r}, must be exactly {version}")
@@ -71,6 +75,8 @@ def engine_state(target, version):
     release, shipping = SDK / "engine" / target / exe, SDK / "engine" / target / "shipping" / exe
     if not release.is_file() or not shipping.is_file():
         return None, None, "release and shipping are not both staged (tools/stage_engine.py)"
+    if not (release.parent / GLSLANG[target]).is_file():
+        return None, None, f"{GLSLANG[target]} is not staged next to the release engine (tools/stage_engine.py)"
     ids = set(BUILD_ID.findall(release.read_bytes())) & set(BUILD_ID.findall(shipping.read_bytes()))
     if not ids:
         return None, None, "release and shipping share no bytecode build id (stale or mixed staging; restage)"
@@ -79,6 +85,54 @@ def engine_state(target, version):
         if said != f"alpha-star {version}":
             return None, None, f"engine --version says {said!r}, SDK is {version}"
     return release, shipping, None
+
+
+def compiled_key(stage):
+    """The game.jsbc key id of this machine's staged release engine (what `alpha export` encrypts with)."""
+    import stage_engine
+    engine = SDK / "engine" / stage_engine.target() / TARGETS.get(stage_engine.target(), ("", "", "alpha_star"))[2]
+    src, out = stage / "key.js", stage / "key.jsbc"
+    src.write_text("export default 1;\n", encoding="utf-8")
+    if not engine.is_file() or subprocess.run([str(engine), "--compile", str(src), str(out)], capture_output=True).returncode:
+        return None
+    return out.read_bytes()[16:32].rstrip(b"\0")
+
+
+def android_state(stage):
+    """(folder, None) when the Android engine is packable, else (None, reason). Its libmain.so files must
+    hold the key id the desktop release engines compile with: else every exported APK refuses its game."""
+    root = SDK / "engine" / ANDROID
+    libs = [root / f / lib for f in ANDROID_FLAVORS for lib in ANDROID_LIBS]
+    if not all(p.is_file() for p in libs):
+        return None, "debug and shipping libraries are not both staged (tools/stage_android.py)"
+    mains = [(root / f / "libmain.so").read_bytes() for f in ANDROID_FLAVORS]
+    if not set(BUILD_ID.findall(mains[0])) & set(BUILD_ID.findall(mains[1])):
+        return None, "debug and shipping share no bytecode build id (stale or mixed staging; restage)"
+    key = compiled_key(stage)
+    if key is None:
+        return None, "no release engine on this machine to check the game.jsbc key against"
+    if not all(key in m for m in mains):
+        return None, (f"libmain.so lacks the release engine's game.jsbc key id {key.decode()}: build every engine "
+                      "with one ALPHA_JSBC_SECRET")
+    return root, None
+
+
+def android_package(version, root, stage):
+    dest = stage / f"engine-{ANDROID}"
+    shutil.copytree(root, dest, ignore=shutil.ignore_patterns("*.tmp"))
+    shutil.copy2(cfg.ROOT / "LICENSE", dest / "LICENSE")
+    (dest / "THIRD_PARTY_NOTICES.txt").write_text(notices_text(), encoding="utf-8")
+    (dest / "README.md").write_text(
+        f"# @alpha-star/engine-{ANDROID}\n\nThe prebuilt alpha-star engine for Android (arm64-v8a), used by "
+        f"`alpha export --target {ANDROID}` (optional dependency of `@alpha-star/sdk`, exact version {version}; "
+        "installed on every OS, since APKs build anywhere).\n\n- `debug/`: debug APKs (dev tools)\n"
+        "- `shipping/`: release APKs and AABs\n", encoding="utf-8")
+    files = [f"{f}/{lib}" for f in ANDROID_FLAVORS for lib in ANDROID_LIBS]
+    pkg = {"name": f"@alpha-star/engine-{ANDROID}", "version": version, "license": "MIT",
+           "description": "alpha-star prebuilt Android engine (arm64-v8a) for @alpha-star/sdk",
+           "files": [*files, "LICENSE", "THIRD_PARTY_NOTICES.txt", "README.md"]}
+    (dest / "package.json").write_text(json.dumps(pkg, indent=2) + "\n", encoding="utf-8")
+    return dest, {f: root / f for f in files}
 
 
 def host_target():
@@ -98,16 +152,17 @@ def engine_package(target, version, release, shipping, stage):
     (dest / "shipping").mkdir(parents=True)
     shutil.copy2(release, dest / exe)
     shutil.copy2(shipping, dest / "shipping" / exe)
+    shutil.copy2(release.parent / GLSLANG[target], dest / GLSLANG[target])
     shutil.copy2(cfg.ROOT / "LICENSE", dest / "LICENSE")
     (dest / "THIRD_PARTY_NOTICES.txt").write_text(notices_text(), encoding="utf-8")
     (dest / "README.md").write_text(
         f"# @alpha-star/engine-{target}\n\nThe alpha-star engine for {target}, installed by `@alpha-star/sdk` "
         f"(optional dependency, exact version {version}).\n\n- `{exe}`: release engine (`alpha run`, `alpha test`, "
-        f"`alpha mcp`)\n- `shipping/{exe}`: player engine (`alpha export --standalone`)\n", encoding="utf-8")
+        f"`alpha mcp`)\n- `{GLSLANG[target]}`: shader compiler (`alpha export`)\n- `shipping/{exe}`: player engine (`alpha export --standalone`)\n", encoding="utf-8")
     pkg = {"name": f"@alpha-star/engine-{target}", "version": version, "license": "MIT",
            "description": f"alpha-star engine binaries for {target} (used by @alpha-star/sdk)",
            "os": [os_name], "cpu": [cpu], "preferUnplugged": True,
-           "files": [exe, f"shipping/{exe}", "LICENSE", "THIRD_PARTY_NOTICES.txt", "README.md"]}
+           "files": [exe, GLSLANG[target], f"shipping/{exe}", "LICENSE", "THIRD_PARTY_NOTICES.txt", "README.md"]}
     (dest / "package.json").write_text(json.dumps(pkg, indent=2) + "\n", encoding="utf-8")
     return dest
 
@@ -171,6 +226,17 @@ def pack(stage, version, require):
         tarballs.append(tgz)
         problems += tarball_problems(tgz, ["package.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.txt"],
                                      BUDGET_MB["engine"], {exe: release, f"shipping/{exe}": shipping})
+    root, reason = android_state(stage)
+    if reason:
+        skipped.append(f"{ANDROID}: {reason}")
+        if ANDROID in require:
+            problems.append(f"required engine {ANDROID} not packable: {reason}")
+    else:
+        dest, identical = android_package(version, root, stage)
+        tgz = packed(dest)
+        tarballs.append(tgz)
+        problems += tarball_problems(tgz, ["package.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.txt"],
+                                     BUDGET_MB["engine"], identical)
     return tarballs, problems, skipped
 
 
@@ -178,7 +244,7 @@ def main(argv):
     resource_guard.limit()
     ap = argparse.ArgumentParser()
     ap.add_argument("--install-test", action="store_true")
-    ap.add_argument("--require", action="append", default=[], choices=sorted(TARGETS))
+    ap.add_argument("--require", action="append", default=[], choices=sorted(ALL_TARGETS))
     a = ap.parse_args(argv)
     version = json.loads((SDK / "package.json").read_text(encoding="utf-8"))["version"]
     shutil.rmtree(OUT, ignore_errors=True)

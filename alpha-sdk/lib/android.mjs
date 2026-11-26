@@ -1,15 +1,17 @@
 // `alpha export --target android-arm64`: a ready-to-build Gradle project.
 //   <out>/                  the SDK's android/ template (SDL 3.4.20 Java glue, Gradle wrapper)
 //   <out>/app/src/main/assets  the game pack (game.jsbc + assets/...), read through SDL's APK asset IO
-// The engine's libmain.so is built from the alpha-star source with the shipping flavor
-// (CMake externalNativeBuild). When the Android toolchain is installed, Gradle builds the
-// APK at once; otherwise the exporter says exactly what to install and how to build.
+// The engine (libmain.so + libSDL3.so) is either prebuilt (@alpha-star/engine-android-arm64,
+// built by GitHub Actions; copied to app/src/<debug|release>/jniLibs: no NDK or CMake needed)
+// or, with --engine-src / $ALPHA_ENGINE_SRC (or in a checkout without a staged prebuilt
+// engine), built from the alpha-star source by CMake externalNativeBuild. When the Android
+// toolchain is installed, Gradle builds the APK at once; otherwise the exporter says what to install.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { bundledEngine } from "./engine.mjs";
+import { ANDROID_LIBS, androidEngineDir, bundledEngine } from "./engine.mjs";
 import { exportPack, readGameDef } from "./pack.mjs";
 
 const SDK = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -47,6 +49,7 @@ const xml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 // The project's values from config.title / config.size / config.android; problems name the field.
 // The engine path is relative to the project's app/ folder, so a committed project builds in any clone.
+// engineSrc null: prebuilt engine (ENGINE_CMAKE empty: the Gradle template skips CMake).
 export function androidValues(config, engineSrc, appDir = engineSrc) {
   const a = config.android ?? {};
   const values = {
@@ -56,7 +59,7 @@ export function androidValues(config, engineSrc, appDir = engineSrc) {
     ORIENTATION: orientationFor(config.size),
     VERSION_CODE: String(a.versionCode ?? 1),
     VERSION_NAME: String(a.version ?? "1.0").replace(/"/g, ""),
-    ENGINE_CMAKE: path.relative(appDir, path.join(engineSrc, "CMakeLists.txt")).split(path.sep).join("/"),
+    ENGINE_CMAKE: engineSrc ? path.relative(appDir, path.join(engineSrc, "CMakeLists.txt")).split(path.sep).join("/") : "",
   };
   const problems = [];
   if (!PACKAGE_ID.test(values.PACKAGE)) {
@@ -69,10 +72,10 @@ export function androidValues(config, engineSrc, appDir = engineSrc) {
   return { values, problems };
 }
 
-// The alpha-star checkout the engine builds from: --engine-src, $ALPHA_ENGINE_SRC, or the repo
-// this SDK sits in. null when none has src/main.cpp.
-export function findEngineSource(explicit, env = process.env) {
-  for (const dir of [explicit, env.ALPHA_ENGINE_SRC, path.dirname(SDK)]) {
+// The alpha-star checkout the engine builds from: --engine-src, $ALPHA_ENGINE_SRC, or (repo)
+// the checkout this SDK sits in. null when none has src/main.cpp.
+export function findEngineSource(explicit, env = process.env, repo = true) {
+  for (const dir of [explicit, env.ALPHA_ENGINE_SRC, repo && path.dirname(SDK)]) {
     if (dir && fs.existsSync(path.join(dir, "src", "main.cpp"))) return path.resolve(dir);
   }
   return null;
@@ -111,14 +114,15 @@ function copyIcon(root, config, out) {
 
 // The Android SDK the build would use: $ANDROID_HOME, $ANDROID_SDK_ROOT, then the default
 // install folder. `missing` lists sdkmanager packages (and a JDK) not found.
-export function findToolchain(env = process.env) {
+// native: the engine is built from source (also needs the NDK and CMake).
+export function findToolchain(env = process.env, native = true) {
   const home = env.HOME ?? env.USERPROFILE ?? "";
   const candidates = [env.ANDROID_HOME, env.ANDROID_SDK_ROOT,
     env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, "Android", "Sdk"),
     home && path.join(home, "Library", "Android", "sdk"), home && path.join(home, "Android", "Sdk")];
   const sdk = candidates.find((d) => d && fs.existsSync(d)) ?? null;
   const need = [["platforms", TOOLCHAIN.platform], ["build-tools", TOOLCHAIN.buildTools],
-                ["ndk", TOOLCHAIN.ndk], ["cmake", TOOLCHAIN.cmake]];
+                ...(native ? [["ndk", TOOLCHAIN.ndk], ["cmake", TOOLCHAIN.cmake]] : [])];
   const missing = need.filter(([kind, ver]) => !sdk || !fs.existsSync(path.join(sdk, kind, ver)))
     .map(([kind, ver]) => `${kind};${ver}`);
   const java = env.JAVA_HOME && fs.existsSync(path.join(env.JAVA_HOME, "bin")) ? env.JAVA_HOME : null;
@@ -132,7 +136,7 @@ export function installHelp(out, toolchain) {
     `Android toolchain missing: ${toolchain.missing.join(", ")}.`,
     "Install the Android SDK command-line tools (https://developer.android.com/studio#command-tools),",
     `unpacked to <sdk>/cmdline-tools/latest${toolchain.sdk ? ` (your SDK: ${toolchain.sdk})` : ""}, then:`,
-    `  sdkmanager ${SDK_PACKAGES.map((p) => `"${p}"`).join(" ")}`,
+    `  sdkmanager ${toolchain.missing.filter((p) => p.includes(";")).map((p) => `"${p}"`).join(" ")}`,
     "and a JDK 17 or newer (JAVA_HOME). Gradle 8.12 comes with the project's wrapper.",
     "Build (arm64-v8a): assembleDebug (dev tools), assembleRelease (APK), bundleRelease (AAB for Google Play):",
     `  cd ${out} && ${gradlew} assembleRelease`,
@@ -150,11 +154,37 @@ export const VARIANTS = {
   bundle: { task: "bundleRelease", output: ["bundle", "release", "app-release.aab"] },
 };
 
+// Which engine to use: explicit source (--engine-src / $ALPHA_ENGINE_SRC), else the prebuilt
+// engine, else the checkout this SDK sits in. { source } | { prebuilt } | null.
+function pickEngine(engineSrc, env, prebuilt) {
+  const explicit = findEngineSource(engineSrc, env, false);
+  if (explicit) return { source: explicit };
+  if (prebuilt) return { prebuilt };
+  const repo = findEngineSource(null, env);
+  return repo ? { source: repo } : null;
+}
+
+// APK build type -> prebuilt flavor folder (bundle is bundleRelease).
+const FLAVOR_DIR = { debug: "debug", release: "shipping", bundle: "shipping" };
+const JNI = { debug: "debug", shipping: "release" };  // flavor folder -> Gradle source set
+
+// The prebuilt libraries into app/src/<debug|release>/jniLibs/arm64-v8a (Gradle packs them per
+// build type). Always clears old ones first: a source build must not find stale copies.
+function copyEngine(prebuilt, out) {
+  for (const [flavor, set] of Object.entries(JNI)) {
+    const dir = path.join(out, "app", "src", set, "jniLibs");
+    fs.rmSync(dir, { recursive: true, force: true });
+    if (!prebuilt) continue;
+    fs.mkdirSync(path.join(dir, "arm64-v8a"), { recursive: true });
+    for (const lib of ANDROID_LIBS) fs.copyFileSync(path.join(prebuilt, flavor, lib), path.join(dir, "arm64-v8a", lib));
+  }
+}
+
 // Gradle under the engine repo's resource guard (one build, 8 CMake jobs).
 function runGradle(out, toolchain, engineSrc, variant) {
   const { task, output } = VARIANTS[variant];
   const gradlew = path.join(out, process.platform === "win32" ? "gradlew.bat" : "gradlew");
-  const guard = path.join(engineSrc, "tools", "resource_guard.py");
+  const guard = path.join(engineSrc ?? path.dirname(SDK), "tools", "resource_guard.py");
   const command = fs.existsSync(guard) ? ["python", [guard, "--", gradlew, task]] : [gradlew, [task]];
   const env = { ...process.env, JAVA_HOME: toolchain.java, ANDROID_HOME: toolchain.sdk, CMAKE_BUILD_PARALLEL_LEVEL: "8" };
   const run = spawnSync(command[0], command[1], { cwd: out, env, stdio: "inherit", shell: process.platform === "win32" });
@@ -166,22 +196,26 @@ function runGradle(out, toolchain, engineSrc, variant) {
 // bytecode: the APK ships game.jsbc compiled by this machine's release engine (same
 // QuickJS source hash; arm64 is 64-bit like the host), compiler overrides it.
 export async function exportAndroid({ root, entry, out, target, engineSrc, atlas = true, env = process.env, build = true,
-                                      bytecode = true, compiler = bundledEngine(), variant = "release" }) {
+                                      bytecode = true, compiler = bundledEngine(), variant = "release", prebuilt = androidEngineDir() }) {
   const fail = (problems) => ({ ok: false, problems, files: [] });
   if (!ANDROID_TARGETS.includes(target)) return fail([problem(`unknown target "${target}"; Android targets: ${ANDROID_TARGETS.join(", ")}`)]);
   if (!VARIANTS[variant]) return fail([problem(`unknown --variant "${variant}"; variants: ${Object.keys(VARIANTS).join(", ")}`)]);
-  const source = findEngineSource(engineSrc, env);
-  if (!source) {
-    return fail([problem("the Android build compiles the engine from source: pass --engine-src <alpha-star checkout> " +
-                         "or set ALPHA_ENGINE_SRC (no prebuilt android-arm64 engine is bundled)")]);
+  const engine = pickEngine(engineSrc, env, prebuilt);
+  if (!engine) {
+    return fail([problem("no Android engine: install @alpha-star/engine-android-arm64 at the SDK's version (an optional " +
+                         "dependency of @alpha-star/sdk; do not install with --omit=optional), or build it from source with " +
+                         "--engine-src <alpha-star checkout> / ALPHA_ENGINE_SRC")]);
   }
+  const source = engine.source ?? null;
   const def = await readGameDef(entry);
   if (!def) return fail([problem("main module must `export default game({...})`", entry)]);
   const { values, problems } = androidValues(def.config ?? {}, source, path.join(path.resolve(out), "app"));
   if (problems.length) return fail(problems);
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-android-"));
   try {
-    const pack = await exportPack({ root, entry, out: staging, atlas, bytecode, compiler, bytecodeBits: ABI_BITS[target] });
+    const runner = engine.prebuilt && path.join(engine.prebuilt, FLAVOR_DIR[variant], "libmain.so");
+    const pack = await exportPack({ root, entry, out: staging, atlas, bytecode, compiler,
+                                    ...(runner ? { bytecodeRunner: runner } : { bytecodeBits: ABI_BITS[target] }) });
     if (!pack.ok) return pack;
     // The template is written over the project (Gradle's build/ and .cxx/ caches stay: no full
     // native rebuild on every export); the pack replaces the assets folder whole.
@@ -190,9 +224,10 @@ export async function exportAndroid({ root, entry, out, target, engineSrc, atlas
     copyTemplate(TEMPLATE, out, values);
     fs.rmSync(assets, { recursive: true, force: true });
     fs.cpSync(staging, assets, { recursive: true });
+    copyEngine(engine.prebuilt, out);
     const iconProblem = copyIcon(root, def.config ?? {}, out);
     if (iconProblem) return fail([iconProblem]);
-    const toolchain = findToolchain(env);
+    const toolchain = findToolchain(env, Boolean(source));
     if (toolchain.sdk) fs.writeFileSync(path.join(out, "local.properties"), `sdk.dir=${toolchain.sdk.split(path.sep).join("/")}\n`);
     const ready = toolchain.missing.length === 0;
     const apk = build && ready ? runGradle(out, toolchain, source, variant) : null;

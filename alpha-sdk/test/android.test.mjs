@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { androidValues, defaultPackage, exportAndroid, findToolchain, orientationFor, SDK_PACKAGES, TEMPLATE, VARIANTS }
   from "../lib/android.mjs";
 import { stampOf } from "../lib/bytecode.mjs";
-import { bundledEngine } from "../lib/engine.mjs";
+import { bundledEngine, shippingEngine } from "../lib/engine.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -52,10 +52,11 @@ test("android export assembles a Gradle project: pack in assets, ids and orienta
   assert.match(gradle, /versionName "1\.2"/);
   // The engine path is relative to app/, so a committed project builds in any clone.
   const engine = path.relative(path.join(p.out, "app"), path.join(REPO, "CMakeLists.txt")).split(path.sep).join("/");
-  assert.ok(gradle.includes(`path file("${engine}")`), gradle.match(/path file\(.*\)/)?.[0]);
+  assert.ok(gradle.includes(`def engineCmake = "${engine}"`), gradle.match(/def engineCmake = .*/)?.[0]);
+  for (const set of ["debug", "release"]) assert.equal(fs.existsSync(path.join(p.out, "app", "src", set, "jniLibs")), false);
   // debug APKs carry the dev tools (release engine flavor); release APKs and AABs ship without them.
   assert.match(gradle, /debug \{[^}]*externalNativeBuild \{ cmake \{ arguments "-DALPHA_SHIPPING=OFF", "-DALPHA_DEVTOOLS=ON", "-DALPHA_MCP=OFF", "-DALPHA_DEBUG_TOOLS=ON" \} \}/);
-  assert.match(gradle, /release \{[^}]*signingConfig.*\s*externalNativeBuild \{ cmake \{ arguments "-DALPHA_SHIPPING=ON" \} \}/);
+  assert.match(gradle, /release \{[^}]*signingConfig.*\s*if \(engineCmake\) externalNativeBuild \{ cmake \{ arguments "-DALPHA_SHIPPING=ON" \} \}/);
   assert.match(gradle, /abiFilters 'arm64-v8a'/);
   assert.match(gradle, /-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON/);  // Google Play: 16 KB pages
   assert.match(gradle, /System\.getenv\("ALPHA_ANDROID_KEYSTORE"\)/);  // release key from env, none stored
@@ -70,6 +71,46 @@ test("android export assembles a Gradle project: pack in assets, ids and orienta
   for (const pkg of SDK_PACKAGES) assert.ok(r.help.includes(pkg), pkg);
   assert.match(r.help, /assembleRelease/);
   assert.match(r.help, /JDK 17/);
+});
+
+// A prebuilt engine folder like @alpha-star/engine-android-arm64; libmain.so = `main` bytes.
+function prebuiltEngine(main = "ELF main") {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-android-engine-"));
+  for (const flavor of ["debug", "shipping"]) {
+    fs.mkdirSync(path.join(dir, flavor));
+    fs.writeFileSync(path.join(dir, flavor, "libmain.so"), typeof main === "string" ? `${main} ${flavor}` : main);
+    fs.writeFileSync(path.join(dir, flavor, "libSDL3.so"), `ELF SDL3 ${flavor}`);
+  }
+  return dir;
+}
+
+test("with a prebuilt engine the project needs no engine source, NDK or CMake", async () => {
+  const p = project(`{ title: "t", size: [10, 10], seed: 1, actions: { back: [] } }`);
+  const prebuilt = prebuiltEngine();
+  const r = await exportAndroid({ ...p, target: "android-arm64", env: { ALPHA_ENGINE_SRC: "" }, build: false, bytecode: false, prebuilt });
+  assert.deepEqual(r.problems, []);
+  const gradle = read(p.out, "app", "build.gradle");
+  assert.match(gradle, /def engineCmake = ""/);
+  // Each build type packs its own flavor: debug = dev tools, release/bundle = shipping.
+  const jni = (set, lib) => read(p.out, "app", "src", set, "jniLibs", "arm64-v8a", lib);
+  assert.equal(jni("debug", "libmain.so"), "ELF main debug");
+  assert.equal(jni("release", "libmain.so"), "ELF main shipping");
+  assert.equal(jni("release", "libSDL3.so"), "ELF SDL3 shipping");
+  assert.ok(!r.toolchain.missing.some((m) => /^(ndk|cmake);/.test(m)), r.toolchain.missing.join(", "));
+  // An explicit source wins and removes the copied libraries (no duplicate libmain.so in the APK).
+  assert.ok((await exportAndroid({ ...p, target: "android-arm64", engineSrc: REPO, env: {}, build: false, bytecode: false, prebuilt })).ok);
+  assert.equal(fs.existsSync(path.join(p.out, "app", "src", "release", "jniLibs")), false);
+});
+
+test("prebuilt engine: game.jsbc must come from the same engine build", { skip: !bundledEngine() || !shippingEngine() }, async () => {
+  const p = project(`{ title: "t", size: [10, 10], seed: 1, actions: { back: [] } }`);
+  const other = await exportAndroid({ ...p, target: "android-arm64", env: {}, build: false, prebuilt: prebuiltEngine() });
+  assert.match(other.problems[0].message, /different builds: install @alpha-star\/sdk and its engine packages at one version/);
+  // The desktop shipping engine carries the same stamp and key strings a matching libmain.so has.
+  const same = await exportAndroid({ ...p, target: "android-arm64", env: {}, build: false,
+                                     prebuilt: prebuiltEngine(fs.readFileSync(shippingEngine())) });
+  assert.deepEqual(same.problems, []);
+  assert.ok(fs.existsSync(path.join(p.out, "app", "src", "main", "assets", "game.jsbc")));
 });
 
 test("android export without bytecode ships main.js; without a compiler it says how to fix it", async () => {
@@ -123,6 +164,12 @@ test("defaults: package from the title, landscape unless taller than wide", () =
   assert.equal(values.APP_NAME, String.raw`It\'s`);  // Android string resources escape apostrophes
   assert.equal(values.VERSION_CODE, "1");
   assert.match(androidValues({ android: { versionCode: 0 } }, REPO).problems[0].message, /versionCode/);
+});
+
+test("toolchain lookup without a native build needs no NDK or CMake", () => {
+  const sdk = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-fake-sdk-"));
+  assert.deepEqual(findToolchain({ ANDROID_HOME: sdk }, false).missing,
+                   SDK_PACKAGES.slice(0, 2).concat("JDK 17+ (JAVA_HOME)"));
 });
 
 test("toolchain lookup reports each missing sdkmanager package and the JDK", () => {
