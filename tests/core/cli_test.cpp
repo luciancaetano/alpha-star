@@ -98,3 +98,9 @@ TEST_CASE("cli: without ALPHA_MCP the control flags are unknown") {
   CHECK_FALSE(o.hidden);
 }
 #endif
+
+TEST_CASE("cli: hot reload watches only a pack named on the command line") {
+  CHECK(alpha::core::watches_pack(parse({"pack"})));
+  // Bundled pack (Android APK, fused exe): its dir may hold the saves; a save must never reload the game.
+  CHECK_FALSE(alpha::core::watches_pack(parse({})));
+}

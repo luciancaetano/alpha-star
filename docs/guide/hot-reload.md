@@ -14,4 +14,5 @@ entities again. Keep long-lived values in `ctx.state`, not in entity data.
 
 A reload that fails while booting the new code keeps the old game running and shows the error.
 Agents reload on demand with the MCP tool `game_reload` instead (an agent-driven engine does not
-watch files). Shipping engines have no hot reload.
+watch files). Shipping engines have no hot reload, and neither does a bundled pack (an Android APK
+or an exe-fused game): only a pack folder named on the command line, as `alpha run` passes, is watched.

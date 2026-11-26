@@ -33,4 +33,13 @@ struct CliOptions {
 // numbers are ignored (a player double-clicking the exe must never see a crash).
 CliOptions parse_cli(std::span<const std::string_view> args);
 
+// A player at the keyboard: not an --frames run nor an agent (--control).
+bool interactive(const CliOptions& o);
+
+// Hot reload watches the pack only for an interactive run of a pack named on the
+// command line. A bundled pack (APK assets, fused exe) is never edited, and on
+// Android its "" dir resolves to the app's files dir, where saves live: watching
+// it reloaded the game on every save (a save in enter() looped forever).
+bool watches_pack(const CliOptions& o);
+
 }  // namespace alpha::core

@@ -99,4 +99,8 @@ CliOptions parse_cli(std::span<const std::string_view> args) {
   return o;
 }
 
+bool interactive(const CliOptions& o) { return o.frames == 0 && o.control_port == 0; }
+
+bool watches_pack(const CliOptions& o) { return interactive(o) && !o.game.empty(); }
+
 }  // namespace alpha::core

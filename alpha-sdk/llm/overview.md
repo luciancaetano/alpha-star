@@ -104,5 +104,5 @@ Done = `npm run check` clean and `npm test` passing.
 
 - Determinism: fixed step, `ctx.random` only (`Math.random` throws "use ctx.random"). Particles, tweens, camera, animations all advance on the fixed step. Audio never affects the simulation.
 - A script error pauses the game with a source-mapped message; it never crashes the engine.
-- Hot reload keeps the save, the scene and JSON params, and JSON `ctx.state` (if the scene still declares `state`); `enter` rebuilds the world. Keep long-lived values in `ctx.state`, not entity data.
+- Hot reload keeps the save, the scene and JSON params, and JSON `ctx.state` (if the scene still declares `state`); `enter` rebuilds the world. Keep long-lived values in `ctx.state`, not entity data. Only `alpha run` packs are watched; APKs and exported games never hot-reload.
 - Dev tools (F12; Android debug APK: shake or `adb shell input keyevent 82`), MCP and `alpha/test` are absent from shipping engines: game code never depends on them.

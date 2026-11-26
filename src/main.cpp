@@ -156,9 +156,6 @@ int steps_for_frame(const Options& o, alpha::core::FixedStep& clock, Tools& tool
   return tools.steps(o.frames > 0 ? 1 : clock.advance(elapsed));
 }
 
-// A player at the keyboard: not an --frames run nor an agent (--control).
-bool interactive(const Options& o) { return o.frames == 0 && o.control_port == 0; }
-
 // How far into the next fixed step to draw (smooth motion at any refresh rate).
 // Exact state when stepping frame by frame (--frames, dev tools pause).
 float blend_for(const Options& o, const alpha::core::FixedStep& clock, const Tools& tools, const Control& control) {
@@ -209,9 +206,9 @@ void run(const Options& o, alpha::script::Host& host, alpha::render::Renderer& r
   bool running = true;
   // dev/release: reload when the pack changes. Not in --frames runs (deterministic) nor under an
   // agent (--control): the agent reloads explicitly, so a re-export never restarts a scene mid-step.
-  alpha::script::HotReload hot_reload(host, interactive(o));
+  alpha::script::HotReload hot_reload(host, alpha::core::watches_pack(o));
   Control control = make_control(o, host, renderer, [&d] { return alpha::platform::consume(d.input, d.pads.slots()); });
-  alpha::script::AppEvents app(interactive(o));  // agents and --frames own time: focus never pauses
+  alpha::script::AppEvents app(alpha::core::interactive(o));  // agents and --frames own time: focus never pauses
   for (int frame = 0; running && pump(d, tools, host, renderer.sdl(), app) && (o.frames == 0 || frame < o.frames); ++frame) {
     tap(o, frame, d.input);
     app.configure(host);
