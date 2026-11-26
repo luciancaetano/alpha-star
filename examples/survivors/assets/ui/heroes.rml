@@ -2,7 +2,7 @@
 <style>
   .panel { width: 300dp; margin-top: 6dp; padding-top: 4dp; }
   h1 { margin-bottom: 2dp; }
-  .hero { display: inline-block; width: 136dp; height: 44dp; margin: 2dp; padding: 1dp 3dp; box-sizing: border-box; text-align: left; vertical-align: top;
+  .hero { display: inline-block; width: 132dp; height: 42dp; margin: 1dp; padding: 1dp 3dp; box-sizing: border-box; text-align: left; vertical-align: top;
     background-color: #2b1d3a; border: 1dp #5a4470; tab-index: auto; }
   .hero:hover, .hero:focus { background-color: #4a2f3a; border-color: #ffcf6b; }
   .hero .big { float: left; width: 34dp; height: 32dp; }

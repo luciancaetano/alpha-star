@@ -114,12 +114,13 @@ export function signaturesStartStrongerThanTheBasicWeapon() {
 }
 
 export function everyHeroAndManyPowersSurviveAMinuteWithoutErrors() {
-  // Every hero, taking every card: all weapon kinds and status effects get exercised.
+  // Every hero, walking around and taking every card: all weapon kinds and status effects get exercised.
+  const circle = Array.from({ length: 20 }, (_, i) => [i * 180, Math.cos(i)] as [number, number]);
   const picks = Array.from({ length: 60 }, (_, i) => 10 + i * 40);
   for (const hero of Object.keys(HEROES) as HeroId[]) {
     const run = simulate(game, {
       seconds: 60, saves: { main: { hero, heroes: Object.keys(HEROES) } }, clicks: { "title#play": [30] },
-      inputs: { pick1: picks, pick2: picks.map((f) => f + 20) },
+      inputs: { pick1: picks, pick2: picks.map((f) => f + 20), axes: { moveX: circle, moveY: circle.map(([f, v]) => [f, Math.sin(v * 3)] as [number, number]) } },
     });
     run.expect.noErrors();
     if (!run.state) fail(`${hero} died within a minute: ${JSON.stringify(run.saves.main)}`);
@@ -199,3 +200,4 @@ export function theHordeGrowsGraduallyWithoutJumps() {
   const early = simulate(game, { ...PLAY, seconds: 5 }).entities("enemy").length;
   if (early > 6) fail(`the first seconds should be calm, ${early} foes at 5s`);
 }
+

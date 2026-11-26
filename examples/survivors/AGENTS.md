@@ -3,7 +3,8 @@
 Survivors-like: Sir Wick, a living candle, walks through an endless night bog while weapons fire on
 their own. Gems -> level up -> pick 1 of 3 cards (weapons/passives). A maxed weapon + its passive
 evolves from a chest (elites and the Moth Queen drop them). The Snuffer arrives at 15:00. Gold is
-banked between runs: Candle Shop upgrades and two more heroes (title screen).
+banked between runs: Candle Shop upgrades and five more heroes (title screen). Each of the six heroes
+starts with a signature weapon only they can get (stronger, with its own hit effect).
 
 You are editing a game for the alpha-star engine. Write TypeScript in `src/`; `alpha export`
 type-checks it and bundles it into one JS module (`dist/main.js`). The API types live in
@@ -29,11 +30,14 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 |---|---|
 | `src/types.ts` | Every name: actions, sounds, tags, sheets, UI ids, scenes, item ids. Edit first. |
 | `src/tuning.ts` | Speeds, HP, XP curve, enemy and hero stats. Change feel here. |
-| `src/data/items.ts` | Weapons (per-level numbers, evolutions) and passives. |
+| `src/data/powers.ts` | Every weapon: kind (how it fires), mod (what its hits do), icon, evolution passive, numbers, signature hero. |
+| `src/data/items.ts` | Passives (what they do: `stats` in `run.ts`); re-exports the weapons. |
+| `src/data/glyphs.ts` | Icon glyph codes, including the recolored ones `tools/process-art.py` makes. |
 | `src/data/waves.ts` | Spawns per minute and timed events (swarms, rings, elites, bosses). |
 | `src/game/run.ts` | Run state (JSON, survives hot reload) and derived stats (pure). |
 | `src/game/offers.ts` | Level-up offers, chests and evolutions (pure, unit-tested). |
-| `src/game/weapons.ts`, `projectiles.ts` | Firing and what weapons leave in the world. |
+| `src/game/weapons.ts`, `areas.ts`, `projectiles.ts` | Firing per kind (shots / areas) and what weapons leave in the world. |
+| `src/game/strike.ts` | A weapon hit: crit, execute, knockback, heal, gold, blast; burn/slow/freeze statuses. |
 | `src/game/enemies.ts`, `combat.ts` | Horde spawns/chase/contact; damage, death, drops. |
 | `src/game/pickups.ts`, `world.ts` | Gems/items/braziers; endless ground and scenery. |
 | `src/game/menus.ts` | HUD and the level-up / chest / pause menus. |
@@ -44,7 +48,11 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 ## How things work here
 
 - **Icons in UI:** `ctx.ui.set` is text only, so item icons are BMFont glyphs: `A-E` weapons,
-  `F-J` evolved, `a-g` passives, `$ %` coin/cake, `1-3` heroes, `#`/`-` XP bar, `*` empty slot.
+  `F-J` evolved, `a-g` passives, `$ %` coin/cake, `1-6` heroes, `#`/`-` XP bar, `*` empty slot.
+  Newer powers use recolored copies: `glyph(g, h)` = `chr(0x100 + g * 8 + h)` (same rule in the art tool).
+- **New weapon:** add its id to `WeaponId`, a row in `powers.ts` (kind + mod pick its behavior; no code)
+  and `weapon.<id>.name/evo/desc` in both locales. Non-custom weapons share the growth texts `grow.*`.
+- **Extra heroes are recolors** of the drawn ones (`HERO_VARIANTS` in `tools/process-art.py`).
 - **Menus pause the world:** `state.mode` != "play" skips the systems and freezes bodies.
 - **Queries can return foes killed this step:** always `.filter((e) => e.alive)` before `at(e)`.
 - **Languages:** every player-facing word is in `assets/locales/pt.json` + `en.json` (same keys):

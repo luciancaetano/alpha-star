@@ -61,7 +61,7 @@ function fireOrbit(f: Fire) {
   for (let i = 0; i < f.count; i++) {
     f.ctx.spawn(lantern(at(f.hero), { weapon: f.w.id, index: i, count: f.count, radius: 36 * f.area, until, dmg: f.hit.dmg, mod: f.hit.mod }, f.def.color));
   }
-  f.w.cd = life + 3 * f.st.cooldown;
+  f.w.cd += life;   // dark for one cooldown between cycles
 }
 
 const FIRE: Record<WeaponKind, (f: Fire) => void> = {
