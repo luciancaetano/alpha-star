@@ -1,11 +1,13 @@
 // Every name the game uses. The compiler rejects anything not listed here.
+import type { Player, Vec2 } from "alpha";
+
 export interface Arena {
   actions: "fire" | "bomb" | "restart";
   /** Per player: player 1 = WASD/arrows/first pad, player 2 = second pad. */
   axes: "moveX" | "moveY";
   sounds: "shot" | "hit" | "boom";
   images: never;
-  tags: "hero" | "enemy" | "bullet" | "wall" | "blast" | "label";
+  tags: { hero: { player: Player; hp: number; bombs: number; aim: Vec2; cooldown: number }; enemy: {}; bullet: { life: number }; wall: {}; blast: {}; label: {} };
   /** Sheet -> its animation names (assets.sheets in main.ts). */
   sheets: { hero: "idle" | "walk" };
   /** No fonts: UI and world text use the engine's built-in 8x8 font. */

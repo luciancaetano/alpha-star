@@ -12,7 +12,7 @@ interface Arena {
   axes: "moveX" | "moveY";
   sounds: never;
   images: never;
-  tags: "hero" | "shot" | "mark";
+  tags: { hero: {}; shot: { vx: number; vy: number }; mark: {} };
   ui: {};
   scenes: { play: undefined };
 }
@@ -50,8 +50,8 @@ const play = scene("play", {
     if (ctx.input.pressed("fire")) ctx.spawn({ tags: ["mark"], pos: ctx.camera.toWorld(ctx.input.mouse()), shape: { rect: [4, 4], color: "#ff004d" } });
 
     for (const s of ctx.findAll("shot")) {
-      s.pos.x += (s.data.vx as number) * ctx.dt;
-      s.pos.y += (s.data.vy as number) * ctx.dt;
+      s.pos.x += s.data.vx * ctx.dt;
+      s.pos.y += s.data.vy * ctx.dt;
       if (Math.abs(s.pos.x - 160) &gt; 200 || Math.abs(s.pos.y - 90) &gt; 120) ctx.destroy(s);
     }
   },

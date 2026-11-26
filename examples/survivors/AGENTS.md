@@ -58,8 +58,11 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 - **New weapon:** add its id to `WeaponId`, a row in `powers.ts` (kind + mod pick its behavior; no code)
   and `weapon.<id>.name/evo/desc` in both locales. Non-custom weapons share the growth texts `grow.*`.
 - **Extra heroes are recolors** of the drawn ones (`HERO_VARIANTS` in `tools/process-art.py`).
-- **Menus pause the world:** `state.mode` != "play" skips the systems and freezes bodies.
-- **Queries can return foes killed this step:** always `.filter((e) => e.alive)` before `at(e)`.
+- **Menus pause the world:** `state.mode` != "play" skips the systems and sets `ctx.frozen` (scenes/play.ts).
+- **Typed tags:** `Candle.tags` maps each tag to its `data` shape (`types.ts`); prefabs return `Spec<"enemy">`,
+  functions take `Ent<"enemy">`, so `e.data.*` needs no casts. Use `e.has("boss")`, not `tags.includes`.
+- **Queries and `findAll` only return living entities;** a list held while your own code kills can go stale:
+  check `alive` inside loops that kill.
 - **Languages:** every player-facing word is in `assets/locales/pt.json` + `en.json` (same keys):
   `ctx.t(key)` in code, `data-t="key"` in RML. First launch is Portuguese; the title button toggles.
   Pure rules take a `t` function (`offers.ts`) so tests can pass `(k) => k`.
@@ -131,10 +134,9 @@ sprites will shake or flicker:
 ## Lessons from building a full game (Candlewick)
 
 ### Entities and queries
-- **Queries can return foes killed earlier in the same step.** A list you queried earlier
-  (`queryCircle`, `queryRect`, `findAll`) can hold entities your own code destroyed since.
-  Check `e.alive` before reading `e.pos` (it throws on a dead entity), and re-query or
-  `.filter((e) => e.alive)` after any loop that kills.
+- **Queries and `findAll` only return living entities.** No `.filter((e) => e.alive)` after them.
+  But a list you hold while your own code kills can go stale: check `e.alive` before reading
+  `e.pos` (it throws on a dead entity) inside loops that kill, handlers and timers.
 - **Lists are stale inside a loop that kills.** If one strike can kill the next target, check
   `t.alive` again on every iteration.
 - **Entities without a body are invisible to queries.** Orbiting lanterns, pools and slashes with
@@ -143,10 +145,11 @@ sprites will shake or flicker:
   (or a `data` flag) before acting.
 
 ### Pausing the world (menus, level-up)
-- There is no world pause: keep a `mode` in `ctx.state` and skip your systems while a menu is up.
-  Zero the velocities of moving bodies each step (they come back when the systems run again).
-- Prefer your own timers in `ctx.state` (counting `ctx.dt` only while playing) for anything that
-  must pause; `ctx.every`/`ctx.after` keep running during your menus.
+- Keep a `mode` in `ctx.state`, skip your systems while a menu is up, and set
+  `ctx.frozen = mode !== "play"`: physics (bodies keep their velocity), contact events,
+  `ctx.every`/`ctx.after`, tweens, animations, particles and `ctx.time` stop; `update`, UI handlers,
+  input, camera and audio keep running. No need to zero velocities. It resets to false on scene enter.
+- Timers you keep in `ctx.state` must still count `ctx.dt` only while playing (`ctx.dt` is not 0 when frozen).
 
 ### UI (RmlUi)
 - **`ctx.ui.set` is text only.** To show item icons in the UI, make a BMFont whose glyphs are the

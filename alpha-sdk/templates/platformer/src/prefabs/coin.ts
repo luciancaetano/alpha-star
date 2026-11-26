@@ -1,10 +1,9 @@
 import type { EntitySpec, LevelEntity } from "alpha";
 import type { Platformer } from "../types";
 
-type Spec = EntitySpec<Platformer["tags"], never, Platformer["sheets"]>;
 
 // A spinning coin at an LDtk "Coin" entity; a sensor, so the player passes through it.
-export function coin(at: LevelEntity): Spec {
+export function coin(at: LevelEntity): EntitySpec<Platformer, "coin"> {
   return {
     tags: ["coin"],
     pos: at.pos,

@@ -22,7 +22,7 @@ interface Dodge {
   actions: "point" | "die" | "language";
   sounds: never;
   images: never;
-  tags: "player";
+  tags: { player: {} };
   locales: "en" | "pt";
   scenes: { play: undefined; over: { score: number } };
   ui: { hud: "score" | "best"; over: "result" | "again" };

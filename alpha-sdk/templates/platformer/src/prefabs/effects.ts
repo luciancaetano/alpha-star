@@ -2,7 +2,7 @@ import type { EntitySpec, Vec2 } from "alpha";
 import { DUST } from "../tuning";
 import type { Platformer } from "../types";
 
-type Spec = EntitySpec<Platformer["tags"], never, Platformer["sheets"], Platformer["layers"], Platformer["fonts"]>;
+type Spec = EntitySpec<Platformer, "dust" | "popup" | "scenery">;
 
 // A one-shot puff at the feet: its entity goes away with its last particle.
 export function dust(feet: Vec2): Spec {

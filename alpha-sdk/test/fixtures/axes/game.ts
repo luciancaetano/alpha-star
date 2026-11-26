@@ -6,7 +6,7 @@ interface T {
   sounds: never;
   images: never;
   ui: {};
-  tags: "hero";
+  tags: { hero: {} };
   scenes: { play: undefined };
 }
 const { scene, game } = define<T>();

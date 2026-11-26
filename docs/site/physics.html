@@ -12,7 +12,7 @@ interface Phys {
   axes: "moveX";
   sounds: "coin";
   images: never;
-  tags: "hero" | "ground" | "ledge" | "crate" | "coin" | "spike";
+  tags: { hero: {}; ground: {}; ledge: {}; crate: {}; coin: {}; spike: {} };
   ui: {};
   scenes: { play: undefined };
 }
@@ -135,7 +135,7 @@ config: { collision: { categories: ["player", "foe", "shot", "world"] } }</code>
   body: { type: "dynamic", category: "player", collidesWith: ["foe", "world"], collider: { rect: [12, 16] } } });
 ctx.spawn({ tags: ["enemy"], pos: [80, 100], shape: { rect: [12, 12], color: "#ff004d" },
   body: { type: "dynamic", category: "foe", collidesWith: ["player", "shot", "world"], collider: { rect: [12, 12] } } });</code></pre>
-<p>Two bodies collide only when <strong>both</strong> accept each other. Without <code>collidesWith</code> a body accepts all. A prefab type with categories: <code>EntitySpec&lt;MyGame["tags"], never, {}, never, never, MyGame["categories"]&gt;</code>.</p>
+<p>Two bodies collide only when <strong>both</strong> accept each other. Without <code>collidesWith</code> a body accepts all. Prefab specs need no extra type arguments: <code>EntitySpec&lt;MyGame, "enemy"&gt;</code> checks <code>category</code> and <code>collidesWith</code> against <code>MyGame["categories"]</code> automatically.</p>
 <h3 id="raycasts-and-area-queries">Raycasts and area queries</h3>
 <pre><code>const h = ctx.find("hero");
 const hit = ctx.raycast([h.pos.x, h.pos.y], [h.pos.x + 200, h.pos.y], { tags: ["wall", "enemy"] });
@@ -179,8 +179,9 @@ if (ctx.input.pressed("jump") &amp;&amp; ctx.state.jumps &gt; 0) {
   h.body.velocity = [h.body.velocity.x, -300];
 }</code></pre>
 <h3 id="enemy-patrol-that-turns-at-walls-and-edges">Enemy patrol that turns at walls and edges</h3>
-<pre><code>for (const e of ctx.findAll("enemy")) {
-  let dir = (e.data.dir as number | undefined) ?? 1;
+<pre><code>// types: tags: { enemy: { dir?: number }; ground: {}; wall: {} }
+for (const e of ctx.findAll("enemy")) {
+  let dir = e.data.dir ?? 1;
   const ahead = e.pos.x + dir * 10;
   const floor = ctx.raycast([ahead, e.pos.y], [ahead, e.pos.y + 16], { tags: ["ground"] });
   const wall = ctx.raycast([e.pos.x, e.pos.y], [ahead + dir * 2, e.pos.y], { tags: ["wall"] });
@@ -189,7 +190,7 @@ if (ctx.input.pressed("jump") &amp;&amp; ctx.state.jumps &gt; 0) {
   e.body.velocity = [dir * 40, e.body.velocity.y];
 }</code></pre>
 <h3 id="bullets">Bullets</h3>
-<pre><code>function bullet(from: Vec2, dir: Vec2): Spec {
+<pre><code>function bullet(from: Vec2, dir: Vec2): EntitySpec&lt;MyGame, "bullet"&gt; {
   return {
     tags: ["bullet"], pos: from, shape: { circle: 2, color: "#ffec27" },
     body: { type: "dynamic", bullet: true, gravityScale: 0, collider: { circle: 2, sensor: true },

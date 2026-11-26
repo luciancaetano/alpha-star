@@ -16,7 +16,7 @@ interface Fx {
   axes: "moveX" | "moveY";
   sounds: never;
   images: never;
-  tags: "ship" | "star" | "blast" | "label" | "gem";
+  tags: { ship: {}; star: { speed: number }; blast: {}; label: {}; gem: {} };
   layers: "stars" | "fx" | "hud";
   ui: {};
   scenes: { play: undefined };

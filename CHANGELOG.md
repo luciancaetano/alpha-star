@@ -7,6 +7,23 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
+Script API 1.0, phase 1 (breaking; see `docs/RFC_API_1.0.md`).
+
+### Changed (breaking)
+- `GameTypes.tags` maps each tag to the data its entities carry (`tags: { hero: {}; enemy: { hp: number } }`):
+  tags are typed components. `entity.data` is typed by the entity's tags (`DataOf<G, T>`), spawning a tag
+  without its data is a compile error, and `find`/`findAll`/queries/contact handlers return typed entities.
+- Every type is parameterized by the game alone: `EntitySpec<G, T>`, `Entity<G, T>` (contravariant in `T`),
+  `RayHit<G, T>`, `QueryFilter<G, T>`, `JointSpec<G>`, `Level<G>`, `SpawnLevelOptions<G>`. The six-generic
+  `EntitySpec<Tags, Images, ...>`, `Entity<Tags, Anim>` and `EntityData` are gone.
+- `simulate(...).entities(tag)` snapshots carry the tag's typed data.
+
+### Added
+- `entity.has(tag)`, a type guard that narrows the entity and its data.
+- `ctx.frozen`: freezes the scene's world (physics with velocities kept, contacts, timers, tweens, animations,
+  particles, animated tiles, `ctx.time`) while `update`, UI, input, camera and audio run. For menus.
+- `TagOf`, `DataOf`, `EntityOf`, `AnySpec` helper types.
+
 ## [0.5.0] - 2026-11-26
 
 ### Added

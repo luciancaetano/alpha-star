@@ -3,7 +3,7 @@ import type { Vec2 } from "alpha";
 import { ENEMIES, HERO, HEROES } from "../tuning";
 import type { EnemyKind, HeroId, Spec } from "../types";
 
-export function hero(id: HeroId, at: Vec2): Spec {
+export function hero(id: HeroId, at: Vec2): Spec<"hero"> {
   return {
     tags: ["hero"], pos: at, z: 5,
     shape: { sheet: id, animation: "idle" },
@@ -14,18 +14,18 @@ export function hero(id: HeroId, at: Vec2): Spec {
 
 export const HP_SEGMENTS = 12;
 /** Under the hero: a dark plate (index -1) and 12 red segments the HUD shows or hides. */
-export function hpBar(index: number): Spec {
+export function hpBar(index: number): Spec<"hpbar"> {
   return index < 0
-    ? { tags: ["hpbar"], pos: [0, 13], z: 6, shape: { rect: [28, 4], color: "#1a1020" } }
+    ? { tags: ["hpbar"], pos: [0, 13], z: 6, shape: { rect: [28, 4], color: "#1a1020" }, data: { seg: -1 } }
     : { tags: ["hpbar"], pos: [-11 + index * 2, 13], z: 7, shape: { rect: [2, 2], color: "#ff4d5e" }, data: { seg: index } };
 }
 
 const full = (hp: number) => ({ hp, max: hp });
 
-export function enemy(kind: EnemyKind, at: Vec2, hpMul: number): Spec {
+export function enemy(kind: EnemyKind, at: Vec2, hpMul: number): Spec<"enemy" | "elite" | "boss"> {
   const d = ENEMIES[kind];
   const big = kind === "queen" || kind === "snuffer";
-  const tags: Spec["tags"] = big ? ["enemy", "boss"] : kind === "gargoyle" ? ["enemy", "elite"] : ["enemy"];
+  const tags: ("enemy" | "elite" | "boss")[] = big ? ["enemy", "boss"] : kind === "gargoyle" ? ["enemy", "elite"] : ["enemy"];
   return {
     tags, pos: at, z: big ? 4 : 3,
     shape: { sheet: kind, animation: "fly" },

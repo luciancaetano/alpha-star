@@ -3,7 +3,7 @@ export interface Flappy {
   actions: "flap" | "restart" | "settings";
   sounds: "flap" | "point";
   images: "player" | "nebula" | "column" | "deck";
-  tags: "bird" | "solid" | "goal" | "scrolls" | "fade";
+  tags: { bird: {}; solid: {}; goal: {}; scrolls: {}; fade: {} };
   /** Streamed music (assets.music). */
   music: "theme";
   /** Languages (assets.locales); texts in assets/locales/*.json. */

@@ -18,7 +18,7 @@ interface Signs {
   actions: "hit";
   sounds: never;
   images: never;
-  tags: "title" | "score" | "popup" | "story";
+  tags: { title: {}; score: {}; popup: {}; story: {} };
   scenes: { play: undefined };
   ui: {};
 }

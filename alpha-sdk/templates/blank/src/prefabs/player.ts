@@ -2,6 +2,6 @@
 import type { EntitySpec, Vec2 } from "alpha";
 import type { Game } from "../types";
 
-export function player(at: Vec2): EntitySpec<Game["tags"], Game["images"]> {
+export function player(at: Vec2): EntitySpec<Game, "player"> {
   return { tags: ["player"], pos: at, shape: { image: "player" } };
 }

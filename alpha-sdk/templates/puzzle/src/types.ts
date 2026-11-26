@@ -3,7 +3,7 @@ export interface Crates {
   actions: "up" | "down" | "left" | "right" | "undo" | "restart" | "language";
   sounds: "step" | "push" | "bump" | "solved";
   images: never;
-  tags: "wall" | "floor" | "goal" | "box" | "player" | "language";
+  tags: { wall: {}; floor: {}; goal: {}; box: { i: number }; player: {}; language: {} };
   /** One sheet of 16x16 tiles; each "animation" is a single frame. */
   sheets: { tiles: "wall" | "floor" | "goal" | "box" | "boxOnGoal" | "player" };
   /** Texts in assets/locales/*.json: ctx.t(key) in scripts, data-t="key" in .rml. */

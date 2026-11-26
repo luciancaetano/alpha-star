@@ -17,7 +17,7 @@ interface Sprites {
   axes: "moveX";
   sounds: never;
   images: "npc";
-  tags: "hero" | "ground" | "coin" | "npc";
+  tags: { hero: {}; ground: {}; coin: {}; npc: {} };
   sheets: { hero: "idle" | "run" | "jump" | "fall"; coin: "spin" };
   ui: {};
   scenes: { play: undefined };
@@ -213,7 +213,7 @@ interface Levels {
   axes: "moveX";
   sounds: never;
   images: never;
-  tags: "player" | "coin" | "walls";
+  tags: { player: {}; coin: {}; walls: {} };
   sheets: { hero: "idle" | "run"; coin: "spin" };
   worlds: "main";
   ui: {};
@@ -221,14 +221,13 @@ interface Levels {
 }
 
 const { scene, game } = define<Levels>();
-type Spec = EntitySpec<Levels["tags"], never, Levels["sheets"]>;
 
 // Factories: one LDtk entity -> a spawn spec (or several, or null to skip it).
-const player = (e: LevelEntity): Spec => ({
+const player = (e: LevelEntity): EntitySpec<Levels, "player"> => ({
   tags: ["player"], pos: e.pos, shape: { sheet: "hero", animation: "idle" },
   body: { type: "dynamic", fixedRotation: true, collider: { rect: [12, 16], friction: 0 } },
 });
-const coin = (e: LevelEntity): Spec => ({
+const coin = (e: LevelEntity): EntitySpec<Levels, "coin"> => ({
   tags: ["coin"], pos: e.pos, shape: { sheet: "coin", animation: "spin" },
   body: { type: "static", collider: { circle: 4, sensor: true } },
 });
@@ -397,7 +396,7 @@ if (ctx.input.pressed("dig")) {
 ### Facing and animation state in one place
 
 ```ts
-type Hero = Entity<MyGame["tags"], "idle" | "run" | "jump" | "fall">;   // import type { Entity } from "alpha"
+type Hero = Entity<MyGame, "hero">;   // import type { Entity } from "alpha"; animations come from MyGame["sheets"]
 
 function animate(hero: Hero, move: number, grounded: boolean) {
   if (move !== 0) hero.flipX = move < 0;

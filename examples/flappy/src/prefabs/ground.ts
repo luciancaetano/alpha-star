@@ -3,7 +3,7 @@ import type { Flappy } from "../types";
 import { WORLD } from "../tuning";
 
 /** The deck: its top stays at the design floor; it reaches down to the bottom of the visible world (ctx.camera.view). */
-export function ground([, y, , h]: readonly number[]): EntitySpec<Flappy["tags"], Flappy["images"]> {
+export function ground([, y, , h]: readonly number[]): EntitySpec<Flappy, "solid"> {
   const top = WORLD.height - WORLD.groundHeight;
   const size: Vec2 = [WORLD.width, Math.max(WORLD.groundHeight, y + h - top)];
   return {

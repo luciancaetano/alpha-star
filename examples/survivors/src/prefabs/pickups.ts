@@ -1,20 +1,20 @@
 // Things on the ground: XP gems, items, braziers to break, treasure chests, scenery.
 import type { Vec2 } from "alpha";
 import { GEM } from "../tuning";
-import type { Candle, Spec } from "../types";
+import type { Candle, ItemKind, Slot, Spec } from "../types";
+
+export type { ItemKind };
 
 type ItemAnim = Candle["sheets"]["items"];
 type PropAnim = Candle["sheets"]["props"];
 
 export const gemLook = (value: number): ItemAnim => (value >= GEM.big ? "xp3" : value >= GEM.mid ? "xp2" : "xp1");
 
-export function gem(at: Vec2, value: number): Spec {
+export function gem(at: Vec2, value: number): Spec<"gem"> {
   return { tags: ["gem"], pos: at, z: 2, shape: { sheet: "items", animation: gemLook(value) }, data: { v: value, pull: 0 } };
 }
 
-export type ItemKind = "coin" | "cake" | "magnet" | "bell" | "chest";
-
-export function item(at: Vec2, kind: ItemKind): Spec {
+export function item(at: Vec2, kind: ItemKind): Spec<"item"> {
   const chest = kind === "chest";
   return {
     tags: ["item"], pos: at, z: 2,
@@ -24,7 +24,7 @@ export function item(at: Vec2, kind: ItemKind): Spec {
   };
 }
 
-export function brazier(at: Vec2): Spec {
+export function brazier(at: Vec2): Spec<"brazier"> {
   return {
     tags: ["brazier"], pos: at, z: 2,
     shape: { sheet: "props", animation: "brazier" },
@@ -36,15 +36,16 @@ export function brazier(at: Vec2): Spec {
 
 export const SCENERY: PropAnim[] = ["grave", "reeds", "shrooms", "stones", "stump", "reeds", "shrooms"];
 
-export function prop(at: Vec2, look: PropAnim, flip: boolean): Spec {
+export function prop(at: Vec2, look: PropAnim, flip: boolean, slot: Slot): Spec<"prop"> {
   const glow = look === "shrooms";
   return {
     tags: ["prop"], pos: at, z: 0, layer: "floor",
     shape: { sheet: "props", animation: look, flipX: flip },
     ...(glow ? { light: { radius: 34, color: "#4de8c2", intensity: 0.9 } } : {}),
+    data: slot,
   };
 }
 
-export function groundTile(at: Vec2): Spec {
-  return { tags: ["ground"], pos: at, z: -10, layer: "floor", shape: { image: "ground" } };
+export function groundTile(at: Vec2, slot: Slot): Spec<"ground"> {
+  return { tags: ["ground"], pos: at, z: -10, layer: "floor", shape: { image: "ground" }, data: slot };
 }

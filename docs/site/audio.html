@@ -13,7 +13,7 @@ interface Jukebox {
   actions: "jump" | "coin" | "hurt" | "mute";
   sounds: "jump" | "coin" | "hurt";
   images: never;
-  tags: "player";
+  tags: { player: {} };
   scenes: { play: undefined };
   ui: {};
 }

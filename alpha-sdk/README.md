@@ -171,6 +171,22 @@ hero.body.applyImpulse([0, -hero.body.mass * 300]); hero.body.angularVelocity = 
 Raycasts ignore sensors; area queries include them. Joints and queries are scene-scoped.
 Units are pixels, degrees and kg (an impulse of `mass * dv` changes the velocity by `dv` px/s).
 
+## Typed tags (entity data), frozen world
+
+A tag is a typed component: `GameTypes.tags` maps each tag to the data its entities carry.
+
+```ts
+tags: { hero: {}; enemy: { kind: "moth" | "ghoul"; hp: number }; boss: { phase: number } };   // types.ts
+
+const enemy = (at: Vec2): EntitySpec<MyGame, "enemy"> => ({ tags: ["enemy"], pos: at, data: { kind: "moth", hp: 3 } });
+for (const e of ctx.findAll("enemy")) e.data.hp -= 1;            // Entity<MyGame, "enemy">: hp is a number
+ctx.onHit("shot", "enemy", (s, e) => { if (e.has("boss")) e.data.phase += 1; });   // has() narrows
+ctx.frozen = ctx.state.menu !== null;   // level-up/pause menu: physics, timers, tweens, anims stop; update + UI run
+```
+
+Spawning a tag without its data, reading a field another tag has, or passing a gem where an enemy
+is expected are compile errors. Queries and `findAll` return only living entities.
+
 ## Tweens, vectors, parent/child, entity data, prefabs
 
 ```ts
@@ -178,7 +194,7 @@ import { vec } from "alpha";  // add sub scale len norm dot lerp angle fromAngle
 ctx.tween(lift, { to: { x: 470 }, seconds: 2.5, ease: "sineInOut", yoyo: true, repeat: Infinity });
 ctx.tween(coin, { to: { scale: 2.5, alpha: 0 }, seconds: 0.25, onDone: () => ctx.destroy(coin) });
 const sword = ctx.spawn({ tags: ["sword"], pos: [8, 0], parent: hero });  // pos local; follows; dies with hero
-const e = ctx.spawn({ ...enemy(at), data: { hp: 3 } }); e.data.hp -= 1;       // JSON-safe, seen by MCP
+const e = ctx.spawn(enemy(at)); e.data.hp -= 1;                             // typed by the tag, JSON-safe, seen by MCP
 ```
 
 Tweens run on the fixed step (deterministic), cleared on scene change; entities tween

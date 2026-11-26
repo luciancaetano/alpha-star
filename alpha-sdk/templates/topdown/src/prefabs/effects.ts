@@ -2,7 +2,7 @@
 import type { EntitySpec, Vec2 } from "alpha";
 import type { Arena } from "../types";
 
-type Spec = EntitySpec<Arena["tags"], never, Arena["sheets"]>;
+type Spec = EntitySpec<Arena, "blast" | "label">;
 
 export function blast(at: Vec2, big = false): Spec {
   return {

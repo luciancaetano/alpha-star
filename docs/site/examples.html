@@ -47,7 +47,7 @@ ctx.onEnter("player", "coin", (_p, c) =&gt; pick(ctx, c));</code></pre>
 <h2 id="topdown">topdown</h2>
 <p>Two players on one machine, movement axes, auto-aim, sensor bullets, a bomb that clears an area, one-shot particle blasts, gamepad rumble and sounds panned to where they happen.</p>
 <p><strong>One input per player</strong> (<code>src/scenes/play.ts</code>): <code>ctx.input.player(n)</code> has the same <code>axis</code> / <code>down</code> / <code>pressed</code> as <code>ctx.input</code>.</p>
-<pre><code>const input = ctx.input.player(h.data.player as Player);
+<pre><code>const input = ctx.input.player(h.data.player);
 const move: Vec2 = [input.axis("moveX"), input.axis("moveY")];
 h.body.velocity = vec.scale(vec.norm(move), amount * HERO.speed);
 h.animation = amount &gt; 0 ? "walk" : "idle";
@@ -56,9 +56,9 @@ if (input.down("fire") &amp;&amp; h.data.cooldown === 0) {
   ctx.audio.play("shot", { pan: pan(ctx, h.pos.x), volume: 0.4 });
 }</code></pre>
 <p><strong>Everything in a circle</strong> (a physics area query):</p>
-<pre><code>for (const e of ctx.queryCircle(at(h), BOMB.radius, { tags: ["enemy"] })) if (e.alive) kill(ctx, e, 1);
+<pre><code>for (const e of ctx.queryCircle(at(h), BOMB.radius, { tags: ["enemy"] })) kill(ctx, e, 1);
 ctx.camera.shake(BOMB.shake, BOMB.seconds);
-ctx.input.rumble(0.6, 0.2, h.data.player as Player);</code></pre>
+ctx.input.rumble(0.6, 0.2, h.data.player);</code></pre>
 <p>Guides: <a href="input.html">Input</a>, <a href="physics.html">Physics</a>, <a href="audio.html">Audio</a>.</p>
 <h2 id="puzzle">puzzle</h2>
 <p>Sokoban. The rules are pure functions on plain data, tested directly without the engine; the scene only draws what they return. Undo, level progress and best moves in the save, i18n with plural forms and <code>data-t</code>, reduced motion and high contrast.</p>
@@ -89,7 +89,7 @@ stars.write();</code></pre>
 <pre><code>ctx.camera.shake(3, 0.3);
 ctx.input.rumble(0.8, 0.25);
 ctx.tween(s, { to: { alpha: 0.2 }, seconds: SHIP.safeSeconds / 8, yoyo: true, repeat: 3 });
-if ((s.data.lives as number) &lt;= 0) ctx.after(0.5, () =&gt; ctx.go("over", { score: ctx.state.score }));</code></pre>
+if (s.data.lives &lt;= 0) ctx.after(0.5, () =&gt; ctx.go("over", { score: ctx.state.score }));</code></pre>
 <p>Guides: <a href="physics.html">Physics</a>, <a href="particles.html">Particles and effects</a>.</p>
 <h2 id="shaders">shaders</h2>
 <p>Six custom Vulkan GLSL fragment shaders (wave, chromatic aberration, sepia, posterize, scanlines, vignette pulse) switched live, with <code>intensity</code> and <code>time</code> uniforms, plus lights, emitters and on-screen buttons on phones.</p>

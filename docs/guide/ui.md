@@ -18,7 +18,7 @@ interface Clicker {
   actions: "tap" | "pause";
   sounds: "pop";
   images: never;
-  tags: "target";
+  tags: { target: {} };
   scenes: { play: undefined };
   ui: {
     hud: "score" | "time";             // document -> ids of the elements scripts touch
@@ -29,23 +29,23 @@ interface Clicker {
 const { scene, game } = define<Clicker>();
 
 const play = scene("play", {
-  state: () => ({ score: 0, left: 30, paused: false }),
+  state: () => ({ score: 0, left: 30 }),
   enter(ctx) {
     ctx.spawn({ tags: ["target"], pos: [160, 90], shape: { circle: 16, color: "#ffd166" } });
     ctx.ui.show("hud");
     ctx.ui.set("hud", "score", 0);
 
-    const resume = () => { ctx.state.paused = false; ctx.ui.hide("pause"); };
+    const resume = () => { ctx.frozen = false; ctx.ui.hide("pause"); };
     ctx.ui.on("pause", "resume", "click", resume);
     ctx.ui.on("pause", "resume", "back", resume);           // Escape / gamepad B
     ctx.ui.on("pause", "restart", "click", () => ctx.go("play"));
   },
   update(ctx) {
-    if (ctx.input.pressed("pause") && !ctx.state.paused) {
-      ctx.state.paused = true;
+    if (ctx.input.pressed("pause") && !ctx.frozen) {
+      ctx.frozen = true;                                    // the world stops; update and UI keep running
       ctx.ui.show("pause");
     }
-    if (ctx.state.paused) return;
+    if (ctx.frozen) return;
 
     ctx.state.left = Math.max(0, ctx.state.left - ctx.dt);
     ctx.ui.set("hud", "time", Math.ceil(ctx.state.left));
@@ -239,6 +239,20 @@ Elements with `data-t="key"` show `ctx.t(key)` and re-translate when `ctx.locale
 [Saves, settings, i18n](saves.html).
 
 ## Recipes
+
+### Menus that pause the game
+
+`ctx.frozen = true` freezes the scene's world: physics (bodies keep their velocity), contact
+events, `ctx.every`/`ctx.after` timers, tweens, animations, particles and `ctx.time` stop, while
+`update`, UI handlers, input, the camera and audio keep running. It is `false` on every scene enter.
+
+```ts
+function openPause(ctx: Ctx) { ctx.frozen = true; ctx.ui.show("pause"); }
+function closePause(ctx: Ctx) { ctx.frozen = false; ctx.ui.hide("pause"); }
+// update(ctx):
+if (ctx.input.pressed("pause")) (ctx.frozen ? closePause : openPause)(ctx);
+if (ctx.frozen) return;                                  // skip game logic while the menu is up
+```
 
 ### Score HUD with lives
 

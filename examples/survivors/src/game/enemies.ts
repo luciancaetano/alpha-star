@@ -10,7 +10,7 @@ import type { Play, Stats } from "./run";
 import { pace, statusTint, strike, tickStatuses } from "./strike";
 
 /** A point just outside the visible world, `extra` px beyond its edge, at `angle` degrees from the hero. */
-function offscreen(ctx: Play, hero: Ent, angle: number, extra = 24): Vec2 {
+function offscreen(ctx: Play, hero: Ent<"hero">, angle: number, extra = 24): Vec2 {
   const [, , vw, vh] = ctx.camera.view;
   const dir = vec.fromAngle(angle);
   const reach = Math.min(Math.abs(vw / 2 / (dir[0] || 1e-6)), Math.abs(vh / 2 / (dir[1] || 1e-6)));
@@ -22,7 +22,7 @@ function spawnKind(ctx: Play, kind: EnemyKind, pos: Vec2) {
 }
 
 /** One foe at a time: `spawnCd` accumulates the wave's rate (foes per second) until one is due. */
-function waveSpawns(ctx: Play, hero: Ent, st: Stats) {
+function waveSpawns(ctx: Play, hero: Ent<"hero">, st: Stats) {
   const wave = waveAt(ctx.state.time);
   ctx.state.spawnCd += wave.rate * st.omen * ctx.dt;
   const alive = ctx.findAll("enemy").length;
@@ -33,7 +33,7 @@ function waveSpawns(ctx: Play, hero: Ent, st: Stats) {
   }
 }
 
-function runEvent(ctx: Play, hero: Ent, ev: (typeof EVENTS)[number]) {
+function runEvent(ctx: Play, hero: Ent<"hero">, ev: (typeof EVENTS)[number]) {
   ctx.state.events.push(`${ev.at}`);
   ctx.ui.set("hud", "banner", ctx.t(`event.${ev.at}`));
   ctx.after(3.5, () => ctx.ui.set("hud", "banner", ""));
@@ -48,43 +48,43 @@ function runEvent(ctx: Play, hero: Ent, ev: (typeof EVENTS)[number]) {
   }
 }
 
-function events(ctx: Play, hero: Ent) {
+function events(ctx: Play, hero: Ent<"hero">) {
   for (const ev of EVENTS) {
     if (ctx.state.time >= ev.at && !ctx.state.events.includes(`${ev.at}`)) runEvent(ctx, hero, ev);
   }
 }
 
 /** Foes left far behind come back from the side the hero walks toward. */
-function chase(ctx: Play, hero: Ent) {
+function chase(ctx: Play, hero: Ent<"hero">) {
   const h = at(hero);
   const [, , vw, vh] = ctx.camera.view;
   const far = Math.hypot(vw, vh) / 2 + RUN.despawn;   // beyond the corners of any screen
   for (const e of ctx.findAll("enemy")) {
-    e.data.flash = Math.max(0, (e.data.flash as number) - ctx.dt);
+    e.data.flash = Math.max(0, e.data.flash - ctx.dt);
     if (e.data.flash === 0) e.tint = statusTint(ctx, e);
-    e.data.kb = Math.max(0, (e.data.kb as number) - ctx.dt);
+    e.data.kb = Math.max(0, e.data.kb - ctx.dt);
     const to = vec.sub(h, at(e));
-    if (vec.len(to) > far && !e.tags.includes("boss")) {
+    if (vec.len(to) > far && !e.has("boss")) {
       // Well past the edge: placed right at it, they seemed to pop in next to a walking hero.
       const p = offscreen(ctx, hero, vec.angle(vec.scale(to, -1)) + 180 + ctx.random.range(-40, 40), ctx.random.range(60, 120));
       [e.pos.x, e.pos.y] = p;   // a far jump: the engine draws it there at once
       continue;
     }
     e.flipX = to[0] < 0;
-    if (e.data.kb === 0) e.body.velocity = vec.scale(vec.norm(to), ENEMIES[e.data.kind as EnemyKind].speed * pace(ctx, e));
+    if (e.data.kb === 0) e.body.velocity = vec.scale(vec.norm(to), ENEMIES[e.data.kind].speed * pace(ctx, e));
   }
 }
 
 /** Touching foes hurt; a short invulnerability follows each hit. */
-function contact(ctx: Play, hero: Ent, st: Stats) {
+function contact(ctx: Play, hero: Ent<"hero">, st: Stats) {
   ctx.state.iframes = Math.max(0, ctx.state.iframes - ctx.dt);
   hero.tint = ctx.state.iframes > 0 && Math.floor(ctx.state.iframes * 20) % 2 === 0 ? "#ff6060" : "#ffffff";
   if (ctx.state.iframes > 0) return;
-  const touching = ctx.queryCircle(at(hero), HERO.radius + 4, { tags: ["enemy"] }).filter((e) => e.alive);
+  const touching = ctx.queryCircle(at(hero), HERO.radius + 4, { tags: ["enemy"] });
   if (!touching.length) return;
   if (st.thorns > 0) for (const e of touching) strike(ctx, e, { dmg: st.thorns, mod: "none", weapon: "thorn" }, at(hero), 1, st);
   // Every foe pressing in hurts (the five strongest): standing in a crowd is deadly.
-  const hits = touching.map((e) => ENEMIES[e.data.kind as EnemyKind].dmg).sort((a, b) => b - a).slice(0, HERO.crowd);
+  const hits = touching.map((e) => ENEMIES[e.data.kind].dmg).sort((a, b) => b - a).slice(0, HERO.crowd);
   const raw = hits.reduce((sum, d) => sum + d, 0) * dmgScale(ctx.state.time);
   ctx.state.hp -= Math.max(1, raw - st.armor * hits.length);
   ctx.state.iframes = HERO.iframes;
@@ -93,7 +93,7 @@ function contact(ctx: Play, hero: Ent, st: Stats) {
   ctx.input.rumble(0.4, 0.15);
 }
 
-export function updateEnemies(ctx: Play, hero: Ent, st: Stats) {
+export function updateEnemies(ctx: Play, hero: Ent<"hero">, st: Stats) {
   if (ctx.state.time < RUN.seconds) waveSpawns(ctx, hero, st);
   tickStatuses(ctx);
   events(ctx, hero);

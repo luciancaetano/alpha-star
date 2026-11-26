@@ -3,7 +3,7 @@ import type { Player, Vec2 } from "alpha";
 import { vec } from "alpha";
 import { scene } from "../alpha";
 import { updateEnemies } from "../game/enemies";
-import { boltHit, freeze, updateProjectiles } from "../game/projectiles";
+import { boltHit, updateProjectiles } from "../game/projectiles";
 import { choose, hud, nextMenu, pause, wireMenus } from "../game/menus";
 import { updatePickups } from "../game/pickups";
 import { newRun, type Play, type RunState, stats } from "../game/run";
@@ -19,7 +19,7 @@ const result = (ctx: Play, dawn: boolean): RunResult => {
   return { hero: s.hero, seconds: Math.floor(s.time), level: s.level, kills: s.kills, gold: s.gold + Math.floor(s.kills / 10), dawn };
 };
 
-function walk(ctx: Play, h: Ent, speed: number) {
+function walk(ctx: Play, h: Ent<"hero">, speed: number) {
   const input = ctx.input.player(1 as Player);
   const move: Vec2 = ctx.state.demo ? autopilot(ctx.state.time) : [input.axis("moveX"), input.axis("moveY")];
   const amount = Math.min(1, vec.len(move));
@@ -33,14 +33,14 @@ function walk(ctx: Play, h: Ent, speed: number) {
 
 function showHp(ctx: Play, maxHp: number) {
   const on = Math.ceil((Math.max(0, ctx.state.hp) / maxHp) * HP_SEGMENTS);
-  for (const seg of ctx.findAll("hpbar")) if (seg.data.seg !== undefined) seg.alpha = (seg.data.seg as number) < on ? 1 : 0;
+  for (const seg of ctx.findAll("hpbar")) if (seg.data.seg >= 0) seg.alpha = seg.data.seg < on ? 1 : 0;
 }
 
 function menuKeys(ctx: Play) {
   if (ctx.state.mode === "levelup") (["pick1", "pick2", "pick3"] as const).forEach((a, i) => ctx.input.pressed(a) && choose(ctx, i));
 }
 
-function step(ctx: Play, h: Ent) {
+function step(ctx: Play, h: Ent<"hero">) {
   const s = ctx.state;
   const st = stats(s);
   s.time += ctx.dt;
@@ -87,11 +87,9 @@ export default scene("play", {
     const h = ctx.findAll("hero")[0];
     if (!h || ctx.state.over) return;
     if (ctx.state.mode === "play") step(ctx, h);
-    else {
-      h.body.velocity = [0, 0];
-      freeze(ctx);
-      menuKeys(ctx);
-    }
+    else menuKeys(ctx);
+    // Menus hold the world still: bodies, contacts, timers, tweens and particles wait.
+    ctx.frozen = ctx.state.mode !== "play";
     ctx.state.view = [...ctx.camera.view];
     updateWorld(ctx);
     hud(ctx);

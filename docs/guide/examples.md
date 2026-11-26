@@ -108,7 +108,7 @@ one-shot particle blasts, gamepad rumble and sounds panned to where they happen.
 `down` / `pressed` as `ctx.input`.
 
 ```ts
-const input = ctx.input.player(h.data.player as Player);
+const input = ctx.input.player(h.data.player);
 const move: Vec2 = [input.axis("moveX"), input.axis("moveY")];
 h.body.velocity = vec.scale(vec.norm(move), amount * HERO.speed);
 h.animation = amount > 0 ? "walk" : "idle";
@@ -121,9 +121,9 @@ if (input.down("fire") && h.data.cooldown === 0) {
 **Everything in a circle** (a physics area query):
 
 ```ts
-for (const e of ctx.queryCircle(at(h), BOMB.radius, { tags: ["enemy"] })) if (e.alive) kill(ctx, e, 1);
+for (const e of ctx.queryCircle(at(h), BOMB.radius, { tags: ["enemy"] })) kill(ctx, e, 1);
 ctx.camera.shake(BOMB.shake, BOMB.seconds);
-ctx.input.rumble(0.6, 0.2, h.data.player as Player);
+ctx.input.rumble(0.6, 0.2, h.data.player);
 ```
 
 Guides: [Input](input.html), [Physics](physics.html), [Audio](audio.html).
@@ -190,7 +190,7 @@ stars.write();
 ctx.camera.shake(3, 0.3);
 ctx.input.rumble(0.8, 0.25);
 ctx.tween(s, { to: { alpha: 0.2 }, seconds: SHIP.safeSeconds / 8, yoyo: true, repeat: 3 });
-if ((s.data.lives as number) <= 0) ctx.after(0.5, () => ctx.go("over", { score: ctx.state.score }));
+if (s.data.lives <= 0) ctx.after(0.5, () => ctx.go("over", { score: ctx.state.score }));
 ```
 
 Guides: [Physics](physics.html), [Particles and effects](particles.html).

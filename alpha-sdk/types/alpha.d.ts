@@ -33,8 +33,14 @@ declare module "alpha" {
     sounds: string;
     /** Image asset names (use `never` if the game has none). */
     images: string;
-    /** Entity tags used by find / collisions. */
-    tags: string;
+    /**
+     * Entity tags -> the data an entity with that tag carries in `entity.data` (`{}` = none),
+     * e.g. `{ hero: {}; enemy: { kind: EnemyKind; hp: number } }`. A tag is a typed component:
+     * spawning with "enemy" requires its data, and `findAll("enemy")`, queries filtered by it
+     * and `onHit("shot", "enemy", ...)` give entities whose `data.hp` is a number. Data stays
+     * JSON-safe (numbers, strings, booleans, null, arrays, plain objects).
+     */
+    tags: { [tag: string]: object };
     /** Scene name -> params its enter() receives (`undefined` = none). */
     scenes: { [name: string]: SceneParams };
     /**
@@ -88,6 +94,18 @@ declare module "alpha" {
   export type AnimationOf<G extends GameTypes> = SheetsOf<G>[keyof SheetsOf<G>] & string;
   /** The game's LDtk world names (`never` without `worlds`). */
   export type WorldOf<G extends GameTypes> = G extends { worlds: infer W extends string } ? W : never;
+
+  /** The game's tag names. */
+  export type TagOf<G extends GameTypes> = keyof G["tags"] & string;
+  /**
+   * The data of an entity having every tag in `T` (the intersection of their data shapes);
+   * `{}` for `never` (an entity whose tags are not known).
+   */
+  export type DataOf<G extends GameTypes, T extends TagOf<G>> = [T] extends [never] ? {}
+    : (T extends unknown ? (x: G["tags"][T]) => void : never) extends (x: infer I) => void ? I : never;
+  /** An entity having any one of the tags in `T` (a union, one member per tag); `Entity<G>` for `never`. */
+  export type EntityOf<G extends GameTypes, T extends TagOf<G>> = [T] extends [never] ? Entity<G>
+    : T extends TagOf<G> ? Entity<G, T> : never;
 
   export type UiTypes = { [doc: string]: string };
 
@@ -305,31 +323,36 @@ declare module "alpha" {
     list(): EffectOf<S>[];
   }
 
-  /** Plain data describing an entity. Build it with functions, not classes. */
-  export interface EntitySpec<T extends string = string, I extends string = never, S extends { [k: string]: string } = {},
-    L extends string = never, F extends string = never, C extends string = string> {
-    tags: T[];
+  /**
+   * Plain data describing an entity with tags `T` (`tags` lists all of them or some).
+   * Build it with functions, not classes: `const enemy = (...): EntitySpec<G, "enemy"> => ({...})`.
+   * `data` must hold every field of every tag in `T`; it may be left out when they have none.
+   */
+  export type EntitySpec<G extends GameTypes, T extends TagOf<G>> = SpecBase<G, T> & DataField<DataOf<G, T>>;
+  /** `data` is required when the tags' data has a required field. */
+  export type DataField<D> = {} extends D ? { data?: D } : { data: D };
+  /** A spec with any tags, what LDtk `entities` factories may return; `ctx.spawn` takes only EntitySpec. */
+  export type AnySpec<G extends GameTypes> = SpecBase<G, TagOf<G>> & { data?: object };
+
+  export interface SpecBase<G extends GameTypes, T extends TagOf<G>> {
+    tags: readonly T[];
     pos: Vec2;
-    shape?: Shape<I, S, F>;
-    body?: BodySpec<C>;
-    emitter?: EmitterSpec<I, keyof S & string>;
+    shape?: Shape<G["images"], SheetsOf<G>, FontOf<G>>;
+    body?: BodySpec<CategoryOf<G>>;
+    emitter?: EmitterSpec<G["images"], keyof SheetsOf<G> & string>;
     /** A light riding on the entity; seen only with config.lighting. Render-only. */
     light?: LightSpec;
     rotation?: number;
     /** Order inside the entity's layer (default 0). */
     z?: number;
     /** A config.layers name (default: the unnamed layer, z 0, parallax 1). */
-    layer?: L;
+    layer?: LayerOf<G>;
     /**
      * Makes it a child: `pos` and `rotation` are then local to the parent, it follows the
      * parent every step and is destroyed with it.
      */
-    parent?: Entity<T, any>;
-    /** Game data (JSON-safe plain object), copied; read and change it as `entity.data`. */
-    data?: EntityData;
+    parent?: Entity<G>;
   }
-
-  export type EntityData = { [k: string]: SaveValue };
 
   export interface Body {
     get velocity(): Vec2Ref;
@@ -356,8 +379,8 @@ declare module "alpha" {
     speed: number;
   }
 
-  export interface RayHit<T extends string = string> {
-    entity: Entity<T, any>;
+  export interface RayHit<G extends GameTypes, T extends TagOf<G> = never> {
+    entity: EntityOf<G, T>;
     point: Vec2;
     /** Out of the hit surface. */
     normal: Vec2;
@@ -366,11 +389,11 @@ declare module "alpha" {
   }
 
   /** What a raycast or area query considers (default: every body). */
-  export interface QueryFilter<T extends string = string, C extends string = string> {
-    /** Only entities having any of these tags. */
-    tags?: T[];
+  export interface QueryFilter<G extends GameTypes, T extends TagOf<G> = never> {
+    /** Only entities having any of these tags (the results are typed by them). */
+    tags?: readonly T[];
     /** Only bodies in these config.collision categories. */
-    categories?: C[];
+    categories?: readonly CategoryOf<G>[];
   }
 
   /**
@@ -380,10 +403,10 @@ declare module "alpha" {
    * [min, max] length (distance). motor: speed in degrees/s or px/s, max torque/force in
    * kg-pixel units (keep it near what the job needs: a huge max overpowers the limits).
    */
-  export interface JointSpec<T extends string = string> {
+  export interface JointSpec<G extends GameTypes> {
     type: "revolute" | "distance" | "rope" | "weld" | "prismatic";
-    a: Entity<T, any>;
-    b: Entity<T, any>;
+    a: Entity<G>;
+    b: Entity<G>;
     anchor?: Vec2;
     anchors?: [Vec2, Vec2];
     /** Prismatic slide direction. Default [1, 0]. */
@@ -429,9 +452,15 @@ declare module "alpha" {
     cancel(): void;
   }
 
-  export interface Entity<T extends string = string, A extends string = string> {
+  /**
+   * A live entity known to have the tags in `T` (`Entity<G>`: tags not known, data `{}`).
+   * Every `Entity<G, T>` is an `Entity<G>`; `has` narrows to more tags.
+   */
+  export interface Entity<G extends GameTypes, in T extends TagOf<G> = never> {
     readonly id: number;
-    readonly tags: readonly T[];
+    readonly tags: readonly TagOf<G>[];
+    /** True when it has `tag`; narrows the entity (and its data) to that tag too. */
+    has<K extends TagOf<G>>(tag: K): this is Entity<G, K>;
     pos: Vec2Ref;
     rotation: number;
     z: number;
@@ -444,9 +473,9 @@ declare module "alpha" {
      * switches to it from its first frame; setting the same name keeps it going.
      * Advances on the fixed step. Throws (listing the sheet's animations) for unknown names.
      */
-    animation: A | "";
+    animation: AnimationOf<G> | "";
     /** Plays `name` from its first frame, even if it is already playing. */
-    play(name: A): void;
+    play(name: AnimationOf<G>): void;
     /** Mirror the shape horizontally / vertically (images and sheets). */
     flipX: boolean;
     flipY: boolean;
@@ -471,14 +500,14 @@ declare module "alpha" {
     /** Size multiplier of the shape (1 = as spawned; text scales its size). Must be > 0. */
     scale: number;
     /** The entity it was spawned under (`spawn({ parent })`), or null. */
-    readonly parent: Entity<T, A> | null;
+    readonly parent: Entity<G> | null;
     /** Living children, oldest first. */
-    readonly children: Entity<T, A>[];
+    readonly children: Entity<G>[];
     /**
-     * Game data: a JSON-safe plain object (spawn's `data`, or {}), changed in place
-     * (`e.data.hp -= 1`) or replaced. Tools (MCP state) see it after each step.
+     * Game data typed by the tags (GameTypes.tags): spawn's `data`, or {}, changed in place
+     * (`e.data.hp -= 1`) or replaced; JSON-safe. Tools (MCP state) see it after each step.
      */
-    data: EntityData;
+    data: DataOf<G, T>;
   }
 
   /** ctx.window: the game window. Ignored by headless runs except for reading back. */
@@ -551,7 +580,7 @@ declare module "alpha" {
      * distance covered per fixed step, (0, 1], default 1 (locked). `deadzone`: [w, h] box
      * around the center inside which the entity moves without moving the camera.
      */
-    follow(entity: Entity<any, any> | null, opts?: { lerp?: number; deadzone?: Vec2 }): void;
+    follow(entity: Entity<any> | null, opts?: { lerp?: number; deadzone?: Vec2 }): void;
     /** Shakes by up to `intensity` pixels, fading out over `seconds` (deterministic). */
     shake(intensity: number, seconds: number): void;
     /** Keeps the visible area inside [x, y, width, height] (e.g. the map's size); null removes them. */
@@ -645,7 +674,7 @@ declare module "alpha" {
   }
 
   /** A spawned level (ctx.spawnLevel): data plus live edits. */
-  export interface Level<T extends string = string> extends LevelData {
+  export interface Level<G extends GameTypes> extends LevelData {
     /**
      * Sets an IntGrid cell to a value (number or its LDtk identifier; 0 clears).
      * Collision rules of that layer rebuild their merged colliders. Auto-layer
@@ -655,7 +684,7 @@ declare module "alpha" {
     /** Replaces the tiles of a cell with tile id `tile` (null clears). The layer redraws in place. */
     setTile(layer: string, cx: number, cy: number, tile: number | null, opts?: { flipX?: boolean; flipY?: boolean; alpha?: number }): void;
     /** The entity a factory spawned for LDtk entity `iid` (resolves EntityRef fields), or null. */
-    entity(iid: string): Entity<T> | null;
+    entity(iid: string): Entity<G> | null;
     /** Removes everything spawnLevel made: tile layers, colliders, background and factory entities still alive. */
     destroy(): void;
   }
@@ -679,15 +708,15 @@ declare module "alpha" {
     | T
     | { tag: T; oneWay?: boolean; sensor?: boolean; friction?: number; restitution?: number };
 
-  export interface SpawnLevelOptions<T extends string, S> {
+  export interface SpawnLevelOptions<G extends GameTypes> {
     /**
      * IntGrid layers that become merged static colliders: a tag for every
      * non-zero value (`{ Collisions: "wall" }`), or a rule per value / identifier
      * (`{ Collisions: { wall: "wall", platform: { tag: "ledge", oneWay: true } } }`).
      */
-    collide?: { [intGridLayer: string]: T | { [value: string]: IntGridCollider<T> } };
+    collide?: { [intGridLayer: string]: TagOf<G> | { [value: string]: IntGridCollider<TagOf<G>> } };
     /** LDtk entity identifier -> factory; it returns spawn spec(s) or null. */
-    entities?: { [entity: string]: (e: LevelEntity) => S | S[] | null | undefined };
+    entities?: { [entity: string]: (e: LevelEntity) => AnySpec<G> | AnySpec<G>[] | null | undefined };
     /** z of every tile layer and the background (default 0; later layers draw over earlier ones). */
     z?: number;
     /** World pixels of the level's top-left (default its LDtk world position). */
@@ -1015,8 +1044,8 @@ declare module "alpha" {
 
   type ParamArgs<P> = [P] extends [undefined] ? [] : [params: P];
 
-  export type HitHandler<T extends string> = (a: Entity<T, any>, b: Entity<T, any>, contact: Contact) => void;
-  export type PairHandler<T extends string> = (a: Entity<T, any>, b: Entity<T, any>) => void;
+  export type HitHandler<G extends GameTypes, A extends TagOf<G>, B extends TagOf<G>> = (a: Entity<G, A>, b: Entity<G, B>, contact: Contact) => void;
+  export type PairHandler<G extends GameTypes, A extends TagOf<G>, B extends TagOf<G>> = (a: Entity<G, A>, b: Entity<G, B>) => void;
   export type CategoryOf<G extends GameTypes> = G extends { categories: infer C extends string } ? C : string;
 
   /** Everything a scene can touch. Scene-scoped: cleared on scene change. */
@@ -1064,19 +1093,28 @@ declare module "alpha" {
      * the cutout) keep HUD and buttons inside it.
      */
     readonly safeArea: readonly [x: number, y: number, width: number, height: number];
+    /**
+     * Freezes the scene's world while true: physics (bodies keep their velocity), contact
+     * events, ctx.every/after timers, tweens, animations, particles, animated tiles and
+     * ctx.time stop; `update`, UI handlers, input, the camera and audio keep running (level-up
+     * and pause menus). False on every scene enter. Not ctx.app.paused (the OS paused the app).
+     */
+    frozen: boolean;
 
-    spawn(spec: EntitySpec<G["tags"], G["images"], SheetsOf<G>, LayerOf<G>, FontOf<G>, CategoryOf<G>>): Entity<G["tags"], AnimationOf<G>>;
-    /** Removed at the end of the step. Destroying twice is a no-op. */
-    destroy(entity: Entity<G["tags"], any>): void;
-    /** Throws if no entity has the tag. */
-    find(tag: G["tags"]): Entity<G["tags"], AnimationOf<G>>;
-    findAll(tag: G["tags"]): Entity<G["tags"], AnimationOf<G>>[];
+    /** `data` is checked against every tag's data (GameTypes.tags). */
+    spawn<T extends TagOf<G>>(spec: EntitySpec<G, T>): Entity<G, T>;
+    /** Gone from queries at once (alive = false), freed at the end of the step. Destroying twice is a no-op. */
+    destroy(entity: Entity<G>): void;
+    /** The oldest living entity with the tag; throws if none has it. */
+    find<T extends TagOf<G>>(tag: T): Entity<G, T>;
+    /** Living entities with the tag, oldest first. */
+    findAll<T extends TagOf<G>>(tag: T): Entity<G, T>[];
     /**
      * Every living entity with the tag, positions in bulk (oldest first). For many
      * entities per frame this is several times cheaper than `entity.pos` per entity:
      * edit `x[i]` / `y[i]`, then `write()` once. Entities destroyed since are skipped.
      */
-    positions(tag: G["tags"]): Positions;
+    positions(tag: TagOf<G>): Positions;
 
     /**
      * Spawns an LDtk level: draws its visible tile layers (one batched, culled entity
@@ -1087,19 +1125,19 @@ declare module "alpha" {
     spawnLevel(
       world: WorldOf<G>,
       level: string,
-      opts?: SpawnLevelOptions<G["tags"], EntitySpec<G["tags"], G["images"], SheetsOf<G>, LayerOf<G>, FontOf<G>, CategoryOf<G>>>,
-    ): Level<G["tags"]>;
+      opts?: SpawnLevelOptions<G>,
+    ): Level<G>;
     /** An LDtk world's data (levels, entities, cells) without spawning anything. */
     world(name: WorldOf<G>): World;
 
     /** Solid contact between tags starts. `a` has tagA, `b` has tagB; `contact` normal points a -> b. */
-    onHit(tagA: G["tags"], tagB: G["tags"], fn: HitHandler<G["tags"]>): void;
+    onHit<A extends TagOf<G>, B extends TagOf<G>>(tagA: A, tagB: B, fn: HitHandler<G, A, B>): void;
     /** Solid contact between tags ends (both still alive). */
-    onHitEnd(tagA: G["tags"], tagB: G["tags"], fn: PairHandler<G["tags"]>): void;
+    onHitEnd<A extends TagOf<G>, B extends TagOf<G>>(tagA: A, tagB: B, fn: PairHandler<G, A, B>): void;
     /** Overlap with a sensor starts. */
-    onEnter(tagA: G["tags"], tagB: G["tags"], fn: PairHandler<G["tags"]>): void;
+    onEnter<A extends TagOf<G>, B extends TagOf<G>>(tagA: A, tagB: B, fn: PairHandler<G, A, B>): void;
     /** Overlap with a sensor ends (both still alive). */
-    onExit(tagA: G["tags"], tagB: G["tags"], fn: PairHandler<G["tags"]>): void;
+    onExit<A extends TagOf<G>, B extends TagOf<G>>(tagA: A, tagB: B, fn: PairHandler<G, A, B>): void;
 
     /**
      * The app paused: window lost focus or was minimized (unless `config.pauseOnFocusLoss` is
@@ -1114,22 +1152,25 @@ declare module "alpha" {
     /** App state: `paused` is true between onPause and onResume. */
     readonly app: { readonly paused: boolean };
 
-    /** First solid collider on the segment (sensors ignored), or null. */
-    raycast(from: Vec2, to: Vec2, opts?: QueryFilter<G["tags"], CategoryOf<G>>): RayHit<G["tags"]> | null;
+    /**
+     * First solid collider on the segment (sensors ignored), or null. Queries never return
+     * entities destroyed earlier in the step; `opts.tags` types the results.
+     */
+    raycast<T extends TagOf<G> = never>(from: Vec2, to: Vec2, opts?: QueryFilter<G, T>): RayHit<G, T> | null;
     /** Every solid collider on the segment, nearest first. */
-    raycastAll(from: Vec2, to: Vec2, opts?: QueryFilter<G["tags"], CategoryOf<G>>): RayHit<G["tags"]>[];
-    /** Entities whose colliders (sensors too) overlap the circle, oldest first. */
-    queryCircle(center: Vec2, radius: number, opts?: QueryFilter<G["tags"], CategoryOf<G>>): Entity<G["tags"], AnimationOf<G>>[];
-    /** Entities whose colliders overlap [x, y, width, height] (top-left), oldest first. */
-    queryRect(rect: [x: number, y: number, width: number, height: number], opts?: QueryFilter<G["tags"], CategoryOf<G>>): Entity<G["tags"], AnimationOf<G>>[];
+    raycastAll<T extends TagOf<G> = never>(from: Vec2, to: Vec2, opts?: QueryFilter<G, T>): RayHit<G, T>[];
+    /** Living entities whose colliders (sensors too) overlap the circle, oldest first. */
+    queryCircle<T extends TagOf<G> = never>(center: Vec2, radius: number, opts?: QueryFilter<G, T>): EntityOf<G, T>[];
+    /** Living entities whose colliders overlap [x, y, width, height] (top-left), oldest first. */
+    queryRect<T extends TagOf<G> = never>(rect: [x: number, y: number, width: number, height: number], opts?: QueryFilter<G, T>): EntityOf<G, T>[];
     /** Connects two bodies. Scene-scoped; goes away with either body. */
-    joint(spec: JointSpec<G["tags"]>): Joint;
+    joint(spec: JointSpec<G>): Joint;
     /**
      * Eases numbers on the fixed step (deterministic, scene-scoped). An entity tweens
      * x, y, rotation, alpha, scale (a kinematic body's x/y moves by velocity, so riders are
      * carried); a plain object tweens its number keys.
      */
-    tween(target: Entity<G["tags"], any>, opts: TweenOptions<EntityTweenKeys>): Tween;
+    tween(target: Entity<G>, opts: TweenOptions<EntityTweenKeys>): Tween;
     tween<O extends object>(target: O, opts: TweenOptions<{ [K in keyof O]: O[K] extends number ? K : never }[keyof O] & string>): Tween;
 
     /** Repeats every `seconds` (>= 0.001) of game time, first call after `seconds`. */
@@ -1363,7 +1404,7 @@ declare module "alpha" {
 }
 
 declare module "alpha/test" {
-  import type { AnimationOf, AxisOf, Game, GameTypes, LocaleOf, MusicOf, Os, Vec2 } from "alpha";
+  import type { AnimationOf, AxisOf, DataOf, Game, GameTypes, LocaleOf, MusicOf, Os, TagOf, Vec2 } from "alpha";
 
   /**
    * One player's simulated input: action -> frames (pressed for one step each),
@@ -1415,11 +1456,11 @@ declare module "alpha/test" {
   export interface Expect<G extends GameTypes> {
     scene(name: keyof G["scenes"] & string): void;
     noErrors(): void;
-    count(tag: G["tags"]): { equals(n: number): void; atLeast(n: number): void };
+    count(tag: TagOf<G>): { equals(n: number): void; atLeast(n: number): void };
     /** Plain text of a UI element at the end of the run. */
     text<D extends keyof G["ui"] & string>(doc: D, id: G["ui"][D]): { equals(text: string): void };
     /** Animation of the oldest living entity with the tag at the end of the run ("" = none). */
-    animation(tag: G["tags"]): { equals(name: AnimationOf<G> | ""): void };
+    animation(tag: TagOf<G>): { equals(name: AnimationOf<G> | ""): void };
     /** The UI document is shown at the end of the run. */
     shown(doc: keyof G["ui"] & string): void;
     /** Live particles of every emitter at the end of the run. */
@@ -1428,13 +1469,13 @@ declare module "alpha/test" {
     music(name: MusicOf<G> | null): void;
   }
 
-  export interface EntitySnapshot {
+  export interface EntitySnapshot<D = { [k: string]: unknown }> {
     id: number;
     pos: [number, number];
     rotation: number;
     scale: number;
     alpha: number;
-    data: { [k: string]: unknown };
+    data: D;
     /** null without a body. */
     velocity: [number, number] | null;
   }
@@ -1445,7 +1486,7 @@ declare module "alpha/test" {
     /** Scene state at the end of the run (JSON copy; undefined when not JSON-safe). */
     readonly state: unknown;
     /** Living entities with the tag at the end of the run, oldest first (plain data). */
-    entities(tag: G["tags"]): EntitySnapshot[];
+    entities<T extends TagOf<G>>(tag: T): EntitySnapshot<DataOf<G, T>>[];
     /** At the end of the run: the music playing, the locale, the settings, the save slots. */
     readonly music: MusicOf<G> | null;
     readonly locale: LocaleOf<G> | null;

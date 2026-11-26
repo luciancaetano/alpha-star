@@ -2,16 +2,15 @@
 // The hit (damage, mod, weapon id) rides in `data`.
 import type { Vec2 } from "alpha";
 import { vec } from "alpha";
-import type { Hit } from "../game/strike";
-import type { Color, Spec } from "../types";
+import type { Candle, Color, Spec, WeaponHit } from "../types";
 
-export interface Shot extends Hit { pierce: number; life: number }
+export type Shot = WeaponHit & { pierce: number; life: number };
 
 const drawnColor = (c: Color, base: Color) => (c === base ? "#ffffff" : c);
 
 /** A flying bolt or lance: a sensor that reports overlaps with enemies (ctx.onEnter).
  *  `turn`: seconds of life left when it flies back (boomerangs). */
-export function bolt(from: Vec2, dir: Vec2, speed: number, lance: boolean, hit: Shot, color: Color = "#ff9a3c", turn = -1): Spec {
+export function bolt(from: Vec2, dir: Vec2, speed: number, lance: boolean, hit: Shot, color: Color = "#ff9a3c", turn = -1): Spec<"shot"> {
   const len = lance ? 30 : 12;
   return {
     tags: ["shot"], pos: from, z: 8, layer: "fx", rotation: vec.angle(dir),
@@ -26,7 +25,7 @@ export function bolt(from: Vec2, dir: Vec2, speed: number, lance: boolean, hit: 
 }
 
 /** A whip crack or a beam: lives a moment; the weapon applies its damage with area queries. */
-export function slash(at: Vec2, flip: boolean, scale: number, color: Color = "#ff7a2a"): Spec {
+export function slash(at: Vec2, flip: boolean, scale: number, color: Color = "#ff7a2a"): Spec<"slash"> {
   return {
     tags: ["slash"], pos: at, z: 8, layer: "fx",
     shape: { tint: drawnColor(color, "#ff7a2a"), sheet: "fx", animation: "slash", size: [48 * scale, 32 * scale], flipX: flip },
@@ -35,7 +34,7 @@ export function slash(at: Vec2, flip: boolean, scale: number, color: Color = "#f
   };
 }
 
-export function beam(from: Vec2, dir: Vec2, length: number, width: number, color: Color): Spec {
+export function beam(from: Vec2, dir: Vec2, length: number, width: number, color: Color): Spec<"slash"> {
   return {
     tags: ["slash"], pos: vec.add(from, vec.scale(dir, length / 2)), z: 8, layer: "fx", rotation: vec.angle(dir),
     shape: { tint: color, sheet: "fx", animation: "lance", size: [length, width], blend: "add" },
@@ -45,8 +44,8 @@ export function beam(from: Vec2, dir: Vec2, length: number, width: number, color
 }
 
 /** An orbiting lantern of weapon `weapon`: index of count, circling at `radius` until `until`. */
-export interface Orbit { weapon: string; index: number; count: number; radius: number; until: number; dmg: number; mod: Hit["mod"] }
-export function lantern(at: Vec2, o: Orbit, color: Color = "#ffcf6b"): Spec {
+export type Orbit = Candle["tags"]["orb"];
+export function lantern(at: Vec2, o: Orbit, color: Color = "#ffcf6b"): Spec<"orb"> {
   return {
     tags: ["orb"], pos: at, z: 8, layer: "fx",
     shape: { tint: drawnColor(color, "#ffcf6b"), sheet: "fx", animation: "lantern", size: [18, 18] },
@@ -56,7 +55,7 @@ export function lantern(at: Vec2, o: Orbit, color: Color = "#ffcf6b"): Spec {
 }
 
 /** A burning pool; `follow`: an aura that stays on the hero. */
-export function pool(at: Vec2, radius: number, hit: Shot, color: Color = "#ff8a2a", follow = false): Spec {
+export function pool(at: Vec2, radius: number, hit: Shot, color: Color = "#ff8a2a", follow = false): Spec<"pool"> {
   return {
     tags: ["pool"], pos: at, z: 1, layer: "floor",
     shape: { tint: drawnColor(color, "#ff8a2a"), sheet: "fx", animation: "pool", size: [radius * 2.4, radius * 2.4], alpha: follow ? 0.45 : 0.9 },
@@ -67,7 +66,7 @@ export function pool(at: Vec2, radius: number, hit: Shot, color: Color = "#ff8a2
 }
 
 /** A lightning strike drawn at the struck spot. */
-export function zap(at: Vec2, scale: number, color: Color = "#c9a6ff"): Spec {
+export function zap(at: Vec2, scale: number, color: Color = "#c9a6ff"): Spec<"zap"> {
   return {
     tags: ["zap"], pos: [at[0], at[1] - 14 * scale], z: 9, layer: "fx",
     shape: { tint: drawnColor(color, "#c9a6ff"), sheet: "fx", animation: "spark", size: [28 * scale, 40 * scale], blend: "add" },

@@ -13,7 +13,7 @@ interface Clicker {
   actions: "tap" | "pause";
   sounds: "pop";
   images: never;
-  tags: "target";
+  tags: { target: {} };
   scenes: { play: undefined };
   ui: {
     hud: "score" | "time";             // document -&gt; ids of the elements scripts touch
@@ -24,23 +24,23 @@ interface Clicker {
 const { scene, game } = define&lt;Clicker&gt;();
 
 const play = scene("play", {
-  state: () =&gt; ({ score: 0, left: 30, paused: false }),
+  state: () =&gt; ({ score: 0, left: 30 }),
   enter(ctx) {
     ctx.spawn({ tags: ["target"], pos: [160, 90], shape: { circle: 16, color: "#ffd166" } });
     ctx.ui.show("hud");
     ctx.ui.set("hud", "score", 0);
 
-    const resume = () =&gt; { ctx.state.paused = false; ctx.ui.hide("pause"); };
+    const resume = () =&gt; { ctx.frozen = false; ctx.ui.hide("pause"); };
     ctx.ui.on("pause", "resume", "click", resume);
     ctx.ui.on("pause", "resume", "back", resume);           // Escape / gamepad B
     ctx.ui.on("pause", "restart", "click", () =&gt; ctx.go("play"));
   },
   update(ctx) {
-    if (ctx.input.pressed("pause") &amp;&amp; !ctx.state.paused) {
-      ctx.state.paused = true;
+    if (ctx.input.pressed("pause") &amp;&amp; !ctx.frozen) {
+      ctx.frozen = true;                                    // the world stops; update and UI keep running
       ctx.ui.show("pause");
     }
-    if (ctx.state.paused) return;
+    if (ctx.frozen) return;
 
     ctx.state.left = Math.max(0, ctx.state.left - ctx.dt);
     ctx.ui.set("hud", "time", Math.ceil(ctx.state.left));
@@ -156,6 +156,13 @@ ctx.ui.on("title", "settings", "click", () =&gt; ctx.go("settings"));</code></pr
 <pre><code>&lt;h1 data-t="menu.title"&gt;MENU&lt;/h1&gt;</code></pre>
 <p>Elements with <code>data-t="key"</code> show <code>ctx.t(key)</code> and re-translate when <code>ctx.locale</code> changes. See <a href="saves.html">Saves, settings, i18n</a>.</p>
 <h2 id="recipes">Recipes</h2>
+<h3 id="menus-that-pause-the-game">Menus that pause the game</h3>
+<p><code>ctx.frozen = true</code> freezes the scene's world: physics (bodies keep their velocity), contact events, <code>ctx.every</code>/<code>ctx.after</code> timers, tweens, animations, particles and <code>ctx.time</code> stop, while <code>update</code>, UI handlers, input, the camera and audio keep running. It is <code>false</code> on every scene enter.</p>
+<pre><code>function openPause(ctx: Ctx) { ctx.frozen = true; ctx.ui.show("pause"); }
+function closePause(ctx: Ctx) { ctx.frozen = false; ctx.ui.hide("pause"); }
+// update(ctx):
+if (ctx.input.pressed("pause")) (ctx.frozen ? closePause : openPause)(ctx);
+if (ctx.frozen) return;                                  // skip game logic while the menu is up</code></pre>
 <h3 id="score-hud-with-lives">Score HUD with lives</h3>
 <pre><code>// types: ui: { hud: "score" | "lives" }
 enter(ctx) {

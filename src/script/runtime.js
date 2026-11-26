@@ -170,6 +170,7 @@ function entityProto(entity, data) {
   return {
     get alive() { return N.alive(this.id); },
     get tags() { return N.tags(this.id); },
+    has(tag) { return N.hasTag(this.id, tag); },
     get rotation() { return N.rotation(this.id); },
     set rotation(v) { N.setRotation(this.id, v); },
     get z() { return N.z(this.id); },
@@ -495,6 +496,11 @@ function makeCtx(s) {
     get config() { return s.game.config; },
     get dt() { return s.stepDt; },
     get time() { return s.sceneTime; },
+    get frozen() { return s.frozen; },
+    set frozen(v) {
+      if (typeof v !== "boolean") fail(`ctx.frozen must be true (stop the world: physics, timers, tweens, animations, particles) or false, got ${show(v)}`);
+      s.frozen = v;
+    },
     state: undefined,
     input: makeInput(s),
     get platform() { return s.platform; },
@@ -621,6 +627,7 @@ function enter(s, ctx, name, params, kept) {
   N.uiReset();
   s.uiHandlers.clear();
   s.sceneTime = 0;
+  s.frozen = false;
   s.current = s.game.scenes[name];
   N.touchScene(name);
   s.currentName = name;
@@ -723,14 +730,18 @@ function stepGame(s, ctx, dt) {
   s.stepDt = dt;
   for (const id of N.uiEvents()) s.uiHandlers.get(id)?.();  // clicks since the last step
   s.current.def.update?.(ctx);
+  // ctx.frozen: the world steps by 0 (frees destroyed entities, nothing moves or ages).
+  const worldDt = s.frozen ? 0 : dt;
   const t0 = N.perfNow();
-  for (const id of N.advanceTimers(dt)) s.timers.get(id)?.();
-  s.tweens.step(dt);
-  stepLevels(s.levels, s.sceneTime);
+  if (!s.frozen) {
+    for (const id of N.advanceTimers(dt)) s.timers.get(id)?.();
+    s.tweens.step(dt);
+    stepLevels(s.levels, s.sceneTime);
+  }
   N.perfAdd(1, N.perfNow() - t0);  // section 1 = timers (with tweens)
-  const events = N.stepWorld(dt);
+  const events = N.stepWorld(worldDt);
   s.entities.forget(events.freed);
-  s.sceneTime += dt;
+  s.sceneTime += worldDt;
   dispatch(s, events.hits, "hits");
   dispatch(s, events.enters, "enters");
   dispatch(s, events.hitEnds, "hitEnds");
@@ -774,7 +785,7 @@ export function createInstance(id, store, platform, screen) {
   const s = {
     platform: Object.freeze({ os, mobile: os === "android" || os === "ios" }),
     game: null, current: null, currentName: null, currentParams: undefined, pending: null, handlers: [], uiHandlers: new Map(),
-    store, screen, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60, appPaused: false,
+    store, screen, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60, appPaused: false, frozen: false,
     timers: new Map(), entities: makeEntities(), worlds: new Map(), levels: [], tweens: makeTweens(tweenAccess),
   };
   const ctx = makeCtx(s);

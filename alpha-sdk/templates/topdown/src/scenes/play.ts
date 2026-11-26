@@ -1,4 +1,4 @@
-import type { Context, Entity, Player, Vec2 } from "alpha";
+import type { Context, Entity, Vec2 } from "alpha";
 import { vec } from "alpha";
 import { scene } from "../alpha";
 import { bullet, enemy, hero, walls } from "../prefabs/actors";
@@ -8,9 +8,9 @@ import type { Arena } from "../types";
 
 type State = { score: number };
 type Play = Context<Arena, State>;
-type Hero = Entity<Arena["tags"], any>;
+type Hero = Entity<Arena, "hero">;
 
-const at = (e: Hero): Vec2 => [e.pos.x, e.pos.y];
+const at = (e: Entity<Arena>): Vec2 => [e.pos.x, e.pos.y];
 // Left speaker .. right speaker across the visible world.
 const pan = (ctx: Play, x: number) => {
   const [vx, , vw] = ctx.camera.view;
@@ -37,12 +37,12 @@ function edgePoint(ctx: Play): Vec2 {
 // Player n joins when a device for them exists (player 2 = the second gamepad).
 function joinPlayers(ctx: Play) {
   const have = new Set(ctx.findAll("hero").map((h) => h.data.player));
-  for (let n = 1; n <= Math.min(2, ctx.input.players()); n++) {
-    if (!have.has(n) && ctx.time < 0.5) ctx.spawn(hero(n, HERO.starts[n - 1]));
+  for (const n of [1, 2] as const) {
+    if (n <= ctx.input.players() && !have.has(n) && ctx.time < 0.5) ctx.spawn(hero(n, HERO.starts[n - 1]));
   }
 }
 
-function kill(ctx: Play, e: Hero, points: number) {
+function kill(ctx: Play, e: Entity<Arena, "enemy">, points: number) {
   ctx.spawn(blast(at(e)));
   ctx.audio.play("boom", { pan: pan(ctx, e.pos.x), volume: 0.6 });
   const l = ctx.spawn(label([e.pos.x, e.pos.y - 8], `+${points}`));
@@ -53,36 +53,36 @@ function kill(ctx: Play, e: Hero, points: number) {
 
 // Every enemy in the circle goes (a physics area query).
 function bomb(ctx: Play, h: Hero) {
-  h.data.bombs = (h.data.bombs as number) - 1;
-  for (const e of ctx.queryCircle(at(h), BOMB.radius, { tags: ["enemy"] })) if (e.alive) kill(ctx, e, 1);
+  h.data.bombs -= 1;
+  for (const e of ctx.queryCircle(at(h), BOMB.radius, { tags: ["enemy"] })) kill(ctx, e, 1);
   ctx.spawn(blast(at(h), true));
   ctx.camera.shake(BOMB.shake, BOMB.seconds);
-  ctx.input.rumble(0.6, 0.2, h.data.player as Player);
+  ctx.input.rumble(0.6, 0.2, h.data.player);
 }
 
 // Auto-aim: toward the nearest enemy, or where the hero last walked when there is none.
 function aimFrom(ctx: Play, h: Hero): Vec2 {
   const enemies = ctx.findAll("enemy");
-  if (!enemies.length) return h.data.aim as Vec2;
+  if (!enemies.length) return h.data.aim;
   const near = enemies.reduce((a, b) => (vec.dist(at(a), at(h)) <= vec.dist(at(b), at(h)) ? a : b));
   return vec.norm(vec.sub(at(near), at(h)));
 }
 
 function steer(ctx: Play, h: Hero) {
-  const input = ctx.input.player(h.data.player as Player);
+  const input = ctx.input.player(h.data.player);
   const move: Vec2 = [input.axis("moveX"), input.axis("moveY")];
   const amount = Math.min(1, vec.len(move));
   h.body.velocity = vec.scale(vec.norm(move), amount * HERO.speed);
   if (amount > 0) h.data.aim = vec.norm(move);
   if (move[0] !== 0) h.flipX = move[0] < 0;
   h.animation = amount > 0 ? "walk" : "idle";
-  h.data.cooldown = Math.max(0, (h.data.cooldown as number) - ctx.dt);
+  h.data.cooldown = Math.max(0, h.data.cooldown - ctx.dt);
   if (input.down("fire") && h.data.cooldown === 0) {
     ctx.spawn(bullet(at(h), aimFrom(ctx, h)));
     ctx.audio.play("shot", { pan: pan(ctx, h.pos.x), volume: 0.4 });
     h.data.cooldown = BULLET.cooldown;
   }
-  if (input.pressed("bomb") && (h.data.bombs as number) > 0) bomb(ctx, h);
+  if (input.pressed("bomb") && h.data.bombs > 0) bomb(ctx, h);
 }
 
 // Enemies walk toward the nearest hero.
@@ -95,20 +95,20 @@ function chase(ctx: Play, heroes: Hero[]) {
 
 function ageBullets(ctx: Play) {
   for (const b of ctx.findAll("bullet")) {
-    b.data.life = (b.data.life as number) - ctx.dt;
-    if ((b.data.life as number) <= 0) ctx.destroy(b);
+    b.data.life -= ctx.dt;
+    if (b.data.life <= 0) ctx.destroy(b);
   }
 }
 
 // Several contacts can arrive in one step: an enemy already used up hurts no one.
-function hurt(ctx: Play, h: Hero, e: Hero) {
+function hurt(ctx: Play, h: Hero, e: Entity<Arena, "enemy">) {
   if (!e.alive || !h.alive) return;
   ctx.spawn(blast(at(e)));
   ctx.destroy(e);
   ctx.audio.play("hit");
   ctx.camera.shake(2, 0.15);
-  h.data.hp = (h.data.hp as number) - 1;
-  if ((h.data.hp as number) <= 0) ctx.destroy(h);
+  h.data.hp -= 1;
+  if (h.data.hp <= 0) ctx.destroy(h);
 }
 
 export default scene("play", {
@@ -131,7 +131,7 @@ export default scene("play", {
 
   update(ctx) {
     joinPlayers(ctx);
-    const heroes = ctx.findAll("hero").filter((h) => h.alive);
+    const heroes = ctx.findAll("hero");
     if (!heroes.length) return ctx.go("over", { score: ctx.state.score });
     for (const h of heroes) steer(ctx, h);
     chase(ctx, heroes);

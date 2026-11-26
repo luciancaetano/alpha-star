@@ -18,7 +18,7 @@ interface Night {
   actions: "flash" | "crt";
   sounds: never;
   images: never;
-  tags: "player" | "torch" | "crate";
+  tags: { player: {}; torch: {}; crate: {} };
   scenes: { play: undefined };
   ui: {};
   shaders: { wave: "amount" | "time" };      // custom shader -> its uniforms

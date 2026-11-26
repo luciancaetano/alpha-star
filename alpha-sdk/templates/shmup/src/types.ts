@@ -6,7 +6,7 @@ export interface Starfighter {
   /** Streamed music (assets.music): a generated WAV loop. */
   music: "theme";
   images: "ship" | "enemy";
-  tags: "ship" | "enemy" | "shot" | "star" | "boom";
+  tags: { ship: { lives: number; cooldown: number; safeUntil: number }; enemy: { fall: number; phase: number }; shot: {}; star: {}; boom: {} };
   /** config.layers: stars far behind (parallax), effects on top. */
   layers: "stars" | "fx";
   /** config.collision: shots hit enemies only, enemies hit the ship and shots, never each other. */

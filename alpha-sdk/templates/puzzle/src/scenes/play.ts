@@ -1,7 +1,7 @@
-import type { Context } from "alpha";
+import type { Context, Entity } from "alpha";
 import { scene } from "../alpha";
 import { LEVELS } from "../levels";
-import { tile, toPixels } from "../prefabs/tiles";
+import { box, tile, toPixels } from "../prefabs/tiles";
 import { move, parse, solved, type Dir, type Level, type Position } from "../rules";
 import { LANGUAGES, SLIDE, VIEW } from "../tuning";
 import type { Crates } from "../types";
@@ -24,14 +24,14 @@ function hud(ctx: Play) {
 function place(ctx: Play, glide: boolean) {
   const level = levelOf(ctx);
   const seconds = ctx.settings.reducedMotion ? 0 : SLIDE;
-  const put = (e: ReturnType<Play["find"]>, cell: [number, number]) => {
+  const put = (e: Entity<Crates>, cell: [number, number]) => {
     const [x, y] = toPixels(cell, level.size);
     if (glide && seconds > 0) ctx.tween(e, { to: { x, y }, seconds, ease: "quadOut" });
     else [e.pos.x, e.pos.y] = [x, y];
   };
   put(ctx.find("player"), ctx.state.pos.player);
   for (const box of ctx.findAll("box")) {
-    const cell = ctx.state.pos.boxes[box.data.i as number];
+    const cell = ctx.state.pos.boxes[box.data.i];
     put(box, cell);
     box.animation = level.goals.some((g) => g[0] === cell[0] && g[1] === cell[1]) ? "boxOnGoal" : "box";
   }
@@ -69,7 +69,7 @@ export default scene("play", {
     for (let y = 0; y < level.size[1]; y++) for (let x = 0; x < level.size[0]; x++) ctx.spawn(tile("floor", [x, y], level.size));
     for (const w of level.walls) ctx.spawn(tile("wall", w, level.size));
     for (const g of level.goals) ctx.spawn(tile("goal", g, level.size));
-    ctx.state.pos.boxes.forEach((b, i) => ctx.spawn(tile("box", b, level.size, { i })));
+    ctx.state.pos.boxes.forEach((b, i) => ctx.spawn(box(i, b, level.size)));
     ctx.spawn(tile("player", ctx.state.pos.player, level.size));
     place(ctx, false);
     ctx.spawn({ tags: ["language"], pos: [VIEW.width / 2, ctx.camera.view[1] + ctx.camera.view[3] - 24],

@@ -2,7 +2,7 @@
 import type { Vec2 } from "alpha";
 import type { Color, Spec } from "../types";
 
-export function burst(at: Vec2, color: Color, count: number, speed = 70): Spec {
+export function burst(at: Vec2, color: Color, count: number, speed = 70): Spec<"fx"> {
   return {
     tags: ["fx"], pos: at, z: 9, layer: "fx",
     emitter: {
@@ -13,19 +13,19 @@ export function burst(at: Vec2, color: Color, count: number, speed = 70): Spec {
 }
 
 /** A ring of sparks for level-ups, chests and evolutions. */
-export function nova(at: Vec2, color: Color): Spec {
+export function nova(at: Vec2, color: Color): Spec<"fx"> {
   return {
     tags: ["fx"], pos: at, z: 9, layer: "fx",
     emitter: { burst: 90, oneShot: true, lifetime: [0.5, 0.9], speed: [140, 180], size: [4, 0], color: [`${color}ff` as Color, `${color}00` as Color], blend: "add", max: 90 },
   };
 }
 
-export function label(at: Vec2, text: string, color: Color, size = 8): Spec {
+export function label(at: Vec2, text: string, color: Color, size = 8): Spec<"label"> {
   return { tags: ["label"], pos: at, z: 10, layer: "fx", shape: { text, font: "pixel", size, color } };
 }
 
 /** A shockwave reaching `radius` px: nova weapons. */
-export function shock(at: Vec2, color: Color, radius: number): Spec {
+export function shock(at: Vec2, color: Color, radius: number): Spec<"fx"> {
   return {
     tags: ["fx"], pos: at, z: 9, layer: "fx",
     emitter: { burst: 48, oneShot: true, lifetime: [0.25, 0.3], speed: [radius * 3, radius * 3.4], size: [3, 0], color: [`${color}ff` as Color, `${color}00` as Color], blend: "add", max: 48 },

@@ -67,6 +67,14 @@ export function aLevelUpHoldsTheWorldStill() {
   if (state(run).time > 70) fail(`time should stop on the cards, at ${state(run).time}`);
 }
 
+export function theLevelUpCardsFreezeTheHorde() {
+  // ctx.frozen: nobody picks a card, so a longer run leaves every foe exactly where it was.
+  const at = (seconds: number) => simulate(game, { ...PLAY, seconds }).entities("enemy").map((e) => e.pos.join());
+  const early = at(80);
+  if (!early.length) fail("expected foes around the hero on the cards");
+  if (at(90).join(";") !== early.join(";")) fail("foes moved while the level-up cards were up");
+}
+
 export function offersAreDistinctAndFillSlots() {
   const s = newRun("wick", {});
   const rng = { range: () => 0.5, int: (a: number) => a, pick: <T>(xs: readonly T[]) => xs[0] };

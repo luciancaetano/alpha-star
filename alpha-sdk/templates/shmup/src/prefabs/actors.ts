@@ -1,13 +1,13 @@
 // Entity specs: plain data built by functions.
-import type { EntitySpec, Vec2 } from "alpha";
+import type { EntitySpec, TagOf, Vec2 } from "alpha";
 import { SHIP, SHOT } from "../tuning";
 import type { Starfighter } from "../types";
 
 type G = Starfighter;
-type Spec = EntitySpec<G["tags"], G["images"], {}, G["layers"], never, G["categories"]>;
+type Spec<T extends TagOf<G>> = EntitySpec<G, T>;
 
 /** The player's ship at `at` (play.ts: SHIP.fromBottom above the bottom of the visible world). */
-export function ship(at: Vec2): Spec {
+export function ship(at: Vec2): Spec<"ship"> {
   return {
     tags: ["ship"], pos: at, z: 2, shape: { image: "ship" },
     body: { type: "dynamic", fixedRotation: true, category: "ship", collidesWith: ["enemy"], collider: { rect: [12, 12] } },
@@ -16,7 +16,7 @@ export function ship(at: Vec2): Spec {
 }
 
 // Kinematic: moved by its velocity only (nothing pushes it).
-export function enemy(at: Vec2, fall: number): Spec {
+export function enemy(at: Vec2, fall: number): Spec<"enemy"> {
   return {
     tags: ["enemy"], pos: at, z: 1, shape: { image: "enemy" },
     body: { type: "kinematic", velocity: [0, fall], category: "enemy", collidesWith: ["ship", "shot"], collider: { rect: [14, 12] } },
@@ -25,7 +25,7 @@ export function enemy(at: Vec2, fall: number): Spec {
 }
 
 // A fast sensor: `bullet` checks continuously so it never skips an enemy between steps.
-export function shot(at: Vec2): Spec {
+export function shot(at: Vec2): Spec<"shot"> {
   return {
     tags: ["shot"], pos: at, shape: { rect: [2, 6], color: "#9bf6ff" },
     body: { type: "dynamic", bullet: true, velocity: [0, -SHOT.speed], category: "shot", collidesWith: ["enemy"],
@@ -34,12 +34,12 @@ export function shot(at: Vec2): Spec {
 }
 
 // The far layer: tiny dots; the play scene scrolls them in bulk (ctx.positions).
-export function star(at: Vec2, depth: number): Spec {
+export function star(at: Vec2, depth: number): Spec<"star"> {
   const shade = ["#555c7a", "#8a90b5", "#e0e6ff"][depth];
   return { tags: ["star"], pos: at, layer: "stars", shape: { rect: [1 + (depth >> 1), 1 + (depth >> 1)], color: shade as `#${string}` } };
 }
 
-export function boom(at: Vec2): Spec {
+export function boom(at: Vec2): Spec<"boom"> {
   return {
     tags: ["boom"], pos: at, layer: "fx",
     emitter: { burst: 24, oneShot: true, lifetime: [0.25, 0.6], speed: [30, 120], size: [3, 1], blend: "add",

@@ -4,7 +4,8 @@ export interface Game {
   axes: "moveX" | "moveY";
   sounds: "blip";
   images: "player";
-  tags: "player";
+  /** Tag -> the data its entities carry in entity.data (`{}` = none). */
+  tags: { player: {} };
   /** UI documents -> ids scripts touch. `{}` when the game has no UI. */
   ui: {};
   /** Scene name -> params its enter() receives (`undefined` = none). */

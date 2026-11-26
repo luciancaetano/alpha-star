@@ -5,7 +5,7 @@ export interface Platformer {
   sounds: "jump" | "coin" | "land";
   images: never;
   /** "walls": colliders made from the LDtk IntGrid layer "Walls" (spawnLevel collide). */
-  tags: "player" | "coin" | "walls" | "dust" | "popup" | "scenery" | "ledge" | "lift";
+  tags: { player: {}; coin: { taken?: boolean }; walls: {}; dust: {}; popup: {}; scenery: {}; ledge: {}; lift: {} };
   /** Sheet -> its animation names (assets.sheets in main.ts). */
   sheets: { hero: "idle" | "run" | "jump" | "fall"; coin: "spin" };
   worlds: "main";

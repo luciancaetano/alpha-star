@@ -3,7 +3,7 @@ import type { Color, EntitySpec, Vec2 } from "alpha";
 import { ORBS, VIEW } from "../tuning";
 import type { ShaderLab } from "../types";
 
-type Spec = EntitySpec<ShaderLab["tags"], never>;
+type Spec = EntitySpec<ShaderLab, "orb" | "floor" | "label">;
 
 const COLORS: Color[] = ["#ff5d73", "#ffd166", "#06d6a0", "#4cc9f0", "#b388ff"];
 const TILE = 20;

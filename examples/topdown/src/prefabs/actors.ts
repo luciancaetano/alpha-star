@@ -1,13 +1,13 @@
 // Entity specs: plain data built by functions.
-import type { EntitySpec, Vec2 } from "alpha";
+import type { EntitySpec, Player, TagOf, Vec2 } from "alpha";
 import { vec } from "alpha";
 import { BULLET, ENEMY, HERO, WALL } from "../tuning";
 import type { Arena } from "../types";
 
-type Spec = EntitySpec<Arena["tags"], never, Arena["sheets"]>;
+type Spec<T extends TagOf<Arena>> = EntitySpec<Arena, T>;
 
 // `data.player` says which player's input drives it; `aim` is the last direction moved.
-export function hero(player: number, at: Vec2): Spec {
+export function hero(player: Player, at: Vec2): Spec<"hero"> {
   return {
     tags: ["hero"],
     pos: at,
@@ -20,7 +20,7 @@ export function hero(player: number, at: Vec2): Spec {
   };
 }
 
-export function enemy(at: Vec2): Spec {
+export function enemy(at: Vec2): Spec<"enemy"> {
   return {
     tags: ["enemy"],
     pos: at,
@@ -31,7 +31,7 @@ export function enemy(at: Vec2): Spec {
 }
 
 // A sensor: it passes through things and reports overlaps (ctx.onEnter).
-export function bullet(from: Vec2, aim: Vec2): Spec {
+export function bullet(from: Vec2, aim: Vec2): Spec<"bullet"> {
   return {
     tags: ["bullet"],
     pos: vec.add(from, vec.scale(aim, HERO.radius + 4)),
@@ -44,8 +44,8 @@ export function bullet(from: Vec2, aim: Vec2): Spec {
 
 // The four walls around the arena.
 /** The arena's four walls along the edges of the visible world `[x, y, w, h]` (ctx.camera.view). */
-export function walls([x, y, w, h]: readonly number[]): Spec[] {
-  const box = (pos: Vec2, size: Vec2): Spec => ({
+export function walls([x, y, w, h]: readonly number[]): Spec<"wall">[] {
+  const box = (pos: Vec2, size: Vec2): Spec<"wall"> => ({
     tags: ["wall"], pos, shape: { rect: size, color: "#34495e" }, body: { type: "static", collider: { rect: size } },
   });
   const cx = x + w / 2;

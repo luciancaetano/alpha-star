@@ -3,7 +3,7 @@ import type { Flappy } from "../types";
 import { ART, BIRD, WORLD } from "../tuning";
 
 /** The bird; `physics` false for the floating title-screen version. */
-export function bird(physics: boolean): EntitySpec<Flappy["tags"], Flappy["images"]> {
+export function bird(physics: boolean): EntitySpec<Flappy, "bird"> {
   const size = physics ? ART.playerSize : ART.titleSize;
   return {
     tags: ["bird"],

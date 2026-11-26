@@ -2,7 +2,7 @@ import type { EntitySpec, Vec2 } from "alpha";
 import { PLAYER } from "../tuning";
 import type { Platformer } from "../types";
 
-type Spec = EntitySpec<Platformer["tags"], never, Platformer["sheets"]>;
+type Spec = EntitySpec<Platformer, "player">;
 
 // A dynamic box drawn with the hero sheet (16x16 frames) that never rotates.
 export function player(pos: Vec2): Spec {

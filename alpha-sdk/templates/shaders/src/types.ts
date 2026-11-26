@@ -7,7 +7,7 @@ export interface ShaderLab {
   actions: "next" | "prev" | "more" | "less";
   sounds: "click";
   images: never;
-  tags: "orb" | "floor" | "label";
+  tags: { orb: {}; floor: {}; label: {} };
   /** assets.shaders: Vulkan GLSL fragment shaders (.frag) in assets/shaders/ -> their uniform names. */
   shaders: { wave: Uniforms; chroma: Uniforms; sepia: Uniforms; posterize: Uniforms; scanlines: Uniforms; pulse: Uniforms };
   /** hud: what is on; touch: on-screen buttons, shown on phones only (ctx.platform.mobile). */

@@ -7,7 +7,7 @@ import type { Starfighter } from "../types";
 
 type State = { score: number; crt: boolean };
 type Play = Context<Starfighter, State>;
-type Thing = Entity<Starfighter["tags"], any>;
+type Ship = Entity<Starfighter, "ship">;
 
 // The play field is the whole visible world (ctx.camera.view): taller or wider screens show more of it.
 const pan = (ctx: Play, x: number) => {
@@ -33,7 +33,7 @@ function toggleCrt(ctx: Play) {
   else ctx.postfx.remove("crt");
 }
 
-function fly(ctx: Play, s: Thing) {
+function fly(ctx: Play, s: Ship) {
   const move = vec.scale(vec.norm([ctx.input.axis("moveX"), ctx.input.axis("moveY")]), SHIP.speed);
   // Keep the ship on screen: stop pushing outward at the edges.
   const m = SHIP.margin;
@@ -41,7 +41,7 @@ function fly(ctx: Play, s: Thing) {
   if ((s.pos.x <= vx + m && move[0] < 0) || (s.pos.x >= vx + vw - m && move[0] > 0)) move[0] = 0;
   if ((s.pos.y <= vy + m && move[1] < 0) || (s.pos.y >= vy + vh - m && move[1] > 0)) move[1] = 0;
   s.body.velocity = move;
-  s.data.cooldown = Math.max(0, (s.data.cooldown as number) - ctx.dt);
+  s.data.cooldown = Math.max(0, s.data.cooldown - ctx.dt);
   if (ctx.input.down("fire") && s.data.cooldown === 0) {
     ctx.spawn(shot([s.pos.x, s.pos.y - 10]));
     ctx.audio.play("shot", { volume: 0.3, pan: pan(ctx, s.pos.x) });
@@ -53,31 +53,31 @@ function fly(ctx: Play, s: Thing) {
 function steerEnemies(ctx: Play) {
   const [vx, vy, vw, vh] = ctx.camera.view;
   for (const e of ctx.findAll("enemy")) {
-    const sway = ENEMY.sway * Math.cos((ctx.time * ENEMY.swayHz + (e.data.phase as number) / 50) * Math.PI * 2);
-    e.body.velocity = [e.pos.x < vx + 12 ? Math.abs(sway) : e.pos.x > vx + vw - 12 ? -Math.abs(sway) : sway, e.data.fall as number];
+    const sway = ENEMY.sway * Math.cos((ctx.time * ENEMY.swayHz + e.data.phase / 50) * Math.PI * 2);
+    e.body.velocity = [e.pos.x < vx + 12 ? Math.abs(sway) : e.pos.x > vx + vw - 12 ? -Math.abs(sway) : sway, e.data.fall];
     if (e.pos.y > vy + vh + 16) ctx.destroy(e);
   }
   for (const s of ctx.findAll("shot")) if (s.pos.y < vy - 8) ctx.destroy(s);
 }
 
-function explode(ctx: Play, e: Thing) {
+function explode(ctx: Play, e: Entity<Starfighter>) {
   ctx.spawn(boom([e.pos.x, e.pos.y]));
   ctx.audio.play("boom", { volume: 0.5, pan: pan(ctx, e.pos.x) });
   ctx.destroy(e);
 }
 
 // Hit: lose a life, blink while safe (a yoyo tween on alpha), rumble the pad.
-function hurt(ctx: Play, s: Thing, e: Thing) {
+function hurt(ctx: Play, s: Ship, e: Entity<Starfighter, "enemy">) {
   if (!e.alive) return;
   explode(ctx, e);
-  if (ctx.time < (s.data.safeUntil as number)) return;
-  s.data.lives = (s.data.lives as number) - 1;
+  if (ctx.time < s.data.safeUntil) return;
+  s.data.lives -= 1;
   s.data.safeUntil = ctx.time + SHIP.safeSeconds;
   ctx.audio.play("hurt");
   ctx.camera.shake(3, 0.3);
   ctx.input.rumble(0.8, 0.25);
   ctx.tween(s, { to: { alpha: 0.2 }, seconds: SHIP.safeSeconds / 8, yoyo: true, repeat: 3 });
-  if ((s.data.lives as number) <= 0) ctx.after(0.5, () => ctx.go("over", { score: ctx.state.score }));
+  if (s.data.lives <= 0) ctx.after(0.5, () => ctx.go("over", { score: ctx.state.score }));
 }
 
 export default scene("play", {
@@ -110,11 +110,11 @@ export default scene("play", {
   update(ctx) {
     scrollStars(ctx);
     const s = ctx.find("ship");
-    if ((s.data.lives as number) > 0) fly(ctx, s);
+    if (s.data.lives > 0) fly(ctx, s);
     else s.body.velocity = [0, 0];
     steerEnemies(ctx);
     ctx.ui.set("hud", "score", `${ctx.state.score}`.padStart(6, "0"));
-    ctx.ui.set("hud", "lives", "A".repeat(Math.max(0, s.data.lives as number)));
+    ctx.ui.set("hud", "lives", "A".repeat(Math.max(0, s.data.lives)));
     if (ctx.input.pressed("crt")) toggleCrt(ctx);
     if (ctx.input.pressed("restart")) ctx.go("play");
   },

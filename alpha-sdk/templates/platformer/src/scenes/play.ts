@@ -9,12 +9,12 @@ import type { Platformer } from "../types";
 
 type State = { coins: number; total: number; grounded: boolean; fallSpeed: number };
 type Play = Context<Platformer, State>;
-type Hero = Entity<Platformer["tags"], "idle" | "run" | "jump" | "fall" | "spin">;
+type Hero = Entity<Platformer, "player">;
 
-const FLOOR: Platformer["tags"][] = ["walls", "ledge", "lift"];
+const FLOOR = ["walls", "ledge", "lift"] as const;
 
 // What the hero stands on: a short ray down from the feet (center, then both edges) hits a floor.
-function groundUnder(ctx: Play, p: Hero): Entity<Platformer["tags"], any> | null {
+function groundUnder(ctx: Play, p: Hero): Entity<Platformer> | null {
   if (p.body.velocity.y < -1) return null;  // rising (e.g. jumping up through a ledge)
   const feet = p.pos.y + PLAYER.size[1] / 2;
   for (const dx of [0, -GROUND_RAY.edge, GROUND_RAY.edge]) {
@@ -51,7 +51,7 @@ function floatPopups(ctx: Play) {
 }
 
 // A picked coin counts once, grows and fades out (tween), then goes away.
-function pick(ctx: Play, c: Entity<Platformer["tags"], any>) {
+function pick(ctx: Play, c: Entity<Platformer, "coin">) {
   if (c.data.taken) return;
   c.data.taken = true;
   ctx.spawn(popup([c.pos.x, c.pos.y]));

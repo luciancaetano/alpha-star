@@ -16,7 +16,7 @@ interface Phys {
   axes: "moveX";
   sounds: "coin";
   images: never;
-  tags: "hero" | "ground" | "ledge" | "crate" | "coin" | "spike";
+  tags: { hero: {}; ground: {}; ledge: {}; crate: {}; coin: {}; spike: {} };
   ui: {};
   scenes: { play: undefined };
 }
@@ -204,7 +204,7 @@ ctx.spawn({ tags: ["enemy"], pos: [80, 100], shape: { rect: [12, 12], color: "#f
 ```
 
 Two bodies collide only when **both** accept each other. Without `collidesWith` a body accepts all.
-A prefab type with categories: `EntitySpec<MyGame["tags"], never, {}, never, never, MyGame["categories"]>`.
+Prefab specs need no extra type arguments: `EntitySpec<MyGame, "enemy">` checks `category` and `collidesWith` against `MyGame["categories"]` automatically.
 
 ### Raycasts and area queries
 
@@ -280,8 +280,9 @@ if (ctx.input.pressed("jump") && ctx.state.jumps > 0) {
 ### Enemy patrol that turns at walls and edges
 
 ```ts
+// types: tags: { enemy: { dir?: number }; ground: {}; wall: {} }
 for (const e of ctx.findAll("enemy")) {
-  let dir = (e.data.dir as number | undefined) ?? 1;
+  let dir = e.data.dir ?? 1;
   const ahead = e.pos.x + dir * 10;
   const floor = ctx.raycast([ahead, e.pos.y], [ahead, e.pos.y + 16], { tags: ["ground"] });
   const wall = ctx.raycast([e.pos.x, e.pos.y], [ahead + dir * 2, e.pos.y], { tags: ["wall"] });
@@ -294,7 +295,7 @@ for (const e of ctx.findAll("enemy")) {
 ### Bullets
 
 ```ts
-function bullet(from: Vec2, dir: Vec2): Spec {
+function bullet(from: Vec2, dir: Vec2): EntitySpec<MyGame, "bullet"> {
   return {
     tags: ["bullet"], pos: from, shape: { circle: 2, color: "#ffec27" },
     body: { type: "dynamic", bullet: true, gravityScale: 0, collider: { circle: 2, sensor: true },

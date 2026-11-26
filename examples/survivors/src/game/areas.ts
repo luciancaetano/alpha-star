@@ -9,7 +9,7 @@ import { strike } from "./strike";
 import { type Fire, nearest } from "./weapons";
 
 const foesIn = (f: Fire, center: Vec2, radius: number) =>
-  f.ctx.queryCircle(center, radius, { tags: ["enemy"] }).filter((e) => e.alive);
+  f.ctx.queryCircle(center, radius, { tags: ["enemy"] });
 
 export function fireWhip(f: Fire) {
   const sides = f.w.evo ? [1, -1] : f.count >= 2 ? [f.ctx.state.facing, -f.ctx.state.facing] : [f.ctx.state.facing];
@@ -20,7 +20,7 @@ export function fireWhip(f: Fire) {
       const center: Vec2 = [f.hero.pos.x + side * 30 * f.area, f.hero.pos.y - 2];
       f.ctx.spawn(slash(center, side < 0, f.area, f.def.color));
       const box: [number, number, number, number] = [center[0] - 30 * f.area, center[1] - 12 * f.area, 60 * f.area, 26 * f.area];
-      for (const e of f.ctx.queryRect(box, { tags: ["enemy"] }).filter((e) => e.alive)) strike(f.ctx, e, f.hit, from, 1.4, f.st);
+      for (const e of f.ctx.queryRect(box, { tags: ["enemy"] })) strike(f.ctx, e, f.hit, from, 1.4, f.st);
     });
   });
   f.ctx.audio.play("whip", { volume: 0.4, pan: pan(f.ctx, from[0]) });
@@ -34,7 +34,7 @@ export function fireBeam(f: Fire) {
   const dirs = targets.length ? targets.map((t) => vec.norm(vec.sub(at(t), from))) : [[f.ctx.state.facing, 0] as Vec2];
   for (const dir of dirs) {
     f.ctx.spawn(beam(from, dir, length, 12 * f.area, f.def.color));
-    const struck = new Set<Ent>();
+    const struck = new Set<Ent<"enemy">>();
     for (let d = 8; d < length; d += 10) {
       for (const e of foesIn(f, vec.add(from, vec.scale(dir, d)), 8 * f.area)) {
         if (struck.has(e)) continue;
@@ -81,7 +81,7 @@ export function fireRain(f: Fire) {
 /** Lightning on random foes in view. */
 export function fireSpark(f: Fire) {
   const [vx, vy, vw, vh] = f.ctx.camera.view;
-  const foes = f.ctx.queryRect([vx, vy, vw, vh], { tags: ["enemy"] }).filter((e) => e.alive);
+  const foes = f.ctx.queryRect([vx, vy, vw, vh], { tags: ["enemy"] });
   for (let i = 0; i < f.count && foes.length; i++) {
     const t = foes.splice(f.ctx.random.int(0, foes.length - 1), 1)[0];
     if (t.alive) blastAt(f, at(t), 14 * f.area);
@@ -92,7 +92,7 @@ export function fireSpark(f: Fire) {
 /** Strikes the nearest foe, then jumps to the next nearest one `count` times. */
 export function fireChain(f: Fire) {
   let from = at(f.hero);
-  const struck = new Set<Ent>();
+  const struck = new Set<Ent<"enemy">>();
   for (let i = 0; i < f.count + 1; i++) {
     const next = nearest(f.ctx, from, 8, i === 0 ? 160 : 70 * f.area).find((e) => !struck.has(e));
     if (!next) break;

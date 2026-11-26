@@ -4,7 +4,6 @@ import type { Cell } from "../rules";
 import { TILE, VIEW } from "../tuning";
 import type { Crates } from "../types";
 
-type Spec = EntitySpec<Crates["tags"], never, Crates["sheets"]>;
 type Kind = "wall" | "floor" | "goal" | "box" | "player";
 
 /** Pixel center of a cell, with the level centered on screen. */
@@ -16,6 +15,11 @@ export function toPixels(cell: Cell, size: Cell): Vec2 {
 
 const Z: Record<Kind, number> = { floor: 0, goal: 1, wall: 1, box: 2, player: 3 };
 
-export function tile(kind: Kind, cell: Cell, size: Cell, data = {}): Spec {
-  return { tags: [kind], pos: toPixels(cell, size), z: Z[kind], shape: { sheet: "tiles", animation: kind }, data };
+export function tile(kind: Exclude<Kind, "box">, cell: Cell, size: Cell): EntitySpec<Crates, Exclude<Kind, "box">> {
+  return { tags: [kind], pos: toPixels(cell, size), z: Z[kind], shape: { sheet: "tiles", animation: kind } };
+}
+
+/** Box `i` of the level (ctx.state.pos.boxes[i]). */
+export function box(i: number, cell: Cell, size: Cell): EntitySpec<Crates, "box"> {
+  return { tags: ["box"], pos: toPixels(cell, size), z: Z.box, shape: { sheet: "tiles", animation: "box" }, data: { i } };
 }

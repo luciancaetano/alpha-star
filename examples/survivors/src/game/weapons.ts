@@ -10,10 +10,10 @@ import { at, pan } from "./combat";
 import type { OwnedWeapon, Play, Stats } from "./run";
 import type { Hit } from "./strike";
 
-export interface Fire { ctx: Play; hero: Ent; w: OwnedWeapon; st: Stats; def: WeaponDef; hit: Hit; count: number; area: number; life: number; pierce: number }
+export interface Fire { ctx: Play; hero: Ent<"hero">; w: OwnedWeapon; st: Stats; def: WeaponDef; hit: Hit; count: number; area: number; life: number; pierce: number }
 
-export function nearest(ctx: Play, from: Vec2, n: number, reach = 260): Ent[] {
-  const foes = ctx.queryCircle(from, reach, { tags: ["enemy"] }).filter((e) => e.alive);
+export function nearest(ctx: Play, from: Vec2, n: number, reach = 260): Ent<"enemy">[] {
+  const foes = ctx.queryCircle(from, reach, { tags: ["enemy"] });
   return foes.map((e) => ({ e, d: vec.dist(at(e), from) })).sort((a, b) => a.d - b.d).slice(0, n).map((x) => x.e);
 }
 
@@ -69,7 +69,7 @@ const FIRE: Record<WeaponKind, (f: Fire) => void> = {
   aura: fireAura, pool: firePool, rain: fireRain, spark: fireSpark, chain: fireChain, nova: fireNova,
 };
 
-export function fireWeapons(ctx: Play, hero: Ent, st: Stats) {
+export function fireWeapons(ctx: Play, hero: Ent<"hero">, st: Stats) {
   for (const w of ctx.state.weapons) {
     w.cd -= ctx.dt;
     if (w.cd > 0) continue;

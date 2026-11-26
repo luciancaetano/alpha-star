@@ -2,7 +2,7 @@ import type { EntitySpec, Vec2 } from "alpha";
 import { LIFT } from "../tuning";
 import type { Platformer } from "../types";
 
-type Spec = EntitySpec<Platformer["tags"], never, Platformer["sheets"]>;
+type Spec = EntitySpec<Platformer, "ledge" | "lift">;
 
 // A wooden plank that is solid only from above: the hero jumps up through it and lands on it.
 export function ledge(pos: Vec2, width: number): Spec {

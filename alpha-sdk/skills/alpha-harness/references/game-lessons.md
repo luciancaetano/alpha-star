@@ -1,22 +1,20 @@
 ## Lessons from building a full game (Candlewick)
 
 ### Entities and queries
-- **Queries can return foes killed earlier in the same step.** A list you queried earlier
-  (`queryCircle`, `queryRect`, `findAll`) can hold entities your own code destroyed since.
-  Check `e.alive` before reading `e.pos` (it throws on a dead entity), and re-query or
-  `.filter((e) => e.alive)` after any loop that kills.
-- **Lists are stale inside a loop that kills.** If one strike can kill the next target, check
-  `t.alive` again on every iteration.
+- **Queries and `findAll` return only living entities**, but a list you hold goes stale while
+  your own code kills: if one strike can kill the next target, check `t.alive` again on every
+  iteration (`e.pos` throws on a dead entity).
+- **Keep entity data in the tag's type** (`tags: { enemy: { hp: number } }`): `e.data.hp` is
+  then a number everywhere, spawning without it is a compile error, and no cast is ever needed.
 - **Entities without a body are invisible to queries.** Orbiting lanterns, pools and slashes with
   no `body` are not found by `queryCircle`; use `findAll(tag)`.
 - **Several contacts arrive in one step.** Guard `onEnter`/`onHit` handlers with `alive`
   (or a `data` flag) before acting.
 
 ### Pausing the world (menus, level-up)
-- There is no world pause: keep a `mode` in `ctx.state` and skip your systems while a menu is up.
-  Zero the velocities of moving bodies each step (they come back when the systems run again).
-- Prefer your own timers in `ctx.state` (counting `ctx.dt` only while playing) for anything that
-  must pause; `ctx.every`/`ctx.after` keep running during your menus.
+- **`ctx.frozen = true` while a menu is up**: physics (velocities kept), contacts, `ctx.every`/
+  `ctx.after`, tweens, animations, particles and `ctx.time` stop; `update`, UI handlers, input and
+  audio keep running. Skip your own world systems in `update` while frozen (they would still run).
 
 ### UI (RmlUi)
 - **`ctx.ui.set` is text only.** To show item icons in the UI, make a BMFont whose glyphs are the

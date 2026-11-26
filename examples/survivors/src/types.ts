@@ -1,5 +1,5 @@
 // Every name the game uses. The compiler rejects anything not listed here.
-import type { Context, Entity, EntitySpec } from "alpha";
+import type { Context, Entity, EntitySpec, TagOf, Vec2 } from "alpha";
 
 export type WeaponId = "bolt" | "whip" | "lanterns" | "pool" | "spark"
   // Signatures: one per hero, only that hero gets it (src/data/powers.ts).
@@ -24,14 +24,40 @@ export type RunResult = { hero: HeroId; seconds: number; level: number; kills: n
 export type HeroSlot = 1 | 2 | 3 | 4 | 5 | 6;
 type Card = "icon" | "name" | "tag" | "desc";
 
+export type ItemKind = "coin" | "cake" | "magnet" | "bell" | "chest";
+/** Who dealt a hit: a weapon, or thorns (passive). */
+export type HitSource = WeaponId | "thorn";
+/** A weapon's hit riding on what it left in the world (src/game/strike.ts). */
+export interface WeaponHit { dmg: number; mod: Mod; weapon: HitSource }
+/** A foe: stats, timers (seconds left / until state.time) and per-weapon hit cooldowns. */
+export interface Foe {
+  kind: EnemyKind; hp: number; max: number; kb: number; flash: number; hit: Record<string, number>;
+  burn: number; burnDps: number; slow: number; frozen: number;
+}
+/** A recycled ground/scenery slot: its index, the cell it shows ("gx,gy") and the grid width it was made for. */
+export interface Slot { i: number; cell: string; cols: number }
+
 export interface Candle {
   actions: "pick1" | "pick2" | "pick3" | "pause" | "restart" | "showcase";
   axes: "moveX" | "moveY";
   sounds: "bolt" | "whip" | "zap" | "pool" | "hit" | "kill" | "gem" | "coin" | "levelup" | "chest" | "evolve"
     | "hurt" | "heal" | "bell" | "boss" | "select" | "death" | "theme";
   images: "ground" | "logo";
-  tags: "hero" | "enemy" | "elite" | "boss" | "shot" | "orb" | "pool" | "slash" | "zap" | "gem" | "item" | "brazier"
-    | "prop" | "ground" | "fx" | "label" | "hpbar";
+  /** Each tag and the `data` its entities keep (`{}`: none). */
+  tags: {
+    hero: {}; elite: {}; boss: {}; fx: {}; label: {};
+    enemy: Foe;
+    shot: WeaponHit & { pierce: number; life: number; vel: Vec2; turn: number };
+    orb: WeaponHit & { weapon: WeaponId; index: number; count: number; radius: number; until: number };
+    pool: WeaponHit & { pierce: number; life: number; radius: number; tick: number; follow: boolean };
+    slash: { life: number }; zap: { life: number };
+    gem: { v: number; pull: number };
+    item: { kind: ItemKind; pull: number };
+    brazier: { hp: number };
+    ground: Slot; prop: Slot;
+    /** `seg`: the segment index; -1 = the dark plate under them. */
+    hpbar: { seg: number };
+  };
   sheets: {
     wick: "idle" | "walk"; taper: "idle" | "walk"; lumen: "idle" | "walk"; ash: "idle" | "walk"; vesper: "idle" | "walk"; tallow: "idle" | "walk";
     moth: "fly"; shade: "fly"; ghoul: "fly"; wisp: "fly"; gargoyle: "fly"; queen: "fly"; snuffer: "fly";
@@ -56,7 +82,8 @@ export interface Candle {
   scenes: { title: undefined; play: { hero: HeroId; demo?: boolean }; over: RunResult };
 }
 
-export type Spec = EntitySpec<Candle["tags"], Candle["images"], Candle["sheets"], Candle["layers"], Candle["fonts"], Candle["categories"]>;
-export type Ent = Entity<Candle["tags"], any>;
+export type Tag = TagOf<Candle>;
+export type Spec<T extends Tag> = EntitySpec<Candle, T>;
+export type Ent<T extends Tag = never> = Entity<Candle, T>;
 export type Ctx<S> = Context<Candle, S>;
 export type Color = `#${string}`;

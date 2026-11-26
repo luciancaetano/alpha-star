@@ -22,13 +22,12 @@ interface Hop {
   actions: "hop";                          // input actions (bound to keys in config)
   sounds: "hop" | "point" | "crash";       // assets.sounds names
   images: never;                           // no images: shapes only
-  tags: "hopper" | "column" | "gap" | "floor" | "label";
+  tags: { hopper: {}; column: {}; gap: {}; floor: {}; label: {} };  // tag -&gt; its data ({} = none)
   ui: {};                                  // no RmlUi documents
   scenes: { title: undefined; play: undefined; over: { score: number } };  // scene -&gt; params
 }
 
-const { scene, game } = define&lt;Hop&gt;();
-type Spec = EntitySpec&lt;Hop["tags"]&gt;;</code></pre>
+const { scene, game } = define&lt;Hop&gt;();</code></pre>
 <p>Put the numbers that shape the feel together, so tuning never means hunting through scenes:</p>
 <pre><code>const W = 320;
 const H = 180;
@@ -36,8 +35,8 @@ const FLOOR_Y = 168;
 const HOPPER = { x: 80, size: 10, hop: -230 };
 const COLUMNS = { width: 22, gap: 56, speed: 90, every: 1.6, margin: 24 };</code></pre>
 <h2 id="2-a-floor-and-a-falling-square">2. A floor and a falling square</h2>
-<p>Entities are plain objects (<strong>spawn specs</strong>): <code>tags</code>, <code>pos</code> (the center), a <code>shape</code> to draw and an optional <code>body</code> for physics. Functions that return specs are called <strong>prefabs</strong>.</p>
-<pre><code>function floor(): Spec {
+<p>Entities are plain objects (<strong>spawn specs</strong>): <code>tags</code>, <code>pos</code> (the center), a <code>shape</code> to draw and an optional <code>body</code> for physics. Functions that return specs are called <strong>prefabs</strong>; <code>EntitySpec&lt;Hop, "floor"&gt;</code> is a spec for an entity tagged <code>floor</code> (its <code>data</code>, shapes and layers are checked against <code>Hop</code>).</p>
+<pre><code>function floor(): EntitySpec&lt;Hop, "floor"&gt; {
   return {
     tags: ["floor"],
     pos: [W / 2, (FLOOR_Y + H) / 2],
@@ -46,7 +45,7 @@ const COLUMNS = { width: 22, gap: 56, speed: 90, every: 1.6, margin: 24 };</code
   };
 }
 
-function hopper(): Spec {
+function hopper(): EntitySpec&lt;Hop, "hopper"&gt; {
   return {
     tags: ["hopper"],
     pos: [HOPPER.x, H / 2],
@@ -98,7 +97,7 @@ export default game({
 <p>Ranges like <code>[0.2, 0.4]</code> pick a random value per particle; pairs like <code>size: [3, 1]</code> and the two colors go from start to end of each particle's life (<code>#ef476f00</code> fades to transparent).</p>
 <h2 id="4-columns-that-scroll-in">4. Columns that scroll in</h2>
 <p>A <strong>kinematic</strong> body moves at its <code>velocity</code> and ignores gravity: ideal for obstacles. Each pair is two columns plus an invisible <strong>sensor</strong> in the gap (a sensor reports overlaps but nothing bounces off it). That sensor is how we score.</p>
-<pre><code>function column(x: number, top: number, bottom: number): Spec {
+<pre><code>function column(x: number, top: number, bottom: number): EntitySpec&lt;Hop, "column"&gt; {
   const size: [number, number] = [COLUMNS.width, bottom - top];
   return {
     tags: ["column"],
@@ -108,7 +107,7 @@ export default game({
   };
 }
 
-function columnPair(gapY: number): Spec[] {
+function columnPair(gapY: number): EntitySpec&lt;Hop, "column" | "gap"&gt;[] {
   const x = W + COLUMNS.width;            // just off the right edge
   const half = COLUMNS.gap / 2;
   return [
@@ -132,7 +131,7 @@ function columnPair(gapY: number): Spec[] {
 <pre><code>    for (const c of ctx.findAll("column")) if (c.pos.x &lt; -COLUMNS.width) ctx.destroy(c);</code></pre>
 <h2 id="5-crashing-and-scoring">5. Crashing and scoring</h2>
 <p><code>ctx.onHit(tagA, tagB, fn)</code> runs when two solid bodies touch; <code>ctx.onEnter</code> when a body enters a sensor. The score is drawn as <strong>world text</strong>: a <code>text</code> shape, changed later through <code>entity.text</code>.</p>
-<pre><code>function label(text: string, y: number, size = 16): Spec {
+<pre><code>function label(text: string, y: number, size = 16): EntitySpec&lt;Hop, "label"&gt; {
   return { tags: ["label"], pos: [W / 2, y], z: 10, shape: { text, size, color: "#ffffff" } };
 }
 
@@ -235,13 +234,12 @@ interface Hop {
   actions: "hop";
   sounds: "hop" | "point" | "crash";
   images: never;
-  tags: "hopper" | "column" | "gap" | "floor" | "label";
+  tags: { hopper: {}; column: {}; gap: {}; floor: {}; label: {} };  // tag -&gt; its data ({} = none)
   ui: {};
   scenes: { title: undefined; play: undefined; over: { score: number } };
 }
 
 const { scene, game } = define&lt;Hop&gt;();
-type Spec = EntitySpec&lt;Hop["tags"]&gt;;
 
 // 2. Tuning: every number that changes the feel, in one place.
 const W = 320;
@@ -251,7 +249,7 @@ const HOPPER = { x: 80, size: 10, hop: -230 };
 const COLUMNS = { width: 22, gap: 56, speed: 90, every: 1.6, margin: 24 };
 
 // 3. Prefabs: functions that return spawn specs.
-function hopper(): Spec {
+function hopper(): EntitySpec&lt;Hop, "hopper"&gt; {
   return {
     tags: ["hopper"],
     pos: [HOPPER.x, H / 2],
@@ -264,7 +262,7 @@ function hopper(): Spec {
   };
 }
 
-function floor(): Spec {
+function floor(): EntitySpec&lt;Hop, "floor"&gt; {
   return {
     tags: ["floor"],
     pos: [W / 2, (FLOOR_Y + H) / 2],
@@ -274,7 +272,7 @@ function floor(): Spec {
 }
 
 // A column moving left: kinematic bodies move at their velocity and ignore gravity.
-function column(x: number, top: number, bottom: number): Spec {
+function column(x: number, top: number, bottom: number): EntitySpec&lt;Hop, "column"&gt; {
   const size: [number, number] = [COLUMNS.width, bottom - top];
   return {
     tags: ["column"],
@@ -285,7 +283,7 @@ function column(x: number, top: number, bottom: number): Spec {
 }
 
 // Two columns and an invisible sensor in the gap that scores once.
-function columnPair(gapY: number): Spec[] {
+function columnPair(gapY: number): EntitySpec&lt;Hop, "column" | "gap"&gt;[] {
   const x = W + COLUMNS.width;
   const half = COLUMNS.gap / 2;
   return [
@@ -295,7 +293,7 @@ function columnPair(gapY: number): Spec[] {
   ];
 }
 
-function label(text: string, y: number, size = 16): Spec {
+function label(text: string, y: number, size = 16): EntitySpec&lt;Hop, "label"&gt; {
   return { tags: ["label"], pos: [W / 2, y], z: 10, shape: { text, size, color: "#ffffff" } };
 }
 

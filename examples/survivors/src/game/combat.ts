@@ -22,8 +22,8 @@ function dropGem(ctx: Play, pos: Vec2, value: number) {
   const gems = ctx.findAll("gem");
   if (gems.length < RUN.maxGems) return void ctx.spawn(gem(pos, value));
   const g = ctx.random.pick(gems);
-  g.data.v = (g.data.v as number) + value;
-  g.animation = gemLook(g.data.v as number);
+  g.data.v += value;
+  g.animation = gemLook(g.data.v);
 }
 
 function drops(ctx: Play, kind: EnemyKind, pos: Vec2) {
@@ -34,8 +34,8 @@ function drops(ctx: Play, kind: EnemyKind, pos: Vec2) {
   else if (roll < 0.036) ctx.spawn(item(vec.add(pos, [5, 0]), "cake"));
 }
 
-export function kill(ctx: Play, e: Ent) {
-  const kind = e.data.kind as EnemyKind;
+export function kill(ctx: Play, e: Ent<"enemy">) {
+  const kind = e.data.kind;
   const pos = at(e);
   ctx.spawn(burst(pos, BLOOD[kind], kind === "queen" ? 80 : 10));
   ctx.audio.play("kill", { pan: pan(ctx, pos[0]), volume: 0.35, pitch: ctx.random.range(0.85, 1.2) });
@@ -51,17 +51,17 @@ function popNumber(ctx: Play, pos: Vec2, dmg: number) {
 }
 
 /** Hurts an enemy; pushes it away from `from`. Returns true when it died. */
-export function damage(ctx: Play, e: Ent, dmg: number, from: Vec2, push = 1): boolean {
+export function damage(ctx: Play, e: Ent<"enemy">, dmg: number, from: Vec2, push = 1): boolean {
   if (!e.alive) return false;
-  e.data.hp = (e.data.hp as number) - dmg;
+  e.data.hp -= dmg;
   e.data.flash = 0.08;
   e.tint = "#ff9090";
   popNumber(ctx, at(e), dmg);
-  if ((e.data.hp as number) <= 0) {
+  if (e.data.hp <= 0) {
     kill(ctx, e);
     return true;
   }
-  if (!e.tags.includes("boss") && push > 0) {
+  if (!e.has("boss") && push > 0) {
     e.data.kb = 0.12;
     e.body.velocity = vec.scale(vec.norm(vec.sub(at(e), from)), 110 * push);
   }
@@ -69,8 +69,8 @@ export function damage(ctx: Play, e: Ent, dmg: number, from: Vec2, push = 1): bo
 }
 
 /** Per-enemy cooldown per weapon, so areas that linger hit each foe a few times a second. */
-export function ready(ctx: Play, e: Ent, key: string, every: number): boolean {
-  const hits = e.data.hit as Record<string, number>;
+export function ready(ctx: Play, e: Ent<"enemy">, key: string, every: number): boolean {
+  const hits = e.data.hit;
   if ((hits[key] ?? -1) > ctx.state.time) return false;
   hits[key] = ctx.state.time + every;
   return true;

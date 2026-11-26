@@ -2,7 +2,7 @@ import type { Collider, EntitySpec, Random, Vec2 } from "alpha";
 import type { Flappy } from "../types";
 import { PIPE, WORLD } from "../tuning";
 
-type Spec = EntitySpec<Flappy["tags"], Flappy["images"]>;
+type Spec = EntitySpec<Flappy, "solid" | "goal" | "scrolls">;
 
 /**
  * Top pipe, bottom pipe and a scoring sensor in the gap, just past the right edge of the visible

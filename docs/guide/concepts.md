@@ -16,7 +16,7 @@ interface Dodge {
   axes: "moveX";
   sounds: "hit";
   images: never;
-  tags: "player" | "rock" | "label";
+  tags: { player: {}; rock: { speed: number }; label: {} };   // tag -> its entity data
   ui: {};
   scenes: { play: undefined; over: { score: number } };
 }
@@ -45,7 +45,7 @@ const play = scene("play", {
     const p = ctx.find("player");
     p.pos.x = Math.min(312, Math.max(8, p.pos.x + ctx.input.axis("moveX") * 150 * ctx.dt));
     for (const r of ctx.findAll("rock")) {
-      r.pos.y += (r.data.speed as number) * ctx.dt;
+      r.pos.y += r.data.speed * ctx.dt;                 // typed by the "rock" tag
       if (r.pos.y > 190) ctx.destroy(r);
       else if (Math.abs(r.pos.x - p.pos.x) < 14 && Math.abs(r.pos.y - p.pos.y) < 14) {
         ctx.audio.play("hit");
@@ -98,7 +98,8 @@ the number at the top counts up each second; touching a rock shows GAME OVER, an
 ### The game types
 
 Every action, axis, sound, image, tag, UI document and scene is declared once. Everything else
-is checked against it: `ctx.find("rokc")` or `ctx.go("ovr")` fail `npx alpha check`.
+is checked against it: `ctx.find("rokc")` or `ctx.go("ovr")` fail `npx alpha check`. Tags also
+declare the data their entities carry, so `entity.data` is typed too.
 
 ```ts
 interface MyGame {
@@ -106,7 +107,7 @@ interface MyGame {
   axes: "moveX";                            // optional: config.axes
   sounds: "hit";                            // assets.sounds must define each one
   images: never;                            // `never` = no images
-  tags: "player" | "enemy" | "rock" | "label";
+  tags: { player: {}; enemy: { hp: number; name: string }; rock: {}; label: {} };   // tag -> entity data
   ui: {};                                   // `{}` = no UI documents
   scenes: { title: undefined; play: { level: number }; over: { score: number } };
 }
@@ -178,8 +179,8 @@ e.pos.x += 10;          // move it
 e.rotation += 90;
 e.scale = 2;            // twice as big
 e.alpha = 0.5;
-e.data.hp = (e.data.hp as number) - 1;
-if ((e.data.hp as number) <= 0) ctx.destroy(e);       // gone at the end of the step
+e.data.hp -= 1;         // a number: "enemy" declares { hp: number; name: string }
+if (e.data.hp <= 0) ctx.destroy(e);                   // gone from queries now, freed at the end of the step
 e.alive;                // false right after destroy(); safe on stale references
 ```
 
@@ -198,34 +199,44 @@ ctx.spawn({ tags: ["label"], pos: [160, 20], shape: { text: "Hello", size: 16, c
 A spec can also carry a `body` ([Physics](physics.md)), an `emitter` and a `layer`
 ([Particles](particles.md)) or a `light` ([Shaders and lighting](shaders.md)).
 
-### Tags: finding entities
+### Tags: typed components
+
+A tag names a kind of entity **and** the data it carries (`{}` = none). An entity has every tag
+it was spawned with, and its `data` holds all their fields:
 
 ```ts
-const player = ctx.find("player");                        // throws if none: a clear error
-for (const en of ctx.findAll("enemy")) en.pos.y += 30 * ctx.dt;
-ctx.findAll("rock").length;                               // how many
+// types.ts: tags: { player: {}; enemy: { hp: number; name: string }; boss: { phase: number } }
+const player = ctx.find("player");                        // the oldest living one; throws if none
+for (const en of ctx.findAll("enemy")) en.data.hp -= 1;   // Entity<MyGame, "enemy">: hp is a number
+ctx.findAll("rock").length;                               // how many (living only)
+ctx.spawn({ tags: ["enemy", "boss"], pos: [0, 0], data: { hp: 90, name: "queen", phase: 1 } });
+for (const en of ctx.findAll("enemy")) {
+  if (en.has("boss")) en.data.phase += 1;                 // has() narrows: boss data too
+}
 ```
 
-An entity can have several tags (`tags: ["enemy", "flying"]`). Collision handlers pair tags too:
-`ctx.onHit("player", "enemy", ...)` ([Physics](physics.md)).
+Spawning a tag without its data (`ctx.spawn({ tags: ["enemy"], pos })`), a misspelled field or a
+field of another tag (`en.data.phase` outside the `has` check) fail `npx alpha check`.
+Collision handlers and queries are typed by their tags too: `ctx.onHit("shot", "enemy", (s, e) => ...)`,
+`ctx.queryCircle(p, 40, { tags: ["enemy"] })` ([Physics](physics.md)). `find`, `findAll` and
+queries return only living entities.
 
 ### Prefabs: functions that return specs
 
 ```ts
 import type { EntitySpec, Vec2 } from "alpha";
 
-type Spec = EntitySpec<MyGame["tags"]>;
-
-export function enemy(at: Vec2, hp = 3): Spec {
-  return { tags: ["enemy"], pos: at, shape: { rect: [12, 12], color: "#ff004d" }, data: { hp } };
+export function enemy(at: Vec2, hp = 3): EntitySpec<MyGame, "enemy"> {
+  return { tags: ["enemy"], pos: at, shape: { rect: [12, 12], color: "#ff004d" }, data: { hp, name: "grunt" } };
 }
 
 for (let i = 0; i < 5; i++) ctx.spawn(enemy([40 + i * 30, 40]));
 ```
 
 Expected: five red squares in a row. A spec is plain data: building it draws nothing, `ctx.spawn`
-does. With images, sheets, layers or fonts, widen the alias:
-`EntitySpec<MyGame["tags"], MyGame["images"], MyGame["sheets"], MyGame["layers"]>`.
+does. `EntitySpec<MyGame, "enemy">` names the tags the spec may use (a union for several:
+`EntitySpec<MyGame, "enemy" | "boss">`); images, sheets, layers, fonts and collision categories
+are checked from `MyGame` itself.
 
 ### Parents and children
 
@@ -244,10 +255,14 @@ ctx.destroy(tank);    // the gun goes too
 import type { Context, Entity } from "alpha";
 
 type Play = Context<MyGame, { score: number }>;           // game types + scene state
-type Thing = Entity<MyGame["tags"], any>;
+type Enemy = Entity<MyGame, "enemy">;                     // an entity with the "enemy" tag (and its data)
 
-function hurt(ctx: Play, target: Thing) { /* ... */ }
+function hurt(ctx: Play, target: Enemy) { /* target.data.hp is a number */ }
+function at(e: Entity<MyGame>) { return [e.pos.x, e.pos.y]; }   // any entity
 ```
+
+`Entity<MyGame>` takes any entity; `Entity<MyGame, "enemy">` takes only one with that tag (passing
+a rock is a compile error).
 
 ### The loop and determinism
 
@@ -294,11 +309,11 @@ ctx.every(5, () => {
 ### Health, hit flash and death
 
 ```ts
-function damage(ctx: Play, target: Thing, amount: number) {
-  target.data.hp = (target.data.hp as number) - amount;
+function damage(ctx: Play, target: Enemy, amount: number) {
+  target.data.hp -= amount;
   target.alpha = 0.3;                                               // blink...
   ctx.after(0.1, () => { if (target.alive) target.alpha = 1; });    // ...and back
-  if ((target.data.hp as number) <= 0) {
+  if (target.data.hp <= 0) {
     ctx.destroy(target);
     ctx.state.score += 10;
   }
@@ -309,18 +324,19 @@ function damage(ctx: Play, target: Thing, amount: number) {
 
 ```ts
 const play = scene("play", {
-  state: () => ({ paused: false }),
   update(ctx) {
-    if (ctx.input.pressed("pause")) ctx.state.paused = !ctx.state.paused;
-    if (ctx.state.paused) return;
+    if (ctx.input.pressed("pause")) ctx.frozen = !ctx.frozen;
+    if (ctx.frozen) return;          // your own world systems skip too
     // ... the rest of the game
   },
 });
 ```
 
-Physics, timers and tweens keep running while `update` returns early; for a full freeze keep
-moving things in `update` (or stop their bodies). The app itself pauses on focus loss
-(`ctx.onPause`, `config.pauseOnFocusLoss`).
+`ctx.frozen` stops the scene's world: physics (bodies keep their velocity and resume with it),
+contacts, `ctx.every`/`ctx.after`, tweens, animations, particles and `ctx.time`. `update`, UI
+handlers, input, the camera and audio keep running, so menus work while the world waits. It is
+false again on every scene enter. The app itself pauses on focus loss (`ctx.onPause`,
+`config.pauseOnFocusLoss`).
 
 ### Game over with a best score
 

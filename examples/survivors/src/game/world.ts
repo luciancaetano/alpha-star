@@ -33,8 +33,8 @@ function fit(ctx: Play, g: Grid) {
   if (have.length === g.cols * g.rows && have[0]?.data.cols === g.cols) return;
   for (const e of have) ctx.destroy(e);
   for (let i = 0; i < g.cols * g.rows; i++) {
-    const spec = g.tag === "ground" ? groundTile([0, 0]) : prop([0, 0], "reeds", false);
-    ctx.spawn({ ...spec, data: { i, cell: "", cols: g.cols } });
+    const slot = { i, cell: "", cols: g.cols };
+    ctx.spawn(g.tag === "ground" ? groundTile([0, 0], slot) : prop([0, 0], "reeds", false, slot));
   }
 }
 
@@ -59,7 +59,7 @@ function placeGround(ctx: Play, g: Grid) {
   const t = g.cell;
   const [bx, by] = origin(ctx, t);
   for (const tile of ctx.findAll("ground")) {
-    const [gx, gy] = cellOf(tile.data.i as number, g.cols, g.rows, bx, by);
+    const [gx, gy] = cellOf(tile.data.i, g.cols, g.rows, bx, by);
     const key = `${gx},${gy}`;
     if (tile.data.cell === key) continue;
     tile.data.cell = key;
@@ -67,7 +67,7 @@ function placeGround(ctx: Play, g: Grid) {
   }
 }
 
-function placeProp(p: Ent, gx: number, gy: number) {
+function placeProp(p: Ent<"prop">, gx: number, gy: number) {
   const key = `${gx},${gy}`;
   if (p.data.cell === key) return;
   p.data.cell = key;
@@ -83,7 +83,7 @@ function placeProp(p: Ent, gx: number, gy: number) {
 function placeProps(ctx: Play, g: Grid) {
   const [bx, by] = origin(ctx, g.cell);
   for (const p of ctx.findAll("prop")) {
-    const [gx, gy] = cellOf(p.data.i as number, g.cols, g.rows, bx, by);
+    const [gx, gy] = cellOf(p.data.i, g.cols, g.rows, bx, by);
     placeProp(p, gx, gy);
   }
 }

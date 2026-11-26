@@ -25,7 +25,7 @@ export interface Platformer {
   axes: "moveX";                       // optional
   sounds: "jump" | "coin";
   images: never;                       // `never` if none
-  tags: "player" | "coin" | "walls";
+  tags: { player: {}; coin: { taken?: boolean }; walls: {} };   // tag -> data in entity.data
   sheets: { hero: "idle" | "run" };    // optional
   worlds: "main"; layers: "far" | "fx"; fonts: "pixel";   // optional
   ui: { hud: "coins"; won: never };    // `{}` if no UI

@@ -31,7 +31,7 @@ function showCard(ctx: Play, n: 1 | 2 | 3, card: Card | undefined) {
   ctx.ui.set("levelup", `c${n}desc`, card?.desc ?? "");
 }
 
-function treasure(ctx: Play, hero: Ent) {
+function treasure(ctx: Play, hero: Ent<"hero">) {
   const s = ctx.state;
   s.chests -= 1;
   const card = openChest(s, ctx.random, (k, p) => ctx.t(k, p));
@@ -46,7 +46,7 @@ function treasure(ctx: Play, hero: Ent) {
 }
 
 /** Opens the next pending menu (chests first); returns false when none is due. */
-export function nextMenu(ctx: Play, hero: Ent): boolean {
+export function nextMenu(ctx: Play, hero: Ent<"hero">): boolean {
   const s = ctx.state;
   if (s.chests > 0) {
     treasure(ctx, hero);
