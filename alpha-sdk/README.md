@@ -104,12 +104,17 @@ and smooth images on separate atlas pages (`alpha-atlas-N.png`, `alpha-atlas-smo
 ## Fonts and sharp text
 
 `assets.fonts.name`: a `.ttf`/`.otf` file or an AngelCode BMFont `.fnt` (text or XML; its PNG
-pages are packed), as `"file"` or `{ file, pixelMode?, license? }`. The name is the `font-family`
+pages are packed), as `"file"` or `{ file, pixelMode?, license?, fallbacks? }`. The name is the `font-family`
 in `.rcss` and `font` of world text. Text is rasterized at the screen's real resolution (window
 scale, high-DPI, camera zoom), so it is sharp at any window size; bitmap fonts draw at whole
 multiples of their size; `pixelMode: true` renders TrueType monochrome (pixel fonts stay crisp;
 for an 8-px-grid font, sizes where size x window scale is a multiple of 8 look best). No fonts at
-all: UI and world text use the built-in 8x8 font (public domain).
+all: UI and world text use the built-in 8x8 font (public domain). Any language: TrueType/OpenType
+text is shaped by HarfBuzz (ligatures, Arabic joining, Devanagari), ordered right to left where
+needed (Unicode bidi; world text `dir: "auto" | "ltr" | "rtl"`, RCSS `direction`), and wraps at
+world text `width` (after spaces, between CJK characters). `fallbacks: ["arabic", "cjk"]` names
+other fonts tried per character the font lacks; what none has draws as a box with a log warning.
+Invalid Unicode in displayed text (an unpaired surrogate) is an error naming the byte.
 
 `alpha export` writes `THIRD_PARTY_NOTICES.txt` into every pack (engine dependencies incl. the
 FreeType License credit) plus the text of each font's `license` file. The font's own license is
@@ -183,8 +188,8 @@ overlap two). Audio is output only: simulations never depend on it. Saves are ve
 and are applied at boot; a value the game can no longer use is skipped with a warning.
 RmlUi elements with `data-t="key"` show `ctx.t(key)` and re-translate when the locale changes;
 `.high-contrast` is set on every document body; `uiScale` is RmlUi's dp ratio (size in `dp`).
-Reduced motion scales camera shake and particle counts to 1/4. World text draws UTF-8 ASCII +
-Latin-1 (others as `?`). Tests: `simulate(game, { settings: { locale: "pt" }, saves: { main: {...} } })`,
+Reduced motion scales camera shake and particle counts to 1/4. Locales may use any script (fonts
+with `fallbacks`). Tests: `simulate(game, { settings: { locale: "pt" }, saves: { main: {...} } })`,
 then `run.music`, `run.locale`, `run.settings`, `run.saves`, `expect.music("theme")`. MCP
 `game_state` adds `locale` and `music`.
 

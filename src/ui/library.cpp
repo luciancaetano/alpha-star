@@ -11,7 +11,6 @@
 
 #include "core/error.hpp"
 #include "platform/fonts.hpp"
-#include "platform/vfs.hpp"
 #include "ui/font_engine.hpp"
 #include "ui/pack_files.hpp"
 
@@ -37,11 +36,7 @@ class System final : public Rml::SystemInterface {
 struct Global {
   System system;
   PackFiles files;
-  // Font bytes must outlive RmlUi's use of them (until Shutdown).
-  // Keyed by "family|path": loading the same font again (every simulate run
-  // preloads its game's fonts) is a no-op.
-  std::map<std::string, std::vector<Rml::byte>> fonts;
-  std::unique_ptr<FontEngine> engine;  // wraps RmlUi's FreeType engine
+  FontEngine engine;  // every font: platform font sources (world text shares them)
 };
 
 int users = 0;
@@ -54,9 +49,8 @@ Library::Library() {
   global = std::make_unique<Global>();
   Rml::SetSystemInterface(&global->system);
   Rml::SetFileInterface(&global->files);
+  Rml::SetFontEngineInterface(&global->engine);
   if (!Rml::Initialise()) throw core::Error("RmlUi failed to initialise: " + take_messages());
-  global->engine = std::make_unique<FontEngine>(*Rml::GetFontEngineInterface());
-  Rml::SetFontEngineInterface(global->engine.get());
 }
 
 Library::~Library() {
@@ -70,39 +64,15 @@ std::string take_messages() {
   return std::exchange(global->system.messages, std::string());
 }
 
-namespace {
-
-// TrueType / OpenType for RmlUi's FreeType engine (kept until RmlUi shuts down).
-void register_truetype(const std::string& path, const std::string& family) {
-  const std::string key = family + "|" + path;
-  if (global->fonts.contains(key)) return;
-  auto read = platform::vfs::read(path);
-  if (!read) throw core::Error("cannot open font file " + path);
-  std::vector<Rml::byte> bytes = std::move(*read);
-  take_messages();
-  global->engine->loaded_font();
-  if (!global->engine->inner().LoadFontFace({bytes.data(), bytes.size()}, 0, family, Rml::Style::FontStyle::Normal,
-                                            Rml::Style::FontWeight::Auto, false)) {
-    throw core::Error(path + " is not a font RmlUi can load (use .ttf, .otf or a BMFont .fnt): " + take_messages());
-  }
-  global->fonts[key] = std::move(bytes);  // the heap buffer RmlUi points at stays put
-}
-
-}  // namespace
-
-
-core::FontSourcePtr load_font(const std::string& path, const std::string& family, bool pixel_mode) {
-  if (platform::is_bitmap_font(path)) {
-    core::FontSourcePtr font = platform::load_font(path, pixel_mode);
-    global->engine->add_bitmap(family, font);
-    return font;
-  }
-  register_truetype(path, family);
-  return platform::load_font(path, pixel_mode);
+core::FontSourcePtr load_font(const std::string& path, const std::string& family, bool pixel_mode,
+                              const std::vector<core::FontSourcePtr>& fallbacks) {
+  core::FontSourcePtr font = platform::load_font(path, pixel_mode, fallbacks);
+  global->engine.add_font(family, font);
+  return font;
 }
 
 void set_density(float density) {
-  if (global && global->engine->set_density(density)) Rml::ReleaseFontResources();
+  if (global && global->engine.set_density(density)) Rml::ReleaseFontResources();
 }
 
 }  // namespace alpha::ui

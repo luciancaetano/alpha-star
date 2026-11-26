@@ -69,14 +69,15 @@ TEST_CASE("BMFont XML format reads the same fields") {
 
 TEST_CASE("BMFont atlas: glyphs land on stacked pages, kerning kept, errors name the problem") {
   const auto f = parse_bmfont(kText);
-  const auto atlas = alpha::core::bitmap_atlas(f, {0, 32});
+  const auto font = alpha::core::bitmap_atlas(f, {0, 32});
+  const auto& atlas = font.atlas;
   CHECK(atlas.line_height == 10);
   CHECK(atlas.ascent == 8);
-  const auto& v = atlas.glyphs[U'V' - U' '];
+  const auto& v = atlas.glyphs.at(alpha::core::glyph_key(0, U'V'));
   CHECK(v.src.y == 32);  // page 1 sits under page 0
   CHECK(v.offset.x == -1);
-  CHECK(atlas.kerning.at({U'A', U'V'}) == -2);
-  CHECK(atlas.glyphs[U'B' - U' '].src.w == 0);  // missing: draws nothing
+  CHECK(font.kerning.at({U'A', U'V'}) == -2);
+  CHECK_FALSE(atlas.glyphs.contains(alpha::core::glyph_key(0, U'B')));  // missing: the source draws tofu
   CHECK_THROWS_WITH(parse_bmfont("char id=65"), doctest::Contains("common"));
   CHECK_THROWS_WITH(parse_bmfont("BMF\x03"), doctest::Contains("binary"));
   std::string bad_page = kText;

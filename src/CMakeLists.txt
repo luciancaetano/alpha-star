@@ -10,6 +10,8 @@ add_library(alpha_core
   core/entity_spec.cpp
   core/fixed_step.cpp
   core/glyph_layout.cpp
+  core/line_break.cpp
+  core/utf8.cpp
   core/image_filter.cpp
   core/bmfont.cpp
   core/pixel_grid.cpp
@@ -81,8 +83,13 @@ add_library(alpha_engine
   platform/decoders.cpp
   platform/frame_latency.cpp
   platform/gamepads.cpp
+  platform/bidi.cpp
+  platform/glyph_atlas.cpp
   platform/glyphs.cpp
   platform/fonts.cpp
+  platform/run_items.cpp
+  platform/text_shaper.cpp
+  platform/truetype.cpp
   platform/default_font_data.cpp
   platform/lifecycle.cpp
   platform/log_file.cpp
@@ -132,8 +139,8 @@ add_library(alpha_engine
   script/text_look.cpp
   script/ui_bindings.cpp
   script/world_bindings.cpp
-  ui/bitmap_text.cpp
   ui/font_engine.cpp
+  ui/text_face.cpp
   ui/input.cpp
   ui/library.cpp
   ui/pack_files.cpp
@@ -158,7 +165,8 @@ unset(ALPHA_QJS_HEADER)
 target_include_directories(alpha_engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnTT::EnTT qjs SDL3_image::SDL3_image
-  RmlUi::Core alpha_rmlui_sdl Freetype::Freetype alpha_codecs)
+  RmlUi::Core alpha_rmlui_sdl Freetype::Freetype alpha_codecs
+  alpha_harfbuzz alpha_sheenbidi)
 alpha_set_warnings(alpha_engine)
 
 # devtools: Dear ImGui engine dev tools (F12). Only with ALPHA_DEVTOOLS; a

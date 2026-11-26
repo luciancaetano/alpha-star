@@ -1,13 +1,21 @@
 {
   "hud": {
     "level": "LEVEL {n}/{of}",
-    "moves": { "zero": "NO MOVES", "one": "1 MOVE", "other": "{count} MOVES" },
+    "moves": {
+      "zero": "NO MOVES",
+      "one": "1 MOVE",
+      "other": "{count} MOVES"
+    },
     "best": "BEST {n}",
-    "keys": "ARROWS  Z UNDO  R RESET  L LANG"
+    "keys": "ARROWS  Z UNDO  R RESET  L LANG",
+    "language": "English"
   },
   "solved": {
     "title": "SOLVED!",
-    "moves": { "one": "IN 1 MOVE", "other": "IN {count} MOVES" },
+    "moves": {
+      "one": "IN 1 MOVE",
+      "other": "IN {count} MOVES"
+    },
     "next": "NEXT LEVEL"
   }
 }

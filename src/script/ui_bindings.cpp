@@ -3,11 +3,13 @@
 #include <array>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "core/error.hpp"
 #include "platform/vfs.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
+#include "script/spec_fields.hpp"
 #include "script/sprite_bindings.hpp"
 
 namespace alpha::script {
@@ -47,7 +49,10 @@ JSValue load_font(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   ui_of(s);  // fonts need the UI library alive
   const auto [name, path] = asset(ctx, s, argv, "fonts");
   const bool pixel = !smooth_arg(ctx, argv[2]);
-  s.fonts[name] = ui::load_font(path, name, pixel);  // world text draws it too
+  std::vector<core::FontSourcePtr> fallbacks;
+  const std::string what = "assets.fonts." + name + ".fallbacks";
+  for (const std::string& f : strings_arg(ctx, argv[3], what)) fallbacks.push_back(named(s.fonts, f, what, "assets.fonts"));
+  s.fonts[name] = ui::load_font(path, name, pixel, fallbacks);  // world text draws it too
   return JS_UNDEFINED;
 }
 
@@ -119,7 +124,7 @@ constexpr std::array<Native, 2> kTestNatives{{
 
 constexpr std::array<Native, 9> kNatives{{
     {"uiCreate", guarded<ui_create>, 2}, {"loadUi", guarded<load_ui>, 2},
-    {"loadFont", guarded<load_font>, 3}, {"uiShow", guarded<ui_show>, 1},
+    {"loadFont", guarded<load_font>, 4}, {"uiShow", guarded<ui_show>, 1},
     {"uiHide", guarded<ui_hide>, 1},     {"uiSet", guarded<ui_set>, 3},
     {"uiOn", guarded<ui_on>, 3},         {"uiEvents", guarded<ui_events>, 0},
     {"uiReset", guarded<ui_reset>, 0},

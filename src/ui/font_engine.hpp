@@ -12,28 +12,25 @@
 
 namespace alpha::ui {
 
-class BitmapText;
+class TextFace;
 
-// The game UI's font engine. UI pixels are the game's logical pixels, but
-// glyphs are made at the output resolution (`density` output pixels per UI
-// pixel) and placed on whole output pixels, so the logical presentation never
-// resamples text. TrueType/OpenType goes to RmlUi's own FreeType engine
-// (`inner`) at size x density, its geometry scaled back; BMFont and the
-// built-in font are drawn here (BitmapText). With no font loaded at all, every
-// family falls back to the built-in font. GenerateString's nine parameters are
-// RmlUi's interface (tools/harness_config.py EXTERNAL_SIGNATURES).
+// The game UI's font engine: every assets.fonts font (TrueType/OpenType with
+// its fallbacks, BMFont, built-in) is shaped and drawn by the same font
+// sources as world text (platform/fonts: HarfBuzz, bidi, fallback, boxes for
+// missing glyphs), through TextFace. UI pixels are the game's logical pixels,
+// but glyphs are made at the output resolution (`density` output pixels per
+// UI pixel) and placed on whole output pixels. RCSS `direction` sets the
+// paragraph direction. With no font loaded at all, every family falls back
+// to the built-in font. GenerateString's nine parameters are RmlUi's
+// interface (tools/harness_config.py EXTERNAL_SIGNATURES).
 class FontEngine final : public Rml::FontEngineInterface {
  public:
-  explicit FontEngine(Rml::FontEngineInterface& inner);
+  FontEngine();
   ~FontEngine() override;
 
-  void add_bitmap(const std::string& family, core::FontSourcePtr font);
+  void add_font(const std::string& family, core::FontSourcePtr font);
   // True when it changed; then every face must be made again (Rml::ReleaseFontResources).
   bool set_density(float density);
-
-  // TrueType / OpenType: registered with RmlUi's engine directly (Library).
-  Rml::FontEngineInterface& inner() { return inner_; }
-  void loaded_font() { any_font_ = true; }
 
   void Shutdown() override;
   Rml::FontFaceHandle GetFontFaceHandle(const Rml::String& family, Rml::Style::FontStyle style,
@@ -50,24 +47,11 @@ class FontEngine final : public Rml::FontEngineInterface {
   void ReleaseFontResources() override;
 
  private:
-  // A family at one size: RmlUi's face at size x density, or bitmap text.
-  struct Face {
-    Rml::FontFaceHandle inner = 0;
-    std::unique_ptr<BitmapText> bitmap;
-    Rml::FontMetrics metrics{};
-  };
-  using Key = std::tuple<std::string, int, int, int>;
+  using Key = std::pair<std::string, int>;
 
-  Face* make_face(const Rml::String& family, Rml::Style::FontStyle style, Rml::Style::FontWeight weight, int size);
-  Face* bitmap_face(const core::FontSourcePtr& font, int size);
-  Rml::TextShapingContext scaled(const Rml::TextShapingContext& shaping) const;
-  int to_ui(int output_pixels) const;
-
-  Rml::FontEngineInterface& inner_;
   float density_ = 1.0f;
-  bool any_font_ = false;
-  std::map<std::string, core::FontSourcePtr> bitmaps_;
-  std::map<Key, std::unique_ptr<Face>> faces_;
+  std::map<std::string, core::FontSourcePtr> fonts_;
+  std::map<Key, std::unique_ptr<TextFace>> faces_;
 };
 
 }  // namespace alpha::ui

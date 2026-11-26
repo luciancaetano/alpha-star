@@ -39,7 +39,9 @@ ctx.ui.on("settings", "back", "back", () => ctx.go("title"));   // Escape / game
 `assets.fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", license: "assets/fonts/OFL.txt" } }`;
 the name is the `font-family` in RCSS and `font` of world text. TTF/OTF or BMFont `.fnt`. With no
 fonts at all, every family falls back to the built-in 8x8 font (public domain): use sizes in
-multiples of 8 (`examples/topdown`, `puzzle`, `shmup` do).
+multiples of 8 (`examples/topdown`, `shmup` do). Any language: fonts take `fallbacks`, text is
+shaped and ordered right to left where needed, `direction: rtl` sets it in RCSS, and CJK
+paragraphs wrap with `word-break: break-all` ([Text and languages](text.html)).
 
 ## In tests
 

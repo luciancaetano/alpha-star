@@ -63,7 +63,7 @@ TEST_CASE("ui text at 1.5x: TrueType made at the output size, every glyph edge o
   Sandbox box;
   Ui ui{64, 32};
   // Press Start 2P has an 8-unit pixel grid: 16 UI px x 1.5 = 24 output px puts every edge on a pixel.
-  alpha::ui::load_font(ALPHA_TEST_FONT, "pixel", true);
+  alpha::ui::load_font(ALPHA_TEST_FONT, "pixel", true, {});
   ui.add("t", box.write("t.rml", page("font-family: pixel; font-size: 16px; padding-left: 3.3px;", "#H")));
   ui.show("t");
   Screen screen;
@@ -76,7 +76,7 @@ TEST_CASE("ui text at 1.5x: TrueType made at the output size, every glyph edge o
 TEST_CASE("ui text in a BMFont: whole texels, kerning applied") {
   Sandbox box;
   Ui ui{64, 32};
-  const auto font = alpha::ui::load_font(ALPHA_TEST_FIXTURES "/fonts/tiny.fnt", "tiny", true);
+  const auto font = alpha::ui::load_font(ALPHA_TEST_FIXTURES "/fonts/tiny.fnt", "tiny", true, {});
   CHECK(font->native() == 4);
   ui.add("t", box.write("t.rml", page("font-family: tiny; font-size: 8px; line-height: 12px; padding-top: 4px;", "AV")));
   ui.show("t");

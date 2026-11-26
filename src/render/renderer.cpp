@@ -132,9 +132,11 @@ void Renderer::add_text(const core::DrawItem& item, const core::View& view) {
   const core::View seen = core::parallax_view(view, item.parallax);
   const float density = window_scale_ * seen.zoom;
   const core::FontScale scale = core::font_scale(face->native(), look.size, density);
-  const core::FontAtlasPtr atlas = fonts_.get(face, scale.pixels);
-  const core::TextQuads quads = core::layout_text(*atlas, look.text, look.align);
   const float unit = scale.texel / density;
+  const core::ShapedText shaped = face->shape({look.text, scale.pixels, look.dir, look.width / unit});
+  const core::FontAtlasPtr& atlas = shaped.atlas;
+  fonts_.use(face, scale.pixels, atlas->image);
+  const core::TextQuads quads = core::layout_text(shaped, look.align);
   const core::Vec2 corner = core::to_screen(seen, item.pos - quads.box * (unit * 0.5f));
   batch({texture(atlas->image), item.shape.blend, item.parallax}, view);
   text_triangles(item, {quads, *atlas->image, core::to_world(seen, core::snap(grid_, corner)), unit}, batch_);

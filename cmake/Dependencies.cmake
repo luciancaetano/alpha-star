@@ -95,7 +95,8 @@ file(CONFIGURE OUTPUT ${CMAKE_BINARY_DIR}/codecs/alpha_codecs.c
 add_library(alpha_codecs STATIC ${CMAKE_BINARY_DIR}/codecs/alpha_codecs.c)
 target_include_directories(alpha_codecs SYSTEM PUBLIC ${stb_vorbis_SOURCE_DIR} ${dr_mp3_SOURCE_DIR})
 
-# Game UI: RmlUi (HTML/CSS-like .rml/.rcss) with its FreeType font engine.
+# Game UI: RmlUi (HTML/CSS-like .rml/.rcss); its text goes through ui::FontEngine
+# (platform font sources: FreeType + HarfBuzz + SheenBidi), not its own engine.
 # FreeType static and self-contained: no zlib/bzip2/png/harfbuzz/brotli from the system.
 foreach(dep ZLIB BZIP2 PNG HARFBUZZ BROTLI)
   set(FT_DISABLE_${dep} ON CACHE BOOL "" FORCE)
@@ -113,7 +114,7 @@ set(CMAKE_DISABLE_FIND_PACKAGE_Freetype ON)
 
 set(RMLUI_SAMPLES OFF CACHE BOOL "" FORCE)
 set(RMLUI_LUA_BINDINGS OFF CACHE BOOL "" FORCE)
-set(RMLUI_FONT_ENGINE "freetype" CACHE STRING "" FORCE)
+set(RMLUI_FONT_ENGINE "none" CACHE STRING "" FORCE)  # ui::FontEngine draws every font
 set(RMLUI_INSTALL_RUNTIME_DEPENDENCIES OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(rmlui
   GIT_REPOSITORY https://github.com/mikke89/RmlUi.git
@@ -127,6 +128,43 @@ add_library(alpha_rmlui_sdl STATIC ${rmlui_SOURCE_DIR}/Backends/RmlUi_Platform_S
 target_include_directories(alpha_rmlui_sdl SYSTEM PUBLIC ${rmlui_SOURCE_DIR}/Backends)
 target_compile_definitions(alpha_rmlui_sdl PUBLIC RMLUI_SDL_VERSION_MAJOR=3)
 target_link_libraries(alpha_rmlui_sdl PUBLIC RmlUi::Core SDL3::SDL3)
+
+# Multi-language text (platform/shaper): HarfBuzz shapes TrueType/OpenType runs
+# (ligatures, Arabic joining, Indic/Thai clusters); SheenBidi orders mixed
+# left-to-right / right-to-left runs (UAX #9). Both compiled from source as
+# single translation units: no FreeType/ICU/glib integration (glyphs are drawn
+# by FreeType in platform/glyphs; HarfBuzz reads the font bytes itself).
+# HarfBuzz 12.3.2 is "Old MIT"; SheenBidi 2.9.0 is Apache-2.0.
+FetchContent_Declare(harfbuzz
+  GIT_REPOSITORY https://github.com/harfbuzz/harfbuzz.git
+  GIT_TAG 12.3.2
+  GIT_SHALLOW TRUE
+  SOURCE_SUBDIR no-cmake  # sources only: alpha_harfbuzz below builds them
+  SYSTEM)
+FetchContent_Declare(sheenbidi
+  GIT_REPOSITORY https://github.com/Tehreer/SheenBidi.git
+  GIT_TAG v2.9.0
+  GIT_SHALLOW TRUE
+  SOURCE_SUBDIR no-cmake
+  SYSTEM)
+FetchContent_MakeAvailable(harfbuzz sheenbidi)
+add_library(alpha_harfbuzz STATIC ${harfbuzz_SOURCE_DIR}/src/harfbuzz.cc)
+target_include_directories(alpha_harfbuzz SYSTEM PUBLIC ${harfbuzz_SOURCE_DIR}/src)
+target_compile_definitions(alpha_harfbuzz PRIVATE HB_NO_MT)  # one thread shapes
+if(MSVC)
+  target_compile_options(alpha_harfbuzz PRIVATE /bigobj /w)
+else()
+  target_compile_options(alpha_harfbuzz PRIVATE -w)
+endif()
+add_library(alpha_sheenbidi STATIC ${sheenbidi_SOURCE_DIR}/Source/SheenBidi.c)
+target_include_directories(alpha_sheenbidi SYSTEM PUBLIC ${sheenbidi_SOURCE_DIR}/Headers)
+target_include_directories(alpha_sheenbidi PRIVATE ${sheenbidi_SOURCE_DIR}/Source)
+target_compile_definitions(alpha_sheenbidi PRIVATE SB_CONFIG_UNITY)
+if(MSVC)
+  target_compile_options(alpha_sheenbidi PRIVATE /w)
+else()
+  target_compile_options(alpha_sheenbidi PRIVATE -w)
+endif()
 
 # Dear ImGui: engine dev tools only (ALPHA_DEVTOOLS), never in shipping builds.
 # ImGui has no CMake build; alpha_imgui compiles the core plus the SDL3 platform

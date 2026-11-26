@@ -55,7 +55,6 @@ struct ScriptState {
   // assets.fonts by name (the game UI loads them too) and the atlases that
   // size world-text boxes, per (font, pixel size).
   std::map<std::string, core::FontSourcePtr, std::less<>> fonts;
-  std::map<std::pair<const core::FontSource*, int>, core::FontAtlasPtr> font_atlases;
   // assets.shaders by name, with their compiled blobs (custom postfx effects).
   std::map<std::string, core::ShaderPtr, std::less<>> shaders;
   // config.collision.categories, in order (category i has bit i + 1).

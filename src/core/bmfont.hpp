@@ -1,7 +1,9 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "core/glyph_layout.hpp"
@@ -36,8 +38,12 @@ struct BmFont {
 // Throws core::Error naming what is missing or wrong.
 BmFont parse_bmfont(std::string_view text);
 // The atlas of a font whose pages are stacked in one image, page i starting
-// at row page_top[i] (the image itself is left for the caller to attach).
-// Characters outside the atlas range (ASCII + Latin-1) are dropped.
-FontAtlas bitmap_atlas(const BmFont& font, const std::vector<int>& page_top);
+// at row page_top[i] (the image itself is left for the caller to attach);
+// glyph keys are glyph_key(0, code point). Kerning pairs by code point.
+struct BitmapAtlas {
+  FontAtlas atlas;
+  std::map<std::pair<char32_t, char32_t>, float> kerning;
+};
+BitmapAtlas bitmap_atlas(const BmFont& font, const std::vector<int>& page_top);
 
 }  // namespace alpha::core

@@ -1,0 +1,21 @@
+{
+  "hud": {
+    "level": "第 {n}/{of} 关",
+    "moves": {
+      "zero": "还没有移动",
+      "one": "1 步",
+      "other": "{count} 步"
+    },
+    "best": "最佳 {n}",
+    "keys": "方向键  Z 撤销  R 重来  L 语言",
+    "language": "中文"
+  },
+  "solved": {
+    "title": "过关！",
+    "moves": {
+      "one": "用了 1 步",
+      "other": "用了 {count} 步"
+    },
+    "next": "下一关"
+  }
+}

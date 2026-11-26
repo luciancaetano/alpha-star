@@ -15,8 +15,15 @@ namespace alpha::core {
 inline constexpr std::size_t kMaxArrayItems = std::size_t{1} << 20;
 // Entities in one scene's world, living or destroyed-but-not-yet-freed.
 inline constexpr std::size_t kMaxEntities = 100000;
-// Characters of displayed text (world text, UI element text).
+// Bytes of displayed text (world text, UI element text), valid UTF-8.
 inline constexpr std::size_t kMaxTextChars = 4096;
+// Glyph atlas of one font at one pixel size: square side it may grow to (RGBA),
+// and pixel sizes kept per font (least recently used dropped); a full atlas
+// starts over with the glyphs the current text needs (large CJK sets).
+inline constexpr int kMaxGlyphAtlasSide = 2048;
+inline constexpr std::size_t kGlyphAtlasSizes = 6;
+// Fallback fonts one font may list (assets.fonts.<name>.fallbacks).
+inline constexpr std::size_t kMaxFontFallbacks = 8;
 // Notes in one synthesized sound (each note is at most 10 s).
 inline constexpr std::size_t kMaxSynthNotes = 256;
 // Game instances alive at once (the game plus simulate runs; each owns a world, UI and mixer).

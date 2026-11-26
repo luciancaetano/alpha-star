@@ -1,7 +1,8 @@
 # AGENTS.md — Crates (alpha-star game)
 
 Sokoban: push every crate onto a goal. Arrows / D-pad move, Z undoes, R restarts the level,
-L switches English / Portuguese. Progress and best move counts are saved.
+L cycles the language: English, Portuguese, Russian, Arabic, Hebrew, Hindi, Chinese (Noto Sans
+subsets in `assets/fonts/`, `main` falling back to one font per script). Progress and best move counts are saved.
 
 You are editing a game for the alpha-star engine. Write TypeScript in `src/`; `alpha export`
 type-checks it and bundles it into one JS module (`dist/main.js`) that the engine runs. The API
@@ -34,6 +35,7 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 | `src/scenes/play.ts` | Input -> `move` -> state; sprites follow the state (tweened). Undo history. |
 | `src/scenes/solved.ts` | Saves the best move count and the next level; "next" button. |
 | `assets/locales/*.json` | Texts: `ctx.t("hud.moves", { count })` (plural forms), `data-t` in `.rml`. |
+| `assets/fonts/` | Noto Sans subsets (OFL). A new language: add its locale, then cut its script's Noto font to the locale's characters with the engine repo's `tools/subset_fonts.py` and list it in `assets.fonts.main.fallbacks`. |
 
 ## How things work here
 

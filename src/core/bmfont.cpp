@@ -127,21 +127,19 @@ BmFont parse_bmfont(std::string_view text) {
   return font;
 }
 
-FontAtlas bitmap_atlas(const BmFont& font, const std::vector<int>& page_top) {
-  FontAtlas atlas;
-  atlas.line_height = font.line_height;
-  atlas.ascent = font.base;
+BitmapAtlas bitmap_atlas(const BmFont& font, const std::vector<int>& page_top) {
+  BitmapAtlas out;
+  out.atlas.line_height = font.line_height;
+  out.atlas.ascent = font.base;
   for (const BmChar& c : font.chars) {
-    const auto i = glyph_index(c.id);
-    if (!i) continue;
     Region src = c.src;
     src.y += page_top.at(static_cast<std::size_t>(c.page));
-    atlas.glyphs[*i] = {src, c.offset, c.advance};
+    out.atlas.glyphs[glyph_key(0, static_cast<std::uint32_t>(c.id))] = {src, c.offset, c.advance};
+    if (c.id == U'x') out.atlas.x_height = static_cast<float>(c.src.h);
   }
-  for (const BmKerning& k : font.kernings) {
-    if (glyph_index(k.first) && glyph_index(k.second)) atlas.kerning[{k.first, k.second}] = k.amount;
-  }
-  return atlas;
+  if (out.atlas.x_height <= 0.0f) out.atlas.x_height = font.base * 0.5f;
+  for (const BmKerning& k : font.kernings) out.kerning[{k.first, k.second}] = k.amount;
+  return out;
 }
 
 }  // namespace alpha::core

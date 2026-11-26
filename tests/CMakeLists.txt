@@ -8,6 +8,8 @@ set(ALPHA_TEST_SOURCES
   core/bytecode_test.cpp
   core/camera_test.cpp
   core/glyph_layout_test.cpp
+  core/line_break_test.cpp
+  core/utf8_test.cpp
   core/image_filter_test.cpp
   core/bmfont_test.cpp
   core/pixel_grid_test.cpp
@@ -38,6 +40,8 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     platform/assets_test.cpp
     platform/audio_decode_test.cpp
     platform/vfs_test.cpp
+    platform/glyph_atlas_test.cpp
+    platform/text_shaping_test.cpp
     platform/frame_latency_test.cpp
     platform/gamepads_test.cpp
     platform/log_file_test.cpp
@@ -68,6 +72,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/physics_script_test.cpp
     script/pixel_mode_test.cpp
     script/prefs_script_test.cpp
+    script/text_script_test.cpp
     script/sprite_script_test.cpp
     script/test_report_test.cpp
     script/console_test.cpp

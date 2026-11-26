@@ -80,6 +80,10 @@ using TileGridPtr = std::shared_ptr<const TileGrid>;
 
 enum class Align { Left, Center, Right };
 
+// Paragraph direction of text: auto takes it from the first strong letter
+// (Arabic/Hebrew = right-to-left), as Unicode's bidi algorithm does.
+enum class TextDir : std::uint8_t { Auto, Ltr, Rtl };
+
 // How a shape's pixels combine with what is under them.
 enum class Blend { Alpha, Add, Multiply };
 
@@ -89,14 +93,18 @@ using FontSourcePtr = std::shared_ptr<const FontSource>;
 // World text: drawn with `font` (an assets.fonts name) or, without one, the
 // built-in 8x8 font, `size` pixels high; rasterized by the renderer at the
 // output resolution (window pixels x camera zoom), so it stays sharp.
-// `pos` is the anchor: align picks which end (or the middle) of the line sits
-// on it; the line is vertically centered on it.
+// `pos` is the anchor: align picks which end (or the middle) of the lines sits
+// on it; the block of lines is vertically centered on it. `width` > 0 wraps
+// lines at that many pixels (spaces, and between CJK characters); `dir` is
+// the paragraph direction (mixed scripts are ordered by Unicode bidi).
 struct TextLook {
   std::string text;
   std::string font;
   FontSourcePtr face;  // the font itself (set by the script layer)
   float size = 16.0f;
   Align align = Align::Center;
+  TextDir dir = TextDir::Auto;
+  float width = 0.0f;
 };
 
 // A sprite-sheet animation to start the entity with ("" = show frame 0, play later).

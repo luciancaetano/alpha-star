@@ -45,7 +45,8 @@ std::string string_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 // One step's dt in seconds: 0..1 (a fixed step is 1/60; more would make
 // timers and emitters catch up without bound).
 double dt_arg(JSContext* ctx, JSValueConst v);
-// String(v) shown to players (world/UI text), at most core::kMaxTextChars bytes.
+// String(v) shown to players (world/UI text), at most core::kMaxTextChars bytes
+// of valid UTF-8 (an unpaired surrogate is refused, naming where it is).
 std::string text_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 std::vector<std::string> strings_arg(JSContext* ctx, JSValueConst v, const std::string& what);
 core::Vec2 vec2_arg(JSContext* ctx, JSValueConst v, const std::string& what);

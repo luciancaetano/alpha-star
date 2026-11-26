@@ -13,11 +13,10 @@ namespace {
 
 const std::string kEmitter = "emitter.";
 
-core::Align parse_align(JSContext* ctx, JSValueConst v) {
-  constexpr std::array<std::pair<const char*, core::Align>, 3> kAligns{
-      {{"left", core::Align::Left}, {"center", core::Align::Center}, {"right", core::Align::Right}}};
-  return choice(ctx, v, "shape.align", kAligns);
-}
+constexpr std::array<std::pair<const char*, core::Align>, 3> kAligns{
+    {{"left", core::Align::Left}, {"center", core::Align::Center}, {"right", core::Align::Right}}};
+constexpr std::array<std::pair<const char*, core::TextDir>, 3> kDirs{
+    {{"auto", core::TextDir::Auto}, {"ltr", core::TextDir::Ltr}, {"rtl", core::TextDir::Rtl}}};
 
 // A number (both ends) or [a, b].
 core::Span span(JSContext* ctx, JSValueConst obj, const char* name, core::Span fallback) {
@@ -116,7 +115,10 @@ core::ShapeSpec parse_text_shape(JSContext* ctx, JSValueConst obj, ScriptState& 
   if (has(ctx, obj, "font")) look.font = string_arg(ctx, field(ctx, obj, "font").get(), kSpawn + "shape.font");
   look.size = number_or(ctx, obj, "size", "shape.size", 16.0f);
   if (!(look.size >= 1 && look.size <= 256)) throw core::Error(kSpawn + "shape.size must be 1..256 (pixels)");
-  if (has(ctx, obj, "align")) look.align = parse_align(ctx, field(ctx, obj, "align").get());
+  if (has(ctx, obj, "align")) look.align = choice(ctx, field(ctx, obj, "align").get(), "shape.align", kAligns);
+  if (has(ctx, obj, "dir")) look.dir = choice(ctx, field(ctx, obj, "dir").get(), "shape.dir", kDirs);
+  look.width = number_or(ctx, obj, "width", "shape.width", 0.0f);
+  if (!(look.width >= 0 && look.width <= 100000)) throw core::Error(kSpawn + "shape.width must be 0 (no wrapping) .. 100000 pixels");
   core::ShapeSpec shape{core::Rect{}, {255, 255, 255, 255}};
   if (has(ctx, obj, "color")) shape.fill = color_arg(ctx, field(ctx, obj, "color").get(), "shape.color");
   shape.text = std::move(look);

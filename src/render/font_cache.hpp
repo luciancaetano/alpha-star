@@ -8,24 +8,26 @@
 
 namespace alpha::render {
 
-// World-text atlases by (font, pixel size), most recently used kept: text is
-// rasterized at the output size (window scale x camera zoom), so a zoom tween
-// or a resize asks for new sizes; the least recently used beyond `capacity`
-// is dropped and `evicted` is told its image (to free the texture).
+// The world-text atlas image last drawn per (font, pixel size), most recent
+// first. Text is rasterized at the output size (window scale x camera zoom),
+// and a font source publishes a new atlas image whenever it adds glyphs: the
+// image it replaces, or the least recently used one beyond `capacity`, is
+// told to `evicted` (to free its texture) once no entry shares it.
 class FontCache {
  public:
   using Evicted = std::function<void(const core::Image*)>;
   FontCache(std::size_t capacity, Evicted evicted);
 
-  core::FontAtlasPtr get(const core::FontSourcePtr& font, int pixels);
+  void use(const core::FontSourcePtr& font, int pixels, const core::ImagePtr& image);
   std::size_t size() const { return entries_.size(); }
 
  private:
   struct Entry {
     core::FontSourcePtr font;  // held, so its address is never reused while cached
     int pixels = 0;
-    core::FontAtlasPtr atlas;
+    core::ImagePtr image;      // held, so a texture's key is never reused while cached
   };
+  void drop(const core::ImagePtr& image);
   std::size_t capacity_;
   Evicted evicted_;
   std::list<Entry> entries_;  // most recent first

@@ -177,19 +177,24 @@ TEST_CASE("bitmap fonts draw whole texels: BMFont with kerning, and the built-in
                     doctest::Contains("not a font"));
 }
 
-TEST_CASE("world text atlases are cached per size and bounded; a resize makes new ones") {
+TEST_CASE("world text atlas images are tracked per font and size; a replaced or old one frees its texture") {
   const FontSourcePtr tiny = alpha::platform::load_font(ALPHA_TEST_FIXTURES "/fonts/tiny_xml.fnt", true);
-  int evicted = 0;
-  alpha::render::FontCache cache(2, [&](const Image*) { ++evicted; });
+  std::vector<const Image*> evicted;
+  alpha::render::FontCache cache(2, [&](const Image* i) { evicted.push_back(i); });
   const FontSourcePtr smooth = alpha::platform::load_font(ALPHA_TEST_FONT, false);
-  const auto a = cache.get(smooth, 10);
-  CHECK(cache.get(smooth, 10) == a);
-  cache.get(smooth, 11);
-  cache.get(tiny, 4);
+  const auto a = smooth->shape({"A", 10}).atlas->image;
+  cache.use(smooth, 10, a);
+  cache.use(smooth, 10, a);
+  CHECK(evicted.empty());
+  const auto grown = smooth->shape({"AB", 10}).atlas->image;  // a new glyph: a new image
+  CHECK(grown != a);
+  cache.use(smooth, 10, grown);
+  REQUIRE(evicted.size() == 1);
+  CHECK(evicted[0] == a.get());
+  cache.use(smooth, 11, smooth->shape({"A", 11}).atlas->image);
+  cache.use(tiny, 4, tiny->shape({"A", 4}).atlas->image);
   CHECK(cache.size() == 2);
-  CHECK(evicted == 1);  // the 10 px atlas
-  CHECK(cache.get(smooth, 10) != a);
-  CHECK(tiny->atlas(99)->kerning.at({U'A', U'V'}) == -1);
+  CHECK(evicted.size() == 2);  // the 10 px atlas, least recently used
 }
 
 TEST_CASE("scaling modes: integer and stretch keep the logical size; expand grows it to the output's aspect") {

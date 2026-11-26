@@ -62,6 +62,10 @@ NOTICES = {
     "rmlui": ("RmlUi 6.3 (game UI) - https://github.com/mikke89/RmlUi", lambda d: (d / "rmlui-src" / "LICENSE.txt").read_text(encoding="utf-8")),
     "stb_vorbis": ("stb_vorbis 1.25 (OGG decoder) - https://github.com/nothings/stb", lambda d: stb(d / "stb_vorbis-src" / "stb_vorbis.c")),
     "dr_mp3": ("dr_mp3 0.7.4 (MP3 decoder) - https://github.com/mackron/dr_libs", dr_mp3),
+    "harfbuzz": ("HarfBuzz 12.3.2 (text shaping) - https://harfbuzz.github.io",
+                 lambda d: (d / "harfbuzz-src" / "COPYING").read_text(encoding="utf-8")),
+    "sheenbidi": ("SheenBidi 2.9.0 (Unicode bidirectional algorithm) - https://github.com/Tehreer/SheenBidi",
+                  lambda d: (d / "sheenbidi-src" / "LICENSE").read_text(encoding="utf-8")),
     "builtin-font": ("Built-in 8x8 font (text with no assets.fonts)", lambda d: font_license()),
 }
 

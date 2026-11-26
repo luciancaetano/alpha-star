@@ -96,6 +96,27 @@ function fileEntry(entry, what, option) {
   return { file: entry.file, obj: entry };
 }
 
+// assets.fonts, each after the fonts it lists as fallbacks (drawing what it lacks).
+function loadFonts(fonts, pixel) {
+  const done = new Set();
+  const load = (name, path) => {
+    if (done.has(name)) return;
+    if (path.includes(name)) fail(`assets.fonts fallbacks loop: ${[...path, name].join(" -> ")}`);
+    const f = fonts[name];
+    const what = `assets.fonts.${name}`;
+    const e = fileEntry(f, what, "pixelMode");
+    if (f?.license !== undefined && typeof f.license !== "string") fail(`${what}.license must be a file path (the font's license, credited by alpha export), got ${show(f.license)}`);
+    const fallbacks = f?.fallbacks ?? [];
+    if (!Array.isArray(fallbacks) || fallbacks.some((n) => !Object.hasOwn(fonts, n))) {
+      fail(`${what}.fallbacks must be an array of other assets.fonts names (${Object.keys(fonts).join(", ")}), got ${show(f.fallbacks)}`);
+    }
+    for (const n of fallbacks) load(n, [...path, name]);
+    N.loadFont(name, e.file, pixelOf(e.obj, what, pixel), fallbacks);
+    done.add(name);
+  };
+  for (const name of Object.keys(fonts)) load(name, []);
+}
+
 // Every asset is loaded (or synthesized) before the first scene starts.
 function preload(s, assets, pixel) {
   loadAudio(assets);
@@ -118,11 +139,7 @@ function preload(s, assets, pixel) {
     map.filter = filterOf(e.obj, `assets.maps.${name}`, fallback);  // its tilesets filter like this
     return [name, map];
   }));
-  for (const [name, f] of Object.entries(assets.fonts ?? {})) {
-    const e = fileEntry(f, `assets.fonts.${name}`, "pixelMode");
-    if (f?.license !== undefined && typeof f.license !== "string") fail(`assets.fonts.${name}.license must be a file path (the font's license, credited by alpha export), got ${show(f.license)}`);
-    N.loadFont(name, e.file, pixelOf(e.obj, `assets.fonts.${name}`, pixel));
-  }
+  loadFonts(assets.fonts ?? {}, pixel);
   for (const [name, file] of Object.entries(assets.ui ?? {})) N.loadUi(name, file);
   for (const [name, shader] of Object.entries(assets.shaders ?? {})) N.loadShader(name, shader);
   s.i18n.load(assets.locales, s.game.config.locale);

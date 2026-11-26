@@ -47,7 +47,23 @@ export default game({
         },
       },
     },
-    locales: { en: "assets/locales/en.json", pt: "assets/locales/pt.json" },
+    locales: {
+      en: "assets/locales/en.json", pt: "assets/locales/pt.json", ru: "assets/locales/ru.json",
+      ar: "assets/locales/ar.json", he: "assets/locales/he.json", hi: "assets/locales/hi.json",
+      zh: "assets/locales/zh.json",
+    },
+    // Noto Sans subsets (SIL OFL 1.1), cut to the characters the locales use with
+    // tools/subset_fonts.py: `main` draws Latin and Cyrillic, its fallbacks the rest.
+    fonts: {
+      main: {
+        file: "assets/fonts/NotoSans-Subset.ttf", license: "assets/fonts/OFL.txt",
+        fallbacks: ["arabic", "hebrew", "devanagari", "cjk"],
+      },
+      arabic: { file: "assets/fonts/NotoSansArabic-Subset.ttf", license: "assets/fonts/OFL.txt" },
+      hebrew: { file: "assets/fonts/NotoSansHebrew-Subset.ttf", license: "assets/fonts/OFL.txt" },
+      devanagari: { file: "assets/fonts/NotoSansDevanagari-Subset.ttf", license: "assets/fonts/OFL.txt" },
+      cjk: { file: "assets/fonts/NotoSansSC-Subset.otf", license: "assets/fonts/OFL-NotoSansCJK.txt" },
+    },
     ui: { hud: "assets/ui/hud.rml", solved: "assets/ui/solved.rml" },
   },
 });

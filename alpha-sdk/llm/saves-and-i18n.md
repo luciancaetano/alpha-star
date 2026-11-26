@@ -60,7 +60,7 @@ if (ctx.input.pressed("language")) ctx.locale = ctx.locale === "en" ? "pt" : "en
 - Only `SaveValue` (number, string, boolean, null, arrays, plain objects). Every `set` writes the file.
 - Plural entries `{ zero?, one, other }` are picked by `params.count`.
 - Missing key: shows `"[key]"` (logged once in dev builds); falls back to `config.locale`'s text first.
-- Locale texts are UTF-8; world text draws ASCII + Latin-1 only; RmlUi whatever its fonts have.
+- Locale texts are UTF-8, any script: give the font `fallbacks` for scripts it lacks (text-and-fonts.md); right-to-left languages order themselves.
 - `ctx.locale` is null without `assets.locales`.
 - Save in `ctx.onPause` if progress must survive the OS killing a backgrounded game.
 - Bump `config.save.version` when the data shape changes. Keep data-shape rules in the game, not in engine code.

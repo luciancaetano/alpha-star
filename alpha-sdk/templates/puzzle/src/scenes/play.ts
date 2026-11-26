@@ -3,7 +3,7 @@ import { scene } from "../alpha";
 import { LEVELS } from "../levels";
 import { tile, toPixels } from "../prefabs/tiles";
 import { move, parse, solved, type Dir, type Level, type Position } from "../rules";
-import { SLIDE } from "../tuning";
+import { LANGUAGES, SLIDE, VIEW } from "../tuning";
 import type { Crates } from "../types";
 
 type State = { level: number; pos: Position; history: Position[]; moves: number; done: boolean };
@@ -17,6 +17,7 @@ function hud(ctx: Play) {
   ctx.ui.set("hud", "level", ctx.t("hud.level", { n: ctx.state.level + 1, of: LEVELS.length }));
   ctx.ui.set("hud", "moves", ctx.t("hud.moves", { count: ctx.state.moves }));
   ctx.ui.set("hud", "best", best ? ctx.t("hud.best", { n: best }) : "");
+  ctx.find("language").text = ctx.t("hud.language");  // world text: the language's own name
 }
 
 // Puts every sprite where the position says; `glide` tweens instead of jumping.
@@ -71,11 +72,13 @@ export default scene("play", {
     ctx.state.pos.boxes.forEach((b, i) => ctx.spawn(tile("box", b, level.size, { i })));
     ctx.spawn(tile("player", ctx.state.pos.player, level.size));
     place(ctx, false);
+    ctx.spawn({ tags: ["language"], pos: [VIEW.width / 2, VIEW.height - 24],
+                shape: { text: ctx.t("hud.language"), font: "main", size: 10, color: "#ffd166" } });
     ctx.ui.show("hud");
   },
 
   update(ctx) {
-    if (ctx.input.pressed("language")) ctx.locale = ctx.locale === "en" ? "pt" : "en";
+    if (ctx.input.pressed("language")) ctx.locale = LANGUAGES[(LANGUAGES.indexOf(ctx.locale ?? "en") + 1) % LANGUAGES.length];
     if (ctx.input.pressed("restart")) return ctx.go("play", { level: ctx.state.level });
     if (ctx.state.done) return;
     if (ctx.input.pressed("undo")) undo(ctx);

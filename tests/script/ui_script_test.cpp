@@ -127,9 +127,13 @@ TEST_CASE("script ui: a missing document or font stops boot with its name") {
     return host.error();
   };
   CHECK(boot_error("ui: { hud: 'nope.rml' }").find("nope.rml") != std::string::npos);
-  CHECK(boot_error("fonts: { pixel: 'nope.ttf' }").find("cannot open font file") != std::string::npos);
+  CHECK(boot_error("fonts: { pixel: 'nope.ttf' }").find("cannot read the file") != std::string::npos);
   box.write("bad.ttf", "not a font");
-  CHECK(boot_error("fonts: { pixel: 'bad.ttf' }").find("is not a font") != std::string::npos);
+  CHECK(boot_error("fonts: { pixel: 'bad.ttf' }").find("not a font") != std::string::npos);
+  CHECK(boot_error("fonts: { a: { file: 'x.ttf', fallbacks: ['b'] } }").find("other assets.fonts names (a)") !=
+        std::string::npos);
+  CHECK(boot_error("fonts: { a: { file: 'x.ttf', fallbacks: ['b'] }, b: { file: 'y.ttf', fallbacks: ['a'] } }")
+            .find("fallbacks loop: a -> b -> a") != std::string::npos);
 }
 
 TEST_CASE("simulate: clicks by document#id and text expectations") {

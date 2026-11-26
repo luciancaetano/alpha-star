@@ -1,26 +1,25 @@
 #pragma once
 
-#include <array>
-#include <map>
+#include <cstdint>
 #include <memory>
-#include <optional>
 #include <string_view>
-#include <utility>
+#include <unordered_map>
+#include <vector>
 
 #include "core/entity_spec.hpp"
 
-// World text layout (pure): a line of text as glyph quads of a font atlas,
-// ready to draw through the tile path (one textured batch).
+// Text as glyph quads (pure): a font source shapes text into positioned
+// glyphs of one atlas (platform/fonts), layout_text turns them into quads
+// ready to draw through the tile path (one textured batch). World text and
+// the game UI share it.
 namespace alpha::core {
 
-// Glyphs: printable ASCII (U+0020..U+007E) then Latin-1 (U+00A0..U+00FF),
-// enough for most Western European languages.
-inline constexpr std::size_t kAsciiGlyphs = '~' - ' ' + 1;
-inline constexpr std::size_t kGlyphCount = kAsciiGlyphs + (0xFF - 0xA0 + 1);
-// Code point of glyph i.
-char32_t glyph_code(std::size_t i);
-// Glyph index of code point c; nullopt outside ASCII + Latin-1.
-std::optional<std::size_t> glyph_index(char32_t c);
+// A glyph of a font atlas: which font of the source's chain (0 = the font
+// itself, then its fallbacks in order) and the glyph id in that font (bitmap
+// fonts: the code point). kTofuKey draws a box for what no font covers.
+using GlyphKey = std::uint64_t;
+constexpr GlyphKey glyph_key(std::uint32_t font, std::uint32_t id) { return (GlyphKey{font} << 32) | id; }
+inline constexpr GlyphKey kTofuKey = ~GlyphKey{0};
 
 struct Glyph {
   Region src;      // in the atlas image (empty for a space)
@@ -28,26 +27,56 @@ struct Glyph {
   float advance = 0.0f;
 };
 
-// The glyphs of one font at one pixel size, rasterized into `image`.
+// The glyphs of one font source at one pixel size, rasterized into `image`.
 struct FontAtlas {
   ImagePtr image;
-  std::array<Glyph, kGlyphCount> glyphs{};
+  std::unordered_map<GlyphKey, Glyph> glyphs;
   float line_height = 0.0f;
-  float ascent = 0.0f;  // baseline from the line top
-  // Extra pen movement between two code points (BMFont kerning pairs, TrueType kern table).
-  std::map<std::pair<char32_t, char32_t>, float> kerning;
+  float ascent = 0.0f;    // baseline from the line top
+  float x_height = 0.0f;  // height of a lowercase x
 };
 using FontAtlasPtr = std::shared_ptr<const FontAtlas>;
 
-// A font file loaded once: scalable fonts rasterize an atlas per pixel size,
-// bitmap fonts have one atlas at their native size.
+// One glyph placed on its line: pen position from the line's left end (x) and
+// the shaper's vertical offset (y, down), both in atlas pixels.
+struct PlacedGlyph {
+  GlyphKey key = 0;
+  float x = 0.0f;
+  float y = 0.0f;
+};
+
+// A line in visual (left-to-right drawing) order.
+struct ShapedLine {
+  std::vector<PlacedGlyph> glyphs;
+  float width = 0.0f;
+};
+
+// Text shaped at one pixel size: its lines and the atlas holding every glyph
+// they use (valid until the source shapes text again).
+struct ShapedText {
+  FontAtlasPtr atlas;
+  std::vector<ShapedLine> lines;
+  float width() const;
+};
+
+// What to shape: UTF-8 `text` (valid; checked where it entered), at `pixels`
+// (ignored by bitmap fonts), wrapped at `wrap` atlas pixels (0 = only at '\n').
+struct TextRequest {
+  std::string_view text;
+  int pixels = 16;
+  TextDir dir = TextDir::Auto;
+  float wrap = 0.0f;
+};
+
+// A font file loaded once: scalable fonts shape and rasterize per pixel size
+// (with their fallback fonts), bitmap fonts draw at their native size.
 class FontSource {
  public:
   virtual ~FontSource() = default;
   // 0 for a scalable font; the size a bitmap font was drawn at.
   virtual int native() const = 0;
-  // The atlas at `pixels` (ignored by bitmap fonts). Throws core::Error.
-  virtual FontAtlasPtr atlas(int pixels) const = 0;
+  // Throws core::Error. Single-threaded: it caches atlases and shapes.
+  virtual ShapedText shape(const TextRequest& request) const = 0;
 };
 
 // How text of `size` logical pixels is drawn where one logical pixel is
@@ -67,11 +96,10 @@ struct TextQuads {
   Vec2 box;       // size of the drawn box
 };
 
-// Lays out `text` on one line. The box is centered on the entity, so for
-// left/right align it is twice the line's width with the glyphs in the
-// half that starts/ends at the anchor (culling stays a centered box).
-// `text` is UTF-8; characters without a glyph and invalid bytes draw as '?'.
-// Kerning pairs of the font apply between consecutive characters.
-TextQuads layout_text(const FontAtlas& font, std::string_view text, Align align);
+// The lines stacked from the top, each aligned in the widest line's width.
+// The box is centered on the entity, so for left/right align it is twice the
+// widest line with the lines in the half that starts/ends at the anchor
+// (culling stays a centered box). Glyphs missing from the atlas are skipped.
+TextQuads layout_text(const ShapedText& text, Align align);
 
 }  // namespace alpha::core

@@ -4,6 +4,7 @@
 
 #include "core/error.hpp"
 #include "core/limits.hpp"
+#include "core/utf8.hpp"
 
 namespace alpha::script {
 
@@ -79,6 +80,10 @@ std::string text_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
   if (text.size() > core::kMaxTextChars) {
     throw core::Error(what + " is " + std::to_string(text.size()) + " bytes long; displayed text is at most " +
                       std::to_string(core::kMaxTextChars));
+  }
+  if (const auto fault = core::utf8_fault(text)) {
+    throw core::Error(what + " is not valid Unicode text: " + fault->why + " at UTF-8 byte " + std::to_string(fault->offset) +
+                      " of \"" + text.substr(0, fault->offset) + "\"... (build strings from whole characters; slicing a JS string can split an emoji's surrogate pair)");
   }
   return text;
 }

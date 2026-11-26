@@ -146,8 +146,13 @@ declare module "alpha" {
    * With `font` (an assets.fonts name) it is drawn `size` pixels high; without, the
    * built-in 8x8 font at the nearest whole multiple of 8. Glyphs are rasterized at the
    * screen's resolution (window scale x camera zoom), so text stays sharp. `pos` is the
-   * anchor: `align` (default "center") picks which end sits on it; vertically centered.
-   * ASCII + Latin-1 (others draw as '?').
+   * anchor: `align` (default "center") picks which end of the lines sits on it; the block
+   * of lines is vertically centered. Any Unicode text: TrueType/OpenType fonts are shaped
+   * (ligatures, Arabic joining, Devanagari/Thai clusters), mixed right-to-left and
+   * left-to-right runs are ordered by the Unicode bidi algorithm, characters the font lacks
+   * come from its `fallbacks` (FontAsset), and what no font has draws as a box (with a
+   * warning in the log). "\n" starts a new line. Invalid Unicode (an unpaired surrogate
+   * from slicing an emoji) is an error naming where it is.
    */
   export interface TextShape<F extends string = never> {
     text: string;
@@ -157,6 +162,16 @@ declare module "alpha" {
     /** Default "#ffffff". */
     color?: Color;
     align?: "left" | "center" | "right";
+    /**
+     * Paragraph direction: "auto" (default) takes it from the first strong letter
+     * (Arabic/Hebrew = right to left), "ltr" / "rtl" force it.
+     */
+    dir?: "auto" | "ltr" | "rtl";
+    /**
+     * Wrap lines at this many pixels (0 = default: only at "\n"). Lines break after
+     * spaces and between CJK characters (not before closing punctuation such as 。、）).
+     */
+    width?: number;
   }
 
   /** A filled shape, an image (`size` defaults to the image's pixel size), a sheet sprite, or world text. */
@@ -1017,7 +1032,7 @@ declare module "alpha" {
        * (OFL is fine; a bitmap font made from a font follows that font's license).
        * No fonts at all: UI and world text use the engine's built-in 8x8 font (public domain).
        */
-      fonts?: Record<FontOf<G>, FontAsset>;
+      fonts?: Record<FontOf<G>, FontAsset<FontOf<G>>>;
       /** Document name -> .rml file. Files it links (`<link href>`, `src=`, rcss `url()`) are packed too. */
       ui?: Record<keyof G["ui"] & string, string>;
       /**
@@ -1048,12 +1063,16 @@ declare module "alpha" {
   /** An image (or a map's tilesets): "path", or `{ file, filter }`. */
   export type ImageAsset = string | { file: string; filter?: ImageFilter };
   /**
-   * A font: "path" or `{ file, pixelMode, license }`; `license` is its license file, credited in the pack.
-   * Text is rasterized at the screen's real resolution, so it stays sharp at any window
-   * scale; bitmap fonts draw at whole multiples of their size. pixelMode true: TrueType
-   * glyphs are rendered monochrome (pixel fonts stay crisp).
+   * A font: "path" or `{ file, pixelMode, license, fallbacks }`; `license` is its license
+   * file, credited in the pack. Text is rasterized at the screen's real resolution, so it
+   * stays sharp at any window scale; bitmap fonts draw at whole multiples of their size.
+   * pixelMode true: TrueType glyphs are rendered monochrome (pixel fonts stay crisp).
+   * `fallbacks` (TrueType/OpenType only): other assets.fonts names, tried in order for
+   * characters this font lacks, e.g. `main: { file: "NotoSans.ttf", fallbacks: ["arabic", "cjk"] }`.
    */
-  export type FontAsset = string | { file: string; pixelMode?: boolean; license?: string };
+  export type FontAsset<F extends string = string> =
+    | string
+    | { file: string; pixelMode?: boolean; license?: string; fallbacks?: F[] };
 
   export interface AnimationDef {
     /** Frame indices into the sheet. */
