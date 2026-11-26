@@ -8,7 +8,7 @@
 import { decodePng, encodePng } from "./png.mjs";
 
 export const MAX_PAGE = 2048;
-const GAP = 2;  // transparent pixels between images: no neighbour bleeds in when scaled
+const GAP = 2;  // pixels between images: each image's edge extruded 1px into it, so edge sampling stays on its own colors
 
 /**
  * Shelf packing, tallest first. Returns placements { key, page, x, y } and
@@ -60,6 +60,21 @@ function blit(dst, src, at) {
   }
 }
 
+// The 1px ring around an image (inside the page) repeats its nearest edge pixel: a tile drawn at a
+// fractional position samples its own edge, never the empty gap (no seams between ground tiles).
+function extrude(dst, src, at) {
+  const clamp = (v, n) => Math.min(Math.max(v, 0), n - 1);
+  for (let y = -1; y <= src.height; y++) {
+    for (let x = -1; x <= src.width; x++) {
+      const inside = y >= 0 && y < src.height && x >= 0 && x < src.width;
+      const [px, py] = [at.x + x, at.y + y];
+      if (inside || px < 0 || py < 0 || px >= dst.width || py >= dst.height) continue;
+      const from = (clamp(y, src.height) * src.width + clamp(x, src.width)) * 4;
+      src.rgba.copy(dst.rgba, (py * dst.width + px) * 4, from, from + 4);
+    }
+  }
+}
+
 /**
  * images: Map(file -> PNG bytes). Returns { pages: [{ file, png }], manifest, packed: [file] };
  * files that are not decodable 8-bit PNGs (or too big) stay out and keep their own file.
@@ -77,6 +92,7 @@ export function buildAtlas(images, prefix = "alpha-atlas", max = MAX_PAGE) {
   for (const p of placed) {
     const img = decoded.get(p.key);
     blit(canvases[p.page], img, p);
+    extrude(canvases[p.page], img, p);
     manifest.images[p.key] = [`${prefix}-${p.page}.png`, [p.x, p.y, img.width, img.height]];
   }
   return {

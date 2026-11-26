@@ -62,3 +62,16 @@ test("buildAtlas leaves undecodable files out and is deterministic", () => {
   assert.equal(one.pages.length, 1);
   assert.deepEqual(buildAtlas(images).pages[0].png, one.pages[0].png);
 });
+
+test("buildAtlas extrudes each image's edge pixels into the gap, so edge sampling never reads transparency", () => {
+  const solid = (v) => encodePng({ width: 2, height: 2, rgba: Buffer.alloc(16, v) });
+  const { pages, manifest } = buildAtlas(new Map([["a.png", solid(100)], ["b.png", solid(200)]]));
+  const page = decodePng(pages[0].png);
+  const at = (x, y) => [...page.rgba.subarray((y * page.width + x) * 4, (y * page.width + x) * 4 + 4)];
+  const [, [ax]] = manifest.images["a.png"];
+  const [, [bx]] = manifest.images["b.png"];
+  const [left, right] = ax < bx ? [100, 200] : [200, 100];
+  const gap = Math.min(ax, bx) + 2;
+  assert.deepEqual(at(gap, 0), [left, left, left, left]);
+  assert.deepEqual(at(gap + 1, 1), [right, right, right, right]);
+});
