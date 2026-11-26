@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include <cmath>
 #include <vector>
 
 #include "core/error.hpp"

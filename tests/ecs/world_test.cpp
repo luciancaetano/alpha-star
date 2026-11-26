@@ -23,15 +23,15 @@ TagSet tagged(std::initializer_list<TagId> ids) {
 }
 
 EntitySpec plain(std::initializer_list<TagId> tags, Vec2 pos, int z = 0) {
-  return {tagged(tags), pos, 0.0f, z, ShapeSpec{Circle{5}, Color{}, {}, {}}, {}, {}, {}};
+  return {tagged(tags), pos, 0.0f, z, ShapeSpec{Circle{5}, Color{}, {}, {}}, {}, {}, {}, {}};
 }
 
 EntitySpec solid_box(Vec2 pos, Vec2 size) {
-  return {tagged({kSolid}), pos, 0.0f, 0, {}, BodySpec{BodyType::Static, {Rect{size}, false}, {}}, {}, {}};
+  return {tagged({kSolid}), pos, 0.0f, 0, {}, BodySpec{BodyType::Static, {Rect{size}, false}, {}}, {}, {}, {}};
 }
 
 EntitySpec falling_bird(Vec2 pos) {
-  return {tagged({kBird}), pos, 0.0f, 0, {}, BodySpec{BodyType::Dynamic, {Circle{10}, false}, {}}, {}, {}};
+  return {tagged({kBird}), pos, 0.0f, 0, {}, BodySpec{BodyType::Dynamic, {Circle{10}, false}, {}}, {}, {}, {}};
 }
 
 }  // namespace
@@ -186,7 +186,7 @@ TEST_CASE("draw_items blends previous and current transforms by alpha") {
 
 TEST_CASE("rotation blends the short way around") {
   World w({0, 0});
-  const EntityId e = w.spawn({TagSet{}, {0, 0}, 350.0f, 0, ShapeSpec{Circle{5}, Color{}, {}, {}}, {}, {}, {}});
+  const EntityId e = w.spawn({TagSet{}, {0, 0}, 350.0f, 0, ShapeSpec{Circle{5}, Color{}, {}, {}}, {}, {}, {}, {}});
   w.snapshot();
   w.set_rotation(e, 10);
   CHECK(w.draw_items(0.5f)[0].rotation == doctest::Approx(360).epsilon(0.001));
