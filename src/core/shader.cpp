@@ -11,6 +11,10 @@ namespace alpha::core {
 namespace {
 
 constexpr std::string_view kSourceExt = ".frag";
+// Per ShaderFormat (enum order): blob file extension and name.
+constexpr std::array<std::string_view, 2> kBlobExts{".spv", ".msl"};
+constexpr std::array<std::string_view, 2> kFormatNames{"spirv", "msl"};
+static_assert(kBlobExts.size() == kShaderFormats.size() && kFormatNames.size() == kShaderFormats.size());
 
 std::string uniform_names(const Shader& s) {
   std::string out;
@@ -40,11 +44,12 @@ Shader make_shader(std::string name, std::string file, std::vector<std::pair<std
   return Shader{std::move(name), std::move(file), std::move(uniforms), {}};
 }
 
-std::string blob_file(std::string_view source, ShaderFormat) {
-  return std::string(source.substr(0, source.size() - kSourceExt.size())) + ".spv";
+std::string blob_file(std::string_view source, ShaderFormat format) {
+  return std::string(source.substr(0, source.size() - kSourceExt.size())) +
+         std::string(kBlobExts[static_cast<std::size_t>(format)]);
 }
 
-std::string_view format_name(ShaderFormat) { return "spirv"; }
+std::string_view format_name(ShaderFormat format) { return kFormatNames[static_cast<std::size_t>(format)]; }
 
 std::string compiler_message(std::string_view log, std::string_view path, std::string_view file) {
   std::string out;

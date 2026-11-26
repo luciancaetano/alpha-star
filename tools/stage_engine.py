@@ -27,7 +27,8 @@ def target():
     return f"{system}-{ARCH.get(platform.machine().lower(), platform.machine().lower())}"
 
 
-SHADER_TOOLS = ["glslang.exe"] if os.name == "nt" else ["glslang"]
+# GLSL -> SPIR-V, then SPIR-V -> MSL (shadercross built without DXC).
+SHADER_TOOLS = [t + (".exe" if os.name == "nt" else "") for t in ("glslang", "shadercross")]
 FLAVORS = {"release": "", "shipping": "shipping"}  # preset -> subdir of engine/<target>
 
 

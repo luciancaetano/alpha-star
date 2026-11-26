@@ -33,7 +33,7 @@ MARKERS = {
     "ALPHA_DEBUG_TOOLS": [rb"--screenshot", rb"--frames", rb"--tap-every", rb"--devtools", rb"--assets", rb"--compile",
                           rb"alpha/test", rb"simulate", rb"holdActions", rb"holdAxis", rb"testNames", rb"instanceCreate",
                           rb"stepBudget", rb"uiView", rb"tagCounts", rb"previous game keeps running",
-                          rb"glslang", rb"ALPHA_GLSLANG"],
+                          rb"glslang", rb"ALPHA_GLSLANG", rb"shadercross", rb"ALPHA_SHADERCROSS"],
 }
 
 

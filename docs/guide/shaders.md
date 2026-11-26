@@ -123,13 +123,17 @@ void main() {
 }
 ```
 
-- **Compiled by glslang.** [glslang](https://github.com/KhronosGroup/glslang) (built with the
-  engine, staged next to the release engine) compiles the GLSL to SPIR-V.
+- **One language, several GPU formats.** You write GLSL only.
+  [glslang](https://github.com/KhronosGroup/glslang) compiles it to SPIR-V (Vulkan), then
+  [SDL_shadercross](https://github.com/libsdl-org/SDL_shadercross) turns that SPIR-V into MSL
+  (Metal). Both tools are built with the engine and staged next to the release engine;
+  shadercross is built without Microsoft's DXC (no HLSL input, no DXIL output).
 - **`alpha run`** compiles the `.frag` when the game boots and again on every save (hot reload);
   a compile error pauses the game naming `assets.shaders.<name>`, the file and the line
   (`shaders/wave.frag:3: 'nope' : undeclared identifier`).
-- **`alpha export`** puts the compiled `shaders/wave.spv` in the pack instead of the `.frag`;
-  shipping engines only load `.spv` and contain no compiler.
+- **`alpha export`** puts the compiled `shaders/wave.spv` and `shaders/wave.msl` in the pack
+  instead of the `.frag`; shipping engines only load these blobs and contain no compiler. The engine
+  picks the one its GPU takes (`.spv` on Vulkan, `.msl` on Metal).
 - Custom shaders run on **Vulkan**: a game with `assets.shaders` asks for SDL's GPU renderer on the
   Vulkan driver at start. Without Vulkan (or on the software renderer of headless tests) the game
   uses SDL's default renderer and each custom effect is **skipped** with one logged warning; the
@@ -140,7 +144,8 @@ void main() {
 | Windows | Vulkan (needs a Vulkan driver; most GPUs since ~2016 have one) |
 | Linux | Vulkan |
 | Android | Vulkan (Android 7+ devices with Vulkan) |
-| macOS / iOS | not yet: planned through Metal (SPIR-V -> MSL at export); the effect is skipped |
+| macOS / iOS | not yet: packs already carry the Metal (`.msl`) version, but there is no macOS/iOS engine yet |
+| Direct3D 12 / Xbox | not yet: would be one more format made from the same SPIR-V (shadercross to HLSL, then the platform's compiler); GLSL stays the language |
 
 - Effect names share one namespace: a shader may not be called like a built-in (`crt`, ...).
   Unknown uniforms, non-numbers and more than 16 uniforms are boot or script errors that list what

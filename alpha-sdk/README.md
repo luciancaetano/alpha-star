@@ -113,7 +113,7 @@ visible; phones always run fullscreen, immersive; UI elements with `class="safe"
 `ctx.postfx.add("wave", { amount: 1 })` like a built-in effect. One Vulkan GLSL fragment shader (`#version 450`,
 entry `main`, frame `sampler2D` at `set = 2, binding = 0`, float-only `std140` uniform block at `set = 3, binding = 0`
 in `uniforms` order, at most 16). `alpha run` compiles it with glslang (staged with the engine) on load and on every
-save; `alpha export` packs `.spv` instead of the `.frag`. Runs on Vulkan (Windows, Linux, Android; macOS/iOS not yet);
+save (and shadercross turns the SPIR-V into MSL for Metal); `alpha export` packs `.spv` + `.msl` instead of the `.frag`. Runs on Vulkan (Windows, Linux, Android; macOS/iOS not yet);
 elsewhere the effect is skipped with a warning. Details: the shaders guide and `llm/shaders.md`.
 
 ## Texture filtering (pixelMode)

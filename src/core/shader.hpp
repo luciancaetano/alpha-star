@@ -13,13 +13,15 @@
 #include "core/limits.hpp"
 
 // Custom full-screen shaders (assets.shaders): one Vulkan GLSL fragment shader
-// (.frag) per asset, compiled by glslang to SPIR-V. ShaderFormat is the seam for
-// more backends (Metal: SPIR-V -> MSL at export is planned); SPIR-V is the only
-// one today. Data and validation only; render::ShaderStates makes GPU state.
+// (.frag) per asset, compiled by glslang to SPIR-V (Vulkan), then by SDL_shadercross
+// from that SPIR-V to MSL (Metal; no DXC). ShaderFormat is the one seam for backends:
+// a D3D12/Xbox format would be SPIR-V -> HLSL (shadercross, no DXC) -> the platform's
+// compiler. Data and validation only; render::ShaderStates makes GPU state.
 namespace alpha::core {
 
-enum class ShaderFormat { Spirv };
-inline constexpr std::array<ShaderFormat, 1> kShaderFormats{ShaderFormat::Spirv};
+// kShaderFormats order is the preference when a device takes several.
+enum class ShaderFormat { Spirv, Msl };
+inline constexpr std::array<ShaderFormat, 2> kShaderFormats{ShaderFormat::Spirv, ShaderFormat::Msl};
 
 using ShaderBlobs = std::map<ShaderFormat, std::vector<std::uint8_t>>;
 
@@ -40,9 +42,9 @@ using ShaderUniforms = std::array<float, kMaxShaderUniforms>;
 Shader make_shader(std::string name, std::string file, std::vector<std::pair<std::string, float>> uniforms);
 // Throws Error when `count` uniforms exceed kMaxShaderUniforms (`what`: assets.shaders.<name>.uniforms).
 void check_uniform_count(const std::string& what, std::size_t count);
-// "shaders/wave.frag" -> "shaders/wave.spv": where a pack keeps the blob.
+// "shaders/wave.frag" -> "shaders/wave.spv" / ".msl": where a pack keeps the blob.
 std::string blob_file(std::string_view source, ShaderFormat format);
-std::string_view format_name(ShaderFormat format);  // "spirv"
+std::string_view format_name(ShaderFormat format);  // "spirv", "msl"
 // The first format the device takes and the shader has a blob for (the one place
 // that chooses a backend format).
 std::optional<ShaderFormat> pick_format(std::uint32_t device_formats, const ShaderBlobs& blobs);

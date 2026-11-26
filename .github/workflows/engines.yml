@@ -148,7 +148,7 @@ jobs:
           name: engine-android-arm64
           path: alpha-sdk/engine/android-arm64
       # Artifacts drop the executable bit.
-      - run: chmod +x alpha-sdk/engine/linux-x64/alpha_star alpha-sdk/engine/linux-x64/glslang alpha-sdk/engine/linux-x64/shipping/alpha_star
+      - run: chmod +x alpha-sdk/engine/linux-x64/alpha_star alpha-sdk/engine/linux-x64/glslang alpha-sdk/engine/linux-x64/shadercross alpha-sdk/engine/linux-x64/shipping/alpha_star
       - name: SDK tests
         working-directory: alpha-sdk
         run: |

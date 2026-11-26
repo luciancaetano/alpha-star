@@ -109,7 +109,7 @@ jobs:
         run: |
           (cd engines/win32-x64 && zip -qr "../../alpha-star-engine-win32-x64-$VERSION.zip" .)
           (cd engines/android-arm64 && zip -qr "../../alpha-star-engine-android-arm64-$VERSION.zip" .)
-          (cd engines/linux-x64 && chmod +x alpha_star glslang shipping/alpha_star && tar czf "../../alpha-star-engine-linux-x64-$VERSION.tar.gz" .)
+          (cd engines/linux-x64 && chmod +x alpha_star glslang shadercross shipping/alpha_star && tar czf "../../alpha-star-engine-linux-x64-$VERSION.tar.gz" .)
           notes=$(awk -v v="$VERSION" '$0 ~ "^## \\[" v "\\]" {on=1; next} on && /^## \[/ {exit} on' CHANGELOG.md)
           gh release create "v$VERSION" --target "$GITHUB_SHA" --title "alpha-star $VERSION" --notes "$notes" \
             dist/release/*.tgz dist/release/MANIFEST.txt \

@@ -23,17 +23,21 @@ namespace alpha::platform {
 namespace {
 
 #ifdef _WIN32
-constexpr const char* kTool = "glslang.exe";
+constexpr const char* kExe = ".exe";
 #else
-constexpr const char* kTool = "glslang";
+constexpr const char* kExe = "";
 #endif
 
-// $ALPHA_GLSLANG, else the tool next to the engine.
-std::filesystem::path tool() {
-  if (const char* env = SDL_getenv("ALPHA_GLSLANG"); env && *env) return env;
+// $<env>, else the tool `name` next to the engine.
+std::filesystem::path tool_at(const char* env, const char* name) {
+  if (const char* value = SDL_getenv(env); value && *value) return value;
   const char* base = SDL_GetBasePath();
-  return std::filesystem::path(base ? base : "") / kTool;
+  return std::filesystem::path(base ? base : "") / (std::string(name) + kExe);
 }
+
+// glslang: GLSL -> SPIR-V. shadercross: that SPIR-V -> MSL (SPIRV-Cross; built without DXC).
+std::filesystem::path tool() { return tool_at("ALPHA_GLSLANG", "glslang"); }
+std::filesystem::path cross_tool() { return tool_at("ALPHA_SHADERCROSS", "shadercross"); }
 
 // Runs `args`; its stdout + stderr, and whether it exited 0.
 std::pair<bool, std::string> run(const std::vector<std::string>& args) {
@@ -63,12 +67,23 @@ std::filesystem::path output(const std::filesystem::path& source, core::ShaderFo
          ("alpha-shader-" + std::to_string(key) + "." + std::string(core::format_name(f)));
 }
 
+// The command that writes format `f` to `to`: SPIR-V from the source, every other format
+// from the SPIR-V (kShaderFormats lists SPIR-V first, so it is already there).
+std::vector<std::string> command(core::ShaderFormat f, const std::filesystem::path& source, const std::filesystem::path& to) {
+  if (f == core::ShaderFormat::Spirv) {
+    return {tool().string(), "-V", "--target-env", "vulkan1.0", "-S", "frag", "-e", "main", "-o", to.string(), source.string()};
+  }
+  return {cross_tool().string(), output(source, core::ShaderFormat::Spirv).string(), "-s", "SPIRV", "-d",
+          std::string(core::format_name(f)), "-t", "fragment", "-o", to.string()};
+}
+
 core::ShaderBlobs compile_all(const std::filesystem::path& source, const std::string& file, const std::string& what) {
   core::ShaderBlobs out;
   for (const core::ShaderFormat f : core::kShaderFormats) {
+    // An engine built without shadercross (ALPHA_SHADERCROSS=OFF) still runs SPIR-V.
+    if (f != core::ShaderFormat::Spirv && !vfs::exists(cross_tool())) continue;
     const std::filesystem::path to = output(source, f);
-    const auto [ok, log] = run({tool().string(), "-V", "--target-env", "vulkan1.0", "-S", "frag", "-e", "main", "-o",
-                                to.string(), source.string()});
+    const auto [ok, log] = run(command(f, source, to));
     auto bytes = ok ? vfs::read(to) : std::nullopt;
     if (!bytes || bytes->empty()) {
       throw core::Error(what + ": " + file + " did not compile:\n" + core::compiler_message(log, source.string(), file));

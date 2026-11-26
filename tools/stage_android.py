@@ -25,7 +25,10 @@ import resource_guard
 TARGET = "android-arm64"
 LIBS = ["libmain.so", "libSDL3.so"]
 COMMON = ["-DANDROID_ABI=arm64-v8a", "-DANDROID_PLATFORM=android-21", "-DANDROID_STL=c++_static",
-          "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON", "-DALPHA_BUILD_TESTS=OFF", "-DCMAKE_BUILD_TYPE=Release"]
+          "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON", "-DALPHA_BUILD_TESTS=OFF", "-DCMAKE_BUILD_TYPE=Release",
+          # No C++20 modules here; without this CMake may scan with the host's clang-scan-deps
+          # (another clang than the NDK's: "PCH file built from a different branch").
+          "-DCMAKE_CXX_SCAN_FOR_MODULES=OFF"]
 # alpha-sdk/android/app/build.gradle buildTypes, one decision each: debug = release flavor without MCP.
 FLAVORS = {"debug": ["-DALPHA_SHIPPING=OFF", "-DALPHA_DEVTOOLS=ON", "-DALPHA_MCP=OFF", "-DALPHA_DEBUG_TOOLS=ON"],
            "shipping": ["-DALPHA_SHIPPING=ON"]}

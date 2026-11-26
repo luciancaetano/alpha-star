@@ -25,11 +25,11 @@ class PruneTest(unittest.TestCase):
 
     def test_leftovers_of_removed_features_are_deleted_and_the_manifest_kept(self):
         keep = stage_engine.owned_files("release", "alpha_star.exe")
-        self.touch(*keep, "shadercross.exe", "dxcompiler.dll", "dxil.dll")
+        self.touch(*keep, "dxcompiler.dll", "dxil.dll")
         (self.dest / "shipping").mkdir()
         (self.dest / "old_dir").mkdir()
         removed = stage_engine.prune(self.dest, keep)
-        self.assertEqual(removed, ["dxcompiler.dll", "dxil.dll", "old_dir", "shadercross.exe"])
+        self.assertEqual(removed, ["dxcompiler.dll", "dxil.dll", "old_dir"])
         self.assertEqual({p.name for p in self.dest.iterdir()}, keep | {"shipping"})
 
     def test_restaging_an_exact_dir_changes_nothing(self):
@@ -39,7 +39,8 @@ class PruneTest(unittest.TestCase):
         self.assertEqual(stage_engine.prune(self.dest, keep), [])
         self.assertEqual({p.name for p in self.dest.iterdir()}, keep)
 
-    def test_only_the_release_engine_carries_the_shader_compiler(self):
+    def test_only_the_release_engine_carries_the_shader_compilers(self):
+        self.assertTrue({"glslang", "shadercross"} <= {t.removesuffix(".exe") for t in stage_engine.SHADER_TOOLS})
         self.assertEqual(stage_engine.owned_files("shipping", "alpha_star"), {"alpha_star"})
         self.assertEqual(stage_engine.owned_files("release", "alpha_star"),
                          {"alpha_star", *stage_engine.SHADER_TOOLS})

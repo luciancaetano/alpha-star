@@ -34,7 +34,8 @@ import resource_guard
 SDK = cfg.ROOT / "alpha-sdk"
 OUT = cfg.ROOT / "dist" / "release"
 TARGETS = {"win32-x64": ("win32", "x64", "alpha_star.exe"), "linux-x64": ("linux", "x64", "alpha_star")}
-GLSLANG = {"win32-x64": "glslang.exe", "linux-x64": "glslang"}  # shader compiler next to the release engine
+# Shader compilers next to the release engine (tools/stage_engine.py SHADER_TOOLS): GLSL -> SPIR-V -> MSL.
+SHADER_TOOLS = {"win32-x64": ["glslang.exe", "shadercross.exe"], "linux-x64": ["glslang", "shadercross"]}
 ANDROID = "android-arm64"  # prebuilt APK engine (tools/stage_android.py), installed on every OS
 ANDROID_FLAVORS, ANDROID_LIBS = ("debug", "shipping"), ("libmain.so", "libSDL3.so")
 ALL_TARGETS = [*TARGETS, ANDROID]
@@ -75,8 +76,9 @@ def engine_state(target, version):
     release, shipping = SDK / "engine" / target / exe, SDK / "engine" / target / "shipping" / exe
     if not release.is_file() or not shipping.is_file():
         return None, None, "release and shipping are not both staged (tools/stage_engine.py)"
-    if not (release.parent / GLSLANG[target]).is_file():
-        return None, None, f"{GLSLANG[target]} is not staged next to the release engine (tools/stage_engine.py)"
+    missing = [t for t in SHADER_TOOLS[target] if not (release.parent / t).is_file()]
+    if missing:
+        return None, None, f"{', '.join(missing)} not staged next to the release engine (tools/stage_engine.py)"
     ids = set(BUILD_ID.findall(release.read_bytes())) & set(BUILD_ID.findall(shipping.read_bytes()))
     if not ids:
         return None, None, "release and shipping share no bytecode build id (stale or mixed staging; restage)"
@@ -152,17 +154,18 @@ def engine_package(target, version, release, shipping, stage):
     (dest / "shipping").mkdir(parents=True)
     shutil.copy2(release, dest / exe)
     shutil.copy2(shipping, dest / "shipping" / exe)
-    shutil.copy2(release.parent / GLSLANG[target], dest / GLSLANG[target])
+    for tool in SHADER_TOOLS[target]:
+        shutil.copy2(release.parent / tool, dest / tool)
     shutil.copy2(cfg.ROOT / "LICENSE", dest / "LICENSE")
     (dest / "THIRD_PARTY_NOTICES.txt").write_text(notices_text(), encoding="utf-8")
     (dest / "README.md").write_text(
         f"# @alpha-star/engine-{target}\n\nThe alpha-star engine for {target}, installed by `@alpha-star/sdk` "
         f"(optional dependency, exact version {version}).\n\n- `{exe}`: release engine (`alpha run`, `alpha test`, "
-        f"`alpha mcp`)\n- `{GLSLANG[target]}`: shader compiler (`alpha export`)\n- `shipping/{exe}`: player engine (`alpha export --standalone`)\n", encoding="utf-8")
+        f"`alpha mcp`)\n- `{SHADER_TOOLS[target][0]}`, `{SHADER_TOOLS[target][1]}`: shader compilers (`alpha export`: GLSL -> SPIR-V -> MSL)\n- `shipping/{exe}`: player engine (`alpha export --standalone`)\n", encoding="utf-8")
     pkg = {"name": f"@alpha-star/engine-{target}", "version": version, "license": "MIT",
            "description": f"alpha-star engine binaries for {target} (used by @alpha-star/sdk)",
            "os": [os_name], "cpu": [cpu], "preferUnplugged": True,
-           "files": [exe, GLSLANG[target], f"shipping/{exe}", "LICENSE", "THIRD_PARTY_NOTICES.txt", "README.md"]}
+           "files": [exe, *SHADER_TOOLS[target], f"shipping/{exe}", "LICENSE", "THIRD_PARTY_NOTICES.txt", "README.md"]}
     (dest / "package.json").write_text(json.dumps(pkg, indent=2) + "\n", encoding="utf-8")
     return dest
 

@@ -24,11 +24,12 @@ std::string game(const std::string& shaders, const std::string& enter) {
          "  assets: { shaders: " + shaders + " }, start: 'play', scenes: { play } });\n";
 }
 
-// The fixture's compiled SPIR-V (no .frag: a pack as alpha export writes it).
+// The fixture's compiled SPIR-V and MSL (no .frag: a pack as alpha export writes it).
 void pack_blobs(const Sandbox& box) {
   std::filesystem::create_directories(box.dir / "fx");
-  std::filesystem::copy_file(kFixtures / "invert.spv", box.dir / "fx" / "invert.spv",
-                             std::filesystem::copy_options::overwrite_existing);
+  for (const char* blob : {"invert.spv", "invert.msl"}) {
+    std::filesystem::copy_file(kFixtures / blob, box.dir / "fx" / blob, std::filesystem::copy_options::overwrite_existing);
+  }
 }
 
 const std::string kInvert = "{ invert: { file: 'fx/invert.frag', uniforms: { amount: 1 } } }";
@@ -53,6 +54,7 @@ TEST_CASE("assets.shaders loads packed blobs; postfx.add runs it with its unifor
   CHECK(frame.effects[1].kind == EffectKind::Shader);
   CHECK(frame.effects[1].uniforms[0] == doctest::Approx(0.25));
   CHECK(frame.effects[1].shader->blobs.contains(ShaderFormat::Spirv));
+  CHECK(frame.effects[1].shader->blobs.contains(ShaderFormat::Msl));  // Metal devices pick this one
 }
 
 TEST_CASE("shader errors are written for the agent") {
@@ -91,6 +93,29 @@ TEST_CASE("debug engines compile the .frag with glslang; compile errors name fil
     CHECK(bad.find("assets.shaders.broken: fx/broken.frag did not compile") != std::string::npos);
     CHECK(bad.find("fx/broken.frag:3: 'nope' : undeclared identifier") != std::string::npos);
   }
+  SDL_UnsetEnvironmentVariable(SDL_GetEnvironment(), "ALPHA_GLSLANG");
+}
+#endif
+
+#if defined(ALPHA_TEST_GLSLANG) && defined(ALPHA_TEST_SHADERCROSS)
+TEST_CASE("debug engines also turn the SPIR-V into MSL with shadercross (Metal entry point main0)") {
+  Sandbox box;
+  std::filesystem::create_directories(box.dir / "fx");
+  std::filesystem::copy_file(kFixtures / "invert.frag", box.dir / "fx" / "invert.frag");
+  SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "ALPHA_GLSLANG", ALPHA_TEST_GLSLANG, true);
+  SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "ALPHA_SHADERCROSS", ALPHA_TEST_SHADERCROSS, true);
+  {
+    Host host(box.save());
+    host.load(box.write("g.js", game(kInvert, "ctx.postfx.add('invert');")));
+    REQUIRE_MESSAGE(!host.paused(), host.error());
+    const auto& blobs = host.frame().effects.at(0).shader->blobs;
+    REQUIRE(blobs.contains(ShaderFormat::Msl));
+    const std::string msl(blobs.at(ShaderFormat::Msl).begin(), blobs.at(ShaderFormat::Msl).end());
+    CHECK(msl.find("#include <metal_stdlib>") != std::string::npos);
+    CHECK(msl.find("fragment main0_out main0(") != std::string::npos);
+    CHECK(msl.find("float amount;") != std::string::npos);  // the uniform block survives
+  }
+  SDL_UnsetEnvironmentVariable(SDL_GetEnvironment(), "ALPHA_SHADERCROSS");
   SDL_UnsetEnvironmentVariable(SDL_GetEnvironment(), "ALPHA_GLSLANG");
 }
 #endif

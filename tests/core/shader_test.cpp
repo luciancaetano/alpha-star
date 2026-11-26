@@ -41,17 +41,24 @@ TEST_CASE("make_shader keeps uniforms in order and validates the entry") {
   CHECK(error_of([&] { make_shader("w", "a.frag", {{"x", inf}}); }).find("assets.shaders.w.uniforms.x must be a finite") == 0);
 }
 
-TEST_CASE("the SPIR-V blob sits next to the source") {
+TEST_CASE("each format's blob sits next to the source") {
   CHECK(blob_file("fx/wave.frag", ShaderFormat::Spirv) == "fx/wave.spv");
+  CHECK(blob_file("fx/wave.frag", ShaderFormat::Msl) == "fx/wave.msl");
   CHECK(format_name(ShaderFormat::Spirv) == "spirv");
+  CHECK(format_name(ShaderFormat::Msl) == "msl");
   CHECK(error_of([] { make_shader("w", ".frag", {}); }).find(".file must be a GLSL") != std::string::npos);
 }
 
-TEST_CASE("pick_format takes SPIR-V only when the device takes it and the shader has it") {
+TEST_CASE("pick_format takes a format only when the device takes it and the shader has it") {
   const ShaderBlobs spirv{{ShaderFormat::Spirv, {1}}};
   CHECK(pick_format(format_bit(ShaderFormat::Spirv), spirv) == ShaderFormat::Spirv);
   CHECK_FALSE(pick_format(format_bit(ShaderFormat::Spirv), {}).has_value());
   CHECK_FALSE(pick_format(0, spirv).has_value());
+  // A Metal device (MSL only) takes the MSL blob of a pack that has both.
+  const ShaderBlobs both{{ShaderFormat::Spirv, {1}}, {ShaderFormat::Msl, {2}}};
+  CHECK(pick_format(format_bit(ShaderFormat::Msl), both) == ShaderFormat::Msl);
+  CHECK(pick_format(format_bit(ShaderFormat::Spirv) | format_bit(ShaderFormat::Msl), both) == ShaderFormat::Spirv);
+  CHECK_FALSE(pick_format(format_bit(ShaderFormat::Msl), spirv).has_value());
 }
 
 TEST_CASE("compiler_message keeps glslang's errors with the pack-relative file") {

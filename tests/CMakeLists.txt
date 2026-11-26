@@ -119,5 +119,9 @@ if(TARGET glslang-standalone)  # the debug-engine compile path, against the buil
   target_compile_definitions(alpha_tests PRIVATE ALPHA_TEST_GLSLANG="$<TARGET_FILE:glslang-standalone>")
   add_dependencies(alpha_tests glslang-standalone)
 endif()
+if(TARGET shadercross)  # SPIR-V -> MSL on the same path
+  target_compile_definitions(alpha_tests PRIVATE ALPHA_TEST_SHADERCROSS="$<TARGET_FILE:shadercross>")
+  add_dependencies(alpha_tests shadercross)
+endif()
 alpha_set_warnings(alpha_tests)
 add_test(NAME alpha_tests COMMAND alpha_tests)

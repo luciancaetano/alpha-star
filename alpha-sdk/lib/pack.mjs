@@ -16,7 +16,7 @@ import { build } from "./build.mjs";
 import { mapReferences } from "./maps.mjs";
 import { BYTECODE_FILE, compileBytecode } from "./bytecode.mjs";
 import { bundledEngine, describeTargets, engineFile, shippingEngine } from "./engine.mjs";
-import { compileShaders, glslangTool } from "./shaders.mjs";
+import { compileShaders, glslangTool, shadercrossTool } from "./shaders.mjs";
 
 const SHIM = path.join(path.dirname(fileURLToPath(import.meta.url)), "alpha-shim.mjs");
 
@@ -239,11 +239,11 @@ function gameFile(staging, standalone, { bytecode, compiler, bytecodeBits, bytec
 // `compiler` (default: this machine's release engine). bytecodeBits: also ship game.jsbc
 // without an engine binary, for a target built from source with that pointer width
 // (Android), or checked against bytecodeRunner: a prebuilt engine library that will run it
-// (Android prebuilt engine; not copied into the pack). shaderTool: glslang for assets.shaders (default: next to the release engine).
+// (Android prebuilt engine; not copied into the pack). shaderTool / crossTool: glslang and shadercross for assets.shaders (default: next to the release engine).
 // Returns { ok, problems, files }. Writes nothing unless everything checks out.
 export async function exportPack({ root, entry, out, target = null, atlas = true, bytecode = true,
                                    compiler = bundledEngine(), bytecodeBits = null, bytecodeRunner = null,
-                                   shaderTool = glslangTool() }) {
+                                   shaderTool = glslangTool(), crossTool = shadercrossTool() }) {
   const standalone = target ? engineFor(target) : {};
   if (standalone.problem) return { ok: false, problems: [standalone.problem], files: [] };
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-pack-"));
@@ -257,7 +257,7 @@ export async function exportPack({ root, entry, out, target = null, atlas = true
     const { files, problems } = packFiles(root, def);
     if (problems.length) return { ok: false, problems, files };
     const shaders = path.join(staging, "shaders");
-    const shaderProblems = compileShaders({ root, def, out: shaders, tool: shaderTool });
+    const shaderProblems = compileShaders({ root, def, out: shaders, tool: shaderTool, crossTool });
     if (shaderProblems.length) return { ok: false, problems: shaderProblems, files };
     fs.rmSync(out, { recursive: true, force: true });
     fs.mkdirSync(out, { recursive: true });

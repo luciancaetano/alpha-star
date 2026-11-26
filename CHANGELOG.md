@@ -7,6 +7,13 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
+### Added
+- Custom shaders also compile to MSL (Metal): SDL_shadercross, built without DXC, turns glslang's
+  SPIR-V into `.msl` (`alpha run` on load, `alpha export` into packs); `core::ShaderFormat::Msl`
+  (entry point `main0`), picked on Metal devices. GLSL stays the only shader language; the same
+  path is ready for a D3D12/Xbox format (SPIR-V -> HLSL -> platform compiler). Desktop engine
+  packages ship `shadercross` next to `glslang`.
+
 ## [0.3.0] - 2026-11-26
 
 First version meant for npm. Summary, install and known limitations:

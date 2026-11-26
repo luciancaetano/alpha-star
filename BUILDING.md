@@ -29,17 +29,21 @@ cmake --build --preset dev        # -> build/dev/src/Debug/alpha_star.exe
 
 Same for the other presets (`cmake --preset release && cmake --build --preset release`).
 
-## Shader compiler (glslang)
+## Shader compilers (glslang, shadercross)
 
 Custom shaders (`assets.shaders`) are Vulkan GLSL compiled to SPIR-V by
 [glslang](https://github.com/KhronosGroup/glslang) (`cmake/Glslang.cmake`, built from source at a pinned tag,
-without SPIRV-Tools or the HLSL front end). The `dev` and `release` builds put the `glslang` tool next to
-`alpha_star` (building the engine builds it); `tools/stage_engine.py` stages it with the release engine for
-`alpha run` / `alpha export`. The `shipping`, Android and Apple builds never build it (`-DALPHA_GLSLANG=OFF`
-turns it off anywhere).
+without SPIRV-Tools or the HLSL front end), then from that SPIR-V to MSL (Metal) by
+[SDL_shadercross](https://github.com/libsdl-org/SDL_shadercross) (`cmake/Shadercross.cmake`: pinned commit,
+SPIRV-Cross from source at its submodule commit, `SDLSHADERCROSS_DXC=OFF`, so no DXC download, no DXIL and
+no extra DLLs). The `dev` and `release` builds put both tools next to `alpha_star` (building the engine builds
+them); `tools/stage_engine.py` stages them with the release engine for `alpha run` / `alpha export`. The
+`shipping`, Android and Apple builds never build them (`-DALPHA_GLSLANG=OFF` / `-DALPHA_SHADERCROSS=OFF`
+turn them off anywhere; without shadercross packs carry SPIR-V only).
 
-- `ALPHA_GLSLANG=<path>` points a dev/release engine at another `glslang` binary.
-- Metal (macOS/iOS) is planned: SPIR-V -> MSL through SPIRV-Cross at export.
+- `ALPHA_GLSLANG=<path>` / `ALPHA_SHADERCROSS=<path>` point a dev/release engine at other binaries.
+- More formats go through `core::ShaderFormat` (engine) and `SHADER_FORMATS` (`alpha-sdk/lib/shaders.mjs`):
+  a Direct3D 12 / Xbox format would be SPIR-V -> HLSL (shadercross, no DXC) -> that platform's compiler.
 
 ## game.jsbc key
 

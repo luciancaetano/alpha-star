@@ -277,10 +277,11 @@ declare module "alpha" {
    * A custom full-screen shader: a Vulkan GLSL fragment shader (.frag; see the shaders
    * guide for its contract) and its float uniforms with defaults, in the order of its
    * std140 uniform block (`layout(set = 3, binding = 0)`, floats only), at most 16.
-   * `alpha run` compiles it to SPIR-V with glslang on load (and on every save);
-   * `alpha export` puts the compiled .spv in the pack instead of the .frag. Runs on
-   * Vulkan only (Windows, Linux, Android; macOS/iOS not yet), which games with shaders
-   * ask for; elsewhere the effect is skipped with a logged warning.
+   * `alpha run` compiles it to SPIR-V (glslang) and MSL (shadercross) on load (and on
+   * every save); `alpha export` puts the compiled .spv and .msl in the pack instead of
+   * the .frag. Runs on Vulkan today (Windows, Linux, Android; the .msl is for Metal,
+   * macOS/iOS not yet), which games with shaders ask for; elsewhere the effect is
+   * skipped with a logged warning.
    */
   export interface ShaderAsset<U extends string> {
     file: string;

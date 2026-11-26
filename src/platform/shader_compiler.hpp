@@ -8,8 +8,9 @@
 namespace alpha::platform {
 
 // Runtime shader compilation (debug-tools builds only; shipping engines only
-// read compiled blobs): runs glslang's standalone compiler that sits next to the
-// engine (Vulkan GLSL fragment shader -> SPIR-V), never linked into it.
+// read compiled blobs): runs the tools that sit next to the engine, never linked
+// into it: glslang (Vulkan GLSL fragment shader -> SPIR-V), then shadercross
+// (SPIR-V -> MSL; skipped when absent). $ALPHA_GLSLANG / $ALPHA_SHADERCROSS override them.
 bool shader_compiler_available();
 // "" or a note for "no blobs" errors (where the missing tool was looked for).
 std::string shader_compiler_hint();
