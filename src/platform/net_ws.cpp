@@ -8,7 +8,9 @@ typedef SSIZE_T ssize_t;
 #endif
 #include <wslay/wslay.h>
 
+#include <algorithm>
 #include <random>
+#include <vector>
 
 #include "net/sha1.hpp"
 #include "net/ws_handshake.hpp"

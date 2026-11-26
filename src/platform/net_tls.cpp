@@ -6,7 +6,9 @@
 #include <mbedtls/ssl.h>
 #include <psa/crypto.h>
 
+#include <algorithm>
 #include <array>
+#include <utility>
 
 #include "core/error.hpp"
 #include "platform/net_roots.hpp"

@@ -27,7 +27,7 @@ TEST_CASE("an endless loop pauses the game with the time budget instead of freez
 TEST_CASE("an allocation bomb pauses the game with the memory limit") {
   Sandbox box;
   Host host(box.save());
-  host.load(box.write("bomb.js", tiny("update", "const a = []; for (;;) a.push(new Array(1e6).fill(1));")));
+  host.load(box.write("bomb.js", tiny("update", "const a = []; for (;;) a.push(new Uint8Array(16 << 20));")));
   host.step({}, kDt);
   REQUIRE(host.paused());
   CHECK(host.error().find("out of memory") != std::string::npos);

@@ -4,6 +4,7 @@
 #include <SDL3_net/SDL_net.h>
 
 #include <array>
+#include <utility>
 
 #include "core/error.hpp"
 

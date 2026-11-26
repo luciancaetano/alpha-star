@@ -1,5 +1,6 @@
 #include "script/net_bindings.hpp"
 
+#include <algorithm>
 #include <array>
 
 #include "core/error.hpp"

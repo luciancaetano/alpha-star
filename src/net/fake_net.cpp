@@ -1,6 +1,7 @@
 #include "net/fake_net.hpp"
 
 #include <functional>
+#include <optional>
 
 #include "core/error.hpp"
 

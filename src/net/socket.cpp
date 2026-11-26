@@ -1,5 +1,8 @@
 #include "net/socket.hpp"
 
+#include <algorithm>
+#include <iterator>
+
 #include "core/error.hpp"
 #include "core/limits.hpp"
 
