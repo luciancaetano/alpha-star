@@ -7,6 +7,11 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-26
+
+### Fixed
+- `@alpha-star/sdk` ships `skills/` again (`alpha skills` failed with "this SDK ships no skills folder").
+
 ## [0.4.0] - 2026-11-26
 
 ### Removed (breaking)

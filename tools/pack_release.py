@@ -178,6 +178,8 @@ def sdk_package(stage):
         target = dest / entry["path"]
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(SDK / entry["path"], target)
+    # skills/ is gitignored in alpha-sdk/ and filled by prepack, which --ignore-scripts skips: copy the source.
+    shutil.copytree(cfg.ROOT / "skills", dest / "skills", dirs_exist_ok=True)
     shutil.copy2(cfg.ROOT / "LICENSE", dest / "LICENSE")
     return dest
 
@@ -213,7 +215,7 @@ def manifest(tarballs):
 def pack(stage, version, require):
     tarballs, problems, skipped = [], version_problems(version), []
     sdk_required = ["package.json", "README.md", "LICENSE", "bin/alpha.mjs", "lib/engine.mjs", "types/alpha.d.ts",
-                    "templates/blank/package.json"] + [f"notices/{p.name}" for p in (SDK / "notices").glob("*.txt")]
+                    "templates/blank/package.json", "skills/alpha-harness/alpha-harness.md"] +[f"notices/{p.name}" for p in (SDK / "notices").glob("*.txt")]
     sdk = packed(sdk_package(stage))
     tarballs.append(sdk)
     problems += tarball_problems(sdk, sdk_required, BUDGET_MB["sdk"], {})
