@@ -1,8 +1,10 @@
 """Fail if a shipping engine binary contains dev/debug/agent-only features.
 
 Usage: python tools/check_shipping.py [--preset shipping | --binary PATH] [--expect-found]
-       python tools/check_shipping.py --pack DIR   # a standalone pack: game.jsbc, no readable
-                                                   # JS / source maps, engine == staged shipping one
+       python tools/check_shipping.py --pack DIR   # a standalone pack: encrypted game.jsbc, no
+                                                   # readable JS / source maps / bytecode atoms,
+                                                   # engine == staged shipping one
+       python tools/check_shipping.py --pack DIR --absent TEXT   # also: TEXT not readable in game.jsbc
        python tools/check_shipping.py --pack DIR --signed   # after alpha export --sign: engine ==
                                                    # staged one once its Authenticode signature is removed
 
@@ -80,14 +82,29 @@ SOURCE_SUFFIXES = (".js", ".mjs", ".cjs", ".ts", ".map", ".frag", ".glsl", ".hls
 SOURCE_TEXT = [rb"sourceMappingURL", rb"export default", rb"import \{", rb"\bfunction\s*\w*\s*\([^)]*\)\s*\{"]
 
 
-def pack_problems(pack, staged, signed=False):
-    """Standalone pack: game.jsbc and no readable JS; the engine is the staged shipping one, unmodified."""
+JSBC_FORMAT = 2  # src/core/bytecode.hpp: encrypted
+# Atoms every game's plain bytecode holds (its `import ... from "alpha"`, `export default`):
+# found in game.jsbc, the body is not encrypted.
+PLAIN_BYTECODE = [b"alpha", b"default"]
+
+
+def jsbc_problems(data, extra=()):
+    """game.jsbc: an encrypted (format 2) file with no readable source, atoms or `extra` strings."""
+    if not data.startswith(b"ALPHAJBC") or len(data) < 112:
+        return ["no game.jsbc (ALPHAJBC header)"]
+    problems = [f"game.jsbc contains source text /{p.decode()}/" for p in SOURCE_TEXT if re.search(p, data)]
+    if (fmt := struct.unpack_from("<I", data, 8)[0]) != JSBC_FORMAT:
+        problems.append(f"game.jsbc is format {fmt}, not the encrypted format {JSBC_FORMAT}")
+    body = data[112:]
+    problems += [f"game.jsbc holds plain text {s!r} (bytecode not encrypted)" for s in [*PLAIN_BYTECODE, *extra] if s in body]
+    return problems
+
+
+def pack_problems(pack, staged, signed=False, strings=()):
+    """Standalone pack: encrypted game.jsbc and no readable JS; the engine is the staged shipping one, unmodified."""
     problems = [f"ships source file {p.relative_to(pack)}" for p in pack.rglob("*") if p.suffix in SOURCE_SUFFIXES]
     jsbc = pack / "game.jsbc"
-    data = jsbc.read_bytes() if jsbc.is_file() else b""
-    if not data.startswith(b"ALPHAJBC"):
-        problems.append("no game.jsbc (ALPHAJBC header)")
-    problems += [f"game.jsbc contains source text /{p.decode()}/" for p in SOURCE_TEXT if re.search(p, data)]
+    problems += jsbc_problems(jsbc.read_bytes() if jsbc.is_file() else b"", [s.encode() for s in strings])
     exe = pack / staged.name
     if not exe.is_file() or not same_engine(exe.read_bytes(), staged.read_bytes(), signed):
         what = "the staged shipping engine plus a signature" if signed else "unmodified"
@@ -121,11 +138,11 @@ def same_engine(exe, staged, signed):
     return not marker_hits(exe) and not form_problems(exe)
 
 
-def check_pack(pack, signed=False):
+def check_pack(pack, signed=False, strings=()):
     staged = sorted((Path(__file__).resolve().parent.parent / "alpha-sdk" / "engine").glob("*/shipping/alpha_star*"))
     host = [s for s in staged if (pack / s.name).is_file()
             and same_engine((pack / s.name).read_bytes(), s.read_bytes(), signed)]
-    problems = pack_problems(pack, (host or staged or [Path("alpha_star")])[0], signed)
+    problems = pack_problems(pack, (host or staged or [Path("alpha_star")])[0], signed, strings)
     print(f"check_shipping: pack {pack}")
     for problem in problems:
         print(f"  PACK  {problem}")
@@ -141,9 +158,11 @@ def main(argv):
     ap.add_argument("--pack", type=Path, help="check a standalone pack (alpha export --standalone) instead")
     ap.add_argument("--signed", action="store_true",
                     help="with --pack: the engine was signed by alpha export --sign (compare without the signature)")
+    ap.add_argument("--absent", action="append", default=[], metavar="TEXT",
+                    help="with --pack: a string of the game (e.g. a name in its code) that must not be readable in game.jsbc")
     a = ap.parse_args(argv)
     if a.pack:
-        return check_pack(a.pack, a.signed)
+        return check_pack(a.pack, a.signed, a.absent)
     binary = a.binary or toolchain.built_exe(a.preset)
     data = binary.read_bytes()
     hits = marker_hits(data)

@@ -1,28 +1,31 @@
 // Standalone packs ship the game as game.jsbc: QuickJS bytecode (no source, no
 // debug info) compiled by the SDK's release engine (`alpha_star --compile`) and
-// stamped with its build. The shipping engine next to it runs only bytecode with
-// its own stamp, so both engines must come from the same staging. Not encryption:
-// names and strings in the game stay readable to a determined reader.
+// stamped with its build, encrypted (XChaCha20-Poly1305) with a key of that engine
+// build. The shipping engine next to it runs only bytecode with its own stamp and key,
+// so both engines must come from the same staging. This stops casual extraction
+// (strings, decompilers on a plain file), not a determined attacker: the key ships
+// inside the engine.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 
 export const BYTECODE_FILE = "game.jsbc";
-const HEADER = 64;  // src/core/bytecode.hpp
+const HEADER = 112;  // src/core/bytecode.hpp
 const problem = (message) => ({ file: "", line: 0, column: 0, message });
 
-// { engine, quickjs, build } from a game.jsbc header, or null when it is not one.
+// { engine, quickjs, build, key } from a game.jsbc header (key: the engine key's
+// public id), or null when it is not one.
 export function stampOf(bytes) {
   if (bytes.length < HEADER || bytes.subarray(0, 8).toString("latin1") !== "ALPHAJBC") return null;
   const text = (at, size) => bytes.subarray(at, at + size).toString("latin1").replace(/\0+$/, "");
-  return { engine: text(24, 12), quickjs: text(36, 12), build: text(48, 16) };
+  return { engine: text(72, 12), quickjs: text(84, 12), build: text(96, 16), key: text(16, 16) };
 }
 
-// The shipping engine carries its stamp as plain strings: one that lacks the
-// compiler's build id would refuse the game at start.
+// The shipping engine carries its stamp and key id as plain strings: one that lacks
+// the compiler's build or key id would refuse the game at start.
 function mismatch(stamp, shipping) {
   const binary = fs.readFileSync(shipping);
-  const ok = binary.includes(stamp.build, 0, "latin1") && binary.includes(stamp.engine, 0, "latin1");
-  return ok ? null : problem(`the SDK's release engine (compiler, alpha-star ${stamp.engine}, build ${stamp.build}) ` +
+  const ok = [stamp.build, stamp.engine, stamp.key].every((s) => binary.includes(s, 0, "latin1"));
+  return ok ? null : problem(`the SDK's release engine (compiler, alpha-star ${stamp.engine}, build ${stamp.build}, key ${stamp.key}) ` +
     "and its shipping engine are different builds; restage both with tools/stage_engine.py");
 }
 

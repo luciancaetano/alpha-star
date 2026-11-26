@@ -136,7 +136,7 @@ All of them have tests. Flappy is a repository example; the other five are also 
 
 ## Export and platforms
 
-A **pack** is the folder the engine runs. The common export contains JavaScript and the declared assets. With `--standalone`, the SDK includes the player engine and compiles the game to **`game.jsbc`**, bound to the engine version/build. The player opens the executable in that folder; they do not need to install the SDK or Node.js. Bytecode is not encryption, and pack files should come from a trusted source.
+A **pack** is the folder the engine runs. The common export contains JavaScript and the declared assets. With `--standalone`, the SDK includes the player engine and compiles the game to **`game.jsbc`**, bound to the engine version/build. The player opens the executable in that folder; they do not need to install the SDK or Node.js. `game.jsbc` is encrypted with a key inside the engine: it stops casual extraction, not a determined attacker; pack files should come from a trusted source.
 
 | Platform | Status documented in this version |
 |---|---|

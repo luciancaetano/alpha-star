@@ -99,7 +99,9 @@ npx alpha export --target android-arm64 --out build/android
 
 With the toolchain complete it runs Gradle and prints the APK path; otherwise it writes the
 project and lists what is missing. The first build compiles the engine and fetches its
-dependencies (several minutes). To rebuild by hand:
+dependencies (several minutes). The APK's `game.jsbc` is encrypted with the key of the SDK's
+release engine; the engine Gradle builds reads the same key from the checkout's `build/jsbc.secret`
+(or `$ALPHA_JSBC_SECRET`), so build from the checkout the SDK engines were staged from. To rebuild by hand:
 
 ```powershell
 cd build/android

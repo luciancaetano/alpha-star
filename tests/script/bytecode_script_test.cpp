@@ -12,11 +12,14 @@
 
 #if ALPHA_DEBUG_TOOLS  // --compile lives in dev/release engines
 
-using alpha::core::kBytecodeHeader;
+using alpha::core::BytecodeKey;
+using alpha::core::BytecodeNonce;
+using alpha::core::open_bytecode;
 using alpha::core::seal_bytecode;
 using alpha::script::compile_file;
 using alpha::script::Host;
 using alpha::script::this_build;
+using alpha::script::this_key;
 using alpha::test::Sandbox;
 namespace fs = std::filesystem;
 
@@ -53,6 +56,20 @@ fs::path compiled_pack(const Sandbox& sb, const std::string& title) {
   return pack;
 }
 
+// `body` sealed for this engine's key under `stamp`.
+std::string sealed(const std::string& body, const alpha::core::BuildStamp& stamp) {
+  BytecodeKey key;
+  this_key(key);
+  return seal_bytecode(body, stamp, key, BytecodeNonce{});
+}
+
+// The decrypted bytecode inside a game.jsbc of this engine.
+std::string plain_of(const std::string& file) {
+  BytecodeKey key;
+  this_key(key);
+  return open_bytecode(file, this_build(), key).bytes;
+}
+
 // The error a Host shows for a pack holding `bytes` as game.jsbc ("" when it boots).
 std::string boot_error(const Sandbox& sb, const std::string& bytes) {
   const fs::path pack = sb.dir / "bad";
@@ -81,38 +98,49 @@ TEST_CASE("bytecode: game.jsbc wins over main.js in the same pack") {
   CHECK(host.load(pack.string()).title == "jsbc");
 }
 
-TEST_CASE("bytecode: no source text, comments or build paths in the file") {
+TEST_CASE("bytecode: no source text, comments or build paths in the bytecode") {
   Sandbox sb;
-  const std::string bytes = read_file(compiled_pack(sb, "t") / "game.jsbc");
+  const std::string bytes = plain_of(read_file(compiled_pack(sb, "t") / "game.jsbc"));
   CHECK(bytes.find("SECRET_COMMENT_TEXT") == std::string::npos);
   CHECK(bytes.find("return 'helper'") == std::string::npos);
   CHECK(bytes.find(sb.dir.filename().string()) == std::string::npos);
   CHECK(bytes.find("main.js") != std::string::npos);  // the module name only
+  CHECK(bytes.find("secretHelperBody") != std::string::npos);  // names stay in the bytecode...
+}
+
+TEST_CASE("bytecode: the file is encrypted with a fresh nonce on every compile") {
+  Sandbox sb;
+  const std::string first = read_file(compiled_pack(sb, "t") / "game.jsbc");
+  const std::string second = read_file(compiled_pack(sb, "t") / "game.jsbc");
+  CHECK(first.find("secretHelperBody") == std::string::npos);  // ...but not in the file
+  CHECK(first.find("main.js") == std::string::npos);
+  CHECK(first.substr(32, 24) != second.substr(32, 24));
+  CHECK(plain_of(first) == plain_of(second));
 }
 
 TEST_CASE("bytecode: wrong build, truncation and damage pause with readable errors") {
   Sandbox sb;
   const std::string good = read_file(compiled_pack(sb, "t") / "game.jsbc");
-  const std::string body = good.substr(kBytecodeHeader);
+  const std::string body = plain_of(good);
   CHECK(boot_error(sb, good).empty());
-  CHECK(boot_error(sb, seal_bytecode(body, {"9.9.9", this_build().quickjs, this_build().build}))
+  CHECK(boot_error(sb, sealed(body, {"9.9.9", this_build().quickjs, this_build().build}))
             .find("compiled for alpha-star 9.9.9") != std::string::npos);
   CHECK(boot_error(sb, good.substr(0, good.size() / 2)).find("truncated or damaged") != std::string::npos);
   CHECK(boot_error(sb, "export default 1;").find("not alpha-star bytecode") != std::string::npos);
   std::string flipped = good;
   flipped[flipped.size() - 5] ^= 0x11;
-  CHECK(boot_error(sb, flipped).find("checksum") != std::string::npos);
+  CHECK(boot_error(sb, flipped).find("failed authentication") != std::string::npos);
 }
 
 TEST_CASE("bytecode: a well-stamped header over a foreign body is an error, never a crash") {
   Sandbox sb;
-  CHECK_FALSE(boot_error(sb, seal_bytecode("", this_build())).empty());
-  CHECK_FALSE(boot_error(sb, seal_bytecode("not bytecode at all", this_build())).empty());
+  CHECK_FALSE(boot_error(sb, sealed("", this_build())).empty());
+  CHECK_FALSE(boot_error(sb, sealed("not bytecode at all", this_build())).empty());
 }
 
-// Not tested: a cut body re-sealed with a fresh length + checksum (a deliberately
-// crafted file) can crash QuickJS's reader (seen at byte 185 of 366). The header is
-// the defense: every accidental truncation or damage is refused before QuickJS reads.
+// Not tested: a cut body re-encrypted with this engine's key (a deliberately crafted
+// file, needs the key out of the engine) can crash QuickJS's reader. Authentication is
+// the defense: every truncation, damage or edit is refused before QuickJS reads.
 
 TEST_CASE("bytecode: compile errors name the file and write nothing") {
   Sandbox sb;

@@ -38,7 +38,7 @@ The engine binaries must match the SDK (`alpha --version` = bundled engines' ver
 - Symptom: an option that `alpha.d.ts` declares is rejected or ignored at runtime, or a documented feature is missing: the engine in use is older than the types. In an alpha-star checkout the SDK uses `alpha-sdk/engine/<platform>-<arch>/`, which goes stale after engine changes: restage with `python tools/stage_engine.py`. Outside the repo, reinstall so `@alpha-star/engine-<platform>` has the SDK's exact version. Also check `--engine` / `$ALPHA_STAR` overrides.
 - `the SDK's release engine ... and its shipping engine are different builds; restage both with tools/stage_engine.py`: export refuses mixed builds.
 - `no release engine for this machine to compile game.jsbc; stage both flavors ...` or `no shipping engine for target "x"; SDK has: ...`: stage engines or use `--no-bytecode` / another target.
-- Standalone game stops at start naming two versions: `game.jsbc` and the engine come from different exports; re-export both together.
+- Standalone game stops at start naming two versions or two keys, or with `game.jsbc failed authentication; re-export with this engine`: `game.jsbc` and the engine come from different exports (or the file was changed); re-export both together.
 
 ## MCP and runs
 

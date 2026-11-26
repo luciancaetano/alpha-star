@@ -9,6 +9,16 @@ FetchContent_Declare(doctest
   SYSTEM)
 FetchContent_MakeAvailable(doctest)
 
+# Monocypher 4.0.2 (CC0 or BSD-2): XChaCha20-Poly1305 (crypto_aead_lock/unlock) for
+# game.jsbc (core/bytecode). Always: alpha_core uses it, the harness preset included.
+FetchContent_Declare(monocypher
+  URL https://github.com/LoupVaillant/Monocypher/archive/refs/tags/4.0.2.tar.gz
+  URL_HASH SHA256=bc1ca30b1b2654e4e7daf2492c0d204200e55137f23fda6b7142fd7d523bd6b4)
+FetchContent_MakeAvailable(monocypher)
+add_library(alpha_monocypher STATIC ${monocypher_SOURCE_DIR}/src/monocypher.c)
+target_include_directories(alpha_monocypher SYSTEM PUBLIC ${monocypher_SOURCE_DIR}/src)
+set_target_properties(alpha_monocypher PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 if(NOT ALPHA_WITH_RUNTIME_DEPS)
   return()
 endif()

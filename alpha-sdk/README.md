@@ -8,7 +8,7 @@ alpha init <dir> [--template t]     new project: blank | platformer | topdown | 
 alpha --version                     SDK version (= the bundled engines' version)
 alpha check                         type-check only
 alpha export [--out dist]           type-check, bundle, copy assets into a pack
-alpha export --standalone           ... plus the player engine (runs by itself)
+alpha export --standalone           ... plus the player engine (runs by itself); the game ships as encrypted game.jsbc
 alpha export --no-atlas             ... without packing images into atlas pages
 alpha run [-- engine args]          export, then open the pack in the engine
 alpha run --watch                   ... and re-export on every change: the game hot-reloads

@@ -23,7 +23,7 @@ npx alpha export --target android-arm64 --out build/android   # Gradle project (
 ```
 build/game/
   alpha_star.exe          shipping engine, byte for byte (same for every game)
-  game.jsbc               the game as QuickJS bytecode (no source, no source map)
+  game.jsbc               the game as encrypted QuickJS bytecode (no source, no source map)
   alpha-atlas-*.png, assets/..., THIRD_PARTY_NOTICES.txt
 ```
 
@@ -40,7 +40,8 @@ All `android` fields optional (package defaults to `org.alphastar.<title letters
 - Shipping engine has no dev tools, MCP, test runner, headless flags, hot reload or console; logs go to the player's data folder.
 - Version lock: `game.jsbc` runs only on the engine build that compiled it; ship both from the same export. A mismatch stops at start naming both versions.
 - Export refuses if the SDK's release and shipping engines are different builds ("restage both with tools/stage_engine.py").
-- Bytecode is not encryption: never put secrets (API keys) in a game.
+- `game.jsbc` is encrypted with a key inside the engine: it stops casual extraction (strings, decompilers on the file), not a determined attacker who reverse-engineers the engine. Never put secrets (API keys) in a game.
+- `game.jsbc failed authentication; re-export with this engine`: the file was changed or damaged, or comes from another engine build; re-export.
 - `--sign` without `ALPHA_SIGN_CMD` fails; a failed signing deletes the pack. The SDK never stores keys or certificates.
 - Errors from `game.jsbc` have no line numbers; use `--no-bytecode` to debug a standalone build.
 - In the alpha-star repo: `python tools/check_shipping.py --pack build/game [--signed]` verifies a pack.

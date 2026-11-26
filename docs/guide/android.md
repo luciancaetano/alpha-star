@@ -13,7 +13,9 @@ The project holds:
   APK through SDL, the same code that reads a pack folder on desktop. `game.jsbc` is compiled by
   the SDK's release engine for this machine: the bytecode format is the same on every
   little-endian 64-bit platform, and the engine built for the APK from the same source carries the
-  same build id (QuickJS source hash + `-64`). `--no-bytecode` ships `main.js` instead;
+  same build id (QuickJS source hash + `-64`). It is encrypted with the key of this checkout's
+  engine build (`build/jsbc.secret`, or `$ALPHA_JSBC_SECRET` passed to Gradle), so build the APK
+  from the checkout the SDK's engines were staged from. `--no-bytecode` ships `main.js` instead;
 - SDL 3.4.20's Java glue (`SDLActivity`, version-checked against the engine at start);
 - a CMake build of the engine from the alpha-star source, **shipping flavor** (no dev tools, MCP or
   debug features), `arm64-v8a` only. The SDK finds the source in the repo it sits in, or pass

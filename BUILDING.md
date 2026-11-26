@@ -41,6 +41,16 @@ turns it off anywhere).
 - `ALPHA_GLSLANG=<path>` points a dev/release engine at another `glslang` binary.
 - Metal (macOS/iOS) is planned: SPIR-V -> MSL through SPIRV-Cross at export.
 
+## game.jsbc key
+
+Standalone packs ship `game.jsbc` encrypted with a key of the engine build (`cmake/BytecodeKey.cmake`,
+XChaCha20-Poly1305 from [Monocypher](https://monocypher.org) 4.0.2). The key comes from a secret: `-DALPHA_JSBC_SECRET=...`,
+else `$ALPHA_JSBC_SECRET`, else `build/jsbc.secret`, made at random by the first configure of a checkout and shared
+by every preset there (release encrypts, shipping decrypts; never commit it). Stage the release and shipping engines
+from one checkout (`tools/stage_engine.py` does). Deleting `build/jsbc.secret` makes a new key: reconfigure and
+restage every engine, and re-export the games. For reproducible release builds on several machines, set the same
+`ALPHA_JSBC_SECRET` everywhere. The binary holds the key only masked; the secret never reaches it.
+
 ## Update the SDK engine (needed for `npm run start` in the examples)
 
 `alpha run` / `alpha test` (and so `npm run start` / `npm test` in a game folder) do **not** use

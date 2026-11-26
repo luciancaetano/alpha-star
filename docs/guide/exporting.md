@@ -16,7 +16,7 @@ executable in the folder to play.
 ```
 build/game/
   alpha_star.exe          the SDK's shipping engine, byte for byte (signable, same for every game)
-  game.jsbc               your game, compiled to QuickJS bytecode
+  game.jsbc               your game, compiled to QuickJS bytecode and encrypted
   alpha-atlas-*.png ...   assets as plain files
   assets/...
   THIRD_PARTY_NOTICES.txt
@@ -24,7 +24,10 @@ build/game/
 
 Nothing is appended to or embedded in the executable; the layout is the same on every platform.
 The SDK's release engine compiles the bundle (`alpha_star --compile main.js game.jsbc`) without
-source text or debug info, so the pack has no `main.js` and no source map.
+source text or debug info, then encrypts it (XChaCha20-Poly1305, Monocypher) with a key of that
+engine build, under a fresh random nonce per export; the pack has no `main.js` and no source map.
+The shipping engine decrypts it in memory at start (the plain bytecode is wiped right after it
+loads); it never touches the disk. `alpha run`, `alpha test` and hot reload keep plain JavaScript.
 
 **Version lock.** `game.jsbc` carries a stamp: engine version, QuickJS version and a build id.
 The engine runs only bytecode stamped with exactly its own build; anything else (or a truncated or
@@ -33,17 +36,20 @@ log, telling the player to update the game. Ship the engine and `game.jsbc` from
 The export refuses to write a pack if the SDK's release and shipping engines are different builds
 (restage both).
 
-**What this protects, and what it doesn't.** Players no longer get readable source, comments or
-your source map. Bytecode is **not encryption**: property names, strings and the program's
-structure are still in the file, and a determined person can decompile it. Do not put secrets
-(API keys) in a game.
+**What this protects, and what it doesn't.** Players get no readable source, comments or source
+map, and `game.jsbc` is encrypted: no strings, names or bytecode show up in it, so `strings` or a
+bytecode decompiler run on the file gets nothing. This **stops casual extraction, not a determined
+attacker**: the key ships inside the engine (only masked, never as one plain value), so someone
+who reverse-engineers the executable, or dumps the game's memory while it runs, can still get the
+bytecode and decompile it. Do not put secrets (API keys) in a game.
 
-**Threat model: the pack folder is trusted.** The header's length and checksum catch accidents
-(a truncated download, a damaged disk, a file from another version). They are not a security
-boundary: QuickJS does not validate bytecode, and a file crafted on purpose (a cut body re-sealed
-with a fresh header) can crash the engine. Signing the bytecode would not change that: the
-shipping engine would have to carry the verification key, and anyone who can replace
-`game.jsbc` can replace the engine executable next to it too. So the rule is the same as for any
+**Threat model: the pack folder is trusted.** The header carries the build stamp, the engine key's
+public id and the nonce, all authenticated with the body: a truncated download, a damaged disk, a
+file from another version or any edited byte is refused at start (`game.jsbc failed
+authentication; re-export with this engine`). Only someone holding the key (extracted from the
+engine) could craft a file that QuickJS reads, and QuickJS does not validate bytecode, so such a
+file could crash the engine; but anyone who can replace `game.jsbc` can replace the engine
+executable next to it too. So the rule is the same as for any
 native game: whoever can write to the game's folder can run code as the player, and the engine
 only ever loads bytecode from its own pack (never from saves, downloads or the network). Protect
 the folder (installer permissions, store packages) and sign the executable (below) so players can

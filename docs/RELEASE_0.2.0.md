@@ -81,10 +81,10 @@ engine is built on Linux).
 - **Xbox / consoles:** need the GDK and platform access; not started.
 - **Custom shaders:** need SDL 3.4 (`SDL_GPURenderState`); 0.2.0 has built-in effects only. Effects
   cover the world, not the RmlUi UI.
-- **Crafted bytecode:** the `game.jsbc` header (stamp, length, checksum) catches accidents, not
-  attacks; a deliberately crafted file can crash QuickJS. The pack folder is trusted, exactly like
-  a native game's files; signing the bytecode would not help because the key would ship in the
-  engine. Bytecode is not encryption.
+- **Crafted bytecode:** `game.jsbc` is encrypted and authenticated (XChaCha20-Poly1305) with a
+  key that ships inside the engine: it stops casual extraction and refuses any changed byte, but a
+  determined attacker can extract the key from the engine and decompile or craft bytecode (which
+  can crash QuickJS). The pack folder is trusted, exactly like a native game's files.
 - **Signing:** hooks only (`--sign` + `$ALPHA_SIGN_CMD`, Android keystore via environment); no
   real certificate was used in testing (a fake Authenticode-shaped signer is), and
   `check_shipping --signed` can strip only PE (Authenticode) signatures.

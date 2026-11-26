@@ -66,6 +66,8 @@ NOTICES = {
                  lambda d: (d / "harfbuzz-src" / "COPYING").read_text(encoding="utf-8")),
     "sheenbidi": ("SheenBidi 2.9.0 (Unicode bidirectional algorithm) - https://github.com/Tehreer/SheenBidi",
                   lambda d: (d / "sheenbidi-src" / "LICENSE").read_text(encoding="utf-8")),
+    "monocypher": ("Monocypher 4.0.2 (game.jsbc encryption) - https://monocypher.org",
+                   lambda d: (d / "monocypher-src" / "LICENCE.md").read_text(encoding="utf-8")),
     "builtin-font": ("Built-in 8x8 font (text with no assets.fonts)", lambda d: font_license()),
 }
 

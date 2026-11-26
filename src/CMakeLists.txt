@@ -41,7 +41,7 @@ if(ALPHA_DEBUG_TOOLS)  # hot reload's file watch: dev/release only
 endif()
 target_include_directories(alpha_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(alpha_core PUBLIC ALPHA_VERSION="${PROJECT_VERSION}")
-target_link_libraries(alpha_core PUBLIC alpha_flavor)
+target_link_libraries(alpha_core PUBLIC alpha_flavor PRIVATE alpha_monocypher)
 alpha_set_warnings(alpha_core)
 
 if(NOT ALPHA_WITH_RUNTIME_DEPS)
@@ -160,6 +160,8 @@ math(EXPR ALPHA_POINTER_BITS "${CMAKE_SIZEOF_VOID_P} * 8")
 set_source_files_properties(script/bytecode.cpp PROPERTIES
   COMPILE_DEFINITIONS "ALPHA_BUILD_ID=\"${ALPHA_QJS_HASH}-${ALPHA_POINTER_BITS}\"")
 unset(ALPHA_QJS_SOURCE)
+include(BytecodeKey)
+alpha_bytecode_key(${CMAKE_CURRENT_BINARY_DIR}/generated/jsbc_key.inc)
 unset(ALPHA_QJS_HEADER)
 
 target_include_directories(alpha_engine PUBLIC

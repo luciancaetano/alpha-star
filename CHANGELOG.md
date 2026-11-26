@@ -7,7 +7,13 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+- `game.jsbc` is encrypted: XChaCha20-Poly1305 (Monocypher 4.0.2) with a per-engine-build key
+  shared by the release (compiles) and shipping (runs) engines, a random nonce per export, the
+  header authenticated (format 2, 112 bytes). Decrypted only in memory, wiped after load. Old
+  (format 1), tampered or other-key files are refused with a clear error. Stops casual extraction,
+  not a determined attacker (the key ships in the engine). `check_shipping --pack` fails on plain
+  bytecode (`--absent TEXT` for game strings).
 
 ## [0.2.0] - 2026-11-25
 
