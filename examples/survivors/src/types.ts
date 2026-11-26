@@ -25,7 +25,7 @@ export type HeroSlot = 1 | 2 | 3 | 4 | 5 | 6;
 type Card = "icon" | "name" | "tag" | "desc";
 
 export interface Candle {
-  actions: "pick1" | "pick2" | "pick3" | "pause" | "restart";
+  actions: "pick1" | "pick2" | "pick3" | "pause" | "restart" | "showcase";
   axes: "moveX" | "moveY";
   sounds: "bolt" | "whip" | "zap" | "pool" | "hit" | "kill" | "gem" | "coin" | "levelup" | "chest" | "evolve"
     | "hurt" | "heal" | "bell" | "boss" | "select" | "death" | "theme";
@@ -53,7 +53,7 @@ export interface Candle {
     paused: "resume" | "quit" | "build";
     over: "title" | "time" | "level" | "kills" | "gold" | "best" | "again" | "menu";
   };
-  scenes: { title: undefined; play: { hero: HeroId }; over: RunResult };
+  scenes: { title: undefined; play: { hero: HeroId; demo?: boolean }; over: RunResult };
 }
 
 export type Spec = EntitySpec<Candle["tags"], Candle["images"], Candle["sheets"], Candle["layers"], Candle["fonts"], Candle["categories"]>;

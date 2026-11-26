@@ -20,7 +20,12 @@ npm start                   # export, then play
 npx alpha run --watch       # every save re-exports and the game hot-reloads
 npx alpha mcp               # MCP server (.mcp.json): start, drive and observe the game as an agent
 python -I tools/process-art.py   # art/raw (Codex-generated) -> assets/img sheets, icon fonts, UI art
+node tools/record-showcase.mjs <dir> 24       # showcase run (V on the title) -> PNG frames, hidden engine (no window)
+python -I tools/encode-showcase.py <dir> <out>  # frames -> showcase.mp4 + poster (docs landing video)
 ```
+
+**Showcase run:** `V` on the title starts `game/demo.ts`: every kind evolved, short cooldowns, a thick and
+tough horde, an autopilot, no damage or menus (`state.demo`). It exists for the docs video; tune it there.
 
 A change is done only when `npm run export` prints `exported dist (...)` and `npm test` passes.
 

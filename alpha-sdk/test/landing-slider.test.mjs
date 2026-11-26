@@ -8,19 +8,26 @@ function element() {
     setAttribute(name, value) { this.attributes[name] = value; },
     addEventListener(name, handler) { this.events[name] = handler; },
     emit(name, event = {}) { this.events[name](event); },
+    videos: [],
+    querySelectorAll() { return this.videos; },
   };
 }
-function setup() {
+const video = () => ({ playing: false, attrs: {}, play() { this.playing = true; return Promise.resolve(); },
+  pause() { this.playing = false; }, removeAttribute(name) { this.attrs[name] = null; } });
+function setup({ reduced = false } = {}) {
   const slides = Array.from({ length: 6 }, element);
   slides[0].hidden = false;
+  slides[0].videos = [video()];
+  slides[2].videos = [video()];
   const buttons = Array.from({ length: 6 }, element);
   const controls = element(), previous = element(), next = element();
   const slider = Object.assign(element(), {
-    querySelectorAll: (selector) => selector === '[data-slide]' ? slides : buttons,
+    querySelectorAll: (selector) => selector === '[data-slide]' ? slides : selector === 'video' ? slides.flatMap((x) => x.videos) : buttons,
     querySelector: (selector) => ({ '.slider-controls': controls, '[data-slider-prev]': previous, '[data-slider-next]': next })[selector],
   });
   vm.runInNewContext(fs.readFileSync(new URL('../scripts/landing.js', import.meta.url), 'utf8'), {
     document: { querySelector: (selector) => selector === '#example-slider' ? slider : null },
+    matchMedia: () => ({ matches: reduced }),
   });
   const active = () => slides.findIndex((slide) => !slide.hidden);
   return { slides, buttons, controls, previous, next, slider, active };
@@ -59,4 +66,18 @@ test('slider supports keyboard and swipe without hijacking Tab or small gestures
   swipe(200, 100); assert.equal(s.active(), 1);
   swipe(100, 200); assert.equal(s.active(), 0);
   swipe(100, 110); assert.equal(s.active(), 0);
+});
+
+test('only the shown slide plays its video; reduced motion never autoplays', () => {
+  const s = setup();
+  s.buttons[2].emit('click');
+  assert.equal(s.slides[2].videos[0].playing, true);
+  assert.equal(s.slides[0].videos[0].playing, false);
+  s.buttons[0].emit('click');
+  assert.equal(s.slides[0].videos[0].playing, true);
+  assert.equal(s.slides[2].videos[0].playing, false);
+  const calm = setup({ reduced: true });
+  calm.buttons[0].emit('click');
+  assert.equal(calm.slides[0].videos[0].playing, false);
+  assert.equal(calm.slides[0].videos[0].attrs.autoplay, null);
 });

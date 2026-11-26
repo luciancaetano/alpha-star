@@ -17,12 +17,20 @@ if (slider) {
   const slides = [...slider.querySelectorAll("[data-slide]")];
   const selectors = [...slider.querySelectorAll("[data-select-slide]")];
   let active = 0;
+  // Videos play only while their slide shows, and never on their own with reduced motion.
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const play = () => slides.forEach((slide, i) => slide.querySelectorAll("video").forEach((v) => {
+    if (i === active && !calm) v.play().catch(() => {});
+    else v.pause();
+  }));
   const show = (index) => {
     active = (index + slides.length) % slides.length;
     slides.forEach((slide, i) => { slide.hidden = i !== active; });
+    play();
     selectors.forEach((button, i) => button.setAttribute("aria-pressed", String(i === active)));
   };
   slider.querySelector(".slider-controls").hidden = false;
+  if (calm) slider.querySelectorAll("video").forEach((v) => { v.removeAttribute("autoplay"); v.controls = true; v.pause(); });
   slider.querySelector("[data-slider-prev]").addEventListener("click", () => show(active - 1));
   slider.querySelector("[data-slider-next]").addEventListener("click", () => show(active + 1));
   selectors.forEach((button, i) => button.addEventListener("click", () => show(i)));

@@ -30,6 +30,7 @@ export default game({
       pick1: ["1"], pick2: ["2"], pick3: ["3"],
       pause: ["Escape", "P", "GamepadStart", "TouchPause"],
       restart: ["R"],
+      showcase: ["V"],
     },
     axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right", "TouchMoveX"], moveY: ["GamepadLeftY", "W/S", "Up/Down", "TouchMoveY"] },
     // Phones: a floating stick anywhere on the left half moves; a small button in the top-right corner pauses.

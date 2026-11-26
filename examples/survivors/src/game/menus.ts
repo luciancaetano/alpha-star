@@ -19,9 +19,9 @@ export function hud(ctx: Play) {
   ctx.ui.set("hud", "kills", ctx.t("hud.foes", { n: s.kills }));
   ctx.ui.set("hud", "gold", ctx.t("hud.gold", { n: s.gold }));
   const weapons = s.weapons.map((w) => (w.evo ? WEAPONS[w.id].evoIcon : WEAPONS[w.id].icon)).join("");
-  ctx.ui.set("hud", "weapons", weapons + "*".repeat(SLOTS.weapons - s.weapons.length));
+  ctx.ui.set("hud", "weapons", weapons + "*".repeat(Math.max(0, SLOTS.weapons - s.weapons.length)));
   const passives = (Object.keys(s.passives) as PassiveId[]).map((p) => PASSIVES[p].icon).join("");
-  ctx.ui.set("hud", "passives", passives + "*".repeat(SLOTS.passives - passives.length));
+  ctx.ui.set("hud", "passives", passives + "*".repeat(Math.max(0, SLOTS.passives - [...passives].length)));
 }
 
 function showCard(ctx: Play, n: 1 | 2 | 3, card: Card | undefined) {

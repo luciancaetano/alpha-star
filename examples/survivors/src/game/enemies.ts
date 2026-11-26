@@ -18,7 +18,7 @@ function offscreen(ctx: Play, hero: Ent, angle: number, extra = 24): Vec2 {
 }
 
 function spawnKind(ctx: Play, kind: EnemyKind, pos: Vec2) {
-  ctx.spawn(enemy(kind, pos, hpScale(ctx.state.time)));
+  ctx.spawn(enemy(kind, pos, hpScale(ctx.state.time) * (ctx.state.demo ? 10 : 1)));
 }
 
 /** One foe at a time: `spawnCd` accumulates the wave's rate (foes per second) until one is due. */
@@ -28,7 +28,7 @@ function waveSpawns(ctx: Play, hero: Ent, st: Stats) {
   const alive = ctx.findAll("enemy").length;
   while (ctx.state.spawnCd >= 1) {
     ctx.state.spawnCd -= 1;
-    if (alive >= Math.min(wave.cap, RUN.maxEnemies)) continue;
+    if (alive >= (ctx.state.demo ? RUN.maxEnemies : Math.min(wave.cap, RUN.maxEnemies))) continue;
     spawnKind(ctx, ctx.random.pick(wave.kinds), offscreen(ctx, hero, ctx.random.range(0, 360)));
   }
 }

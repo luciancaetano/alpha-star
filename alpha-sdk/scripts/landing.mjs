@@ -15,12 +15,26 @@ function gameLink(id) {
     : `<a href="${REPO}/tree/main/examples/${id}">Explore source</a>`;
 }
 
-function heroSlider() {
-  const slides = GAMES.map(([id, , name, description], index) => `<figure class="hero-slide" data-slide="${id}" role="group" aria-roledescription="slide" aria-label="${index + 1} of ${GAMES.length}: ${name}"${index ? " hidden" : ""}>
+// The first slide: a muted, looping engine capture of examples/survivors' showcase run
+// (recorded with examples/survivors/tools/record-showcase.mjs, encoded by encode-showcase.py).
+const SHOWCASE = ["survivors", "Candlewick", "50 powers, hundreds of foes, a screen full of projectiles: one evolved build in real time."];
+
+function showcaseSlide() {
+  const [id, name, description] = SHOWCASE;
+  return `<figure class="hero-slide" data-slide="${id}" role="group" aria-roledescription="slide" aria-label="1 of ${GAMES.length + 1}: ${name}">
     <div class="screen-bar"><span>${name} <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
-    <img src="screenshot-${id}.png" alt="${name} running in alpha-star" ${index ? 'loading="lazy"' : 'fetchpriority="high"'} width="640" height="360">
-    <figcaption><span>${description}</span>${gameLink(id)}</figcaption></figure>`).join("\n");
-  const buttons = GAMES.map(([, , name], index) => `<button type="button" data-select-slide="${index}" aria-label="Show ${name}" aria-pressed="${index === 0}">${name}</button>`).join("");
+    <video src="showcase-${id}.mp4" poster="showcase-${id}.png" autoplay muted loop playsinline preload="auto" width="768" height="432" aria-label="${name} running in alpha-star, no sound"></video>
+    <figcaption><span>${description}</span><a href="${REPO}/tree/main/examples/${id}">Explore source</a></figcaption></figure>`;
+}
+
+function heroSlider() {
+  const total = GAMES.length + 1;
+  const slides = [showcaseSlide(), ...GAMES.map(([id, , name, description], index) => `<figure class="hero-slide" data-slide="${id}" role="group" aria-roledescription="slide" aria-label="${index + 2} of ${total}: ${name}" hidden>
+    <div class="screen-bar"><span>${name} <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
+    <img src="screenshot-${id}.png" alt="${name} running in alpha-star" loading="lazy" width="640" height="360">
+    <figcaption><span>${description}</span>${gameLink(id)}</figcaption></figure>`)].join("\n");
+  const names = [SHOWCASE[1], ...GAMES.map(([, , name]) => name)];
+  const buttons = names.map((name, index) => `<button type="button" data-select-slide="${index}" aria-label="Show ${name}" aria-pressed="${index === 0}">${name}</button>`).join("");
   return `<section id="example-slider" class="hero-screen" role="region" aria-roledescription="carousel" aria-label="Example games" tabindex="0">
     <div class="slides" aria-live="polite">${slides}</div>
     <div class="slider-controls" hidden><button type="button" data-slider-prev aria-label="Previous example">Previous</button><div class="slide-selectors">${buttons}</div><button type="button" data-slider-next aria-label="Next example">Next</button></div>

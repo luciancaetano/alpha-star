@@ -23,31 +23,35 @@
       <div class="hero-intro"><p>For the games in your head.<br>A native engine and a typed API for AI agents and the people building with them.</p><div class="actions"><a class="button primary" href="#start">Make your first game</a><a class="button secondary" href="#examples">See it in action</a></div></div>
     </div>
     <section id="example-slider" class="hero-screen" role="region" aria-roledescription="carousel" aria-label="Example games" tabindex="0">
-    <div class="slides" aria-live="polite"><figure class="hero-slide" data-slide="shaders" role="group" aria-roledescription="slide" aria-label="1 of 6: Shader Lab">
+    <div class="slides" aria-live="polite"><figure class="hero-slide" data-slide="survivors" role="group" aria-roledescription="slide" aria-label="1 of 7: Candlewick">
+    <div class="screen-bar"><span>Candlewick <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
+    <video src="showcase-survivors.mp4" poster="showcase-survivors.png" autoplay muted loop playsinline preload="auto" width="768" height="432" aria-label="Candlewick running in alpha-star, no sound"></video>
+    <figcaption><span>50 powers, hundreds of foes, a screen full of projectiles: one evolved build in real time.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/survivors">Explore source</a></figcaption></figure>
+<figure class="hero-slide" data-slide="shaders" role="group" aria-roledescription="slide" aria-label="2 of 7: Shader Lab" hidden>
     <div class="screen-bar"><span>Shader Lab <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
-    <img src="screenshot-shaders.png" alt="Shader Lab running in alpha-star" fetchpriority="high" width="640" height="360">
+    <img src="screenshot-shaders.png" alt="Shader Lab running in alpha-star" loading="lazy" width="640" height="360">
     <figcaption><span>Six custom GLSL effects, orbiting lights and adjustable intensity.</span><a href="screenshot-shaders.png">View full capture</a></figcaption></figure>
-<figure class="hero-slide" data-slide="platformer" role="group" aria-roledescription="slide" aria-label="2 of 6: Platformer" hidden>
+<figure class="hero-slide" data-slide="platformer" role="group" aria-roledescription="slide" aria-label="3 of 7: Platformer" hidden>
     <div class="screen-bar"><span>Platformer <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
     <img src="screenshot-platformer.png" alt="Platformer running in alpha-star" loading="lazy" width="640" height="360">
     <figcaption><span>Sprite animation, LDtk levels, camera follow and Box2D physics.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/platformer">Explore source</a></figcaption></figure>
-<figure class="hero-slide" data-slide="topdown" role="group" aria-roledescription="slide" aria-label="3 of 6: Top-down arena" hidden>
+<figure class="hero-slide" data-slide="topdown" role="group" aria-roledescription="slide" aria-label="4 of 7: Top-down arena" hidden>
     <div class="screen-bar"><span>Top-down arena <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
     <img src="screenshot-topdown.png" alt="Top-down arena running in alpha-star" loading="lazy" width="640" height="360">
     <figcaption><span>Two players, auto-aim, sensor bullets and particle blasts.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/topdown">Explore source</a></figcaption></figure>
-<figure class="hero-slide" data-slide="shmup" role="group" aria-roledescription="slide" aria-label="4 of 6: Space shooter" hidden>
+<figure class="hero-slide" data-slide="shmup" role="group" aria-roledescription="slide" aria-label="5 of 7: Space shooter" hidden>
     <div class="screen-bar"><span>Space shooter <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
     <img src="screenshot-shmup.png" alt="Space shooter running in alpha-star" loading="lazy" width="640" height="360">
     <figcaption><span>Fast shots, collision categories and a scrolling star field.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/shmup">Explore source</a></figcaption></figure>
-<figure class="hero-slide" data-slide="puzzle" role="group" aria-roledescription="slide" aria-label="5 of 6: Sokoban puzzle" hidden>
+<figure class="hero-slide" data-slide="puzzle" role="group" aria-roledescription="slide" aria-label="6 of 7: Sokoban puzzle" hidden>
     <div class="screen-bar"><span>Sokoban puzzle <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
     <img src="screenshot-puzzle.png" alt="Sokoban puzzle running in alpha-star" loading="lazy" width="640" height="360">
     <figcaption><span>Pure game rules, undo, saved progress and accessible UI.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/puzzle">Explore source</a></figcaption></figure>
-<figure class="hero-slide" data-slide="flappy" role="group" aria-roledescription="slide" aria-label="6 of 6: Flappy" hidden>
+<figure class="hero-slide" data-slide="flappy" role="group" aria-roledescription="slide" aria-label="7 of 7: Flappy" hidden>
     <div class="screen-bar"><span>Flappy <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
     <img src="screenshot-flappy.png" alt="Flappy running in alpha-star" loading="lazy" width="640" height="360">
     <figcaption><span>Scenes, music, settings, localization and a best score to beat.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/flappy">Explore source</a></figcaption></figure></div>
-    <div class="slider-controls" hidden><button type="button" data-slider-prev aria-label="Previous example">Previous</button><div class="slide-selectors"><button type="button" data-select-slide="0" aria-label="Show Shader Lab" aria-pressed="true">Shader Lab</button><button type="button" data-select-slide="1" aria-label="Show Platformer" aria-pressed="false">Platformer</button><button type="button" data-select-slide="2" aria-label="Show Top-down arena" aria-pressed="false">Top-down arena</button><button type="button" data-select-slide="3" aria-label="Show Space shooter" aria-pressed="false">Space shooter</button><button type="button" data-select-slide="4" aria-label="Show Sokoban puzzle" aria-pressed="false">Sokoban puzzle</button><button type="button" data-select-slide="5" aria-label="Show Flappy" aria-pressed="false">Flappy</button></div><button type="button" data-slider-next aria-label="Next example">Next</button></div>
+    <div class="slider-controls" hidden><button type="button" data-slider-prev aria-label="Previous example">Previous</button><div class="slide-selectors"><button type="button" data-select-slide="0" aria-label="Show Candlewick" aria-pressed="true">Candlewick</button><button type="button" data-select-slide="1" aria-label="Show Shader Lab" aria-pressed="false">Shader Lab</button><button type="button" data-select-slide="2" aria-label="Show Platformer" aria-pressed="false">Platformer</button><button type="button" data-select-slide="3" aria-label="Show Top-down arena" aria-pressed="false">Top-down arena</button><button type="button" data-select-slide="4" aria-label="Show Space shooter" aria-pressed="false">Space shooter</button><button type="button" data-select-slide="5" aria-label="Show Sokoban puzzle" aria-pressed="false">Sokoban puzzle</button><button type="button" data-select-slide="6" aria-label="Show Flappy" aria-pressed="false">Flappy</button></div><button type="button" data-slider-next aria-label="Next example">Next</button></div>
   </section>
     <div class="engine-strip"><p>Small surface.<br><strong>Solid foundations.</strong></p><span>C++20</span><span>SDL3</span><span>Box2D</span><span>QuickJS</span><span>TypeScript</span></div>
   </section>

@@ -104,4 +104,7 @@ export default scene("title", {
     open(ctx, "title");
     ctx.postfx.add("vignette", { strength: 0.6, radius: 0.5 });
   },
+  update(ctx) {
+    if (ctx.input.pressed("showcase")) ctx.go("play", { hero: ctx.state.hero, demo: true });
+  },
 });

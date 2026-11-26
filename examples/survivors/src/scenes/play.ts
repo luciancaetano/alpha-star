@@ -9,6 +9,7 @@ import { updatePickups } from "../game/pickups";
 import { newRun, type Play, type RunState, stats } from "../game/run";
 import { fireWeapons } from "../game/weapons";
 import { buildWorld, updateWorld } from "../game/world";
+import { autopilot, demoRun } from "../game/demo";
 import { hero, HP_SEGMENTS, hpBar } from "../prefabs/actors";
 import { RUN } from "../tuning";
 import type { Ent, HeroId, RunResult } from "../types";
@@ -20,7 +21,7 @@ const result = (ctx: Play, dawn: boolean): RunResult => {
 
 function walk(ctx: Play, h: Ent, speed: number) {
   const input = ctx.input.player(1 as Player);
-  const move: Vec2 = [input.axis("moveX"), input.axis("moveY")];
+  const move: Vec2 = ctx.state.demo ? autopilot(ctx.state.time) : [input.axis("moveX"), input.axis("moveY")];
   const amount = Math.min(1, vec.len(move));
   h.body.velocity = vec.scale(vec.norm(move), amount * speed);
   if (move[0] !== 0) {
@@ -49,6 +50,7 @@ function step(ctx: Play, h: Ent) {
   updateProjectiles(ctx, h, st);
   updateEnemies(ctx, h, st);
   updatePickups(ctx, h, st);
+  if (s.demo) [s.hp, s.pending] = [st.maxHp, 0];
   showHp(ctx, st.maxHp);
   if (s.hp <= 0) {
     ctx.audio.play("death");
@@ -61,7 +63,7 @@ function step(ctx: Play, h: Ent) {
 }
 
 export default scene("play", {
-  state: (p?: { hero: HeroId }): RunState => newRun(p?.hero ?? "wick", {}),
+  state: (p?: { hero: HeroId; demo?: boolean }): RunState => (p?.demo ? demoRun(p.hero) : newRun(p?.hero ?? "wick", {})),
 
   enter(ctx) {
     ctx.state.shop = ctx.save.get("shop", {});

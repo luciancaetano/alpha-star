@@ -29,3 +29,15 @@ under `tools/resource_guard.py`. The log reported `renderer gpu`; the capture co
 
 Tutorial Hop (`tutorial-hop.png`): the tutorial's final `src/main.ts`, exported, run as
 `alpha_star <pack> --frames 150 --tap Space --tap-every 38 --screenshot <path>.bmp`, converted to PNG.
+
+Candlewick showcase (`showcase-survivors.mp4` + `.png` poster, the landing's first slide): the
+survivors example's showcase run (V on its title: evolved arsenal, short cooldowns, a thick horde,
+autopilot), recorded with no window by stepping the release engine `--hidden` over the control channel,
+2 fixed steps per video frame (30 fps, 768x432, no audio). From `examples/survivors` (PowerShell):
+
+```powershell
+npx alpha export
+node tools/record-showcase.mjs $env:TEMP/showcase-frames 24
+python -I tools/encode-showcase.py $env:TEMP/showcase-frames $env:TEMP/showcase   # needs: pip install imageio-ffmpeg
+# copy showcase.mp4 / showcase.png here as showcase-survivors.*, then: npm.cmd --prefix alpha-sdk run docs
+```

@@ -201,3 +201,14 @@ export function theHordeGrowsGraduallyWithoutJumps() {
   if (early > 6) fail(`the first seconds should be calm, ${early} foes at 5s`);
 }
 
+
+export function theShowcaseRunFillsTheScreenAndNeverStops() {
+  // V on the title: evolved arsenal, autopilot, no menus, the hero never falls.
+  const run = simulate(game, { seconds: 20, inputs: { showcase: [20] } });
+  run.expect.noErrors();
+  run.expect.scene("play");
+  if (!state(run).demo || state(run).mode !== "play") fail(`showcase plays on, mode ${state(run).mode}`);
+  if (state(run).kills < 150) fail(`showcase should melt the horde, kills ${state(run).kills}`);
+  console.log(`showcase: ${state(run).kills} kills, ${run.entities("enemy").length} foes, ${run.entities("shot").length} shots`);
+  run.expect.count("enemy").atLeast(40);
+}

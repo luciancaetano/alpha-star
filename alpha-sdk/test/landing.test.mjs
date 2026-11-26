@@ -20,12 +20,15 @@ test('landing keeps the guide and includes six real captures with resolvable loc
 });
 
 
-test('hero exposes six accessible slides and the header uses the project logo', () => {
+test('hero exposes seven accessible slides, a muted looping capture first, and the project logo', () => {
   const files = buildSite();
   const html = files['index.html'];
   const hero = html.split('id="example-slider"')[1]?.split('class="engine-strip"')[0] ?? '';
-  assert.equal((hero.match(/data-slide=/g) ?? []).length, 6);
-  assert.equal((hero.match(/data-select-slide=/g) ?? []).length, 6);
+  assert.equal((hero.match(/data-slide=/g) ?? []).length, 7);
+  assert.equal((hero.match(/data-select-slide=/g) ?? []).length, 7);
+  const first = hero.split('data-slide=')[1];
+  assert.match(first, /<video [^>]*autoplay muted loop playsinline/);
+  assert.ok(Buffer.isBuffer(files['showcase-survivors.mp4']));
   assert.match(hero, /aria-roledescription="carousel"/);
   assert.match(hero, /data-slider-next/);
   assert.match(hero, /data-slider-prev/);

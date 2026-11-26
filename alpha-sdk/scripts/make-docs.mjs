@@ -147,7 +147,7 @@ export function buildSite() {
     files[name] = fs.readFileSync(path.join(SDK, "scripts", name), "utf8");
   }
   for (const name of fs.readdirSync(path.join(GUIDE, "assets"))) {
-    if (name.endsWith(".png")) files[name] = fs.readFileSync(path.join(GUIDE, "assets", name));
+    if (name.endsWith(".png") || name.endsWith(".mp4")) files[name] = fs.readFileSync(path.join(GUIDE, "assets", name));
   }
   return files;
 }

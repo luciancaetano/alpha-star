@@ -13,6 +13,8 @@ export interface RunState {
   mode: Mode; pending: number; chests: number; offers: Offer[];
   spawnCd: number; events: string[]; brazierCd: number; shop: Partial<Record<ShopId, number>>;
   facing: number; over: boolean;
+  /** Showcase run (game/demo.ts): autopilot, no damage, no menus. */
+  demo: boolean;
   /** The visible world last step (ctx.camera.view), for tests and MCP. */
   view: number[];
 }
@@ -22,7 +24,7 @@ export function newRun(hero: HeroId, shop: Partial<Record<ShopId, number>>): Run
   return {
     hero, time: 0, kills: 0, gold: 0, xp: 0, level: 1, hp: HERO.hp + (shop.vigor ?? 0) * 10, iframes: 0,
     weapons: [{ id: HEROES[hero].weapon, level: 1, evo: false, cd: 0.4 }], passives: {},
-    mode: "play", pending: 0, chests: 0, offers: [], spawnCd: 0, events: [], brazierCd: 6, shop, facing: 1, over: false, view: [],
+    mode: "play", pending: 0, chests: 0, offers: [], spawnCd: 0, events: [], brazierCd: 6, shop, facing: 1, over: false, demo: false, view: [],
   };
 }
 
