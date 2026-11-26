@@ -79,3 +79,12 @@ The code rules are in [AGENTS.md](AGENTS.md).
   `tools/pack_release.py --install-test`). Artifacts: `engine-win32-x64-debug`, `engine-win32-x64`,
   `engine-linux-x64`, `sdk-release` (the npm tarballs; never published).
 - The Linux package list lives in `.github/actions/linux-deps` (mirrors `tools/linux/Containerfile`).
+
+## GitHub Pages showcase
+
+Run `npm --prefix alpha-sdk run docs` to regenerate the landing, guides and API reference.
+Edit `alpha-sdk/scripts/landing.mjs` and `landing.css` for the showcase; keep screenshots in
+`docs/guide/assets/`. These are actual engine captures, copied by the same generator.
+The setup guide source is `docs/guide/getting-started.md`. The existing Pages workflow
+publishes `docs/site/` when these sources reach `main`. See `docs/guide/assets/README.md`
+for capture commands.

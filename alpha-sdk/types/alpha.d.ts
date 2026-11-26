@@ -1,3 +1,4 @@
+// Guide: https://luciancaetano.github.io/alpha-star/getting-started.html
 // alpha-star script API. The engine provides these modules at runtime;
 // scripts import them and the compiler leaves the imports external.
 // Units: pixels, seconds, degrees. Origin top-left, +y down.

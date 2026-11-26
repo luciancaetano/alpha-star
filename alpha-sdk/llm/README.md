@@ -2,6 +2,8 @@
 
 > summary: Index of concise docs that teach an LLM coding agent the alpha-star game script API; read this to pick the file for the task at hand.
 
+Public site: https://luciancaetano.github.io/alpha-star/ (real example screenshots). The setup guide is `getting-started.html`; typed API docs are `reference.html`.
+
 Source of truth: `types/alpha.d.ts` (modules `"alpha"`, `"alpha/test"`). Real usage: `examples/*/src` and `templates/`. Start with overview.md.
 
 | File | Summary |

@@ -1,6 +1,6 @@
 // Builds the static docs site: docs/guide/*.md (hand-written) + an API reference generated
 // from types/alpha.d.ts with the TypeScript compiler API -> docs/site/*.html. No CDN, no
-// scripts: the pages work opened straight from disk.
+// required scripts: the pages work opened straight from disk; landing copy is optional.
 //   node scripts/make-docs.mjs           write docs/site/
 //   node scripts/make-docs.mjs --check   exit 1 if docs/site/ is not what the sources make (npm test)
 import fs from "node:fs";
@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { decodePng, encodePng } from "../lib/png.mjs";
+import { landing } from "./landing.mjs";
 import { markdown, escape } from "./markdown.mjs";
 
 const SDK = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -19,7 +20,7 @@ const MASCOT = path.join(REPO, "aster.png");
 
 // Navigation: [section, [[file (without .md), title]]]. reference is generated.
 export const NAV = [
-  ["Start", [["index", "Getting started"], ["concepts", "Concepts"], ["examples", "Examples"]]],
+  ["Start", [["getting-started", "Getting started"], ["concepts", "Concepts"], ["examples", "Examples"]]],
   ["Guides", [["input", "Input"], ["ui", "Game UI"], ["audio", "Audio and music"], ["physics", "Physics"],
               ["particles", "Particles, looks, layers"], ["shaders", "Shaders and lighting"], ["tilemaps", "Sprites, camera, tilemaps"],
               ["saves", "Saves, settings, i18n"], ["hot-reload", "Hot reload"], ["mcp", "MCP for agents"],
@@ -138,6 +139,13 @@ export function buildSite() {
       files[`${file}.html`] = page(file, title, body);
     }
   }
+  files["index.html"] = landing();
+  for (const name of ["landing.css", "landing.js"]) {
+    files[name] = fs.readFileSync(path.join(SDK, "scripts", name), "utf8");
+  }
+  for (const name of fs.readdirSync(path.join(GUIDE, "assets"))) {
+    if (name.endsWith(".png")) files[name] = fs.readFileSync(path.join(GUIDE, "assets", name));
+  }
   return files;
 }
 
@@ -166,3 +174,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   for (const [name, text] of Object.entries(buildSite())) fs.writeFileSync(path.join(SITE, name), text);
   console.log(`docs written to ${path.relative(process.cwd(), SITE)}`);
 }
+

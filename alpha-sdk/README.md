@@ -1,5 +1,7 @@
 # @alpha-star/sdk
 
+[Game showcase](https://luciancaetano.github.io/alpha-star/) ? [Getting started](https://luciancaetano.github.io/alpha-star/getting-started.html) ? [API reference](https://luciancaetano.github.io/alpha-star/reference.html)
+
 Types and the `alpha` CLI for alpha-star games (TypeScript, bundled to one JS
 module the engine runs). Run every command from the game project folder.
 

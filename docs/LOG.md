@@ -65,3 +65,12 @@ Condensed summary of the project's history. The full per-action log (326 entries
 - Android debug APK: CMake leaves ALPHA_DEVTOOLS off by default, so the debug variant passes the release preset's flags; MCP off (NDK libc++ has no floating-point from_chars; the channel is for desktops). Menu key (`adb shell input keyevent 82`) opens the dev tools on the phone; ImGui is not DPI-scaled yet (tiny panels).
 - Dev tools on phones: panels were tiny and hidden under the status bar. Scale from the screen (devtools/scale: content scale vs shorter side / 1080, 1..4; font re-rasterized via FontScaleDpi) and a pure tiled layout inside the window's safe area (devtools/layout), reapplied on every open. Removed leftover TEMP accelerometer logs (a rejected instrumentation edit had already been written).
 - CI: `.github/workflows/engines.yml` on push to main builds Windows debug (dev), Windows + Linux release/shipping engines (stage_engine.py) and the SDK with both staged (npm ci, npm test, pack_release --install-test); uploads engines + tarballs. Linux apt list moved to composite action `.github/actions/linux-deps` (one place; ci.yml uses it). Why: downloadable engines/SDK per main commit. BUILDING.md CI section. Validated: YAML parses; not run on GitHub yet.
+
+
+## 2026-11-25 - GitHub Pages showcase
+- Used detached workcopy C:/workspace/alpha-star-pages to preserve concurrent work.
+- Ran five examples through npm start under resource_guard and captured real frames; excluded shaders. Capture recipes: docs/guide/assets/README.md.
+- Added responsive landing, gallery, quickstart copying and documentation navigation. Integrated assets into npm run docs; moved setup guide to getting-started.html.
+- Updated README, type guide link, LLM index, glossary and building documentation.
+- Validation: six documentation tests passed; size/complexity checks passed. Earlier full Windows gate passed build/limits/file-access/CRAP/duplication, but native shader tests and coverage failed with HLSL/GLSL fixture mismatch during concurrent work. Visual browser check blocked by Computer Use URL verification.
+- Rebased only the landing changes onto remote main for publication, leaving local engine/shader commits and edits untouched. Regenerated and retested the site on that base.
