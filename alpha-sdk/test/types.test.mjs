@@ -22,3 +22,8 @@ test("ui: toggle needs on, ids are checked, attr values are text/number/boolean/
   const problems = typecheck(path.join(HERE, "fixtures", "ui_calls", "game.ts"));
   assert.deepEqual(problems.map((p) => `${p.line}: ${p.message}`), []);
 });
+
+test("one way: live vectors with [x, y] assignment, Rect, Color, postfx.set, audio.music.*", () => {
+  const problems = typecheck(path.join(HERE, "fixtures", "one_way", "game.ts"));
+  assert.deepEqual(problems.map((p) => `${p.line}: ${p.message}`), []);
+});

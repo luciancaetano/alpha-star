@@ -16,7 +16,7 @@ export default scene("title", {
       ctx.ui.set("title", "settings", ctx.t("title.settingsTouch"));
     }
     // Music outlives scenes: start it once, it loops from then on.
-    if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });
+    if (ctx.audio.music.playing !== "theme") ctx.audio.music.play("theme", { volume: 0.6, fadeIn: 1 });
   },
   update(ctx) {
     // Idle bob as a pure function of time: deterministic.

@@ -219,7 +219,8 @@ const e = ctx.spawn({
   z: 1,                                                 // draws over z 0
   data: { hp: 3, name: "grunt" },                       // your own JSON data
 });
-e.pos.x += 10;          // move it
+e.pos.x += 10;          // move it (pos is live: x and y read and write the engine)
+e.pos = [40, 60];       // or put it somewhere at once
 e.rotation += 90;
 e.scale = 2;            // twice as big
 e.alpha = 0.5;

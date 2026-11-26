@@ -1,6 +1,6 @@
 # RFC: script API 1.0 (breaking)
 
-Status: phases 1-3 implemented; phase 4 proposed.
+Status: phases 1-4 implemented.
 Evidence: `examples/survivors` (Candlewick), the largest alpha-star game, and the "lessons" in its AGENTS.md.
 
 ## Why
@@ -103,14 +103,19 @@ and checked in tests by `expect.classed` / `expect.attr`. Dropped from the propo
 (cloned elements would need ids the type system cannot know; a document with N declared slots,
 as Candlewick's level-up cards, stays typed).
 
-## Phase 4 (proposed): one shape for each thing
+## Phase 4 (done): one shape for each thing
 
-- One vector: `Vec2` tuples everywhere (`pos`, `velocity` read as live `{x, y}` today; make reads
-  return tuples and writes take tuples, or both `{x, y}`), and one `Rect = [x, y, w, h]`.
-- One contact API: `ctx.on("hit" | "hitEnd" | "enter" | "exit", a, b, fn)`.
-- Music under `ctx.audio.music.play / crossfade / stop / playing`.
-- `LightSpec.color: Color`; `postfx.add`/`set` merged into `postfx.set` (upsert).
-- Entity facets typed by what it was spawned with (no `text` on a sprite, no `emit` without an emitter).
+- **Vectors:** `entity.pos`, `body.velocity` and `camera.pos` are all live `{x, y}` (reading and
+  writing an axis goes to the engine) and all take `[x, y]` assignment. Before, `body.velocity`
+  returned a copy (`e.body.velocity.x = 0` silently did nothing) and `e.pos = [x, y]` replaced the
+  live object with an array. Every other vector stays a `Vec2` tuple (spawn specs, queries, vec helpers).
+- **`Rect`** = `[x, y, width, height]` for camera.view / bounds, queryRect and safeArea.
+- **`Color`** for `light.color`, `postfx` tint and `config.lighting.ambient` (was `string`).
+- **`ctx.postfx.set`** adds or replaces (keeping its place); `add` is gone.
+- **`ctx.audio.music.play / crossfade / stop / playing`** replace `music`, `crossfade`, `stopMusic`, `musicPlaying`.
+- Dropped: one contact API (`ctx.on` already means game events; `onHit`/`onEnter`/... are clear and
+  typed); entity facets typed by spawn shape and animations per sheet (a tag does not decide the
+  sheet or shape, so the types could not be honest).
 
 ## Migration of a game (phase 1)
 

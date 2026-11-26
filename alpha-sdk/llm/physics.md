@@ -13,7 +13,7 @@ interface BodySpec {
   velocity?: Vec2; fixedRotation?: boolean; gravityScale?: number /*1*/; bullet?: boolean;
   category?: C; collidesWith?: C[];          // config.collision.categories (max 63)
 }
-e.body.velocity            // Vec2Ref; assign [vx, vy]
+e.body.velocity            // live {x, y}: e.body.velocity.y = -250 sets one axis; = [vx, vy] sets both
 e.body.angularVelocity     // deg/s, + = clockwise on screen
 e.body.mass; e.body.type
 e.body.applyForce([fx, fy]); e.body.applyImpulse([ix, iy]); e.body.applyTorque(t)

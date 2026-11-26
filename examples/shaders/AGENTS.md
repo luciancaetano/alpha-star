@@ -39,7 +39,7 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
   is `#version 450` with the frame at `set = 2, binding = 0` and a `std140` float block at
   `set = 3, binding = 0` whose members follow the `uniforms` order (`intensity`, `time`).
   `alpha run` compiles them with glslang; `alpha export` packs `.spv` instead.
-- **One at a time:** `ctx.postfx.remove(old)` then `ctx.postfx.add(new, uniforms)`; every frame
+- **One at a time:** `ctx.postfx.remove(old)` then `ctx.postfx.set(new, uniforms)`; every frame
   `ctx.postfx.set(name, { intensity, time: ctx.time })` animates it. A wrong uniform name is an
   error, so the tests' full lap catches asset/uniform mismatches.
 - **Render-only:** shaders need Vulkan (Windows, Linux, Android); elsewhere and in headless tests

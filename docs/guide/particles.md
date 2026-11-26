@@ -226,8 +226,8 @@ Several times cheaper than `entity.pos` per entity when hundreds move every step
 ```ts
 // config: { lighting: { ambient: "#202040" } }
 ctx.spawn({ tags: ["torch"], pos: [100, 120], light: { radius: 80, color: "#ffa300", intensity: 1.2 } });
-ctx.postfx.add("bloom", { strength: 0.8 });
-ctx.postfx.add("vignette");
+ctx.postfx.set("bloom", { strength: 0.8 });
+ctx.postfx.set("vignette");
 ctx.postfx.remove("bloom");
 ```
 

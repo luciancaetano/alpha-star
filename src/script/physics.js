@@ -13,10 +13,17 @@ function pair(v, what) {
 
 // entity.body for entity `id`.
 export function bodyOf(id) {
+  // Live, like entity.pos: velocity.x = 0 stops it horizontally.
+  const velocity = {
+    get x() { return N.velocity(id)[0]; },
+    set x(v) { N.setVelocity(id, v, N.velocity(id)[1]); },
+    get y() { return N.velocity(id)[1]; },
+    set y(v) { N.setVelocity(id, N.velocity(id)[0], v); },
+  };
   return {
     get velocity() {
-      const [x, y] = N.velocity(id);
-      return { x, y };
+      N.velocity(id);  // no body: the error names the entity
+      return velocity;
     },
     set velocity(v) {
       if (!Array.isArray(v)) fail(`entity ${id}: body.velocity must be set to [x, y]`);

@@ -178,6 +178,8 @@ const posProto = {
 function entityProto(entity, data) {
   return {
     get alive() { return N.alive(this.id); },
+    get pos() { return this.ref; },
+    set pos(v) { N.setPosition(this.id, ...pair(v, `entity ${this.id}: pos`)); },
     get tags() { return N.tags(this.id); },
     has(tag) { return N.hasTag(this.id, tag); },
     get rotation() { return N.rotation(this.id); },
@@ -233,7 +235,7 @@ function makeEntities() {
     if (e) return e;
     e = Object.create(proto);
     e.id = id;
-    e.pos = Object.create(posProto, { id: { value: id } });
+    Object.defineProperty(e, "ref", { value: Object.create(posProto, { id: { value: id } }) });
     entities.set(id, e);
     return e;
   }
@@ -360,11 +362,7 @@ function pair(v, what) {
 // ctx.postfx: the current scene's full-screen effects, drawn in the order first added.
 function makePostfx() {
   return {
-    add: (name, params) => N.postfxPut(name, params),
-    set: (name, params) => {
-      if (!N.postfxList().includes(name)) fail(`postfx.set("${name}"): not added in this scene; have: ${N.postfxList().join(" ") || "(none)"}; use postfx.add`);
-      N.postfxPut(name, params);
-    },
+    set: (name, params) => N.postfxPut(name, params),
     remove: (name) => N.postfxRemove(name),
     clear: () => N.postfxClear(),
     list: () => N.postfxList(),
@@ -379,12 +377,18 @@ function makeCamera() {
     c[i] = v;
     N.cameraSet(...c);
   };
+  const pos = {
+    get x() { return get()[0]; },
+    set x(v) { set(0, v); },
+    get y() { return get()[1]; },
+    set y(v) { set(1, v); },
+  };
   return {
-    pos: {
-      get x() { return get()[0]; },
-      set x(v) { set(0, v); },
-      get y() { return get()[1]; },
-      set y(v) { set(1, v); },
+    get pos() { return pos; },
+    set pos(v) {
+      const [x, y] = pair(v, "camera.pos");
+      set(0, x);
+      set(1, y);
     },
     get zoom() { return get()[2]; },
     set zoom(v) { set(2, v); },

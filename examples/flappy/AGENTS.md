@@ -70,8 +70,8 @@ the export copies each declared file into the pack and fails naming any missing 
   Play with `ctx.audio.play("name", { volume, pitch, loop })`; one-off procedural sounds with
   `ctx.audio.tone({ wave: "square", freq: [300, 600], duration: 0.1 })`.
 - **Music:** add the name to `music` in `types.ts` and the .ogg/.mp3/.wav to `assets.music`;
-  `ctx.audio.music("theme", { volume, fadeIn })`, `ctx.audio.crossfade("other", seconds)`,
-  `ctx.audio.stopMusic(fadeOut)`. Streamed, one track at a time; it keeps playing across scenes.
+  `ctx.audio.music.play("theme", { volume, fadeIn })`, `ctx.audio.music.crossfade("other", seconds)`,
+  `ctx.audio.music.stop(fadeOut)`. Streamed, one track at a time; it keeps playing across scenes.
 - **Volumes:** buses `master`, `music`, `sfx`, `voice`: `ctx.audio.bus("music").volume = 0.5`
   (saved in the player's settings and applied at every start; see `src/scenes/settings.ts`).
 - **Texts / languages:** add the key to every `assets/locales/*.json`, show it with `ctx.t("key", { n })`

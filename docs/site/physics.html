@@ -108,7 +108,7 @@ b.angularVelocity = 180;              // degrees per second, clockwise</code></p
 <pre><code>ctx.onHit("hero", "enemy", (hero, enemy, contact) =&gt; {
   if (contact.normal[1] &gt; 0.7) {           // normal points hero -&gt; enemy: enemy is below = a stomp
     ctx.destroy(enemy);
-    hero.body.velocity = [hero.body.velocity.x, -250];
+    hero.body.velocity.y = -250;                     // velocity is live: set one axis
   } else {
     ctx.go("play");                        // hit from the side: start over
   }
@@ -176,7 +176,7 @@ const h = ctx.find("hero");
 if (grounded(ctx)) ctx.state.jumps = 2;
 if (ctx.input.pressed("jump") &amp;&amp; ctx.state.jumps &gt; 0) {
   ctx.state.jumps -= 1;
-  h.body.velocity = [h.body.velocity.x, -300];
+  h.body.velocity.y = -300;
 }</code></pre>
 <h3 id="enemy-patrol-that-turns-at-walls-and-edges">Enemy patrol that turns at walls and edges</h3>
 <pre><code>// types: tags: { enemy: { dir?: number }; ground: {}; wall: {} }

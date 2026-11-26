@@ -29,7 +29,7 @@ function scrollStars(ctx: Play) {
 
 function toggleCrt(ctx: Play) {
   ctx.state.crt = !ctx.state.crt;
-  if (ctx.state.crt) ctx.postfx.add("crt", { strength: 0.6 });
+  if (ctx.state.crt) ctx.postfx.set("crt", { strength: 0.6 });
   else ctx.postfx.remove("crt");
 }
 
@@ -100,11 +100,11 @@ export default scene("play", {
       ctx.state.score += ENEMY.points;
     });
     ctx.onHit("ship", "enemy", (s, e) => hurt(ctx, s, e));
-    if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { fadeIn: 1, volume: 0.6 });
+    if (ctx.audio.music.playing !== "theme") ctx.audio.music.play("theme", { fadeIn: 1, volume: 0.6 });
     ctx.ui.show("hud");
     // Render-only looks: glow on the bright shots and stars; C toggles a CRT filter.
-    ctx.postfx.add("bloom", { strength: 0.9, radius: 3 });
-    if (ctx.state.crt) ctx.postfx.add("crt", { strength: 0.6 });
+    ctx.postfx.set("bloom", { strength: 0.9, radius: 3 });
+    if (ctx.state.crt) ctx.postfx.set("crt", { strength: 0.6 });
   },
 
   update(ctx) {

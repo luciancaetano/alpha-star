@@ -39,8 +39,8 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 - **Many entities:** the 120 stars move through `ctx.positions("star")` (edit `y[i]`, then
   `write()` once) — the fast way for many entities per frame.
 - **Layers:** `config.layers` (`stars` far behind with parallax 0.3, `fx` on top) + `layer:` on specs.
-- **Audio:** `ctx.audio.music("theme", { fadeIn })` streams a file (here a generated WAV);
-  `stopMusic(seconds)` fades out; `expect.music("theme")` / `null` in tests. Sounds are synthesized
+- **Audio:** `ctx.audio.music.play("theme", { fadeIn })` streams a file (here a generated WAV);
+  `music.stop(seconds)` fades out; `expect.music("theme")` / `null` in tests. Sounds are synthesized
   (`assets.sounds` notes) and panned by x.
 - **Hits:** `ctx.onEnter("shot", "enemy")` (sensor), `ctx.onHit("ship", "enemy")` (solid). The
   blink while safe is a yoyo tween on `alpha`; `ctx.input.rumble` shakes the pad.

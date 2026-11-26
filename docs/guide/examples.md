@@ -59,7 +59,7 @@ ctx.save.set("best", best);
 
 ```ts
 ctx.ui.set("title", "hint", ctx.t("title.hintTouch"));
-if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });
+if (ctx.audio.music.playing !== "theme") ctx.audio.music.play("theme", { volume: 0.6, fadeIn: 1 });
 ```
 
 It also ships a committed Android project (`examples/flappy/android`) and npm scripts for every
@@ -212,7 +212,7 @@ const shader = (name: string) => ({ file: `assets/shaders/${name}.frag`, uniform
 ```ts
 ctx.postfx.remove(SHADERS[ctx.state.index]);
 ctx.state.index = cycle(ctx.state.index, step);
-ctx.postfx.add(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: ctx.time });
+ctx.postfx.set(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: ctx.time });
 ```
 
 `alpha run` compiles the `.frag` files with glslang (and recompiles them on save under

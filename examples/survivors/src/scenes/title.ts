@@ -102,7 +102,7 @@ export default scene("title", {
     for (const id of SHOP_IDS) ctx.ui.on("shop", id, "click", () => buy(ctx, id));
     refresh(ctx);
     open(ctx, "title");
-    ctx.postfx.add("vignette", { strength: 0.6, radius: 0.5 });
+    ctx.postfx.set("vignette", { strength: 0.6, radius: 0.5 });
   },
   update(ctx) {
     if (ctx.input.pressed("showcase")) ctx.go("play", { hero: ctx.state.hero, demo: true });

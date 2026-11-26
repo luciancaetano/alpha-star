@@ -93,7 +93,7 @@ JSValue music(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const auto it = s.music.find(name);
   if (it == s.music.end()) {
     const std::string have = core::keys_of(s.music, ", ");
-    throw core::Error("audio.music(\"" + name + "\"): unknown music; assets.music has: " + (have.empty() ? "(none)" : have));
+    throw core::Error("audio.music.play(\"" + name + "\"): unknown music; assets.music has: " + (have.empty() ? "(none)" : have));
   }
   core::MusicOptions o;
   o.volume = ranged(ctx, argv[1], "music volume", 0.0, 1.0);
@@ -109,7 +109,7 @@ JSValue music(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 }
 
 JSValue stop_music(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  s.mixer.stop_music(ranged(ctx, argv[0], "stopMusic fadeOut seconds", 0.0, 60.0));
+  s.mixer.stop_music(ranged(ctx, argv[0], "music.stop fadeOut seconds", 0.0, 60.0));
   return JS_UNDEFINED;
 }
 

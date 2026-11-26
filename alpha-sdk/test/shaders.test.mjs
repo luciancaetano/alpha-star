@@ -21,7 +21,7 @@ import { define } from "alpha";
 interface T { actions: never; sounds: never; images: never; tags: never; scenes: { play: undefined }; ui: {};
               shaders: { invert: "amount" } }
 const { scene, game } = define<T>();
-const play = scene("play", { enter(ctx) { ctx.postfx.add("invert", { amount: 0.5 }); } });
+const play = scene("play", { enter(ctx) { ctx.postfx.set("invert", { amount: 0.5 }); } });
 export default game({ config: { title: "t", size: [10, 10], seed: 1, actions: {} }, start: "play", scenes: { play },
   assets: ${assets} });
 `);

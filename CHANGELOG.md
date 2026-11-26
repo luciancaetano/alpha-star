@@ -18,6 +18,10 @@ Script API 1.0, phase 1 (breaking; see `docs/RFC_API_1.0.md`).
   `EntitySpec<Tags, Images, ...>`, `Entity<Tags, Anim>` and `EntityData` are gone.
 - `simulate(...).entities(tag)` snapshots carry the tag's typed data.
 
+- Phase 4: `body.velocity` and `camera.pos` are live `{x, y}` like `entity.pos`, and all three take `[x, y]` assignment;
+  `ctx.postfx.add` removed (`set` adds or replaces); `ctx.audio.music(...)`, `crossfade`, `stopMusic`, `musicPlaying` became
+  `ctx.audio.music.play / crossfade / stop / playing`; `Color` for light colors, postfx tint and lighting ambient; `Rect` type.
+
 ### Added
 - `entity.has(tag)`, a type guard that narrows the entity and its data.
 - `ctx.frozen`: freezes the scene's world (physics with velocities kept, contacts, timers, tweens, animations,

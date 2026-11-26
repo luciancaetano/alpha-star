@@ -136,14 +136,14 @@ TEST_CASE("music streams from assets.music: fades, crossfades, stops; one track 
   const std::string assets = "music: { a: 'a.ogg', b: 'b.mp3' }, sounds: { v: { synth: { wave: 'sine', freq: 440, duration: 0.1 }, bus: 'voice' } }";
   Host host(box.save());
   host.load(box.write("g.js", game(", audio: { buses: ['crowd'] }", assets,
-      "check(ctx.audio.musicPlaying === null, 'silent');"
-      "ctx.audio.music('a', { fadeIn: 1 }); check(ctx.audio.musicPlaying === 'a', 'a');"
-      "ctx.audio.crossfade('b', 0.5, { volume: 0.8 }); check(ctx.audio.musicPlaying === 'b', 'b');"
+      "check(ctx.audio.music.playing === null, 'silent');"
+      "ctx.audio.music.play('a', { fadeIn: 1 }); check(ctx.audio.music.playing === 'a', 'a');"
+      "ctx.audio.music.crossfade('b', 0.5, { volume: 0.8 }); check(ctx.audio.music.playing === 'b', 'b');"
       "ctx.audio.play('v', { pan: -1 }); check(ctx.audio.buses.join() === 'master,music,sfx,voice,crowd', 'buses');")));
   REQUIRE_MESSAGE(host.error() == "", host.error());
   CHECK(host.mixer().music_name() == "b");
   CHECK(run(box, game("", assets, "ctx.audio.play('v', { pan: 2 });")).find("audio pan must be in [-1, 1]") != std::string::npos);
-  CHECK(run(box, game("", assets, "ctx.audio.stopMusic(1); check(ctx.audio.musicPlaying === null, 'stopped');")) == "");
+  CHECK(run(box, game("", assets, "ctx.audio.music.stop(1); check(ctx.audio.music.playing === null, 'stopped');")) == "");
   CHECK(run(box, game("", "sounds: { v: { file: 'a.ogg', bus: 'band' } }", "")).find("unknown bus \"band\"") != std::string::npos);
 }
 
@@ -153,7 +153,7 @@ TEST_CASE("simulate seeds settings and saves in memory and reports music, locale
   box.write("en.json", R"({ "hi": "Hello" })");
   box.write("pt.json", R"({ "hi": "Ola" })");
   const std::string g = box.write("game.js", game("", "music: { a: 'a.ogg' }, locales: { en: 'en.json', pt: 'pt.json' }",
-      "ctx.audio.music('a'); ctx.save.set('runs', ctx.save.get('runs', 0) + 1);"
+      "ctx.audio.music.play('a'); ctx.save.set('runs', ctx.save.get('runs', 0) + 1);"
       "ctx.spawn({ tags: ['fx'], pos: [0, 0], emitter: { burst: 40, max: 40, lifetime: 5 } });"));
   Host host(box.save());
   const auto results = host.test(box.write("t.js",

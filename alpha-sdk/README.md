@@ -113,7 +113,7 @@ visible; phones always run fullscreen, immersive; UI elements with `class="safe"
 ## Custom shaders
 
 `assets.shaders: { wave: { file: "shaders/wave.frag", uniforms: { amount: 0.5 } } }`, then
-`ctx.postfx.add("wave", { amount: 1 })` like a built-in effect. One Vulkan GLSL fragment shader (`#version 450`,
+`ctx.postfx.set("wave", { amount: 1 })` like a built-in effect. One Vulkan GLSL fragment shader (`#version 450`,
 entry `main`, frame `sampler2D` at `set = 2, binding = 0`, float-only `std140` uniform block at `set = 3, binding = 0`
 in `uniforms` order, at most 16). `alpha run` compiles it with glslang (staged with the engine) on load and on every
 save (and shadercross turns the SPIR-V into MSL for Metal); `alpha export` packs `.spv` + `.msl` instead of the `.frag`. Runs on Vulkan (Windows, Linux, Android; macOS/iOS not yet);
@@ -234,8 +234,8 @@ assets: {
 config: { audio: { buses: ["ambience"] }, save: { version: 2, migrate: (d, from) => ({ ...d, gold: d.coins }) }, locale: "en" }
 
 ctx.audio.play("jump", { pan: -0.5 });                       // -1 left .. 1 right
-ctx.audio.music("theme", { loop: true, volume: 0.6, fadeIn: 1 });
-ctx.audio.crossfade("boss", 2); ctx.audio.stopMusic(1.5); ctx.audio.musicPlaying;
+ctx.audio.music.play("theme", { loop: true, volume: 0.6, fadeIn: 1 });
+ctx.audio.music.crossfade("boss", 2); ctx.audio.music.stop(1.5); ctx.audio.music.playing;
 ctx.audio.bus("music").volume = 0.5;                         // master / music / sfx / voice / config.audio.buses
 ctx.save.set("best", 9); ctx.save.slot("slot2").get("level", 1);
 ctx.locale = "pt"; ctx.t("coins", { count: 3 });            // "{count} moedas" via { one, other }

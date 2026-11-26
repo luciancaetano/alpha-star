@@ -34,11 +34,11 @@ core::Effect effect(const ScriptState& s, const std::string& name, const core::E
 
 // postfxPut(name, params?): adds the effect or sets its params (order kept).
 JSValue postfx_put(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  const std::string name = string_arg(ctx, argv[0], "postfx.add(name)");
+  const std::string name = string_arg(ctx, argv[0], "postfx.set(name)");
   core::EffectNumbers numbers;
   std::optional<core::Color> color;
   if (!JS_IsUndefined(argv[1]) && !JS_IsObject(argv[1])) {
-    throw core::Error("postfx.add(\"" + name + "\", params): params must be an object, got " + describe(ctx, argv[1]));
+    throw core::Error("postfx.set(\"" + name + "\", params): params must be an object, got " + describe(ctx, argv[1]));
   }
   for (const std::string& key : JS_IsObject(argv[1]) ? keys(ctx, argv[1]) : std::vector<std::string>{}) {
     const Value v = field(ctx, argv[1], key.c_str());

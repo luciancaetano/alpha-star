@@ -157,8 +157,8 @@ stars.write();</code></pre>
 <h3 id="lights-and-full-screen-effects">Lights and full-screen effects</h3>
 <pre><code>// config: { lighting: { ambient: "#202040" } }
 ctx.spawn({ tags: ["torch"], pos: [100, 120], light: { radius: 80, color: "#ffa300", intensity: 1.2 } });
-ctx.postfx.add("bloom", { strength: 0.8 });
-ctx.postfx.add("vignette");
+ctx.postfx.set("bloom", { strength: 0.8 });
+ctx.postfx.set("vignette");
 ctx.postfx.remove("bloom");</code></pre>
 <p>See <a href="shaders.html">Shaders and lighting</a> for every effect and custom shaders.</p>
 <h2 id="recipes">Recipes</h2>

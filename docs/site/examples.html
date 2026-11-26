@@ -27,7 +27,7 @@ npm start</code></pre>
 ctx.save.set("best", best);</code></pre>
 <p><strong>Hints per platform, text per language</strong> (<code>src/scenes/title.ts</code>):</p>
 <pre><code>ctx.ui.set("title", "hint", ctx.t("title.hintTouch"));
-if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });</code></pre>
+if (ctx.audio.music.playing !== "theme") ctx.audio.music.play("theme", { volume: 0.6, fadeIn: 1 });</code></pre>
 <p>It also ships a committed Android project (<code>examples/flappy/android</code>) and npm scripts for every Android variant. Guides: <a href="ui.html">Game UI</a>, <a href="audio.html">Audio</a>, <a href="saves.html">Saves, settings, i18n</a>, <a href="android.html">Android</a>.</p>
 <h2 id="platformer">platformer</h2>
 <p>Sprite sheets and animation, an LDtk level, camera follow with bounds and shake, a raycast ground check, a one-way ledge, a tweened lift, a parallax layer, dust particles and world text.</p>
@@ -98,7 +98,7 @@ if (s.data.lives &lt;= 0) ctx.after(0.5, () =&gt; ctx.go("over", { score: ctx.st
 <p><strong>Switch them at runtime</strong> (<code>src/scenes/lab.ts</code>):</p>
 <pre><code>ctx.postfx.remove(SHADERS[ctx.state.index]);
 ctx.state.index = cycle(ctx.state.index, step);
-ctx.postfx.add(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: ctx.time });</code></pre>
+ctx.postfx.set(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: ctx.time });</code></pre>
 <p><code>alpha run</code> compiles the <code>.frag</code> files with glslang (and recompiles them on save under <code>--watch</code>); <code>alpha export</code> packs SPIR-V. Guide: <a href="shaders.html">Shaders and lighting</a>.</p>
 <h2 id="change-one-thing-and-see-it">Change one thing and see it</h2>
 <p>The fastest way to learn from an example: change one value, play, run the tests.</p>

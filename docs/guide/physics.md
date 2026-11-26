@@ -154,7 +154,7 @@ Setting `entity.pos` teleports a body; prefer velocity for anything that should 
 ctx.onHit("hero", "enemy", (hero, enemy, contact) => {
   if (contact.normal[1] > 0.7) {           // normal points hero -> enemy: enemy is below = a stomp
     ctx.destroy(enemy);
-    hero.body.velocity = [hero.body.velocity.x, -250];
+    hero.body.velocity.y = -250;                     // velocity is live: set one axis
   } else {
     ctx.go("play");                        // hit from the side: start over
   }
@@ -273,7 +273,7 @@ const h = ctx.find("hero");
 if (grounded(ctx)) ctx.state.jumps = 2;
 if (ctx.input.pressed("jump") && ctx.state.jumps > 0) {
   ctx.state.jumps -= 1;
-  h.body.velocity = [h.body.velocity.x, -300];
+  h.body.velocity.y = -300;
 }
 ```
 

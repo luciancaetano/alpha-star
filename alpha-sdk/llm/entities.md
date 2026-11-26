@@ -29,7 +29,7 @@ ctx.positions(tag): Positions    // { count, ids, x, y: Float64Array; write() }
 
 Moves are drawn smoothly between fixed steps; setting `pos` more than a quarter of the view away is a teleport (drawn there at once, children too).
 
-Entity: `id, tags, has(tag), pos (Vec2Ref {x, y}), rotation, z, body, alive, animation, play(name), flipX, flipY, tint, alpha, blend, text, layer, emit(n), emitting, particles, scale, parent, children, data`.
+Entity: `id, tags, has(tag), pos (live {x, y}; `e.pos = [x, y]` moves it), rotation, z, body, alive, animation, play(name), flipX, flipY, tint, alpha, blend, text, layer, emit(n), emitting, particles, scale, parent, children, data`.
 
 `Entity<G, "enemy">`: `data` is enemy's shape (no casts). `Entity<G>`: tags unknown, `data` is `{}`; every
 `Entity<G, T>` is an `Entity<G>`, but a gem is not an `Entity<G, "enemy">` (compile error). `e.has("boss")`

@@ -57,10 +57,13 @@ export function makeAudio(onVolume) {
     play: (sound, opts) => voice(N.playSound(sound, ...playArgs(opts))),
     tone: (synth, opts) => voice(N.playTone(synth, ...playArgs(opts))),
     stopAll: () => N.stopAll(),
-    music: (name, opts = {}) => N.music(name, ...musicArgs(opts), opts.fadeIn ?? 0, false),
-    crossfade: (name, seconds, opts = {}) => N.music(name, ...musicArgs(opts), seconds, true),
-    stopMusic: (fadeOut = 0) => N.stopMusic(fadeOut),
-    get musicPlaying() { return N.musicName(); },
+    // One track at a time: play (fadeIn), crossfade, stop (fadeOut), playing.
+    music: {
+      play: (name, opts = {}) => N.music(name, ...musicArgs(opts), opts.fadeIn ?? 0, false),
+      crossfade: (name, seconds, opts = {}) => N.music(name, ...musicArgs(opts), seconds, true),
+      stop: (fadeOut = 0) => N.stopMusic(fadeOut),
+      get playing() { return N.musicName(); },
+    },
     get buses() { return N.buses(); },
     bus(name) {
       N.busVolume(name);  // unknown names fail here, listing the buses

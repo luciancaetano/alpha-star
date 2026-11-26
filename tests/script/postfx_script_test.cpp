@@ -30,16 +30,16 @@ std::string error_of(const Sandbox& box, const std::string& config, const std::s
 
 }  // namespace
 
-TEST_CASE("postfx.add builds the chain in order; set/remove/list; frames carry it") {
+TEST_CASE("postfx.set builds the chain in order; set/remove/list; frames carry it") {
   Sandbox box;
   Host host(box.save());
   host.load(box.write("g.js", game("", R"(
-    ctx.postfx.add('bloom', { strength: 1.2 });
-    ctx.postfx.add('crt');
+    ctx.postfx.set('bloom', { strength: 1.2 });
+    ctx.postfx.set('crt');
     ctx.postfx.set('bloom', { strength: 0.3 });
     check(ctx.postfx.list().join() === 'bloom,crt', 'order');
     check(ctx.postfx.remove('crt') === true && ctx.postfx.remove('crt') === false, 'remove');
-    ctx.postfx.add('tint', { color: '#ff0000', strength: 0.5 });
+    ctx.postfx.set('tint', { color: '#ff0000', strength: 0.5 });
   )")));
   REQUIRE_MESSAGE(!host.paused(), host.error());
   const auto frame = host.frame();
@@ -53,7 +53,7 @@ TEST_CASE("postfx.add builds the chain in order; set/remove/list; frames carry i
 TEST_CASE("postfx is scene-scoped: a new scene starts without effects") {
   Sandbox box;
   Host host(box.save());
-  host.load(box.write("g.js", game("", "ctx.postfx.add('vignette');", "ctx.go('other');")));
+  host.load(box.write("g.js", game("", "ctx.postfx.set('vignette');", "ctx.go('other');")));
   REQUIRE(host.frame().effects.size() == 1);
   host.step({}, kDt);
   REQUIRE_MESSAGE(!host.paused(), host.error());
@@ -62,13 +62,12 @@ TEST_CASE("postfx is scene-scoped: a new scene starts without effects") {
 
 TEST_CASE("postfx errors are written for the agent") {
   Sandbox box;
-  CHECK(error_of(box, "", "ctx.postfx.add('blur');").find("postfx: unknown effect \"blur\"; have: bloom crt pixelate tint vignette") !=
+  CHECK(error_of(box, "", "ctx.postfx.set('blur');").find("postfx: unknown effect \"blur\"; have: bloom crt pixelate tint vignette") !=
         std::string::npos);
-  CHECK(error_of(box, "", "ctx.postfx.add('crt', { amount: 1 });").find("unknown param \"amount\"; have: strength") !=
+  CHECK(error_of(box, "", "ctx.postfx.set('crt', { amount: 1 });").find("unknown param \"amount\"; have: strength") !=
         std::string::npos);
-  CHECK(error_of(box, "", "ctx.postfx.add('vignette', { strength: 5 });").find("postfx \"vignette\".strength must be 0") !=
+  CHECK(error_of(box, "", "ctx.postfx.set('vignette', { strength: 5 });").find("postfx \"vignette\".strength must be 0") !=
         std::string::npos);
-  CHECK(error_of(box, "", "ctx.postfx.set('crt', {});").find("not added in this scene") != std::string::npos);
 }
 
 TEST_CASE("lights ride on entities; config.lighting sets the ambient") {

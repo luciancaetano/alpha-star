@@ -17,7 +17,7 @@ export default scene("over", {
     ctx.ui.on("over", "again", "click", () => ctx.go("play", { hero: r.hero }));
     ctx.ui.on("over", "menu", "click", () => ctx.go("title"));
     ctx.ui.show("over");
-    ctx.postfx.add("vignette", { strength: 0.6, radius: 0.5 });
+    ctx.postfx.set("vignette", { strength: 0.6, radius: 0.5 });
   },
   update(ctx) {
     if (ctx.input.pressed("restart")) ctx.go("title");

@@ -42,11 +42,11 @@ std::string error_of(const Sandbox& box, const std::string& shaders, const std::
 
 }  // namespace
 
-TEST_CASE("assets.shaders loads packed blobs; postfx.add runs it with its uniforms") {
+TEST_CASE("assets.shaders loads packed blobs; postfx.set runs it with its uniforms") {
   Sandbox box;
   pack_blobs(box);
   Host host(box.save());
-  const auto info = host.load(box.write("g.js", game(kInvert, "ctx.postfx.add('crt'); ctx.postfx.add('invert', { amount: 0.25 });")));
+  const auto info = host.load(box.write("g.js", game(kInvert, "ctx.postfx.set('crt'); ctx.postfx.set('invert', { amount: 0.25 });")));
   REQUIRE_MESSAGE(!host.paused(), host.error());
   CHECK(info.shaders);
   const auto frame = host.frame();
@@ -63,14 +63,14 @@ TEST_CASE("shader errors are written for the agent") {
   CHECK(error_of(box, "{ gone: { file: 'fx/gone.frag' } }", "")
             .find("assets.shaders.gone: no compiled shader for \"fx/gone.frag\" (looked for fx/gone.spv") !=
         std::string::npos);
-  CHECK(error_of(box, kInvert, "ctx.postfx.add('invert', { speed: 1 });")
+  CHECK(error_of(box, kInvert, "ctx.postfx.set('invert', { speed: 1 });")
             .find("postfx \"invert\": unknown uniform \"speed\"; have: amount") != std::string::npos);
-  CHECK(error_of(box, kInvert, "ctx.postfx.add('blur');").find("have: bloom crt pixelate tint vignette invert") !=
+  CHECK(error_of(box, kInvert, "ctx.postfx.set('blur');").find("have: bloom crt pixelate tint vignette invert") !=
         std::string::npos);
   CHECK(error_of(box, "{ bad: 'fx/invert.frag' }", "").find("assets.shaders.bad must be { file") != std::string::npos);
   CHECK(error_of(box, "{ vignette: { file: 'fx/invert.frag' } }", "").find("is a built-in postfx effect") !=
         std::string::npos);
-  CHECK(error_of(box, kInvert, "ctx.postfx.add('invert'); if (ctx.postfx.remove('invert') !== true) throw new Error('rm');")
+  CHECK(error_of(box, kInvert, "ctx.postfx.set('invert'); if (ctx.postfx.remove('invert') !== true) throw new Error('rm');")
             .empty());
 }
 
@@ -83,7 +83,7 @@ TEST_CASE("debug engines compile the .frag with glslang; compile errors name fil
   SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "ALPHA_GLSLANG", ALPHA_TEST_GLSLANG, true);
   {
     Host host(box.save());
-    host.load(box.write("g.js", game(kInvert, "ctx.postfx.add('invert');")));
+    host.load(box.write("g.js", game(kInvert, "ctx.postfx.set('invert');")));
     REQUIRE_MESSAGE(!host.paused(), host.error());
     const auto& blobs = host.frame().effects.at(0).shader->blobs;
     REQUIRE(blobs.contains(ShaderFormat::Spirv));
@@ -106,7 +106,7 @@ TEST_CASE("debug engines also turn the SPIR-V into MSL with shadercross (Metal e
   SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "ALPHA_SHADERCROSS", ALPHA_TEST_SHADERCROSS, true);
   {
     Host host(box.save());
-    host.load(box.write("g.js", game(kInvert, "ctx.postfx.add('invert');")));
+    host.load(box.write("g.js", game(kInvert, "ctx.postfx.set('invert');")));
     REQUIRE_MESSAGE(!host.paused(), host.error());
     const auto& blobs = host.frame().effects.at(0).shader->blobs;
     REQUIRE(blobs.contains(ShaderFormat::Msl));

@@ -22,7 +22,6 @@
 | `world "w" has no level "x"; it has: ...` / `has no IntGrid layer "x"; it has: ...` | Use the LDtk identifiers listed. |
 | `...pixelMode is not an image option; use filter: ...` | Images/sheets/worlds take `filter: "nearest" \| "linear" \| "sharp"`; `pixelMode` is only for config and fonts. |
 | `entity N: data must stay JSON-safe ...` | Only numbers, strings, booleans, null, arrays, plain objects in `entity.data`. |
-| `postfx.set("x"): not added in this scene; ... use postfx.add` | Call `ctx.postfx.add` first (each scene starts with none). |
 | `postfx "crt": unknown param "amount"; have: strength` | Use the listed params. |
 | `camera.bounds must be [x, y, width, height] or null` | Pass a 4-number array. |
 | `settings.uiScale must be a number in [0.5, 3]` | Clamp the value. |

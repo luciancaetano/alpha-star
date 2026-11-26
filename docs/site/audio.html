@@ -100,10 +100,10 @@ ctx.audio.tone([{ wave: "square", freq: 523, duration: 0.08 }, { wave: "square",
 <pre><code>// GameTypes: music: "theme" | "boss"
 assets: { music: { theme: "assets/music/theme.ogg", boss: "assets/music/boss.mp3" } },
 // a scene
-ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });   // loops by default
-ctx.audio.crossfade("boss", 2);                          // theme fades out, boss in, over 2 s
-ctx.audio.stopMusic(1.5);                                // fade out over 1.5 s</code></pre>
-<p>Music is streamed (decoded a little at a time, never loaded whole). One track plays at a time: <code>music()</code> stops whatever played at once. <code>ctx.audio.musicPlaying</code> is the current track or null.</p>
+ctx.audio.music.play("theme", { volume: 0.6, fadeIn: 1 });   // loops by default
+ctx.audio.music.crossfade("boss", 2);                          // theme fades out, boss in, over 2 s
+ctx.audio.music.stop(1.5);                                // fade out over 1.5 s</code></pre>
+<p>Music is streamed (decoded a little at a time, never loaded whole). One track plays at a time: <code>music.play()</code> stops whatever played at once. <code>ctx.audio.music.playing</code> is the current track or null.</p>
 <h3 id="7-buses-and-volumes">7. Buses and volumes</h3>
 <pre><code>// GameTypes: buses: "ambience";  config: { audio: { buses: ["ambience"] } }
 wind: { file: "assets/sfx/wind.ogg", bus: "ambience" },
@@ -115,11 +115,11 @@ for (const b of ctx.audio.buses) console.log(b, ctx.audio.bus(b).volume);</code>
 <h2 id="recipes">Recipes</h2>
 <h3 id="keep-the-title-music-playing-across-scenes">Keep the title music playing across scenes</h3>
 <pre><code>enter(ctx) {
-  if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });
+  if (ctx.audio.music.playing !== "theme") ctx.audio.music.play("theme", { volume: 0.6, fadeIn: 1 });
 },</code></pre>
 <p>(<code>examples/flappy/src/scenes/title.ts</code>.)</p>
 <h3 id="boss-fight-music">Boss fight music</h3>
-<pre><code>ctx.onHit("player", "bossDoor", () =&gt; ctx.audio.crossfade("boss", 2));</code></pre>
+<pre><code>ctx.onHit("player", "bossDoor", () =&gt; ctx.audio.music.crossfade("boss", 2));</code></pre>
 <h3 id="pitch-that-climbs-with-a-combo">Pitch that climbs with a combo</h3>
 <pre><code>ctx.audio.play("coin", { pitch: 1 + Math.min(ctx.state.combo, 12) / 12 });</code></pre>
 <h3 id="varied-footsteps">Varied footsteps</h3>
@@ -130,6 +130,6 @@ for (const b of ctx.audio.buses) console.log(b, ctx.audio.bus(b).volume);</code>
 <h3 id="mute-toggle">Mute toggle</h3>
 <p>The <code>mute</code> key in the complete example: <code>ctx.audio.bus("master").volume = 0</code> or <code>1</code>.</p>
 <h2 id="gotchas">Gotchas</h2>
-<ul><li><code>play</code> takes only names from <code>assets.sounds</code> (a typo is a compile error); use <code>tone</code> for sounds built at runtime.</li><li><code>music()</code> cuts the current track at once; use <code>crossfade</code> for a smooth change.</li><li>When the app pauses (focus lost, minimized, backgrounded) audio stops with the game and resumes with it.</li><li>Tests have no audio output, but music and buses are tracked: <code>run.expect.music("theme")</code>, <code>run.expect.music(null)</code>, <code>run.music</code>, <code>run.settings.volumes</code>; seed volumes with <code>simulate(game, { settings: { volumes: { music: 0.5 } } })</code>.</li></ul>
+<ul><li><code>play</code> takes only names from <code>assets.sounds</code> (a typo is a compile error); use <code>tone</code> for sounds built at runtime.</li><li><code>music.play()</code> cuts the current track at once; use <code>crossfade</code> for a smooth change.</li><li>When the app pauses (focus lost, minimized, backgrounded) audio stops with the game and resumes with it.</li><li>Tests have no audio output, but music and buses are tracked: <code>run.expect.music("theme")</code>, <code>run.expect.music(null)</code>, <code>run.music</code>, <code>run.settings.volumes</code>; seed volumes with <code>simulate(game, { settings: { volumes: { music: 0.5 } } })</code>.</li></ul>
 <h2 id="see-also">See also</h2>
 <ul><li><a href="ui.html">Game UI</a> for the settings screen.</li><li><a href="saves.html">Saves, settings, i18n</a>: volumes are settings.</li><li><code>examples/flappy</code> (OGG music, volume settings), <code>examples/shmup</code> (a generated WAV loop, fades, panning), <code>examples/puzzle</code> (all-synth sounds).</li><li>In <code>alpha.d.ts</code>: <code>Audio</code>, <code>Note</code>, <code>Synth</code>, <code>SoundAsset</code>, <code>PlayOptions</code>, <code>Bus</code>, <code>Voice</code>.</li></ul></main></body></html>

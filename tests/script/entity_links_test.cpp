@@ -87,3 +87,31 @@ TEST_CASE("entity.scale resizes the shape from its spawned size") {
   bad.load(box.write("b.js", game_with("", "enter(ctx) { ctx.spawn({ tags: [], pos: [0, 0], shape: { circle: 1, color: '#fff' } }).scale = 0; },")));
   CHECK(has(bad.error(), "entity.scale must be a number > 0"));
 }
+
+TEST_CASE("vectors: pos, body.velocity and camera.pos are live {x, y}; assigning [x, y] replaces them") {
+  Sandbox box;
+  Host host(box.save());
+  host.load(box.write("g.js", game_with("", R"(
+    enter(ctx) {
+      const e = ctx.spawn({ tags: ['b'], pos: [10, 20], body: { type: 'dynamic', collider: { circle: 2 }, velocity: [30, 40] } });
+      const v = e.body.velocity;
+      v.x = 0;
+      check(e.body.velocity.x === 0 && near(e.body.velocity.y, 40, 1e-3), 'velocity is live: ' + JSON.stringify([v.x, v.y]));
+      e.body.velocity = [5, 6];
+      check(v.x === 5 && v.y === 6, 'the same live object reads the new velocity');
+      const p = e.pos;
+      e.pos = [70, 80];
+      check(p.x === 70 && p.y === 80 && e.pos === p, 'pos assigned from [x, y], same live object');
+      ctx.camera.pos = [1, 2];
+      check(ctx.camera.pos.x === 1 && ctx.camera.pos.y === 2, 'camera.pos assigned');
+      ctx.camera.pos.x = 9;
+      check(ctx.camera.pos.x === 9, 'camera.pos is live');
+    },)")));
+  host.step({}, kDt);
+  REQUIRE_MESSAGE(!host.paused(), host.error());
+
+  Host bad(box.save());
+  bad.load(box.write("b.js", game_with("", "enter(ctx) { ctx.spawn({ tags: ['a'], pos: [0, 0] }).pos = { x: 1, y: 2 }; },")));
+  bad.step({}, kDt);
+  CHECK(bad.error().find("pos must be [x, y]") != std::string::npos);
+}

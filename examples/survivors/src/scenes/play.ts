@@ -109,8 +109,8 @@ export default scene("play", {
     wireBanners(ctx);
     wireMenus(ctx, () => ctx.go("over", result(ctx, false)));
     ctx.ui.show("hud");
-    ctx.postfx.add("bloom", { strength: 0.7, radius: 4 });
-    ctx.postfx.add("vignette", { strength: 0.55, radius: 0.55 });
+    ctx.postfx.set("bloom", { strength: 0.7, radius: 4 });
+    ctx.postfx.set("vignette", { strength: 0.55, radius: 0.55 });
     // Both layers start in the same step and have the same length, so they loop together.
     ctx.audio.play("theme", { loop: true, volume: 0.35 });
     ctx.audio.play("themeBass", { loop: true, volume: 0.35 });

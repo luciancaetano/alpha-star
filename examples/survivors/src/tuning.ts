@@ -1,5 +1,5 @@
 // Gameplay numbers. Change the feel here, not in the systems.
-import type { EnemyKind, HeroId, WeaponId } from "./types";
+import type { Color, EnemyKind, HeroId, WeaponId } from "./types";
 
 // DESIGN resolution (the virtual canvas the art and UI are drawn for), NOT the window size: the engine
 // scales it to any window, monitor or phone (config.window). Changing it shrinks/grows everything.
@@ -29,7 +29,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
 /** Hero bonuses add to the stats (game/run.ts): speed is a fraction (+0.1 = 10% faster). */
 export interface HeroBonus { might?: number; area?: number; speed?: number; cooldown?: number; armor?: number; maxHp?: number; burn?: number; duration?: number; knock?: number }
 /** `weapon`: the hero's signature, only they get it (src/data/powers.ts). */
-export interface HeroDef { cost: number; weapon: WeaponId; tint: string; bonus: HeroBonus }
+export interface HeroDef { cost: number; weapon: WeaponId; tint: Color; bonus: HeroBonus }
 export const HEROES: Record<HeroId, HeroDef> = {
   wick: { cost: 0, weapon: "flare", tint: "#ffd9a0", bonus: { speed: 0.1 } },
   taper: { cost: 400, weapon: "lash", tint: "#e9b8ff", bonus: { might: 0.2 } },

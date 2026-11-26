@@ -36,19 +36,19 @@ const play = scene("play", {
     }
     ctx.spawn({ tags: ["player"], pos: [40, 120], shape: { rect: [12, 16], color: "#29adff" },
       light: { radius: 50, color: "#a0c8ff" } });
-    ctx.postfx.add("bloom", { strength: 0.8, radius: 3 });
-    ctx.postfx.add("vignette", { strength: 0.6 });
-    ctx.postfx.add("wave", { amount: 0 });
+    ctx.postfx.set("bloom", { strength: 0.8, radius: 3 });
+    ctx.postfx.set("vignette", { strength: 0.6 });
+    ctx.postfx.set("wave", { amount: 0 });
   },
   update(ctx) {
     ctx.find("player").pos.x = 40 + ((ctx.time * 60) % 240);
     if (ctx.input.pressed("crt")) {
-      if (!ctx.postfx.remove("crt")) ctx.postfx.add("crt", { strength: 0.7 });
+      if (!ctx.postfx.remove("crt")) ctx.postfx.set("crt", { strength: 0.7 });
     }
     if (ctx.input.pressed("flash")) ctx.state.flash = 1;
     ctx.state.flash = Math.max(0, ctx.state.flash - ctx.dt * 3);
     ctx.postfx.set("wave", { amount: ctx.state.flash, time: ctx.time });
-    if (ctx.state.flash > 0) ctx.postfx.add("tint", { color: "#ff4040", strength: ctx.state.flash });
+    if (ctx.state.flash > 0) ctx.postfx.set("tint", { color: "#ff4040", strength: ctx.state.flash });
     else ctx.postfx.remove("tint");
   },
 });
@@ -109,8 +109,8 @@ built-in effects and lighting still draw.
 
 ```ts
 enter(ctx) {
-  ctx.postfx.add("bloom", { strength: 0.9, radius: 3 });  // glow around bright pixels
-  ctx.postfx.add("crt");                                   // scanlines + dark edges, defaults
+  ctx.postfx.set("bloom", { strength: 0.9, radius: 3 });  // glow around bright pixels
+  ctx.postfx.set("crt");                                   // scanlines + dark edges, defaults
 },
 ```
 
@@ -125,9 +125,8 @@ enter(ctx) {
 ### 2. Change, remove, list
 
 ```ts
-ctx.postfx.add("vignette", { strength: 0.5 });
-ctx.postfx.add("vignette", { strength: 0.8 });   // already added: replaces params, keeps its place
-ctx.postfx.set("vignette", { strength: 0.8 });   // same, but an error if it was not added
+ctx.postfx.set("vignette", { strength: 0.5 });
+ctx.postfx.set("vignette", { strength: 0.8 });   // already added: replaces params, keeps its place
 ctx.postfx.remove("crt");                        // false when it was not there
 ctx.postfx.list();                               // names in draw order
 ctx.postfx.clear();
@@ -156,7 +155,7 @@ effects, so `bloom` makes lit areas glow.
 // GameTypes: shaders: { gray: "amount" }
 assets: { shaders: { gray: { file: "assets/shaders/gray.frag", uniforms: { amount: 1 } } } },
 // a scene: same calls as the built-ins, uniforms by name
-ctx.postfx.add("gray", { amount: 1 });
+ctx.postfx.set("gray", { amount: 1 });
 ```
 
 ```glsl
@@ -239,7 +238,7 @@ The `flash` value in the complete example: a red `tint` whose strength decays, r
 const hex = (v: number) => Math.round(v).toString(16).padStart(2, "0");
 update(ctx) {
   const day = (Math.sin(ctx.time * 0.1) + 1) / 2;     // 0 = midnight, 1 = noon
-  ctx.postfx.add("tint", {
+  ctx.postfx.set("tint", {
     color: `#${hex(60 + 195 * day)}${hex(70 + 185 * day)}${hex(140 + 115 * day)}`,
     strength: 1,
   });
@@ -252,15 +251,15 @@ scene and none in the day scene.
 ### Retro look
 
 ```ts
-ctx.postfx.add("pixelate", { size: 3 });
-ctx.postfx.add("crt", { strength: 0.6 });
+ctx.postfx.set("pixelate", { size: 3 });
+ctx.postfx.set("crt", { strength: 0.6 });
 ```
 
 ### Toggle an effect from the keyboard
 
 ```ts
 if (ctx.input.pressed("crt")) {
-  if (!ctx.postfx.remove("crt")) ctx.postfx.add("crt");
+  if (!ctx.postfx.remove("crt")) ctx.postfx.set("crt");
 }
 ```
 

@@ -5,7 +5,7 @@
 ## Camera API
 
 ```ts
-ctx.camera.pos                  // Vec2Ref: world point at the screen center
+ctx.camera.pos                  // live {x, y}: world point at the screen center; = [x, y] moves it
 ctx.camera.zoom = 2;            // > 0
 ctx.camera.rotation = 0;        // degrees; the world turns the other way
 ctx.camera.follow(entity | null, { lerp?: (0, 1] /*1 = locked*/, deadzone?: [w, h] });

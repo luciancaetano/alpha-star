@@ -144,13 +144,13 @@ Synthesized on the fly on the sfx bus: good for values that change (a pitch from
 // GameTypes: music: "theme" | "boss"
 assets: { music: { theme: "assets/music/theme.ogg", boss: "assets/music/boss.mp3" } },
 // a scene
-ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });   // loops by default
-ctx.audio.crossfade("boss", 2);                          // theme fades out, boss in, over 2 s
-ctx.audio.stopMusic(1.5);                                // fade out over 1.5 s
+ctx.audio.music.play("theme", { volume: 0.6, fadeIn: 1 });   // loops by default
+ctx.audio.music.crossfade("boss", 2);                          // theme fades out, boss in, over 2 s
+ctx.audio.music.stop(1.5);                                // fade out over 1.5 s
 ```
 
 Music is streamed (decoded a little at a time, never loaded whole). One track plays at a time:
-`music()` stops whatever played at once. `ctx.audio.musicPlaying` is the current track or null.
+`music.play()` stops whatever played at once. `ctx.audio.music.playing` is the current track or null.
 
 ### 7. Buses and volumes
 
@@ -173,7 +173,7 @@ settings and applied at boot; `ctx.settings.volumes` reads them all.
 
 ```ts
 enter(ctx) {
-  if (ctx.audio.musicPlaying !== "theme") ctx.audio.music("theme", { volume: 0.6, fadeIn: 1 });
+  if (ctx.audio.music.playing !== "theme") ctx.audio.music.play("theme", { volume: 0.6, fadeIn: 1 });
 },
 ```
 
@@ -182,7 +182,7 @@ enter(ctx) {
 ### Boss fight music
 
 ```ts
-ctx.onHit("player", "bossDoor", () => ctx.audio.crossfade("boss", 2));
+ctx.onHit("player", "bossDoor", () => ctx.audio.music.crossfade("boss", 2));
 ```
 
 ### Pitch that climbs with a combo
@@ -213,7 +213,7 @@ The `mute` key in the complete example: `ctx.audio.bus("master").volume = 0` or 
 
 - `play` takes only names from `assets.sounds` (a typo is a compile error); use `tone` for
   sounds built at runtime.
-- `music()` cuts the current track at once; use `crossfade` for a smooth change.
+- `music.play()` cuts the current track at once; use `crossfade` for a smooth change.
 - When the app pauses (focus lost, minimized, backgrounded) audio stops with the game and
   resumes with it.
 - Tests have no audio output, but music and buses are tracked: `run.expect.music("theme")`,

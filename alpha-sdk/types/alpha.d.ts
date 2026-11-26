@@ -128,13 +128,19 @@ declare module "alpha" {
 
   export type Vec2 = [x: number, y: number];
 
-  /** Live vector owned by the engine. */
+  /**
+   * A live vector owned by the engine (entity.pos, body.velocity, camera.pos): reading x / y
+   * reads the engine, writing them moves it. Assign a whole `[x, y]` to replace both.
+   */
   export interface Vec2Ref {
     x: number;
     y: number;
   }
 
   export type Color = `#${string}`;
+
+  /** [x, y, width, height] in pixels, top-left corner (camera.view, camera.bounds, queryRect, safeArea). */
+  export type Rect = [x: number, y: number, width: number, height: number];
 
   export type SaveValue = number | string | boolean | null | SaveValue[] | { [k: string]: SaveValue };
 
@@ -279,7 +285,7 @@ declare module "alpha" {
     /** World pixels, 1..4096. */
     radius: number;
     /** Default "#ffffff". */
-    color?: string;
+    color?: Color;
     /** 0..8, default 1. */
     intensity?: number;
   }
@@ -295,7 +301,7 @@ declare module "alpha" {
     /** Blocks of `size` game px, 1..64 (4). */
     pixelate: { size?: number };
     /** Color grade: the screen multiplied by `color` ("#ffffff"), faded by strength 0..1 (1). */
-    tint: { color?: string; strength?: number };
+    tint: { color?: Color; strength?: number };
     /** Dark edges: strength 0..1 (0.5); radius 0..1 (0.5) = clear part from the center. */
     vignette: { strength?: number; radius?: number };
   }
@@ -325,9 +331,10 @@ declare module "alpha" {
    * too); custom shaders (assets.shaders, same calls) need the GPU renderer.
    */
   export interface PostFx<S = {}> {
-    /** Adds the effect, or replaces its params when already added (keeping its place). */
-    add<N extends EffectOf<S>>(name: N, params?: EffectParams<S, N>): void;
-    /** Like add, for an effect already added (error otherwise). Missing params reset to defaults. */
+    /**
+     * Adds the effect (drawn after the ones already added), or replaces its params when it is
+     * already there (keeping its place). Missing params take their defaults.
+     */
     set<N extends EffectOf<S>>(name: N, params?: EffectParams<S, N>): void;
     /** False when it was not added. */
     remove(name: EffectOf<S>): boolean;
@@ -368,6 +375,7 @@ declare module "alpha" {
   }
 
   export interface Body {
+    /** Live velocity in px/s (`body.velocity.x = 0`); `body.velocity = [vx, vy]` sets both. */
     get velocity(): Vec2Ref;
     set velocity(v: Vec2);
     /** Degrees per second (positive = clockwise on screen). */
@@ -486,9 +494,11 @@ declare module "alpha" {
   export interface Entity<G extends GameTypes, in T extends TagOf<G> = never> {
     readonly id: number;
     readonly tags: readonly TagOf<G>[];
+    /** Live position (`e.pos.x += 1`); `e.pos = [x, y]` moves it. */
+    get pos(): Vec2Ref;
+    set pos(v: Vec2);
     /** True when it has `tag`; narrows the entity (and its data) to that tag too. */
     has<K extends TagOf<G>>(tag: K): this is Entity<G, K>;
-    pos: Vec2Ref;
     rotation: number;
     z: number;
     /** Throws (pausing the game) if the entity was spawned without `body`. */
@@ -596,8 +606,9 @@ declare module "alpha" {
    * Moves on the fixed step (deterministic); the UI and overlays never move with it.
    */
   export interface Camera {
-    /** World point at the screen center. */
-    pos: Vec2Ref;
+    /** World point at the screen center: live (`camera.pos.x += 1`); `camera.pos = [x, y]` moves it. */
+    get pos(): Vec2Ref;
+    set pos(v: Vec2);
     /** > 0; 2 = everything twice as big. */
     zoom: number;
     /** Degrees; the world turns the other way on screen. */
@@ -611,7 +622,7 @@ declare module "alpha" {
     /** Shakes by up to `intensity` pixels, fading out over `seconds` (deterministic). */
     shake(intensity: number, seconds: number): void;
     /** Keeps the visible area inside [x, y, width, height] (e.g. the map's size); null removes them. */
-    bounds(rect: [x: number, y: number, width: number, height: number] | null): void;
+    bounds(rect: Rect | null): void;
     /** Screen point (game pixels, e.g. ctx.input.mouse()) -> world point. */
     toWorld(screen: Vec2): Vec2;
     /**
@@ -620,7 +631,7 @@ declare module "alpha" {
      * design center), so size backgrounds/ground to it and spawn at its edges; read it each
      * time (it follows window resizes, zoom and camera moves).
      */
-    readonly view: readonly [x: number, y: number, width: number, height: number];
+    readonly view: Readonly<Rect>;
   }
 
   /**
@@ -1045,6 +1056,18 @@ declare module "alpha" {
     volume: number;
   }
 
+  /** ctx.audio.music: streamed (decoded a little at a time, never loaded whole), on the "music" bus. */
+  export interface Music<M extends string> {
+    /** Plays `name`; whatever played stops at once. `fadeIn` in seconds. */
+    play(name: M, opts?: MusicOptions & { fadeIn?: number }): void;
+    /** Fades the current music out and `name` in over `seconds`. */
+    crossfade(name: M, seconds: number, opts?: MusicOptions): void;
+    /** Fades the music out over `fadeOut` seconds (default 0 = at once). */
+    stop(fadeOut?: number): void;
+    /** The music playing (not fading out), or null. */
+    readonly playing: M | null;
+  }
+
   /** A playing sound. Stopping twice is a no-op. */
   export interface Voice {
     readonly playing: boolean;
@@ -1062,17 +1085,8 @@ declare module "alpha" {
     tone(synth: Synth, opts?: PlayOptions): Voice;
     /** Stops every sound and the music. */
     stopAll(): void;
-    /**
-     * Streams music from assets.music (decoded a little at a time, never loaded whole).
-     * One track at a time: whatever played stops at once. `fadeIn` in seconds.
-     */
-    music(name: M, opts?: MusicOptions & { fadeIn?: number }): void;
-    /** Fades the current music out and `name` in over `seconds`. */
-    crossfade(name: M, seconds: number, opts?: MusicOptions): void;
-    /** Fades the music out over `fadeOut` seconds (default 0 = at once). */
-    stopMusic(fadeOut?: number): void;
-    /** The music playing (not fading out), or null. */
-    readonly musicPlaying: M | null;
+    /** Streamed music from assets.music, one track at a time. */
+    readonly music: Music<M>;
     /** "master", "music", "sfx", "voice", then config.audio.buses. */
     readonly buses: readonly B[];
     bus(name: B): Bus;
@@ -1130,7 +1144,7 @@ declare module "alpha" {
      * whole screen on desktop and in headless runs; on phones (always fullscreen, drawing into
      * the cutout) keep HUD and buttons inside it.
      */
-    readonly safeArea: readonly [x: number, y: number, width: number, height: number];
+    readonly safeArea: Readonly<Rect>;
     /**
      * Freezes the scene's world while true: physics (bodies keep their velocity), contact
      * events, ctx.every/after timers, tweens, animations, particles, animated tiles and
@@ -1200,7 +1214,7 @@ declare module "alpha" {
     /** Living entities whose colliders (sensors too) overlap the circle, oldest first. */
     queryCircle<T extends TagOf<G> = never>(center: Vec2, radius: number, opts?: QueryFilter<G, T>): EntityOf<G, T>[];
     /** Living entities whose colliders overlap [x, y, width, height] (top-left), oldest first. */
-    queryRect<T extends TagOf<G> = never>(rect: [x: number, y: number, width: number, height: number], opts?: QueryFilter<G, T>): EntityOf<G, T>[];
+    queryRect<T extends TagOf<G> = never>(rect: Rect, opts?: QueryFilter<G, T>): EntityOf<G, T>[];
     /** Connects two bodies. Scene-scoped; goes away with either body. */
     joint(spec: JointSpec<G>): Joint;
     /**
@@ -1336,7 +1350,7 @@ declare module "alpha" {
      * 2D lighting: the world is multiplied by a lightmap that is `ambient` where no light
      * reaches, plus every entity `light`. Off when absent. Render-only (UI unaffected).
      */
-    lighting?: { ambient: string };
+    lighting?: { ambient: Color };
     window?: WindowConfig;
     /** Pause (ctx.onPause) when the window loses focus or is minimized. Default true. */
     pauseOnFocusLoss?: boolean;

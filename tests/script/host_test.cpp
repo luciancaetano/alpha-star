@@ -209,7 +209,7 @@ TEST_CASE("asset and audio mistakes name the asset and what exists") {
         std::string::npos);
   CHECK(boot_error("{}", "ctx.audio.bus('crowd');").find("unknown bus \"crowd\"; buses: master, music, sfx, voice") !=
         std::string::npos);
-  CHECK(boot_error("{}", "ctx.audio.music('theme');").find("assets.music has: (none)") != std::string::npos);
+  CHECK(boot_error("{}", "ctx.audio.music.play('theme');").find("assets.music has: (none)") != std::string::npos);
   CHECK(boot_error("{ music: { m: 'song.flac' } }", "").find(".ogg (Vorbis), .mp3 or .wav") != std::string::npos);
   CHECK(boot_error("{}", "ctx.audio.tone({ wave: 'sine', freq: [1, 2, 3], duration: 1 });")
             .find("audio.tone.freq must be [x, y]") != std::string::npos);

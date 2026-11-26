@@ -12,7 +12,7 @@ type Lab = Context<ShaderLab, State>;
 function select(ctx: Lab, step: number) {
   ctx.postfx.remove(SHADERS[ctx.state.index]);
   ctx.state.index = cycle(ctx.state.index, step);
-  ctx.postfx.add(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: ctx.time });
+  ctx.postfx.set(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: ctx.time });
   ctx.ui.set("hud", "name", label(ctx.state.index));
   ctx.audio.play("click");
 }
@@ -39,7 +39,7 @@ export default scene("lab", {
     floor(ctx.camera.view).forEach((tile) => ctx.spawn(tile));
     ctx.spawn(title());
     for (let i = 0; i < ORBS.count; i++) ctx.spawn(orb(i));
-    ctx.postfx.add(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: 0 });
+    ctx.postfx.set(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: 0 });
     ctx.ui.set("hud", "name", label(ctx.state.index));
     ctx.ui.set("hud", "level", level(ctx.state.intensity));
     ctx.ui.show("hud");

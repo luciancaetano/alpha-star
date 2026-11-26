@@ -54,8 +54,8 @@ ctx.spawn({ tags: ["torch"], pos: [100, 80], light: { radius: 110, color: "#ffd9
 ## Post effects
 
 ```ts
-ctx.postfx.add("bloom", { strength: 0.9, radius: 3 });  // adds, or replaces params in place
-ctx.postfx.add("crt");
+ctx.postfx.set("bloom", { strength: 0.9, radius: 3 });  // adds, or replaces params in place
+ctx.postfx.set("crt");
 ctx.postfx.set("crt", { strength: 0.8 });               // only if already added (else error)
 ctx.postfx.remove("crt"); ctx.postfx.clear(); ctx.postfx.list();
 ```

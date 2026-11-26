@@ -24,10 +24,10 @@ interface Note { wave: "sine" | "square" | "triangle" | "saw" | "noise";
 ctx.audio.play(sound, { volume?, pitch?, loop?, pan? /* -1..1 */ }): Voice  // voice.playing, voice.stop()
 ctx.audio.tone(synth, opts?): Voice                  // on the fly, sfx bus
 ctx.audio.stopAll()
-ctx.audio.music(name, { volume?, loop? /*true*/, fadeIn? })
-ctx.audio.crossfade(name, seconds, opts?)
-ctx.audio.stopMusic(fadeOut?)
-ctx.audio.musicPlaying                               // name | null
+ctx.audio.music.play(name, { volume?, loop? /*true*/, fadeIn? })
+ctx.audio.music.crossfade(name, seconds, opts?)
+ctx.audio.music.stop(fadeOut?)
+ctx.audio.music.playing                               // name | null
 ctx.audio.buses                                      // "master","music","sfx","voice", ...config.audio.buses
 ctx.audio.bus(name).volume = 0.5;                    // 0..1, persisted in settings
 ```

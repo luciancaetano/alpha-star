@@ -8,7 +8,7 @@ assets: { shaders: {
   wave: { file: "shaders/wave.frag", uniforms: { amount: 0.5, time: 0 } },
   gray: { file: "shaders/gray.frag", uniforms: { amount: 1 } },
 } },
-ctx.postfx.add("wave", { amount: 0.8 });                 // like a built-in effect
+ctx.postfx.set("wave", { amount: 0.8 });                 // like a built-in effect
 ctx.postfx.set("wave", { amount: 0.8, time: ctx.time }); // every frame for animation (missing = default)
 ctx.postfx.remove("wave");
 ```
