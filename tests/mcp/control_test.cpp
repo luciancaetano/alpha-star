@@ -34,6 +34,9 @@ struct Rig {
 
 bool has(const std::string& text, const std::string& part) { return text.find(part) != std::string::npos; }
 
+// The line read, shown when the check fails (what came instead of the expected part).
+#define CHECK_LINE(line, part)                 do {                                           const std::string got_ = (line);             CHECK_MESSAGE(has(got_, part), got_);      } while (false)
+
 }  // namespace
 
 TEST_CASE("control: a client gets the greeting, then one response per request line") {
@@ -43,8 +46,8 @@ TEST_CASE("control: a client gets the greeting, then one response per request li
   std::string buf;
   CHECK(has(rig.line(client, buf), R"("protocol":"alpha-control")"));
   client.send("{\"id\":1,\"cmd\":\"state\"}\r\n\n{\"id\":2,\"cmd\":\"pause\"}\n");
-  CHECK(has(rig.line(client, buf), R"("scene":"title")"));
-  CHECK(has(rig.line(client, buf), R"({"id":2,"ok":true})"));
+  CHECK_LINE(rig.line(client, buf), R"("scene":"title")");
+  CHECK_LINE(rig.line(client, buf), R"({"id":2,"ok":true})");
   CHECK(rig.control.paused());
   CHECK(rig.control.steps(3) == 0);
 }
@@ -72,8 +75,8 @@ TEST_CASE("control: a token locks everything but hello") {
   client.send("{\"cmd\":\"state\"}\n");
   CHECK(has(rig.line(client, buf), "not authenticated"));
   client.send("{\"cmd\":\"hello\",\"token\":\"tok\"}\n{\"cmd\":\"state\"}\n");
-  CHECK(has(rig.line(client, buf), R"("ok":true)"));
-  CHECK(has(rig.line(client, buf), R"("scene":"title")"));
+  CHECK_LINE(rig.line(client, buf), R"("ok":true)");
+  CHECK_LINE(rig.line(client, buf), R"("scene":"title")");
 }
 
 TEST_CASE("control: quit ends the loop; an endless line closes the client") {
