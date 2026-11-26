@@ -23,16 +23,23 @@ namespace {
 
 namespace {
 // ALPHA_BUILD_ID comes from src/CMakeLists.txt (hash of the QuickJS sources + pointer width).
-// Read through a volatile pointer so the literal stays in every binary: a short string
-// would otherwise be built from immediates, and tools/pack_release.py finds the id by bytes.
+// Read through an opaque pointer so the literal stays whole in every binary: gcc otherwise
+// builds the short string from immediates, and tools/pack_release.py finds the id by bytes.
 constexpr char kBuildId[] = ALPHA_BUILD_ID;
-const char* const volatile kBuildIdText = kBuildId;
+
+const char* build_id_text() {
+  const char* text = kBuildId;
+#if defined(__GNUC__)
+  asm("" : "+r"(text));  // the compiler no longer knows what `text` points at
+#endif
+  return text;
+}
 }  // namespace
 
 core::BuildStamp this_build() {
   return {std::string(core::version()),
           ALPHA_STR(QJS_VERSION_MAJOR) "." ALPHA_STR(QJS_VERSION_MINOR) "." ALPHA_STR(QJS_VERSION_PATCH),
-          std::string(kBuildIdText)};
+          std::string(build_id_text())};
 }
 
 // Unmasked at run time through volatile reads, so no plain key literal is folded in.

@@ -82,13 +82,13 @@ TEST_CASE("open dev tools draw their windows over the game; closed ones draw not
   host.load(box.write("g.js", tiny("enter", kGame)));
   DevTools tools(screen.window, screen.sdl);
   screen.clear();
-  tools.draw(host, FrameStats{16.6, 1});
+  tools.draw(host, FrameStats{16.6, 1, {}});
   CHECK(screen.lit() == 0);
   tools.toggle();
   tools.panels().selected = host.world()->entities().front();
   for (int i = 0; i < 3; ++i) {  // ImGui lays windows out over the first frames
     screen.clear();
-    tools.draw(host, FrameStats{16.6, 1});
+    tools.draw(host, FrameStats{16.6, 1, {}});
   }
   CHECK(screen.lit() > 100);
 }
