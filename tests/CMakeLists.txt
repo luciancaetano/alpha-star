@@ -118,6 +118,7 @@ if(ALPHA_WITH_RUNTIME_DEPS AND ALPHA_MCP)
     mcp/dispatch_test.cpp
     mcp/game_session_test.cpp
     mcp/json_test.cpp
+    mcp/net_state_test.cpp
     mcp/mcp_fixture.cpp
     mcp/socket_test.cpp)
   list(APPEND ALPHA_TEST_LIBS alpha_mcp)

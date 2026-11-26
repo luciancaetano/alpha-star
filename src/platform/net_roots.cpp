@@ -20,13 +20,19 @@ int count(const mbedtls_x509_crt& chain) {
 }
 
 #if defined(_WIN32)
+// Kept small: only Windows runs (and covers) these two.
+int store_roots(mbedtls_x509_crt& chain, HCERTSTORE store) {
+  int added = 0;
+  for (PCCERT_CONTEXT c = CertEnumCertificatesInStore(store, nullptr); c; c = CertEnumCertificatesInStore(store, c)) {
+    added += static_cast<int>(mbedtls_x509_crt_parse_der(&chain, c->pbCertEncoded, c->cbCertEncoded) == 0);
+  }
+  return added;
+}
+
 int windows_roots(mbedtls_x509_crt& chain) {
   HCERTSTORE store = CertOpenSystemStoreW(0, L"ROOT");
   if (!store) return 0;
-  int added = 0;
-  for (PCCERT_CONTEXT c = CertEnumCertificatesInStore(store, nullptr); c; c = CertEnumCertificatesInStore(store, c)) {
-    if (mbedtls_x509_crt_parse_der(&chain, c->pbCertEncoded, c->cbCertEncoded) == 0) ++added;
-  }
+  const int added = store_roots(chain, store);
   CertCloseStore(store, 0);
   return added;
 }
