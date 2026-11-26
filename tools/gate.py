@@ -35,6 +35,7 @@ def main():
         ("crap", [py, "tools/crapper.py", a.coverage or f"build/{a.preset}/coverage.xml",
                   *(["--only", "src/core"] if a.preset == "harness" else [])]),
         ("dry", [py, "tools/dryer.py"]),
+        ("tools", [py, "-m", "unittest", "tools/test_stage_engine.py"]),
     ]
     if a.mutate:
         steps.append(("mutate", [py, "tools/mutator.py", "--preset", a.preset]))
