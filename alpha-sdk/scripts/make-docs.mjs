@@ -132,6 +132,7 @@ function icon(png, size) {
 /** { file name -> contents } of the whole site. */
 export function buildSite() {
   const files = { "style.css": fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "docs.css"), "utf8") };
+  files["logo.png"] = fs.readFileSync(path.join(REPO, "logo.png"));
   if (fs.existsSync(MASCOT)) files["aster.png"] = icon(fs.readFileSync(MASCOT), 128);
   for (const [, pages] of NAV) {
     for (const [file, title] of pages) {

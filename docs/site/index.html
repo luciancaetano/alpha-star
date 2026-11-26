@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>alpha-star — Small engine. Playable ideas.</title>
-  <meta name="description" content="An open-source 2D game engine for AI agents and the people building with them. Write typed game code, test it, and play. Explore five real example games.">
+  <meta name="description" content="An open-source 2D game engine for AI agents and the people building with them. Write typed game code, test it, and play. Explore six real engine examples.">
   <meta name="theme-color" content="#10120f"><meta property="og:title" content="alpha-star — Small engine. Playable ideas.">
   <meta property="og:description" content="A native 2D engine. A typed scripting API. A shorter path from an idea to a game you can play.">
   <meta property="og:type" content="website"><meta property="og:image" content="https://luciancaetano.github.io/alpha-star/screenshot-platformer.png">
@@ -13,7 +13,7 @@
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header wrap">
-  <a class="brand" href="index.html" aria-label="alpha-star home"><img src="aster.png" width="40" height="40" alt=""><span>alpha<span class="brand-star">*</span>star</span></a>
+  <a class="brand" href="index.html" aria-label="alpha-star home"><img class="header-logo" src="logo.png" width="160" height="107" alt="alpha-star engine"></a>
   <nav aria-label="Main navigation"><a href="#examples">Examples</a><a href="getting-started.html">Docs</a><a class="github-link" href="https://github.com/luciancaetano/alpha-star">GitHub <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.86c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03A9.6 9.6 0 0 1 12 6.82c.85 0 1.71.11 2.51.34 1.91-1.3 2.75-1.03 2.75-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.6 1.03 2.69 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg></a></nav>
 </header>
 <main id="main">
@@ -22,7 +22,33 @@
       <h1 id="hero-title">Small engine.<br><span>Playable ideas.</span></h1>
       <div class="hero-intro"><p>For the games in your head.<br>A native engine and a typed API for AI agents and the people building with them.</p><div class="actions"><a class="button primary" href="#start">Make your first game</a><a class="button secondary" href="#examples">See it in action</a></div></div>
     </div>
-    <figure class="hero-screen"><div class="screen-bar"><span><i aria-hidden="true"></i> platformer <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div><img src="screenshot-platformer.png" alt="The platformer example running: a pixel-art world with platforms, coins and a playable character" fetchpriority="high"><figcaption><span>Written in TypeScript. Running on a C++ core.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/platformer">See the game source</a></figcaption></figure>
+    <section id="example-slider" class="hero-screen" role="region" aria-roledescription="carousel" aria-label="Example games" tabindex="0">
+    <div class="slides" aria-live="polite"><figure class="hero-slide" data-slide="shaders" role="group" aria-roledescription="slide" aria-label="1 of 6: Shader Lab">
+    <div class="screen-bar"><span>Shader Lab <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
+    <img src="screenshot-shaders.png" alt="Shader Lab running in alpha-star" fetchpriority="high" width="640" height="360">
+    <figcaption><span>Six custom GLSL effects, orbiting lights and adjustable intensity.</span><a href="screenshot-shaders.png">View full capture</a></figcaption></figure>
+<figure class="hero-slide" data-slide="platformer" role="group" aria-roledescription="slide" aria-label="2 of 6: Platformer" hidden>
+    <div class="screen-bar"><span>Platformer <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
+    <img src="screenshot-platformer.png" alt="Platformer running in alpha-star" loading="lazy" width="640" height="360">
+    <figcaption><span>Sprite animation, Tiled maps, camera follow and Box2D physics.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/platformer">Explore source</a></figcaption></figure>
+<figure class="hero-slide" data-slide="topdown" role="group" aria-roledescription="slide" aria-label="3 of 6: Top-down arena" hidden>
+    <div class="screen-bar"><span>Top-down arena <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
+    <img src="screenshot-topdown.png" alt="Top-down arena running in alpha-star" loading="lazy" width="640" height="360">
+    <figcaption><span>Two players, auto-aim, sensor bullets and particle blasts.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/topdown">Explore source</a></figcaption></figure>
+<figure class="hero-slide" data-slide="shmup" role="group" aria-roledescription="slide" aria-label="4 of 6: Space shooter" hidden>
+    <div class="screen-bar"><span>Space shooter <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
+    <img src="screenshot-shmup.png" alt="Space shooter running in alpha-star" loading="lazy" width="640" height="360">
+    <figcaption><span>Fast shots, collision categories and a scrolling star field.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/shmup">Explore source</a></figcaption></figure>
+<figure class="hero-slide" data-slide="puzzle" role="group" aria-roledescription="slide" aria-label="5 of 6: Sokoban puzzle" hidden>
+    <div class="screen-bar"><span>Sokoban puzzle <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
+    <img src="screenshot-puzzle.png" alt="Sokoban puzzle running in alpha-star" loading="lazy" width="640" height="360">
+    <figcaption><span>Pure game rules, undo, saved progress and accessible UI.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/puzzle">Explore source</a></figcaption></figure>
+<figure class="hero-slide" data-slide="flappy" role="group" aria-roledescription="slide" aria-label="6 of 6: Flappy" hidden>
+    <div class="screen-bar"><span>Flappy <span class="muted">/ alpha-star</span></span><span class="screen-caption">REAL ENGINE CAPTURE</span></div>
+    <img src="screenshot-flappy.png" alt="Flappy running in alpha-star" loading="lazy" width="640" height="360">
+    <figcaption><span>Scenes, music, settings, localization and a best score to beat.</span><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/flappy">Explore source</a></figcaption></figure></div>
+    <div class="slider-controls" hidden><button type="button" data-slider-prev aria-label="Previous example">Previous</button><div class="slide-selectors"><button type="button" data-select-slide="0" aria-label="Show Shader Lab" aria-pressed="true">Shader Lab</button><button type="button" data-select-slide="1" aria-label="Show Platformer" aria-pressed="false">Platformer</button><button type="button" data-select-slide="2" aria-label="Show Top-down arena" aria-pressed="false">Top-down arena</button><button type="button" data-select-slide="3" aria-label="Show Space shooter" aria-pressed="false">Space shooter</button><button type="button" data-select-slide="4" aria-label="Show Sokoban puzzle" aria-pressed="false">Sokoban puzzle</button><button type="button" data-select-slide="5" aria-label="Show Flappy" aria-pressed="false">Flappy</button></div><button type="button" data-slider-next aria-label="Next example">Next</button></div>
+  </section>
     <div class="engine-strip"><p>Small surface.<br><strong>Solid foundations.</strong></p><span>C++20</span><span>SDL3</span><span>Box2D</span><span>QuickJS</span><span>TypeScript</span></div>
   </section>
 
@@ -30,25 +56,29 @@
     <div class="features"><article><span class="feature-symbol" aria-hidden="true">{ }</span><h3>Code with a clear contract.</h3><p>TypeScript checks your scenes, actions, tags and assets. Catch a misspelled name before it becomes a broken game.</p><a href="reference.html" class="text-link">Explore the API <span aria-hidden="true">+</span></a></article><article><span class="feature-symbol" aria-hidden="true">&gt;_</span><h3>Give your agent the controls.</h3><p>Through MCP, an agent can build, run and inspect the game. Hot reload keeps the feedback loop moving.</p><a href="mcp.html" class="text-link">Meet the agent workflow <span aria-hidden="true">+</span></a></article><article><span class="feature-symbol" aria-hidden="true">[=]</span><h3>Make play reproducible.</h3><p>A fixed step, seeded randomness and headless tests let you check game behavior with repeatable inputs.</p><a href="testing.html" class="text-link">See how testing works <span aria-hidden="true">+</span></a></article></div>
   </section>
 
-  <section id="examples" class="examples-section section" aria-labelledby="examples-title"><div class="wrap"><div class="section-heading split-heading"><div><p class="eyebrow">Built with alpha-star</p><h2 id="examples-title">Less imagining.<br><span>More playing.</span></h2></div><p>Five small, complete games. Real screenshots from the running engine. Read the code, learn a pattern, make it yours.</p></div><div class="games-grid"><article class="game-card game-platformer">
+  <section id="examples" class="examples-section section" aria-labelledby="examples-title"><div class="wrap"><div class="section-heading split-heading"><div><p class="eyebrow">Built with alpha-star</p><h2 id="examples-title">Less imagining.<br><span>More playing.</span></h2></div><p>Five small games and a shader playground. Real screenshots from the running engine. Read the code, learn a pattern, make it yours.</p></div><div class="games-grid"><article class="game-card game-shaders">
+    <a class="game-image" href="screenshot-shaders.png" aria-label="View full screenshot of Shader Lab"><img src="screenshot-shaders.png" alt="Shader Lab running in the alpha-star engine" loading="lazy" decoding="async"><span class="image-label">GLSL / Lighting</span></a>
+    <div class="game-copy"><p class="eyebrow">Shader Lab</p><h3>Give every frame a new look.</h3><p>Six custom GLSL effects, orbiting lights and adjustable intensity.</p><span class="text-link"><a href="screenshot-shaders.png">View full capture</a> <span aria-hidden="true">+</span></span></div>
+  </article>
+<article class="game-card game-platformer">
     <a class="game-image" href="screenshot-platformer.png" aria-label="View full screenshot of Platformer"><img src="screenshot-platformer.png" alt="Platformer running in the alpha-star engine" loading="lazy" decoding="async"><span class="image-label">Physics / Tilemaps</span></a>
-    <div class="game-copy"><p class="eyebrow">Platformer</p><h3>A little world. A big jump.</h3><p>Sprite animation, Tiled maps, camera follow and Box2D physics.</p><a class="text-link" href="https://github.com/luciancaetano/alpha-star/tree/main/examples/platformer">Explore source <span aria-hidden="true">+</span></a></div>
+    <div class="game-copy"><p class="eyebrow">Platformer</p><h3>A little world. A big jump.</h3><p>Sprite animation, Tiled maps, camera follow and Box2D physics.</p><span class="text-link"><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/platformer">Explore source</a> <span aria-hidden="true">+</span></span></div>
   </article>
 <article class="game-card game-topdown">
     <a class="game-image" href="screenshot-topdown.png" aria-label="View full screenshot of Top-down arena"><img src="screenshot-topdown.png" alt="Top-down arena running in the alpha-star engine" loading="lazy" decoding="async"><span class="image-label">Co-op / Particles</span></a>
-    <div class="game-copy"><p class="eyebrow">Top-down arena</p><h3>Bring a friend. Clear the arena.</h3><p>Two players, auto-aim, sensor bullets and particle blasts.</p><a class="text-link" href="https://github.com/luciancaetano/alpha-star/tree/main/examples/topdown">Explore source <span aria-hidden="true">+</span></a></div>
+    <div class="game-copy"><p class="eyebrow">Top-down arena</p><h3>Bring a friend. Clear the arena.</h3><p>Two players, auto-aim, sensor bullets and particle blasts.</p><span class="text-link"><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/topdown">Explore source</a> <span aria-hidden="true">+</span></span></div>
   </article>
 <article class="game-card game-shmup">
     <a class="game-image" href="screenshot-shmup.png" aria-label="View full screenshot of Space shooter"><img src="screenshot-shmup.png" alt="Space shooter running in the alpha-star engine" loading="lazy" decoding="async"><span class="image-label">Collision / Layers</span></a>
-    <div class="game-copy"><p class="eyebrow">Space shooter</p><h3>Find your way through the fire.</h3><p>Fast shots, collision categories and a scrolling star field.</p><a class="text-link" href="https://github.com/luciancaetano/alpha-star/tree/main/examples/shmup">Explore source <span aria-hidden="true">+</span></a></div>
+    <div class="game-copy"><p class="eyebrow">Space shooter</p><h3>Find your way through the fire.</h3><p>Fast shots, collision categories and a scrolling star field.</p><span class="text-link"><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/shmup">Explore source</a> <span aria-hidden="true">+</span></span></div>
   </article>
 <article class="game-card game-puzzle">
     <a class="game-image" href="screenshot-puzzle.png" aria-label="View full screenshot of Sokoban puzzle"><img src="screenshot-puzzle.png" alt="Sokoban puzzle running in the alpha-star engine" loading="lazy" decoding="async"><span class="image-label">Saves / Game UI</span></a>
-    <div class="game-copy"><p class="eyebrow">Sokoban puzzle</p><h3>One more move. One more try.</h3><p>Pure game rules, undo, saved progress and accessible UI.</p><a class="text-link" href="https://github.com/luciancaetano/alpha-star/tree/main/examples/puzzle">Explore source <span aria-hidden="true">+</span></a></div>
+    <div class="game-copy"><p class="eyebrow">Sokoban puzzle</p><h3>One more move. One more try.</h3><p>Pure game rules, undo, saved progress and accessible UI.</p><span class="text-link"><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/puzzle">Explore source</a> <span aria-hidden="true">+</span></span></div>
   </article>
 <article class="game-card game-flappy">
     <a class="game-image" href="screenshot-flappy.png" aria-label="View full screenshot of Flappy"><img src="screenshot-flappy.png" alt="Flappy running in the alpha-star engine" loading="lazy" decoding="async"><span class="image-label">Audio / Localization</span></a>
-    <div class="game-copy"><p class="eyebrow">Flappy</p><h3>Small game. Complete experience.</h3><p>Scenes, music, settings, localization and a best score to beat.</p><a class="text-link" href="https://github.com/luciancaetano/alpha-star/tree/main/examples/flappy">Explore source <span aria-hidden="true">+</span></a></div>
+    <div class="game-copy"><p class="eyebrow">Flappy</p><h3>Small game. Complete experience.</h3><p>Scenes, music, settings, localization and a best score to beat.</p><span class="text-link"><a href="https://github.com/luciancaetano/alpha-star/tree/main/examples/flappy">Explore source</a> <span aria-hidden="true">+</span></span></div>
   </article><aside class="gallery-note"><span class="pixel-spark large" aria-hidden="true"></span><h3>A starting point,<br>not a blank page.</h3><p>Each example includes tests and an AGENTS.md. Platformer, top-down, puzzle and shmup are also ready-to-use templates.</p><a class="text-link" href="examples.html">Read the example guide <span aria-hidden="true">+</span></a></aside></div></div></section>
 
   <section id="start" class="start-section wrap section" aria-labelledby="start-title"><div class="section-heading"><p class="eyebrow">From terminal to playtime</p><h2 id="start-title">Start small.<br><span>Make it yours.</span></h2><p>Pick a template. Install its dependencies. Run the tests, then take the controls.</p><a class="button secondary" href="getting-started.html">Read the getting started guide</a></div><div class="terminal"><div class="terminal-bar"><span>Terminal</span><button type="button" id="copy-command" hidden>Copy commands</button></div><pre><code id="start-commands">npx @alpha-star/sdk init my-game --template platformer

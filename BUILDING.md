@@ -88,3 +88,7 @@ Edit `alpha-sdk/scripts/landing.mjs` and `landing.css` for the showcase; keep sc
 The setup guide source is `docs/guide/getting-started.md`. The existing Pages workflow
 publishes `docs/site/` when these sources reach `main`. See `docs/guide/assets/README.md`
 for capture commands.
+
+The showcase header uses root `logo.png`, copied by the generator and watched by Pages CI.
+Hero slides and gallery share the example list in `landing.mjs`; `landing.js` handles
+previous/next, direct selection, keyboard and swipe. There is no automatic rotation.

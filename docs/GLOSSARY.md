@@ -127,4 +127,4 @@
 | Android variant | `alpha export --variant`: `debug` (assembleDebug, release engine flavor with dev tools), `release` (assembleRelease APK, shipping), `bundle` (bundleRelease AAB for Google Play, shipping). |
 | Dev tools layout | `devtools::tools_scale` (larger of the display content scale and the screen's shorter side / 1080, within 1..4: ImGui sizes and `FontScaleDpi`, crisp text) and `devtools::layout_panels` (pure: overlay + time on top, console along the bottom, entities + profiler between, side by side in landscape / stacked in portrait, inside `SDL_GetWindowSafeArea`). Windows go back to their places each time the tools open. |
 
-- **Showcase landing**: GitHub Pages entry (`docs/site/index.html`), generated from `alpha-sdk/scripts/landing.mjs` with real example captures in `docs/guide/assets/`. The setup guide lives at `getting-started.html`.
+- **Showcase landing**: GitHub Pages entry (`docs/site/index.html`), generated from `alpha-sdk/scripts/landing.mjs` with a six-example slider and real captures in `docs/guide/assets/`. The setup guide lives at `getting-started.html`.

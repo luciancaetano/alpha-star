@@ -74,3 +74,9 @@ Condensed summary of the project's history. The full per-action log (326 entries
 - Updated README, type guide link, LLM index, glossary and building documentation.
 - Validation: six documentation tests passed; size/complexity checks passed. Earlier full Windows gate passed build/limits/file-access/CRAP/duplication, but native shader tests and coverage failed with HLSL/GLSL fixture mismatch during concurrent work. Visual browser check blocked by Computer Use URL verification.
 - Rebased only the landing changes onto remote main for publication, leaving local engine/shader commits and edits untouched. Regenerated and retested the site on that base.
+
+## 2026-11-25 - Example slider and Shader Lab
+- Replaced hero capture with a six-example slider: previous/next, named selection, keyboard and touch swipe; full-frame viewport and no automatic motion. Gallery shares the same example list.
+- Ran Shader Lab via npm start in isolated c8747c9 checkout with copied staged engine; captured frame 150, confirmed renderer gpu and visible wave effect. Concurrent edits remain untouched.
+- Used root logo.png in the header and added it to generated assets and Pages workflow triggers. Updated docs and capture provenance.
+- Nine documentation and slider interaction tests passed, including wraparound, direct selection, keyboard, touch and logo/assets checks. Size/complexity check passed. Visual browser QA remains unavailable; earlier native gate failures are recorded above.

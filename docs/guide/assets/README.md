@@ -2,7 +2,7 @@
 
 Captured on Windows on 2026-11-25 from commit 2525239, using the staged 0.2.0
 release engine copied into the isolated workcopy. No generated game imagery.
-The shaders example is deliberately excluded while it is under development.
+Shader Lab was captured later from isolated commit c8747c9 with its staged Vulkan GPU engine.
 
 Install SDK and each example with npm. Set ALPHA_STAR to the absolute path of
 the release engine, then run from the repository root (PowerShell):
@@ -23,3 +23,6 @@ The engine opens each game normally, captures its rendered frame, and exits.
 Persistent game preferences can affect locale and the selected puzzle level.
 Keep full frames at native dimensions; the landing handles portrait and landscape
 images without cropping HUDs. Asset licenses remain in the respective examples.
+
+Shader Lab used `npm start -- -- --frames 150 --screenshot <absolute-path>/screenshot-shaders.png`
+under `tools/resource_guard.py`. The log reported `renderer gpu`; the capture confirms the wave effect.
