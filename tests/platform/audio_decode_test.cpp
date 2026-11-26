@@ -132,6 +132,21 @@ TEST_CASE("a looping streamed WAV plays through the mixer's music bus") {
   fs::remove(path);
 }
 
+TEST_CASE("looping streamed OGG/MP3 music never ends, mixed in small per-frame chunks") {
+  for (const char* name : {"tone.ogg", "tone.mp3"}) {
+    CAPTURE(name);
+    core::Mixer m;
+    m.music("tone", platform::open_music(fixture(name)), core::MusicOptions{});
+    std::vector<float> out;
+    for (int i = 0; i < 400; ++i) {  // ~10 loops of the 0.25 s fixture, uneven device top-ups
+      out.assign(static_cast<std::size_t>(37 + (i * 211) % 1600) * 2, 0.0f);
+      m.mix(out);
+      REQUIRE(m.music_name() == "tone");
+    }
+    CHECK(peak(out, 0, 2) > 0.1f);
+  }
+}
+
 TEST_CASE("streaming cost per 60 Hz frame" * doctest::skip()) {
   // Bench: decode + convert 800 stereo frames (one frame at 60 Hz) from OGG and MP3.
   for (const char* name : {"tone.ogg", "tone.mp3"}) {

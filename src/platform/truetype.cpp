@@ -33,7 +33,7 @@ vfs::Bytes read_font(const std::filesystem::path& file) {
 
 // A box for code points no font has: an outline about half an em wide.
 GlyphBitmap tofu(int pixels, float ascent) {
-  const int w = std::max(3, static_cast<int>(std::lround(pixels * 0.45f)));
+  const int w = std::max(3, static_cast<int>(std::lround(static_cast<float>(pixels) * 0.45f)));
   const int h = std::max(4, static_cast<int>(std::lround(ascent * 0.8f)));
   const int line = std::max(1, pixels / 16);
   GlyphBitmap b{w, h, std::vector<std::uint8_t>(static_cast<std::size_t>(w * h), 0), {}, 0.0f};
@@ -43,7 +43,7 @@ GlyphBitmap tofu(int pixels, float ascent) {
       if (edge) b.coverage[static_cast<std::size_t>(y * w + x)] = 255;
     }
   }
-  const float margin = std::max(1.0f, std::round(pixels * 0.06f));
+  const float margin = std::max(1.0f, std::round(static_cast<float>(pixels) * 0.06f));
   b.offset = {margin, ascent - static_cast<float>(h)};
   b.advance = static_cast<float>(w) + margin * 2.0f;
   return b;
