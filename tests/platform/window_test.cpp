@@ -27,7 +27,7 @@ TEST_CASE("Alt+Enter asks for the other fullscreen state unless the game opted o
   const WindowConfig on;
   CHECK(alpha::platform::window_event(key(SDL_SCANCODE_RETURN, SDL_KMOD_LALT), on, state));
   CHECK(state.request == true);
-  state = {true, {}, {}};
+  state = {true, {}, {}, {}};
   CHECK(alpha::platform::window_event(key(SDL_SCANCODE_RETURN, SDL_KMOD_RALT), on, state));
   CHECK(state.request == false);
   WindowState untouched;

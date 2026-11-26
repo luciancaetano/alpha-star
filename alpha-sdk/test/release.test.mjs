@@ -1,6 +1,6 @@
 // The packed release, installed the way a user would get it: run by tools/pack_release.py
 // --install-test (ALPHA_RELEASE_DIR = dist/release). Installs the local tarballs into a temp
-// project (offline: npm's cache serves the third-party dependencies, the alpha-star ones are
+// project (prefer-offline: npm's cache serves third-party dependencies when it has them, the alpha-star ones are
 // the files), then alpha init + npm test (alpha test) + alpha export --standalone there.
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -22,14 +22,14 @@ function ok(run, what) {
   return run.stdout;
 }
 
-test("packed tarballs install offline and run init, test and a standalone export", { skip, timeout: 600_000 }, () => {
+test("packed tarballs install and run init, test and a standalone export", { skip, timeout: 600_000 }, () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-release-"));
   const sdk = path.join(DIR, SDK);
   const engine = path.join(DIR, ENGINE);
   const tool = path.join(tmp, "tool");
   fs.mkdirSync(tool);
   fs.writeFileSync(path.join(tool, "package.json"), '{ "name": "tool", "private": true }\n');
-  ok(sh(tool, "npm", ["install", "--offline", "--no-audit", "--no-fund", `"${sdk}"`, `"${engine}"`]), "npm install (tool)");
+  ok(sh(tool, "npm", ["install", "--prefer-offline", "--no-audit", "--no-fund", `"${sdk}"`, `"${engine}"`]), "npm install (tool)");
   const alpha = path.join(tool, "node_modules", "@alpha-star", "sdk", "bin", "alpha.mjs");
   const version = JSON.parse(fs.readFileSync(path.join(tool, "node_modules", "@alpha-star", "sdk", "package.json"))).version;
   assert.equal(ok(sh(tool, "node", [alpha, "--version"]), "alpha --version").trim(), version);
@@ -37,7 +37,7 @@ test("packed tarballs install offline and run init, test and a standalone export
 
   ok(sh(tmp, "node", [alpha, "init", "game", "--sdk", `"file:${sdk.split(path.sep).join("/")}"`]), "alpha init");
   const game = path.join(tmp, "game");
-  ok(sh(game, "npm", ["install", "--offline", "--no-audit", "--no-fund", `"${engine}"`]), "npm install (game)");
+  ok(sh(game, "npm", ["install", "--prefer-offline", "--no-audit", "--no-fund", `"${engine}"`]), "npm install (game)");
   const pkg = path.join(game, "node_modules", "@alpha-star", `engine-${hostTarget()}`);
   const said = ok(sh(game, `"${path.join(pkg, engineFile(hostTarget()))}"`, ["--version"]), "engine --version");
   assert.equal(said.trim(), `alpha-star ${version}`);
