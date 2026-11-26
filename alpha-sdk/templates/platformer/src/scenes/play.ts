@@ -70,7 +70,7 @@ export default scene("play", {
     const spawns = map.objects("spawns");
     const start = spawns.find((o) => o.name === "player") ?? spawns[0];
     const hero = ctx.spawn(player([start.x, start.y]));
-    for (let x = 0; x < map.size[0] * 0.2 + 320; x += 70) ctx.spawn(hill(x, 45 + (x % 3) * 15));
+    for (let x = 0; x < map.size[0] * 0.2 + ctx.camera.view[2]; x += 70) ctx.spawn(hill(x, 45 + (x % 3) * 15));
     for (const o of spawns.filter((s) => s.type === "coin")) ctx.spawn(coin(o));
     ctx.state.total = ctx.findAll("coin").length;
     for (const l of LEDGES) ctx.spawn(ledge(l.pos, l.width));

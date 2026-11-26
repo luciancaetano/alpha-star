@@ -18,8 +18,9 @@ export default game({
     axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"] },
     // Far hills scroll at a fifth of the camera's speed; effects draw over the level.
     layers: { far: { z: -100, parallax: 0.2 }, fx: { z: 100 } },
-    // Pixel art: whole-number scaling only (nearest filtering), so every pixel stays square.
-    window: { scaling: "integer" },
+    // Pixel art: whole-number scale only (nearest filtering), so every pixel stays square. A side
+    // scroller keeps its height (what jumps are tuned for); wider screens show more level.
+    window: { aspect: "keep_height", scale: "integer" },
   },
   start: "play",
   scenes: { play, won },

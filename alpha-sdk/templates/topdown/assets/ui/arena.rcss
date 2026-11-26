@@ -1,5 +1,5 @@
 /* No assets.fonts: every font-family falls back to the engine's built-in 8x8 font (sizes in multiples of 8). */
-body { width: 100%; height: 100%; font-size: 8dp; color: #ffffff; }
+body { width: 100%; height: 100%; box-sizing: border-box; /* class="safe": padded by ctx.safeArea */ font-size: 8dp; color: #ffffff; }
 p { display: block; margin: 4dp 12dp; }
 .right { text-align: right; }
 .panel { display: block; width: 200dp; margin: 60dp auto 0dp auto; padding: 12dp; background-color: #2c3e50; border: 2dp #ecf0f1; text-align: center; }

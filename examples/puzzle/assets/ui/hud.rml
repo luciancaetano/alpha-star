@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="crates.rcss"/>
 </head>
-<body>
+<body class="safe">
   <p class="bar"><span id="level">LEVEL 1</span><span id="moves">NO MOVES</span><span id="best"></span></p>
   <p class="keys" data-t="hud.keys">ARROWS  Z UNDO  R RESET  L LANG</p>
 </body>

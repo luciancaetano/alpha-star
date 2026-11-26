@@ -61,7 +61,7 @@ unknown animation lists the sheet's animations).
 
 Nothing in a game can depend on dev features: they are absent from the shipping engine.
 
-## Image filtering and window scaling
+## Image filtering and window stretch
 
 Each image, sheet or map picks how it is sampled when drawn scaled or rotated:
 
@@ -76,15 +76,32 @@ assets: { images: {
 Without `filter`, `config.pixelMode` decides (`true`: nearest, `false`: linear). `"sharp"` costs
 16x the texture memory of that image.
 
-`config.window` sets how the game's `size` fits the window and how the window opens:
+`config.window` sets how the game's `size` (the design resolution) fits the screen and how the
+window opens. The model is Godot's stretch aspect + scale mode:
 
 ```js
 window: {
-  scaling: "integer",   // letterbox (default) | integer | stretch | expand | crop
+  aspect: "expand",     // expand (default) | keep_width | keep_height | keep
+  scale: "fractional",  // fractional (default) | integer
   borderless: false, alwaysOnTop: false, maximized: false,
   vsync: true, resizable: true, fullscreen: false, altEnter: true,
 }
 ```
 
-`integer` keeps pixel art exact (whole multiples, bars around); `crop` fills the window and cuts
-the edges that do not fit.
+| aspect | screen wider than the design | screen taller than the design |
+|---|---|---|
+| `expand` (default) | more world left and right | more world above and below |
+| `keep_width` | side bars | more world above and below |
+| `keep_height` | more world left and right | bars above and below |
+| `keep` | side bars | bars above and below |
+
+The revealed world splits evenly around the design center. `ctx.camera.view` is the world rect
+the screen shows (`[x, y, w, h]`): size backgrounds, ground and walls to it and spawn at its
+edges; keep difficulty in design numbers. `scale: "integer"` keeps pixel art exact (whole
+multiples); the revealed axes still fill the screen up to under one scale step.
+
+Screen space (layers with `parallax: 0`, `ctx.safeArea`, the game UI) covers the whole revealed
+screen, so a HUD anchored to an edge sits at the real edge. UI documents scale with the kept axis,
+like Unity's Canvas Scaler matching width or height; `class="safe"` pads an element by the safe
+area. `config.window.scaling` was replaced (`letterbox` -> `aspect: "keep"`, `integer` ->
+`scale: "integer"`); the error names the replacement. Tests: `simulate(game, { size: [1080, 2340] })`.

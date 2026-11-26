@@ -37,6 +37,19 @@ std::string text_of(Rml::Element* element) {
   return out;
 }
 
+// The document itself and every element inside with class "safe" get `in` as padding.
+void pad_safe(Rml::ElementDocument* doc, const core::Insets& in) {
+  Rml::ElementList safe;
+  doc->GetElementsByClassName(safe, "safe");
+  if (doc->IsClassSet("safe")) safe.push_back(doc);
+  for (Rml::Element* e : safe) {
+    e->SetProperty(Rml::PropertyId::PaddingLeft, Rml::Property(in.left, Rml::Unit::PX));
+    e->SetProperty(Rml::PropertyId::PaddingTop, Rml::Property(in.top, Rml::Unit::PX));
+    e->SetProperty(Rml::PropertyId::PaddingRight, Rml::Property(in.right, Rml::Unit::PX));
+    e->SetProperty(Rml::PropertyId::PaddingBottom, Rml::Property(in.bottom, Rml::Unit::PX));
+  }
+}
+
 std::string ids_of(Rml::ElementDocument* doc) {
   std::string out;
   each_element(doc, [&](Rml::Element* e) {
@@ -72,6 +85,7 @@ Rml::ElementDocument* Ui::load(const std::string& path) {
   doc->AddEventListener(Rml::EventId::Click, &listener_);
   apply_translations(doc, translations_);
   doc->SetClass("high-contrast", high_contrast_);
+  pad_safe(doc, safe_);
   return doc;
 }
 
@@ -84,6 +98,12 @@ std::vector<std::string> Ui::translation_keys() const {
 void Ui::translate(std::map<std::string, std::string> texts) {
   translations_ = std::move(texts);
   for (const auto& [name, d] : documents_) apply_translations(d.doc, translations_);
+}
+
+void Ui::safe_area(const core::Insets& insets) {
+  if (insets.left == safe_.left && insets.top == safe_.top && insets.right == safe_.right && insets.bottom == safe_.bottom) return;
+  safe_ = insets;
+  for (const auto& [name, d] : documents_) pad_safe(d.doc, safe_);
 }
 
 void Ui::accessibility(float scale, bool high_contrast) {

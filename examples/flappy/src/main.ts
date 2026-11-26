@@ -12,6 +12,9 @@ export default game({
     size: [WORLD.width, WORLD.height],
     background: "#090d26",
     seed: 42,
+    // Portrait: the width (what the pipes' timing depends on) stays 288 on every screen; taller
+    // phones show more sky and deck instead of bars (Godot's keep_width). Wider screens get side bars.
+    window: { aspect: "keep_width" },
     // Smooth scenery; the player sprite is "sharp" (square pixels at any size/tilt), the pixel font crisp.
     pixelMode: false,
     gravity: [0, 900],

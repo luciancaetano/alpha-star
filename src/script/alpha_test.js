@@ -161,13 +161,22 @@ function platformOf(os) {
   return os;
 }
 
+// opts.size: [w, h] screen pixels (e.g. a phone, [1080, 2340]); the game sees what config.window shows there.
+function sizeOf(size) {
+  if (size === undefined) return undefined;
+  if (!Array.isArray(size) || size.length !== 2 || !size.every((n) => Number.isInteger(n) && n >= 1 && n <= 16384)) {
+    fail(`simulate: size must be [width, height] screen pixels (integers 1..16384), e.g. [1080, 2340], got ${JSON.stringify(size)}`);
+  }
+  return size;
+}
+
 // Runs the game in a fresh instance and returns what tests may inspect.
 function runGame(game, opts) {
   const frames = framesOf(opts.seconds);
   const id = N.instanceCreate();
   try {
     const store = memoryStore(seedFiles(opts));
-    const sim = createInstance(id, store, platformOf(opts.platform));
+    const sim = createInstance(id, store, platformOf(opts.platform), sizeOf(opts.size));
     sim.boot(game, opts.scene, "simulate");
     const players = playerInputs(opts.inputs, sim);
     const clicks = clicksByFrame(opts.clicks);

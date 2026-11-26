@@ -33,6 +33,9 @@ ctx.ui.on("settings", "back", "back", () => ctx.go("title"));   // Escape / game
 - Sizes in `dp` follow `ctx.settings.uiScale`; `.high-contrast` is set on every body when
   `ctx.settings.highContrast` is on.
 - Text is rasterized at the screen's real resolution: sharp at any window size.
+- Documents cover the whole screen, including what `config.window.aspect` reveals beyond
+  `config.size`, so edge-anchored HUDs sit at the real edges; `class="safe"` pads an element by
+  `ctx.safeArea` (cutouts, rounded corners). Use `box-sizing: border-box` on a padded full-size body.
 
 ## Fonts
 

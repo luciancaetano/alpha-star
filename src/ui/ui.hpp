@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "core/window.hpp"
 #include "ui/library.hpp"
 #include "ui/pad_nav.hpp"
 #include "ui/rml_renderer.hpp"
@@ -59,7 +60,10 @@ class Ui {
   std::vector<std::uint32_t> take_events();
   void reset();
   std::map<std::string, DocumentView> view() const;
-  // The logical screen changed size (scaling "expand").
+  // Safe-area insets (logical pixels, ctx.safeArea): every element with class
+  // "safe" gets them as padding, so HUDs sit inside cutouts and rounded corners.
+  void safe_area(const core::Insets& insets);
+  // The logical screen changed size (config.window.aspect reveals more world).
   void resize(int width, int height);
   // data-t="key" elements: every key the documents use, and their texts (kept,
   // so documents reloaded later show them too).
@@ -128,6 +132,7 @@ class Ui {
   std::vector<std::uint32_t> events_;
   std::map<std::string, std::string> translations_;
   float scale_ = 1.0f;
+  core::Insets safe_;
   bool high_contrast_ = false;
 };
 

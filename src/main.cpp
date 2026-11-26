@@ -282,7 +282,7 @@ int main(int argc, char** argv) {
     return fail("SDL_CreateWindowAndRenderer");
   }
   limit_latency(sdl, info.window.vsync);
-  alpha::render::Renderer renderer(sdl, info.width, info.height, info.window.scaling);
+  alpha::render::Renderer renderer(sdl, info.width, info.height, info.window.stretch);
   {
     Tools tools(window, sdl);  // gone before its renderer
     if (options.devtools) tools.toggle();

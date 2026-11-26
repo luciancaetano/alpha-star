@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="flappy.rcss"/>
 </head>
-<body>
+<body class="safe">
   <div class="panel">
     <h1 data-t="over.title">GAME OVER</h1>
     <p class="row"><span data-t="over.score">SCORE</span> <span id="score">0</span></p>

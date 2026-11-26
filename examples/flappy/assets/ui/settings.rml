@@ -9,7 +9,7 @@
     .value { display: inline-block; width: 48dp; }
   </style>
 </head>
-<body>
+<body class="safe">
   <!-- Gamepad: D-pad / stick moves focus, A presses, B goes back. -->
   <div class="panel">
     <h1 data-t="settings.title">SETTINGS</h1>

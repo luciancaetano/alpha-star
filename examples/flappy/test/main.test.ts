@@ -112,3 +112,16 @@ export function bestScoreIsKeptInTheSave() {
   run.expect.text("over", "best").equals("7");
   if (run.saves.main.best !== 7) throw new Error(JSON.stringify(run.saves));
 }
+
+export function tallPhoneShowsMoreWorldWithTheSameDifficulty() {
+  // keep_width on a 1080x2340 phone: 288 wide, 624 tall (56 more world above and below).
+  const opts = { scene: "play", seconds: 3.1, inputs: { flap: FLAP_STEADILY } } as const;
+  const design = simulate(game, opts);
+  const phone = simulate(game, { ...opts, size: [1080, 2340], platform: "android" });
+  phone.expect.scene("play");
+  phone.expect.noErrors();
+  const gaps = (r: typeof design) => JSON.stringify(r.entities("goal").map((g) => g.pos));
+  if (gaps(phone) !== gaps(design)) throw new Error(`pipes differ on a tall phone: ${gaps(phone)} vs ${gaps(design)}`);
+  const top = Math.min(...phone.entities("solid").map((e) => e.pos[1]));
+  if (top >= Math.min(...design.entities("solid").map((e) => e.pos[1]))) throw new Error("top pipes do not reach the revealed sky");
+}

@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="arena.rcss"/>
 </head>
-<body>
+<body class="safe">
   <p id="score">SCORE 0</p>
   <p id="hp">HP 3</p>
   <p id="bombs">BOMBS 2</p>

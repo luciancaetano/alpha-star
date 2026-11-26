@@ -6,8 +6,8 @@ import { ART } from "../tuning";
 
 export default scene("title", {
   enter(ctx) {
-    ctx.spawn(background());
-    ctx.spawn(ground());
+    ctx.spawn(background(ctx.camera.view));
+    ctx.spawn(ground(ctx.camera.view));
     ctx.spawn(bird(false));
     ctx.ui.show("title");
     // Phones have no keyboard: the hints name the screen and the back button instead.

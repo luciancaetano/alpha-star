@@ -60,7 +60,7 @@ bool open_window(const WindowSetup& setup, SDL_Window** window, SDL_Renderer** r
   if (c.maximized) flags |= SDL_WINDOW_MAXIMIZED;
   if (setup.hidden) flags |= SDL_WINDOW_HIDDEN;
   flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;  // output in real pixels on high-DPI screens; text is made at that size
-  const core::Vec2 size = core::initial_window_size(setup.game, c.scaling);
+  const core::Vec2 size = core::initial_window_size(setup.game, c.stretch.scale);
   if (!setup.gpu) {
     return SDL_CreateWindowAndRenderer(setup.title.c_str(), static_cast<int>(size.x), static_cast<int>(size.y), flags,
                                        window, renderer);

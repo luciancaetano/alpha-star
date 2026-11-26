@@ -34,7 +34,8 @@ struct ScriptState {
   core::Random random{0};
   core::Timers timers;
   core::Vec2 gravity;
-  core::Vec2 view_size;  // config.size: what each scene's camera shows
+  core::Vec2 design_size;  // config.size: each scene's camera starts centered on it
+  core::Vec2 view_size;    // what the screen shows: config.size grown by config.window.aspect
   std::unique_ptr<ecs::World> world;
   // The game's save.json path for its title; save slots and settings sit next
   // to it. Empty for test instances (their saves live in memory).

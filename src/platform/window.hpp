@@ -24,7 +24,7 @@ struct WindowSetup {
 // SDL's GPU renderer on the Vulkan driver, told we bring SPIR-V shaders
 // (custom shaders run only there); nullptr when Vulkan is unavailable (SDL_GetError).
 SDL_Renderer* vulkan_renderer(SDL_Window* window);
-// Creates the window (sized for the scaling mode; fullscreen, resizable,
+// Creates the window (sized for the scale mode; fullscreen, resizable,
 // borderless, alwaysOnTop and maximized from config.window) and its renderer. False on failure (SDL_GetError).
 bool open_window(const WindowSetup& setup, SDL_Window** window, SDL_Renderer** renderer);
 // Alt+Enter (unless config.window.altEnter is false) asks for the other

@@ -6,7 +6,7 @@
     #score { margin: 7dp 0dp 0dp; font-size: 26dp; }
   </style>
 </head>
-<body>
+<body class="safe">
   <div class="telemetry">
     <p class="eyebrow" data-t="over.score">SCORE</p>
     <p id="score" class="shadow">0</p>

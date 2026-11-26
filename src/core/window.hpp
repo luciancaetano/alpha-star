@@ -10,20 +10,39 @@
 // Window presentation (pure): how the game's logical size maps to the window.
 namespace alpha::core {
 
-// letterbox: largest fit keeping the aspect, bars around; integer: largest
-// whole-number scale (pixel art), bars around; stretch: fills the window,
-// aspect lost; expand: fills the window keeping the aspect by showing more
-// world (the logical size grows along one axis); crop: fills the window
-// keeping the aspect, the edges that do not fit are cut off.
-enum class Scaling { Letterbox, Integer, Stretch, Expand, Crop };
+// Godot-style stretch: the game is designed at config.size; `aspect` says
+// what happens when the output's aspect differs. keep: letterbox bars;
+// keep_width: the width stays, a taller output shows more world (wider: bars);
+// keep_height: the height stays, a wider output shows more world (taller:
+// bars); expand: more world on whichever axis is longer (never bars).
+enum class Aspect { Keep, KeepWidth, KeepHeight, Expand };
+// fractional: any scale; integer: whole multiples only (crisp pixel art).
+enum class Scale { Fractional, Integer };
 
-// "letterbox" | "integer" | "stretch" | "expand" | "crop"; nullopt otherwise.
-std::optional<Scaling> parse_scaling(std::string_view name);
+struct Stretch {
+  Aspect aspect = Aspect::Expand;
+  Scale scale = Scale::Fractional;
+};
+
+// "keep" | "keep_width" | "keep_height" | "expand"; nullopt otherwise.
+std::optional<Aspect> parse_aspect(std::string_view name);
+// "fractional" | "integer"; nullopt otherwise.
+std::optional<Scale> parse_scale(std::string_view name);
+
+// How the game is shown in an output of `output` pixels: `logical` game
+// pixels (config.size grown along the revealed axes, whole pixels), each
+// `scale` output pixels wide, centered (`offset` = the bars, if any).
+struct Presentation {
+  Vec2 logical;
+  float scale = 1.0f;
+  Vec2 offset;
+};
+Presentation present(Vec2 design, Vec2 output, Stretch stretch);
 
 // config.window, fixed at boot.
 struct WindowConfig {
   bool fullscreen = false;
-  Scaling scaling = Scaling::Letterbox;
+  Stretch stretch;
   bool resizable = true;
   bool alt_enter = true;  // Alt+Enter toggles fullscreen
   bool borderless = false;     // no title bar or frame
@@ -57,11 +76,8 @@ bool starts_fullscreen(const WindowConfig& config, Os os);
 // the output rect [safe_min, safe_max) is safe; never negative.
 Insets safe_insets(const PixelGrid& grid, Vec2 view, Vec2 safe_min, Vec2 safe_max);
 
-// Logical size for `expand`: the game size grown along one axis so its
-// aspect matches the output's (never smaller than `game`).
-Vec2 expanded_size(Vec2 game, Vec2 output);
 // Initial window size: the game size times a scale that suits the mode
 // (integer: a whole number, so pixels stay square from the first frame).
-Vec2 initial_window_size(Vec2 game, Scaling scaling);
+Vec2 initial_window_size(Vec2 game, Scale scale);
 
 }  // namespace alpha::core

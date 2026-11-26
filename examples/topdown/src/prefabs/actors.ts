@@ -1,7 +1,7 @@
 // Entity specs: plain data built by functions.
 import type { EntitySpec, Vec2 } from "alpha";
 import { vec } from "alpha";
-import { BULLET, ENEMY, HERO, VIEW, WALL } from "../tuning";
+import { BULLET, ENEMY, HERO, WALL } from "../tuning";
 import type { Arena } from "../types";
 
 type Spec = EntitySpec<Arena["tags"], never, Arena["sheets"]>;
@@ -43,11 +43,13 @@ export function bullet(from: Vec2, aim: Vec2): Spec {
 }
 
 // The four walls around the arena.
-export function walls(): Spec[] {
-  const { width: w, height: h } = VIEW;
+/** The arena's four walls along the edges of the visible world `[x, y, w, h]` (ctx.camera.view). */
+export function walls([x, y, w, h]: readonly number[]): Spec[] {
   const box = (pos: Vec2, size: Vec2): Spec => ({
     tags: ["wall"], pos, shape: { rect: size, color: "#34495e" }, body: { type: "static", collider: { rect: size } },
   });
-  return [box([w / 2, WALL / 2], [w, WALL]), box([w / 2, h - WALL / 2], [w, WALL]),
-          box([WALL / 2, h / 2], [WALL, h]), box([w - WALL / 2, h / 2], [WALL, h])];
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  return [box([cx, y + WALL / 2], [w, WALL]), box([cx, y + h - WALL / 2], [w, WALL]),
+          box([x + WALL / 2, cy], [WALL, h]), box([x + w - WALL / 2, cy], [WALL, h])];
 }

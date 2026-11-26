@@ -20,6 +20,7 @@ JSValue configure(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
                static_cast<float>(number_arg(ctx, argv[2], "config.gravity[1]"))};
   s.view_size = {static_cast<float>(number_arg(ctx, argv[3], "config.size[0]")),
                  static_cast<float>(number_arg(ctx, argv[4], "config.size[1]"))};
+  s.design_size = s.view_size;
   s.window.size = s.view_size;  // headless runs; the engine writes the real window every frame
   return JS_UNDEFINED;
 }

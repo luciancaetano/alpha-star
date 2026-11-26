@@ -1,13 +1,14 @@
 import type { EntitySpec } from "alpha";
 import type { Flappy } from "../types";
-import { WORLD } from "../tuning";
 
-/** Distant orbital sky, behind every scene and all colliders. */
-export function background(): EntitySpec<Flappy["tags"], Flappy["images"]> {
+type View = readonly [number, number, number, number];
+
+/** Distant orbital sky over the whole visible world (ctx.camera.view), behind every scene and all colliders. */
+export function background([x, y, w, h]: View): EntitySpec<Flappy["tags"], Flappy["images"]> {
   return {
     tags: [],
-    pos: [WORLD.width / 2, WORLD.height / 2],
+    pos: [x + w / 2, y + h / 2],
     z: -100,
-    shape: { image: "nebula", size: [WORLD.width, WORLD.height] },
+    shape: { image: "nebula", size: [w, h] },
   };
 }

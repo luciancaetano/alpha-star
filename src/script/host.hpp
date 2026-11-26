@@ -93,7 +93,7 @@ class Host {
   // real state every frame (platform::sync_window).
   core::WindowState& window() { return vm_->main().window; }
   const GameInfo& info() const { return info_; }
-  // The screen shows `size` game pixels now (scaling "expand"): the scene
+  // The screen shows `size` game pixels now (config.window.aspect): the scene
   // camera, later scenes and the UI follow.
   void resize_view(core::Vec2 size);
 

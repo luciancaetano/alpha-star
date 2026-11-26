@@ -2,6 +2,7 @@
 body {
   width: 100%;
   height: 100%;
+  box-sizing: border-box; /* class="safe": the engine pads it by ctx.safeArea */
   font-family: pixel;
   font-size: 10dp;
   color: #edf5ff;

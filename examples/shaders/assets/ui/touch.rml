@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="lab.rcss"/>
 </head>
-<body>
+<body class="safe">
   <div class="pad">
     <div class="row"><button id="less">-</button><button id="more">+</button></div>
     <div class="row"><button id="prev">&lt;</button><button id="next">&gt;</button></div>

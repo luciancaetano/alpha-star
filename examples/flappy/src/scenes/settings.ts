@@ -23,8 +23,8 @@ function show(ctx: Settings, bus: Bus) {
 // Every setting is persisted by the engine (settings.json) and applied at boot.
 export default scene("settings", {
   enter(ctx) {
-    ctx.spawn(background());
-    ctx.spawn(ground());
+    ctx.spawn(background(ctx.camera.view));
+    ctx.spawn(ground(ctx.camera.view));
     ctx.ui.show("settings");
     show(ctx, "music");
     show(ctx, "sfx");

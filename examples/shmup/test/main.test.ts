@@ -56,3 +56,11 @@ export function cToggleTheCrtFilterWithoutChangingTheGame() {
   const twice = simulate(game, { seconds: 1, inputs: { crt: [10, 30] } });
   if ((twice.state as { crt: boolean }).crt) throw new Error("a second press turns it off");
 }
+
+export function aTallPhoneShowsMoreFieldAndTheShipStartsAtItsBottom() {
+  // 1080x2340 at whole-number scale 4: a 270x585 field instead of 240x320.
+  const run = simulate(game, { seconds: 0.1, size: [1080, 2340], platform: "android" });
+  run.expect.noErrors();
+  const [x, y] = run.entities("ship")[0].pos;
+  if (Math.abs(x - 120) > 0.01 || y < 400) throw new Error(`ship at ${x}, ${y}: not centered near the bottom of the tall field`);
+}

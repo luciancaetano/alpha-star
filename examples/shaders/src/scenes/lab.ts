@@ -36,9 +36,7 @@ function touchButtons(ctx: Lab) {
 export default scene("lab", {
   state: (): State => ({ index: 0, intensity: INTENSITY.start }),
   enter(ctx) {
-    ctx.camera.pos.x = VIEW.width / 2;  // centered: expand adds world evenly around
-    ctx.camera.pos.y = VIEW.height / 2;
-    floor().forEach((tile) => ctx.spawn(tile));
+    floor(ctx.camera.view).forEach((tile) => ctx.spawn(tile));
     ctx.spawn(title());
     for (let i = 0; i < ORBS.count; i++) ctx.spawn(orb(i));
     ctx.postfx.add(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: 0 });

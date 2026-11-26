@@ -25,7 +25,7 @@
 <h2 id="build-flavors">Build flavors</h2>
 <table><thead><tr><th>Flavor</th><th>Has</th><th>Used by</th></tr></thead><tbody><tr><td>dev</td><td>everything, debug build</td><td>engine development</td></tr><tr><td>release</td><td>dev tools (F12; phone: shake / Menu key), MCP control channel, headless flags, test runner</td><td><code>alpha run</code>, <code>alpha test</code>, <code>alpha mcp</code></td></tr><tr><td>shipping</td><td>none of those; LTO, stripped, no console</td><td><code>alpha export --standalone</code> (players)</td></tr></tbody></table>
 <p>Nothing in a game can depend on dev features: they are absent from the shipping engine.</p>
-<h2 id="image-filtering-and-window-scaling">Image filtering and window scaling</h2>
+<h2 id="image-filtering-and-window-stretch">Image filtering and window stretch</h2>
 <p>Each image, sheet or map picks how it is sampled when drawn scaled or rotated:</p>
 <pre><code>assets: { images: {
   hero:  { file: "img/hero.png", filter: "sharp" },   // pixel art at any size/angle: square pixels, soft edges
@@ -33,10 +33,13 @@
   sky:   { file: "img/sky.png", filter: "linear" },   // smooth art and photos
 } }</code></pre>
 <p>Without <code>filter</code>, <code>config.pixelMode</code> decides (<code>true</code>: nearest, <code>false</code>: linear). <code>"sharp"</code> costs 16x the texture memory of that image.</p>
-<p><code>config.window</code> sets how the game's <code>size</code> fits the window and how the window opens:</p>
+<p><code>config.window</code> sets how the game's <code>size</code> (the design resolution) fits the screen and how the window opens. The model is Godot's stretch aspect + scale mode:</p>
 <pre><code>window: {
-  scaling: "integer",   // letterbox (default) | integer | stretch | expand | crop
+  aspect: "expand",     // expand (default) | keep_width | keep_height | keep
+  scale: "fractional",  // fractional (default) | integer
   borderless: false, alwaysOnTop: false, maximized: false,
   vsync: true, resizable: true, fullscreen: false, altEnter: true,
 }</code></pre>
-<p><code>integer</code> keeps pixel art exact (whole multiples, bars around); <code>crop</code> fills the window and cuts the edges that do not fit.</p></main></body></html>
+<table><thead><tr><th>aspect</th><th>screen wider than the design</th><th>screen taller than the design</th></tr></thead><tbody><tr><td><code>expand</code> (default)</td><td>more world left and right</td><td>more world above and below</td></tr><tr><td><code>keep_width</code></td><td>side bars</td><td>more world above and below</td></tr><tr><td><code>keep_height</code></td><td>more world left and right</td><td>bars above and below</td></tr><tr><td><code>keep</code></td><td>side bars</td><td>bars above and below</td></tr></tbody></table>
+<p>The revealed world splits evenly around the design center. <code>ctx.camera.view</code> is the world rect the screen shows (<code>[x, y, w, h]</code>): size backgrounds, ground and walls to it and spawn at its edges; keep difficulty in design numbers. <code>scale: "integer"</code> keeps pixel art exact (whole multiples); the revealed axes still fill the screen up to under one scale step.</p>
+<p>Screen space (layers with <code>parallax: 0</code>, <code>ctx.safeArea</code>, the game UI) covers the whole revealed screen, so a HUD anchored to an edge sits at the real edge. UI documents scale with the kept axis, like Unity's Canvas Scaler matching width or height; <code>class="safe"</code> pads an element by the safe area. <code>config.window.scaling</code> was replaced (<code>letterbox</code> -&gt; <code>aspect: "keep"</code>, <code>integer</code> -&gt; <code>scale: "integer"</code>); the error names the replacement. Tests: <code>simulate(game, { size: [1080, 2340] })</code>.</p></main></body></html>

@@ -379,6 +379,7 @@ function makeCamera() {
       N.cameraBounds(...rect);
     },
     toWorld: (p) => N.toWorld(...pair(p, "camera.toWorld point")),
+    get view() { return N.cameraView(); },
   };
 }
 
@@ -650,6 +651,7 @@ function bootGame(s, ctx, g, start, what, from) {
   }
   N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]), c.size[0], c.size[1]);
   N.uiCreate(c.size[0], c.size[1]);
+  if (s.screen) N.presentView(c, s.screen[0], s.screen[1]);
   N.collisionCategories(collisionCategories(c.collision));
   for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bind("actions", action, inputs);
   if (c.deadzone !== undefined) N.deadzone(c.deadzone);
@@ -741,13 +743,14 @@ function within(id, fn) {
 
 // One game instance. `id` is its native instance; `store` keeps its saves and
 // settings (fileStore() for the engine's game, memoryStore() for test runs).
-// platform: an os name to report instead of the engine's (headless runs pick one).
-export function createInstance(id, store, platform) {
+// platform: an os name to report instead of the engine's (headless runs pick one);
+// screen: [w, h] output pixels a headless run is shown on (the game size follows config.window).
+export function createInstance(id, store, platform, screen) {
   const os = platform ?? N.platformOs();
   const s = {
     platform: Object.freeze({ os, mobile: os === "android" || os === "ios" }),
     game: null, current: null, currentName: null, currentParams: undefined, pending: null, handlers: [], uiHandlers: new Map(),
-    store, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60, appPaused: false,
+    store, screen, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60, appPaused: false,
     timers: new Map(), entities: makeEntities(), maps: new Map(), tweens: makeTweens(tweenAccess),
   };
   const ctx = makeCtx(s);

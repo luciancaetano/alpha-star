@@ -487,14 +487,21 @@ declare module "alpha" {
   }
 
   /**
-   * config.window. scaling: "letterbox" (default; largest fit, bars), "integer" (whole
-   * multiples only: crisp pixel art, bars), "stretch" (fills, aspect lost), "expand"
-   * (fills keeping pixels square by showing more world; ctx.window.size grows the view),
-   * "crop" (fills keeping the aspect; the edges that do not fit are cut off).
+   * config.window. The game is designed at config.size and scaled to the screen keeping its
+   * aspect (like Godot's stretch aspect). `aspect`: "expand" (default; fills the screen by
+   * showing more world on the longer axis, never bars), "keep_width" (width fixed: taller
+   * screens show more height, wider ones get side bars; portrait games), "keep_height"
+   * (height fixed: wider screens show more width, taller ones get bars; landscape games),
+   * "keep" (exactly config.size, letterbox bars). `scale`: "fractional" (default) or
+   * "integer" (whole multiples only: crisp pixel art; the revealed axes still fill the
+   * screen). The revealed world is ctx.camera.view; screen-space HUD uses ctx.safeArea, and
+   * UI elements with class="safe" are padded by it. (`scaling` was replaced: letterbox ->
+   * aspect "keep", integer -> scale "integer".)
    */
   export interface WindowConfig {
     fullscreen?: boolean;
-    scaling?: "letterbox" | "integer" | "stretch" | "expand" | "crop";
+    aspect?: "expand" | "keep_width" | "keep_height" | "keep";
+    scale?: "fractional" | "integer";
     /** Default true. */
     resizable?: boolean;
     /** Alt+Enter toggles fullscreen (default true). */
@@ -548,6 +555,13 @@ declare module "alpha" {
     bounds(rect: [x: number, y: number, width: number, height: number] | null): void;
     /** Screen point (game pixels, e.g. ctx.input.mouse()) -> world point. */
     toWorld(screen: Vec2): Vec2;
+    /**
+     * [x, y, width, height]: the world rect the screen shows now, read-only. config.window.aspect
+     * reveals more than config.size on phones and resized windows (split evenly around the
+     * design center), so size backgrounds/ground to it and spawn at its edges; read it each
+     * time (it follows window resizes, zoom and camera moves).
+     */
+    readonly view: readonly [x: number, y: number, width: number, height: number];
   }
 
   /** One object of a Tiled object layer, as plain data. */
@@ -855,9 +869,11 @@ declare module "alpha" {
     readonly postfx: PostFx<ShadersOf<G>>;
     readonly window: GameWindow;
     /**
-     * [x, y, width, height] in screen (game) pixels: the part of the view no display cutout,
-     * rounded corner or system bar hides. The whole view on desktop and in headless runs; on
-     * phones (always fullscreen, drawing into the cutout) keep HUD and buttons inside it.
+     * [x, y, width, height] in screen (game) pixels: the part of the screen no display cutout,
+     * rounded corner or system bar hides. Screen pixels span the whole revealed screen
+     * (config.size grown by config.window.aspect), so [0, 0] is the real top-left corner. The
+     * whole screen on desktop and in headless runs; on phones (always fullscreen, drawing into
+     * the cutout) keep HUD and buttons inside it.
      */
     readonly safeArea: readonly [x: number, y: number, width: number, height: number];
 
@@ -1165,6 +1181,8 @@ declare module "alpha/test" {
     appPauses?: [number, number][];
     /** What ctx.platform reports (default: the machine running the test). */
     platform?: Os;
+    /** Screen size in pixels to run on, e.g. a tall phone `[1080, 2340]`: config.window.aspect grows ctx.camera.view and ctx.safeArea as the engine would (default: config.size). */
+    size?: [number, number];
   }
 
   export interface Expect<G extends GameTypes> {

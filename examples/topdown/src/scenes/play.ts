@@ -3,7 +3,7 @@ import { vec } from "alpha";
 import { scene } from "../alpha";
 import { bullet, enemy, hero, walls } from "../prefabs/actors";
 import { blast, label } from "../prefabs/effects";
-import { BOMB, BULLET, ENEMY, HERO, LABEL, VIEW, WALL } from "../tuning";
+import { BOMB, BULLET, ENEMY, HERO, LABEL, WALL } from "../tuning";
 import type { Arena } from "../types";
 
 type State = { score: number };
@@ -11,7 +11,11 @@ type Play = Context<Arena, State>;
 type Hero = Entity<Arena["tags"], any>;
 
 const at = (e: Hero): Vec2 => [e.pos.x, e.pos.y];
-const pan = (x: number) => (x / VIEW.width) * 2 - 1;  // left speaker .. right speaker
+// Left speaker .. right speaker across the visible world.
+const pan = (ctx: Play, x: number) => {
+  const [vx, , vw] = ctx.camera.view;
+  return ((x - vx) / vw) * 2 - 1;
+};
 
 function hud(ctx: Play) {
   const heroes = ctx.findAll("hero");
@@ -20,13 +24,14 @@ function hud(ctx: Play) {
   ctx.ui.set("hud", "bombs", `BOMBS ${heroes.map((h) => h.data.bombs).join(" / ")}`);
 }
 
-// A random point just inside one of the four walls.
+// A random point just inside one of the four walls (which line the visible world).
 function edgePoint(ctx: Play): Vec2 {
   const m = WALL + ENEMY.radius + 2;
+  const [vx, vy, vw, vh] = ctx.camera.view;
   const side = ctx.random.int(0, 3);
-  const x = ctx.random.range(m, VIEW.width - m);
-  const y = ctx.random.range(m, VIEW.height - m);
-  return [[x, m], [x, VIEW.height - m], [m, y], [VIEW.width - m, y]][side] as Vec2;
+  const x = ctx.random.range(vx + m, vx + vw - m);
+  const y = ctx.random.range(vy + m, vy + vh - m);
+  return [[x, vy + m], [x, vy + vh - m], [vx + m, y], [vx + vw - m, y]][side] as Vec2;
 }
 
 // Player n joins when a device for them exists (player 2 = the second gamepad).
@@ -39,7 +44,7 @@ function joinPlayers(ctx: Play) {
 
 function kill(ctx: Play, e: Hero, points: number) {
   ctx.spawn(blast(at(e)));
-  ctx.audio.play("boom", { pan: pan(e.pos.x), volume: 0.6 });
+  ctx.audio.play("boom", { pan: pan(ctx, e.pos.x), volume: 0.6 });
   const l = ctx.spawn(label([e.pos.x, e.pos.y - 8], `+${points}`));
   ctx.tween(l, { to: { y: e.pos.y - 8 - LABEL.rise, alpha: 0 }, seconds: LABEL.seconds, onDone: () => ctx.destroy(l) });
   ctx.destroy(e);
@@ -74,7 +79,7 @@ function steer(ctx: Play, h: Hero) {
   h.data.cooldown = Math.max(0, (h.data.cooldown as number) - ctx.dt);
   if (input.down("fire") && h.data.cooldown === 0) {
     ctx.spawn(bullet(at(h), aimFrom(ctx, h)));
-    ctx.audio.play("shot", { pan: pan(h.pos.x), volume: 0.4 });
+    ctx.audio.play("shot", { pan: pan(ctx, h.pos.x), volume: 0.4 });
     h.data.cooldown = BULLET.cooldown;
   }
   if (input.pressed("bomb") && (h.data.bombs as number) > 0) bomb(ctx, h);
@@ -110,7 +115,7 @@ export default scene("play", {
   state: () => ({ score: 0 }),
 
   enter(ctx) {
-    for (const w of walls()) ctx.spawn(w);
+    for (const w of walls(ctx.camera.view)) ctx.spawn(w);
     ctx.spawn(hero(1, HERO.starts[0]));
     ctx.every(ENEMY.every, () => {
       if (ctx.findAll("enemy").length < ENEMY.max) ctx.spawn(enemy(edgePoint(ctx)));

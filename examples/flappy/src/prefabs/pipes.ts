@@ -4,13 +4,17 @@ import { PIPE, WORLD } from "../tuning";
 
 type Spec = EntitySpec<Flappy["tags"], Flappy["images"]>;
 
-/** Top pipe, bottom pipe and a scoring sensor in the gap. */
-export function pipePair(random: Random): Spec[] {
+/**
+ * Top pipe, bottom pipe and a scoring sensor in the gap, just past the right edge of the visible
+ * world. The gap range is the design's (same difficulty on every screen); the top pipe reaches up
+ * to the top of the visible world, so taller screens show no open sky above it.
+ */
+export function pipePair(random: Random, [vx, vy, vw]: readonly number[]): Spec[] {
   const floor = WORLD.height - WORLD.groundHeight;
   const half = PIPE.gap / 2;
   const gapY = random.range(PIPE.margin + half, floor - PIPE.margin - half);
-  const x = WORLD.width + PIPE.width;
-  return [pipe(x, 0, gapY - half), pipe(x, gapY + half, floor), goal(x + PIPE.width / 2, gapY)];
+  const x = vx + vw + PIPE.width;
+  return [pipe(x, Math.min(0, vy), gapY - half), pipe(x, gapY + half, floor), goal(x + PIPE.width / 2, gapY)];
 }
 
 function pipe(x: number, top: number, bottom: number): Spec {

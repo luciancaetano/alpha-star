@@ -4,7 +4,7 @@
 
 #include "platform/window.hpp"
 
-using alpha::core::Scaling;
+using alpha::core::Scale;
 using alpha::core::Vec2;
 using alpha::core::WindowConfig;
 using alpha::core::WindowState;
@@ -40,13 +40,13 @@ TEST_CASE("Alt+Enter asks for the other fullscreen state unless the game opted o
   CHECK_FALSE(untouched.request.has_value());
 }
 
-TEST_CASE("open_window sizes for the scaling mode; sync_window applies requests and reads back") {
+TEST_CASE("open_window sizes for the scale mode; sync_window applies requests and reads back") {
   REQUIRE(SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy"));
   REQUIRE(SDL_InitSubSystem(SDL_INIT_VIDEO));
   SDL_Window* window = nullptr;
   SDL_Renderer* renderer = nullptr;
   WindowConfig config;
-  config.scaling = Scaling::Integer;
+  config.stretch.scale = Scale::Integer;
   config.resizable = false;
   config.borderless = true;
   config.always_on_top = true;

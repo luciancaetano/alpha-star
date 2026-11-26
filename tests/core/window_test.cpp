@@ -2,28 +2,84 @@
 
 #include "core/window.hpp"
 
-using alpha::core::Scaling;
+using alpha::core::Aspect;
+using alpha::core::Scale;
+using alpha::core::Stretch;
 using alpha::core::Vec2;
 
-TEST_CASE("scaling names parse; anything else is rejected") {
-  CHECK(alpha::core::parse_scaling("letterbox") == Scaling::Letterbox);
-  CHECK(alpha::core::parse_scaling("integer") == Scaling::Integer);
-  CHECK(alpha::core::parse_scaling("stretch") == Scaling::Stretch);
-  CHECK(alpha::core::parse_scaling("expand") == Scaling::Expand);
-  CHECK(alpha::core::parse_scaling("crop") == Scaling::Crop);
-  CHECK_FALSE(alpha::core::parse_scaling("fit").has_value());
+namespace {
+
+alpha::core::Presentation shown(Vec2 design, Vec2 output, Aspect aspect, Scale scale = Scale::Fractional) {
+  return alpha::core::present(design, output, Stretch{aspect, scale});
 }
 
-TEST_CASE("expand grows the logical size along one axis to the output's aspect") {
-  CHECK(alpha::core::expanded_size({320, 180}, {1920, 1080}) == Vec2{320, 180});
-  CHECK(alpha::core::expanded_size({320, 180}, {1920, 1200}) == Vec2{320, 200});
-  CHECK(alpha::core::expanded_size({320, 180}, {2560, 1080}) == Vec2{(2560.0f / 1080.0f) * 180.0f, 180});
-  CHECK(alpha::core::expanded_size({320, 180}, {0, 0}) == Vec2{320, 180});
+}  // namespace
+
+TEST_CASE("aspect and scale names parse; anything else is rejected") {
+  CHECK(alpha::core::parse_aspect("keep") == Aspect::Keep);
+  CHECK(alpha::core::parse_aspect("keep_width") == Aspect::KeepWidth);
+  CHECK(alpha::core::parse_aspect("keep_height") == Aspect::KeepHeight);
+  CHECK(alpha::core::parse_aspect("expand") == Aspect::Expand);
+  CHECK_FALSE(alpha::core::parse_aspect("letterbox").has_value());
+  CHECK(alpha::core::parse_scale("fractional") == Scale::Fractional);
+  CHECK(alpha::core::parse_scale("integer") == Scale::Integer);
+  CHECK_FALSE(alpha::core::parse_scale("pixel").has_value());
+  CHECK(Stretch{}.aspect == Aspect::Expand);  // games fill the screen unless they ask for bars
 }
 
-TEST_CASE("the first window is 1.5x, or a whole 2x for integer scaling") {
-  CHECK(alpha::core::initial_window_size({320, 180}, Scaling::Letterbox) == Vec2{480, 270});
-  CHECK(alpha::core::initial_window_size({320, 180}, Scaling::Integer) == Vec2{640, 360});
+TEST_CASE("keep: the design size, letterboxed and centered") {
+  const auto p = shown({320, 180}, {1920, 1200}, Aspect::Keep);
+  CHECK(p.logical == Vec2{320, 180});
+  CHECK(p.scale == doctest::Approx(6));
+  CHECK(p.offset == Vec2{0, 60});
+}
+
+TEST_CASE("expand: more world on the longer axis, no bars (landscape and portrait)") {
+  const auto wide = shown({320, 180}, {2340, 1080}, Aspect::Expand);
+  CHECK(wide.logical == Vec2{390, 180});
+  CHECK(wide.scale == doctest::Approx(6));
+  CHECK(wide.offset == Vec2{0, 0});
+  const auto tall = shown({288, 512}, {1080, 2340}, Aspect::Expand);
+  CHECK(tall.logical == Vec2{288, 624});
+  CHECK(tall.scale == doctest::Approx(3.75));
+  CHECK(tall.offset.x == doctest::Approx(0));
+  CHECK(tall.offset.y == doctest::Approx(0));
+  CHECK(shown({320, 180}, {1920, 1080}, Aspect::Expand).logical == Vec2{320, 180});
+}
+
+TEST_CASE("keep_width reveals height only; keep_height reveals width only; the other axis gets bars") {
+  CHECK(shown({288, 512}, {1080, 2340}, Aspect::KeepWidth).logical == Vec2{288, 624});
+  const auto wide = shown({288, 512}, {2340, 1080}, Aspect::KeepWidth);
+  CHECK(wide.logical == Vec2{288, 512});
+  CHECK(wide.offset.x == doctest::Approx((2340 - 288 * 2.109375) / 2));
+  CHECK(shown({320, 180}, {2340, 1080}, Aspect::KeepHeight).logical == Vec2{390, 180});
+  CHECK(shown({320, 180}, {1080, 2340}, Aspect::KeepHeight).logical == Vec2{320, 180});
+}
+
+TEST_CASE("integer: whole-number scale; the revealed axes fill the output up to under one scale step") {
+  const auto keep = shown({320, 180}, {1000, 700}, Aspect::Keep, Scale::Integer);
+  CHECK(keep.logical == Vec2{320, 180});
+  CHECK(keep.scale == doctest::Approx(3));
+  CHECK(keep.offset == Vec2{20, 80});
+  const auto fill = shown({320, 180}, {1000, 700}, Aspect::Expand, Scale::Integer);
+  CHECK(fill.logical == Vec2{333, 233});
+  CHECK(fill.scale == doctest::Approx(3));
+  CHECK(fill.offset == Vec2{0.5f, 0.5f});
+  CHECK(shown({320, 180}, {200, 100}, Aspect::Keep, Scale::Integer).scale == doctest::Approx(1));  // never below 1
+}
+
+TEST_CASE("odd and empty outputs stay sane") {
+  const auto odd = shown({320, 180}, {1001, 999}, Aspect::Expand);
+  CHECK(odd.logical.x == 320);
+  CHECK(odd.logical.y == 319);  // round(999 / (1001 / 320))
+  const auto none = shown({320, 180}, {0, 0}, Aspect::Expand);
+  CHECK(none.logical == Vec2{320, 180});
+  CHECK(none.scale == doctest::Approx(1));
+}
+
+TEST_CASE("the first window is 1.5x, or a whole 2x for integer scale") {
+  CHECK(alpha::core::initial_window_size({320, 180}, Scale::Fractional) == Vec2{480, 270});
+  CHECK(alpha::core::initial_window_size({320, 180}, Scale::Integer) == Vec2{640, 360});
 }
 
 TEST_CASE("phones always start fullscreen; desktop follows config.window.fullscreen") {

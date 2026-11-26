@@ -129,11 +129,13 @@ Android whatever `config.window.fullscreen` says, so SDL hides the status and na
 the app comes back from the background). The game draws edge to edge, into the display cutout
 (`windowLayoutInDisplayCutoutMode` = `shortEdges` in the template's theme from Android 9, SDL sets
 `always` from Android 11), so the frame and every postfx or shader pass cover the whole screen.
-With `letterbox` or `integer` scaling the bars of a different aspect stay; use `expand` (shows more
-world, as `examples/shaders` does) or `crop` to fill every screen.
+`config.window.aspect` decides what a different aspect shows: the default `expand` (and
+`keep_width` for portrait / `keep_height` for landscape games) reveals more world instead of
+bars, so size backgrounds and spawns to `ctx.camera.view`; only `keep` letterboxes.
 
-`ctx.safeArea` is `[x, y, width, height]` in screen (game) pixels: the part of the view no cutout
-or rounded corner hides. Keep HUD text and touch buttons inside it:
+`ctx.safeArea` is `[x, y, width, height]` in screen (game) pixels: the part of the screen no cutout
+or rounded corner hides. Keep HUD text and touch buttons inside it (UI documents: put
+`class="safe"` on the HUD root and the engine pads it):
 
 ```ts
 const [x, y, w, h] = ctx.safeArea;   // the whole view on desktop

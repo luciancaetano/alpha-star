@@ -7,6 +7,7 @@
 #include "platform/vfs.hpp"
 #include "script/error_overlay.hpp"
 #include "script/input_bindings.hpp"
+#include "script/window_config.hpp"
 #include "ui/input.hpp"
 
 namespace alpha::script {
@@ -19,37 +20,6 @@ core::Color color_field(JSContext* ctx, const Value& obj, const char* name, cons
   const auto color = core::parse_color(text);
   if (!color) throw core::Error(what + " must be a color like \"#ffffff\", got \"" + text + "\"");
   return *color;
-}
-
-bool flag_or(JSContext* ctx, const Value& obj, const char* name, bool fallback) {
-  const Value v = obj.prop(name);
-  return JS_IsUndefined(v.get()) ? fallback : JS_ToBool(ctx, v.get()) == 1;
-}
-
-core::Scaling scaling_of(JSContext* ctx, const Value& w) {
-  const Value scaling = w.prop("scaling");
-  if (JS_IsUndefined(scaling.get())) return core::Scaling::Letterbox;
-  const std::string name = string_arg(ctx, scaling.get(), "config.window.scaling");
-  const auto parsed = core::parse_scaling(name);
-  if (!parsed) throw core::Error("config.window.scaling must be \"letterbox\", \"integer\", \"stretch\", \"expand\" or \"crop\", got \"" + name + "\"");
-  return *parsed;
-}
-
-// config.window: { fullscreen?, scaling?, resizable?, altEnter?, borderless?, alwaysOnTop?, maximized?, vsync? }
-core::WindowConfig window_config(JSContext* ctx, const Value& info) {
-  const Value w = info.prop("window");
-  core::WindowConfig c;
-  if (JS_IsUndefined(w.get())) return c;
-  if (!JS_IsObject(w.get())) throw core::Error("config.window must be { fullscreen?, scaling?, resizable?, altEnter?, borderless?, alwaysOnTop?, maximized?, vsync? }");
-  c.fullscreen = flag_or(ctx, w, "fullscreen", false);
-  c.resizable = flag_or(ctx, w, "resizable", true);
-  c.alt_enter = flag_or(ctx, w, "altEnter", true);
-  c.borderless = flag_or(ctx, w, "borderless", false);
-  c.always_on_top = flag_or(ctx, w, "alwaysOnTop", false);
-  c.maximized = flag_or(ctx, w, "maximized", false);
-  c.vsync = flag_or(ctx, w, "vsync", true);
-  c.scaling = scaling_of(ctx, w);
-  return c;
 }
 
 GameInfo game_info(JSContext* ctx, const Value& info) {
@@ -178,6 +148,7 @@ render::Frame Host::frame(float blend) {
 
 void Host::resize_view(core::Vec2 size) {
   ScriptState& s = vm_->main();
+  if (s.ui) s.ui->safe_area(s.window.safe);
   if (s.view_size == size) return;
   s.view_size = size;
   if (s.world) s.world->resize_view(size);

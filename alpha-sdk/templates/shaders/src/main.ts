@@ -21,8 +21,8 @@ export default game({
     },
     // Dim where no light reaches: the orbs carry the lights (render-only).
     lighting: { ambient: "#5a5f80" },
-    // expand: the frame (and every shader pass) fills any window or phone screen, no bars.
-    window: { scaling: "expand" },
+    // No config.window: aspect "expand" (the default) fills any window or phone screen with
+    // more world, no bars, and every shader pass covers it.
   },
   start: "lab",
   scenes: { lab },

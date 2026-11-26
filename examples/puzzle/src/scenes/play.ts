@@ -72,7 +72,7 @@ export default scene("play", {
     ctx.state.pos.boxes.forEach((b, i) => ctx.spawn(tile("box", b, level.size, { i })));
     ctx.spawn(tile("player", ctx.state.pos.player, level.size));
     place(ctx, false);
-    ctx.spawn({ tags: ["language"], pos: [VIEW.width / 2, VIEW.height - 24],
+    ctx.spawn({ tags: ["language"], pos: [VIEW.width / 2, ctx.camera.view[1] + ctx.camera.view[3] - 24],
                 shape: { text: ctx.t("hud.language"), font: "main", size: 10, color: "#ffd166" } });
     ctx.ui.show("hud");
   },

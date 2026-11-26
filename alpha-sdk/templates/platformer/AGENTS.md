@@ -55,7 +55,8 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
   `layer: "far"` on a spec puts it there. Dust is `emitter: { burst, oneShot: true, ... }` (its entity
   goes away with the last particle); `entity.emit(n)` bursts on demand. World text:
   `shape: { text, font: "pixel", size, color }`, `entity.text = "..."`, fade with `entity.alpha`.
-  `config.window.scaling: "integer"` keeps pixels square (Alt+Enter: fullscreen).
+  `config.window: { aspect: "keep_height", scale: "integer" }` keeps pixels square and the height fixed;
+  wider screens show more level (`ctx.camera.view` is the visible world). Alt+Enter: fullscreen.
 - **Pause on focus loss:** losing focus, minimizing or backgrounding pauses the game (steps + audio);
   scene hooks `ctx.onPause(fn)` / `ctx.onResume(fn)` / `ctx.onLowMemory(fn)`, `ctx.app.paused`;
   `config.pauseOnFocusLoss: false` opts out. Tests: `simulate(game, { appPauses: [[from, to]] })`.

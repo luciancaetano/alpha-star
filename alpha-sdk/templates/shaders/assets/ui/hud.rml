@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="lab.rcss"/>
 </head>
-<body>
+<body class="safe">
   <div class="info">
     <p id="name">WAVE 1/6</p>
     <p id="level">INTENSITY 75%</p>

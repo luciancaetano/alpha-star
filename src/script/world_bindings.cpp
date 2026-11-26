@@ -31,7 +31,8 @@ core::Vec2 xy_args(JSContext* ctx, JSValueConst* argv, const std::string& what) 
 }
 
 JSValue reset_world(JSContext*, ScriptState& s, JSValueConst*) {
-  s.world = std::make_unique<ecs::World>(s.gravity, s.view_size, &s.random);
+  s.world = std::make_unique<ecs::World>(s.gravity, s.design_size, &s.random);
+  s.world->resize_view(s.view_size);  // revealed world splits evenly around the design center
   return JS_UNDEFINED;
 }
 

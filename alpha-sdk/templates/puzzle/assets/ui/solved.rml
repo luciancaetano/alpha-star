@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="crates.rcss"/>
 </head>
-<body>
+<body class="safe">
   <div class="panel">
     <h1 data-t="solved.title">SOLVED!</h1>
     <p id="moves">IN 0 MOVES</p>

@@ -19,10 +19,10 @@ namespace {
 
 // Software renderer on a plain surface (64 x 32 game pixels).
 struct Canvas {
-  explicit Canvas(Scaling scaling = Scaling::Letterbox, int w = 64, int h = 32)
+  explicit Canvas(Stretch stretch = {}, int w = 64, int h = 32)
       : surface(SDL_CreateSurface(w, h, SDL_PIXELFORMAT_RGBA32)),
         sdl(SDL_CreateSoftwareRenderer(surface)),
-        renderer(sdl, 64, 32, scaling) {}
+        renderer(sdl, 64, 32, stretch) {}
   ~Canvas() {
     SDL_DestroyRenderer(sdl);
     SDL_DestroySurface(surface);
@@ -142,7 +142,7 @@ int solid_rows(Canvas& c, int width) {
 }  // namespace
 
 TEST_CASE("world text at 1.5x window scale: rasterized at the output size, every edge on a whole pixel") {
-  Canvas c(Scaling::Letterbox, 96, 48);  // 64 x 32 game pixels shown 1.5x
+  Canvas c({}, 96, 48);  // 64 x 32 game pixels shown 1.5x
   // Press Start 2P is drawn on an 8-unit grid: at 16 game px = 24 output px its
   // edges are whole output pixels, unless something resamples it.
   const FontSourcePtr smooth = alpha::platform::load_font(ALPHA_TEST_FONT, false);
@@ -157,7 +157,7 @@ TEST_CASE("world text at 1.5x window scale: rasterized at the output size, every
 }
 
 TEST_CASE("bitmap fonts draw whole texels: BMFont with kerning, and the built-in font with no file") {
-  Canvas c(Scaling::Letterbox, 96, 48);
+  Canvas c({}, 96, 48);
   const FontSourcePtr tiny = alpha::platform::load_font(ALPHA_TEST_FIXTURES "/fonts/tiny.fnt", true);
   CHECK(tiny->native() == 4);
   c.renderer.draw({kBg, {text_item(tiny, "AV", 4, {32, 16})}, {}});
@@ -197,21 +197,22 @@ TEST_CASE("world text atlas images are tracked per font and size; a replaced or 
   CHECK(evicted.size() == 2);  // the 10 px atlas, least recently used
 }
 
-TEST_CASE("scaling modes: integer and stretch keep the logical size; expand grows it to the output's aspect") {
-  Canvas integer(Scaling::Integer, 150, 80);
+TEST_CASE("stretch: keep and integer keep the logical size; expand grows it to the output's aspect") {
+  Canvas integer({Aspect::Keep, Scale::Integer}, 150, 80);
   CHECK(integer.renderer.logical_size() == Vec2{64, 32});
   SDL_RendererLogicalPresentation mode = SDL_LOGICAL_PRESENTATION_DISABLED;
   int w = 0;
   int h = 0;
   SDL_GetRenderLogicalPresentation(integer.sdl, &w, &h, &mode);
   CHECK(mode == SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
-  Canvas stretch(Scaling::Stretch, 100, 100);
-  SDL_GetRenderLogicalPresentation(stretch.sdl, &w, &h, &mode);
-  CHECK(mode == SDL_LOGICAL_PRESENTATION_STRETCH);
-  Canvas expand(Scaling::Expand, 128, 128);
+  Canvas keep({Aspect::Keep}, 128, 128);
+  keep.renderer.draw({kBg, {}, {}});
+  CHECK(keep.renderer.logical_size() == Vec2{64, 32});
+  Canvas expand({}, 128, 128);
   expand.renderer.draw({kBg, {}, {}});
   CHECK(expand.renderer.logical_size() == Vec2{64, 64});
-  CHECK(expand.pixel(32, 60) == kBg);  // the grown area is drawn, no bars
+  CHECK(expand.pixel(32, 4) == kBg);  // the grown area is drawn, no bars
+  CHECK(expand.pixel(32, 124) == kBg);
 }
 
 TEST_CASE("smooth circle/rect particles get a feathered edge; crisp ones are fill or background") {
@@ -239,7 +240,7 @@ TEST_CASE("smooth circle/rect particles get a feathered edge; crisp ones are fil
 
 // Measurement, not a check: alpha_tests -tc="*particle render bench*" --no-skip.
 TEST_CASE("particle render bench: 20000 particles, software renderer" * doctest::skip()) {
-  Canvas c(Scaling::Letterbox, 64, 32);
+  Canvas c({}, 64, 32);
   DrawItem item{EmitterSpec{}.look, {0, 0}, 0};
   for (int i = 0; i < kMaxParticles; ++i) {
     item.particles.push_back({{static_cast<float>(i % 64), static_cast<float>(i % 32)}, 2, kWhite});

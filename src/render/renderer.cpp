@@ -27,11 +27,8 @@ SDL_BlendMode sdl_blend(core::Blend b) {
   return SDL_BLENDMODE_BLEND;
 }
 
-SDL_RendererLogicalPresentation sdl_presentation(core::Scaling s) {
-  if (s == core::Scaling::Integer) return SDL_LOGICAL_PRESENTATION_INTEGER_SCALE;
-  if (s == core::Scaling::Stretch) return SDL_LOGICAL_PRESENTATION_STRETCH;
-  if (s == core::Scaling::Crop) return SDL_LOGICAL_PRESENTATION_OVERSCAN;
-  return SDL_LOGICAL_PRESENTATION_LETTERBOX;  // expand: letterbox of a size with the window's aspect
+SDL_RendererLogicalPresentation sdl_presentation(core::Scale s) {
+  return s == core::Scale::Integer ? SDL_LOGICAL_PRESENTATION_INTEGER_SCALE : SDL_LOGICAL_PRESENTATION_LETTERBOX;
 }
 
 // World-text atlases kept (sizes x fonts); a few per text size in use.
@@ -42,29 +39,25 @@ constexpr std::size_t kFontAtlases = 32;
 Frame::Frame(core::Color bg, std::vector<core::DrawItem> s, std::vector<core::TextItem> t)
     : background(bg), shapes(std::move(s)), texts(std::move(t)) {}
 
-Renderer::Renderer(SDL_Renderer* sdl, int width, int height, core::Scaling scaling)
+Renderer::Renderer(SDL_Renderer* sdl, int width, int height, core::Stretch stretch)
     : sdl_(sdl),
       game_size_{static_cast<float>(width), static_cast<float>(height)},
       size_(game_size_),
-      scaling_(scaling),
+      stretch_(stretch),
       fonts_(kFontAtlases, [this](const core::Image* image) { forget(image); }),
       compositor_(sdl) {
   present_logical();
   SDL_SetRenderDrawBlendMode(sdl_, SDL_BLENDMODE_BLEND);
 }
 
-// expand: the logical size takes the output's aspect (whole pixels).
+// The logical size for the output's current size (core::present), centered by SDL.
 void Renderer::present_logical() {
-  if (scaling_ == core::Scaling::Expand) {
-    int w = 0;
-    int h = 0;
-    SDL_GetRenderOutputSize(sdl_, &w, &h);
-    const core::Vec2 grown = core::expanded_size(game_size_, {static_cast<float>(w), static_cast<float>(h)});
-    size_ = {std::round(grown.x), std::round(grown.y)};
-  }
-  SDL_SetRenderLogicalPresentation(sdl_, static_cast<int>(size_.x), static_cast<int>(size_.y), sdl_presentation(scaling_));
+  int w = 0;
+  int h = 0;
+  SDL_GetRenderOutputSize(sdl_, &w, &h);
+  size_ = core::present(game_size_, {static_cast<float>(w), static_cast<float>(h)}, stretch_).logical;
+  SDL_SetRenderLogicalPresentation(sdl_, static_cast<int>(size_.x), static_cast<int>(size_.y), sdl_presentation(stretch_.scale));
 }
-
 
 Renderer::~Renderer() {
   for (const auto& [image, tex] : textures_) SDL_DestroyTexture(tex);
@@ -72,7 +65,7 @@ Renderer::~Renderer() {
 }
 
 void Renderer::draw(const Frame& frame) {
-  if (scaling_ == core::Scaling::Expand) present_logical();
+  present_logical();
   compositor_.begin(size_, core::needs_scene(frame.effects));
   const core::Color bg = frame.background;
   SDL_SetRenderDrawColor(sdl_, bg.r, bg.g, bg.b, bg.a);

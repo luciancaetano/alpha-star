@@ -75,10 +75,13 @@ ctx.spawn({ tags: ["popup"], pos, shape: { text: "+1", font: "pixel", size: 8, c
 ```
 
 `config.layers: { far: { z: -100, parallax: 0.2 }, fx: { z: 100 } }` + `layer: "far"` on specs
-(and `spawnMap(name, { layer, layers })` for tile layers). `config.window: { fullscreen?, scaling:
-"letterbox" | "integer" | "stretch" | "expand", resizable?, altEnter? }`; `ctx.window.fullscreen`,
+(and `spawnMap(name, { layer, layers })` for tile layers). `config.window: { fullscreen?, aspect?:
+"expand" | "keep_width" | "keep_height" | "keep", scale?: "fractional" | "integer", resizable?, altEnter? }`
+(Godot-style: the default `expand` fills any screen with more world, never bars); `ctx.camera.view`
+([x, y, w, h] the world the screen shows: size scenery and spawns to it); `ctx.window.fullscreen`,
 `ctx.window.size`; `ctx.safeArea` ([x, y, w, h] the display cutout and rounded corners leave
-visible; phones always run fullscreen, immersive). Particles run on the fixed step with the game's seeded random, so
+visible; phones always run fullscreen, immersive; UI elements with `class="safe"` are padded by it);
+`simulate(game, { size: [1080, 2340] })` tests a tall phone. Particles run on the fixed step with the game's seeded random, so
 `simulate(...).expect.particles().equals(n)` is exact. MCP `game_state` entities carry `layer`,
 `alpha`, `text` and `particles`.
 

@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="starfighter.rcss"/>
 </head>
-<body>
+<body class="safe">
   <div class="panel">
     <h1>GAME OVER</h1>
     <p id="score">SCORE 0</p>

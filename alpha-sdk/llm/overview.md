@@ -45,7 +45,7 @@ export default game({
     title: "Platformer", size: [320, 180], background: "#87ceeb", seed: 1, gravity: [0, 900],
     actions: { jump: ["Space", "W", "Up", "GamepadA"], restart: ["R", "GamepadStart"] },
     axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"] },
-    window: { scaling: "integer" },
+    window: { aspect: "keep_height", scale: "integer" },
   },
   start: "play",                       // must be a scene with `undefined` params
   scenes: { play, won },               // every declared scene, exactly once

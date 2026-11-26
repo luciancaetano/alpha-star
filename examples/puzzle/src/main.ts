@@ -21,7 +21,8 @@ export default game({
       language: ["L", "GamepadBack"],
     },
     locale: "en",
-    window: { scaling: "integer" },
+    // Pixel art: whole-number scale (square pixels); aspect "expand" (default) fills any screen with more world.
+    window: { scale: "integer" },
   },
   start: "start",
   scenes: { start, play, solved },

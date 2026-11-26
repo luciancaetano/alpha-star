@@ -46,12 +46,12 @@ struct RenderStats {
 };
 
 // Draws frames on an SDL renderer it does not own. The game's logical size
-// is presented into the output by `scaling` (core::Scaling), so scripts only
-// ever see game pixels; with expand the logical size follows the window.
+// is presented into the output by `stretch` (core::present), so scripts only
+// ever see game pixels; the revealed axes follow the window.
 // Batches break on texture, blend mode or layer parallax.
 class Renderer {
  public:
-  Renderer(SDL_Renderer* sdl, int width, int height, core::Scaling scaling = core::Scaling::Letterbox);
+  Renderer(SDL_Renderer* sdl, int width, int height, core::Stretch stretch = {});
   ~Renderer();
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;
@@ -60,7 +60,7 @@ class Renderer {
   const RenderStats& stats() const { return stats_; }
   void present();
   SDL_Renderer* sdl() const { return sdl_; }
-  // Game pixels the screen shows now (the game size, except with expand).
+  // Game pixels the screen shows now (the game size grown along the revealed axes).
   core::Vec2 logical_size() const { return size_; }
   // Saves what draw() produced, before present(). Returns false on failure.
   bool save_bmp(const std::string& path) const;
@@ -88,7 +88,7 @@ class Renderer {
   SDL_Renderer* sdl_;
   core::Vec2 game_size_;
   core::Vec2 size_;
-  core::Scaling scaling_;
+  core::Stretch stretch_;
   core::PixelGrid grid_;       // game pixels -> output pixels, this frame
   float window_scale_ = 1.0f;  // output pixels per game pixel
   RenderStats stats_;

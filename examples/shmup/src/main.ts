@@ -16,7 +16,8 @@ export default game({
     // Stars far behind (they barely move with camera shake), effects over everything.
     layers: { stars: { z: -100, parallax: 0.3 }, fx: { z: 100 } },
     collision: { categories: ["ship", "enemy", "shot"] },
-    window: { scaling: "integer" },
+    // Pixel art: whole-number scale (square pixels); aspect "expand" (default) fills any screen with more world.
+    window: { scale: "integer" },
   },
   start: "play",
   scenes: { play, over },

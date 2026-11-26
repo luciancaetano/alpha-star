@@ -6,9 +6,10 @@ import type { Starfighter } from "../types";
 type G = Starfighter;
 type Spec = EntitySpec<G["tags"], G["images"], {}, G["layers"], never, G["categories"]>;
 
-export function ship(): Spec {
+/** The player's ship at `at` (play.ts: SHIP.fromBottom above the bottom of the visible world). */
+export function ship(at: Vec2): Spec {
   return {
-    tags: ["ship"], pos: SHIP.start, z: 2, shape: { image: "ship" },
+    tags: ["ship"], pos: at, z: 2, shape: { image: "ship" },
     body: { type: "dynamic", fixedRotation: true, category: "ship", collidesWith: ["enemy"], collider: { rect: [12, 12] } },
     data: { lives: SHIP.lives, cooldown: 0, safeUntil: 0 },
   };

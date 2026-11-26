@@ -119,7 +119,7 @@ class World {
   bool following() const { return target_.has_value(); }
   // The camera between the previous and the current step, like draw_items.
   core::View view(float blend = 1.0f) const;
-  // The screen size the camera shows changed (scaling "expand").
+  // The screen size the camera shows changed (config.window.aspect reveals more world).
   void resize_view(core::Vec2 size);
 
   // Frees destroyed entities, advances physics, syncs transforms, animations,

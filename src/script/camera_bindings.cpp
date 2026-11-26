@@ -9,7 +9,9 @@
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
 #include "script/spec_fields.hpp"
+#include "script/window_config.hpp"
 #include "script/world_bindings.hpp"
+#include "ui/ui.hpp"
 
 namespace alpha::script {
 
@@ -80,7 +82,34 @@ JSValue to_world(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return new_vec2(ctx, core::to_world(core::view_of(camera(s)), screen));
 }
 
-constexpr std::array<Native, 6> kNatives{{
+// cameraView() -> [x, y, width, height]: the world rect the screen shows now
+// (the whole revealed area, not just config.size).
+JSValue camera_view(JSContext* ctx, ScriptState& s, JSValueConst*) {
+  const core::Box box = core::visible_area(core::view_of(camera(s)));
+  const std::array<double, 4> xywh{box.min.x, box.min.y, box.max.x - box.min.x, box.max.y - box.min.y};
+  JSValue out = JS_NewArray(ctx);
+  for (std::uint32_t i = 0; i < xywh.size(); ++i) JS_SetPropertyUint32(ctx, out, i, JS_NewFloat64(ctx, xywh[i]));
+  return out;
+}
+
+#if ALPHA_DEBUG_TOOLS  // test runner only
+// presentView(config, width, height): headless runs shown on a `width` x
+// `height` pixel screen (simulate({ size })) see the game size config.window
+// presents there, as the engine would. Call before the first scene.
+JSValue present_view(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  const core::Vec2 output{ranged(ctx, argv[1], "size[0]", 1.0, 16384.0), ranged(ctx, argv[2], "size[1]", 1.0, 16384.0)};
+  const core::WindowConfig config = window_config(ctx, Value(ctx, JS_DupValue(ctx, argv[0])));
+  s.view_size = core::present(s.design_size, output, config.stretch).logical;
+  s.window.size = output;
+  if (s.ui) s.ui->resize(static_cast<int>(s.view_size.x), static_cast<int>(s.view_size.y));
+  return JS_UNDEFINED;
+}
+
+constexpr std::array<Native, 1> kTestNatives{{{"presentView", guarded<present_view>, 3}}};
+#endif
+
+constexpr std::array<Native, 7> kNatives{{
+    {"cameraView", guarded<camera_view>, 0},
     {"cameraGet", guarded<camera_get>, 0},       {"cameraSet", guarded<camera_set>, 4},
     {"cameraFollow", guarded<camera_follow>, 4}, {"cameraShake", guarded<camera_shake>, 2},
     {"cameraBounds", guarded<camera_bounds>, 4}, {"toWorld", guarded<to_world>, 2},
@@ -88,6 +117,11 @@ constexpr std::array<Native, 6> kNatives{{
 
 }  // namespace
 
-void install_camera_bindings(JSContext* ctx, JSValueConst target) { install(ctx, target, kNatives); }
+void install_camera_bindings(JSContext* ctx, JSValueConst target) {
+  install(ctx, target, kNatives);
+#if ALPHA_DEBUG_TOOLS
+  install(ctx, target, kTestNatives);
+#endif
+}
 
 }  // namespace alpha::script

@@ -189,18 +189,45 @@ TEST_CASE("world text: a font from assets.fonts; text is settable; no font uses 
 TEST_CASE("ctx.window: fullscreen requests and size; config.window is parsed and checked") {
   Sandbox box;
   Host host(box.save());
-  const auto info = host.load(box.write("g.js", game(", window: { scaling: 'integer', fullscreen: true, altEnter: false }", R"(
+  const auto info = host.load(box.write("g.js", game(", window: { aspect: 'keep_width', scale: 'integer', fullscreen: true, altEnter: false }", R"(
     check(ctx.window.size[0] === 100 && ctx.window.size[1] === 100, 'size ' + ctx.window.size);
     check(!ctx.window.fullscreen, 'starts windowed');
     ctx.window.fullscreen = true;
     check(ctx.window.fullscreen, 'requested');
   )")));
   REQUIRE_MESSAGE(!host.paused(), host.error());
-  CHECK(info.window.scaling == alpha::core::Scaling::Integer);
+  CHECK(info.window.stretch.aspect == alpha::core::Aspect::KeepWidth);
+  CHECK(info.window.stretch.scale == alpha::core::Scale::Integer);
   CHECK(info.window.fullscreen);
   CHECK_FALSE(info.window.alt_enter);
   CHECK(host.window().request == true);
-  CHECK(error_of(box, ", window: { scaling: 'fit' }", "").find("config.window.scaling must be \"letterbox\"") != std::string::npos);
+  CHECK(error_of(box, ", window: { aspect: 'fit' }", "").find("config.window.aspect must be \"expand\"") != std::string::npos);
+  CHECK(error_of(box, ", window: { scale: 'pixel' }", "").find("config.window.scale must be \"fractional\" or \"integer\"") != std::string::npos);
+  Host fresh(box.save());
+  const alpha::script::GameInfo defaults = fresh.load(box.write("d.js", game("", "")));
+  CHECK(defaults.window.stretch.aspect == alpha::core::Aspect::Expand);  // fill the screen by default
+}
+
+TEST_CASE("the removed config.window.scaling fails naming its replacement") {
+  Sandbox box;
+  CHECK(error_of(box, ", window: { scaling: 'letterbox' }", "").find("for scaling \"letterbox\" use { aspect: \"keep\" }") != std::string::npos);
+  CHECK(error_of(box, ", window: { scaling: 'integer' }", "").find("use { scale: \"integer\" }") != std::string::npos);
+  CHECK(error_of(box, ", window: { scaling: 'crop' }", "").find("use { aspect: \"expand\" }") != std::string::npos);
+}
+
+TEST_CASE("ctx.camera.view: the world rect the screen shows, grown on the revealed axis around the camera") {
+  Sandbox box;
+  Host host(box.save());
+  host.load(box.write("g.js", game("", R"(
+    check(ctx.camera.view.join() === '0,0,100,100', 'design ' + ctx.camera.view);
+    ctx.camera.zoom = 2;
+    check(ctx.camera.view.join() === '25,25,50,50', 'zoomed ' + ctx.camera.view);
+    ctx.camera.zoom = 1;
+  )", "check(ctx.camera.view.join() === '0,-30,100,160', 'taller ' + ctx.camera.view);")));
+  REQUIRE_MESSAGE(!host.paused(), host.error());
+  host.resize_view({100, 160});  // a taller screen (aspect "expand"): more world above and below
+  steps(host, 1);
+  CHECK_MESSAGE(!host.paused(), host.error());
 }
 
 TEST_CASE("ctx.safeArea: the whole view, minus what cutouts and rounded corners hide") {

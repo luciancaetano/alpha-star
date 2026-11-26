@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="platformer.rcss"/>
 </head>
-<body>
+<body class="safe">
   <h1 class="shadow">all coins!</h1>
   <p class="shadow center">press R to play again</p>
 </body>

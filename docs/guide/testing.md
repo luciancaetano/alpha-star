@@ -26,6 +26,7 @@ export function holdingRightRuns() {
 | `saves` / `settings` | Boot state, e.g. `{ main: { best: 5 } }`, `{ locale: "pt" }` |
 | `appPauses` | `[[from, to]]` frames the app is paused (focus lost) |
 | `platform` | the os `ctx.platform` reports (`"android"`, `"windows"`, ...; default: the machine running the test) |
+| `size` | screen pixels to run on, e.g. a tall phone `[1080, 2340]`: `ctx.camera.view`, `ctx.safeArea` and the UI grow as `config.window.aspect` says (default: `config.size`) |
 
 ## Checks
 

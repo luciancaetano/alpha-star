@@ -136,6 +136,7 @@ add_library(alpha_engine
   script/sprite_bindings.cpp
   script/synth_parser.cpp
   script/system_bindings.cpp
+  script/window_config.cpp
   script/text_look.cpp
   script/ui_bindings.cpp
   script/world_bindings.cpp

@@ -1,6 +1,6 @@
 # Testing
 
-> summary: Headless deterministic tests with alpha/test simulate(), its options (inputs, clicks, saves, settings, appPauses, platform) and checks (expect, entities, state); read before writing or debugging test/main.test.ts.
+> summary: Headless deterministic tests with alpha/test simulate(), its options (inputs, clicks, saves, settings, appPauses, platform, size) and checks (expect, entities, state); read before writing or debugging test/main.test.ts.
 
 `alpha test` (npm test) type-checks and bundles `test/main.test.ts`, then runs every exported function headlessly. A test fails by throwing.
 
@@ -19,6 +19,7 @@ simulate(game, {
   settings?: { locale: "pt", reducedMotion: true, volumes: { music: 0.5 } },
   appPauses?: [[60, 120]],                        // frames paused: onPause at from, onResume at to
   platform: "android",                            // what ctx.platform reports (default: this machine)
+  size: [1080, 2340],                             // screen pixels (a tall phone): ctx.camera.view grows per config.window.aspect
 }): Run
 
 run.expect.scene(name); run.expect.noErrors();

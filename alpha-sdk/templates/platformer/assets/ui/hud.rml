@@ -2,7 +2,7 @@
 <head>
   <link type="text/rcss" href="platformer.rcss"/>
 </head>
-<body>
+<body class="safe">
   <p id="coins" class="shadow">coins 0</p>
 </body>
 </rml>

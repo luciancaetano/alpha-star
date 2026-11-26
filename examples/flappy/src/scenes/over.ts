@@ -5,7 +5,7 @@ import { FADE, WORLD } from "../tuning";
 
 export default scene("over", {
   enter(ctx, { score }) {
-    ctx.spawn(background());
+    ctx.spawn(background(ctx.camera.view));
     ctx.audio.tone({ wave: "noise", freq: 1, duration: 0.3, volume: 0.3, release: 0.25 });
     const best = Math.max(score, ctx.save.get("best", 0));
     ctx.save.set("best", best);
@@ -15,7 +15,7 @@ export default scene("over", {
     // Mouse, touch, Enter/Space or gamepad A on the focused button.
     ctx.ui.on("over", "again", "click", () => ctx.go("play"));
     // The world fades to dark behind the game-over panel (update raises its alpha).
-    ctx.spawn(ground());
+    ctx.spawn(ground(ctx.camera.view));
     ctx.spawn({
       tags: ["fade"], pos: [WORLD.width / 2, WORLD.height / 2], z: 10,
       shape: { rect: [WORLD.width, WORLD.height], color: "#000000", alpha: 0 },

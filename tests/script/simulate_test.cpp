@@ -135,3 +135,30 @@ TEST_CASE("test failures name the TypeScript source too") {
   REQUIRE(results.size() == 1);
   CHECK(results[0].error.find("src/play.ts:5:1") != std::string::npos);
 }
+
+TEST_CASE("simulate size: the game sees the world config.window.aspect shows on that screen") {
+  Sandbox box;
+  const auto game_with = [&box](const std::string& name, const std::string& window) {
+    return std::filesystem::path(box.write(name, "import { define } from 'alpha'; const { scene, game } = define();\n"
+                                                 "const play = scene('play', { state: () => ({}), enter(ctx) { ctx.state.view = ctx.camera.view;"
+                                                 " ctx.state.safe = ctx.safeArea; } });\n"
+                                                 "export default game({ config: { title: 't', size: [288, 512]" + window +
+                                                     " }, start: 'play', scenes: { play } });\n"))
+        .generic_string();
+  };
+  const std::string fill = game_with("fill.js", "");
+  const std::string bars = game_with("bars.js", ", window: { aspect: 'keep' }");
+  Host host(box.save());
+  const auto results = host.test(box.write(
+      "tests.js", "import { simulate } from 'alpha/test';\nimport fill from '" + fill + "';\nimport bars from '" + bars + "';\n"
+                  "const view = (g, size) => JSON.stringify(simulate(g, { seconds: 0.1, size }).state);\n"
+                  "export function a() { const v = view(fill, [1080, 2340]);\n"
+                  "  if (v !== JSON.stringify({ view: [0, -56, 288, 624], safe: [0, 0, 288, 624] })) throw new Error(v); }\n"
+                  "export function b() { const v = view(bars, [1080, 2340]);\n"
+                  "  if (v !== JSON.stringify({ view: [0, 0, 288, 512], safe: [0, 0, 288, 512] })) throw new Error(v); }\n"
+                  "export function c() { simulate(fill, { seconds: 0.1, size: [0, 5] }); }\n"));
+  REQUIRE(results.size() == 3);
+  CHECK_MESSAGE(results[0].passed(), results[0].error);
+  CHECK_MESSAGE(results[1].passed(), results[1].error);
+  CHECK(results[2].error.find("size must be [width, height] screen pixels") != std::string::npos);
+}

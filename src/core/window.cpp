@@ -1,26 +1,53 @@
 #include "core/window.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 namespace alpha::core {
 
-std::optional<Scaling> parse_scaling(std::string_view name) {
-  if (name == "letterbox") return Scaling::Letterbox;
-  if (name == "integer") return Scaling::Integer;
-  if (name == "stretch") return Scaling::Stretch;
-  if (name == "expand") return Scaling::Expand;
-  if (name == "crop") return Scaling::Crop;
+std::optional<Aspect> parse_aspect(std::string_view name) {
+  if (name == "keep") return Aspect::Keep;
+  if (name == "keep_width") return Aspect::KeepWidth;
+  if (name == "keep_height") return Aspect::KeepHeight;
+  if (name == "expand") return Aspect::Expand;
   return std::nullopt;
 }
 
-Vec2 expanded_size(Vec2 game, Vec2 output) {
-  if (output.x <= 0 || output.y <= 0) return game;
-  const float aspect = output.x / output.y;
-  if (aspect > game.x / game.y) return {game.y * aspect, game.y};
-  return {game.x, game.x / aspect};
+std::optional<Scale> parse_scale(std::string_view name) {
+  if (name == "fractional") return Scale::Fractional;
+  if (name == "integer") return Scale::Integer;
+  return std::nullopt;
 }
 
-Vec2 initial_window_size(Vec2 game, Scaling scaling) { return game * (scaling == Scaling::Integer ? 2.0f : 1.5f); }
+namespace {
+
+bool reveals_x(Aspect a) { return a == Aspect::Expand || a == Aspect::KeepHeight; }
+bool reveals_y(Aspect a) { return a == Aspect::Expand || a == Aspect::KeepWidth; }
+
+// The design size grown along a revealed axis to fill `room` game pixels (whole pixels).
+float grown(float design, float room, bool reveals, Scale scale) {
+  if (!reveals) return design;
+  return std::max(design, scale == Scale::Integer ? std::floor(room) : std::round(room));
+}
+
+}  // namespace
+
+// The scale that fits the design size (integer: floored, at least 1), then
+// the revealed axes fill the rest; the final scale is the one that fits the
+// grown size, as SDL's logical presentation computes it.
+Presentation present(Vec2 design, Vec2 output, Stretch stretch) {
+  if (output.x <= 0 || output.y <= 0) return {design, 1.0f, {}};
+  const bool integer = stretch.scale == Scale::Integer;
+  float fit = std::min(output.x / design.x, output.y / design.y);
+  if (integer) fit = std::max(1.0f, std::floor(fit));
+  const Vec2 logical{grown(design.x, output.x / fit, reveals_x(stretch.aspect), stretch.scale),
+                     grown(design.y, output.y / fit, reveals_y(stretch.aspect), stretch.scale)};
+  float scale = std::min(output.x / logical.x, output.y / logical.y);
+  if (integer) scale = std::max(1.0f, std::floor(scale));
+  return {logical, scale, (output - logical * scale) * 0.5f};
+}
+
+Vec2 initial_window_size(Vec2 game, Scale scale) { return game * (scale == Scale::Integer ? 2.0f : 1.5f); }
 
 bool starts_fullscreen(const WindowConfig& config, Os os) { return config.fullscreen || is_mobile(os); }
 

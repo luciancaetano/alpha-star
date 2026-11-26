@@ -19,8 +19,8 @@ export default scene("play", {
   state: () => ({ score: 0 }),
 
   enter(ctx) {
-    ctx.spawn(background());
-    ctx.spawn(ground());
+    ctx.spawn(background(ctx.camera.view));
+    ctx.spawn(ground(ctx.camera.view));
     ctx.spawn(bird(true));
     ctx.ui.show("hud");
 
@@ -31,7 +31,7 @@ export default scene("play", {
       ctx.destroy(goal);
       ctx.audio.play("point");
     });
-    ctx.every(PIPE.every, () => pipePair(ctx.random).forEach((p) => ctx.spawn(p)));
+    ctx.every(PIPE.every, () => pipePair(ctx.random, ctx.camera.view).forEach((p) => ctx.spawn(p)));
   },
 
   update(ctx) {
@@ -42,10 +42,11 @@ export default scene("play", {
       ctx.audio.play("flap");
     }
     b.rotation = Math.min(BIRD.maxTilt, Math.max(-30, b.body.velocity.y * 0.15));
-    if (b.pos.y < 0) crash(ctx);
+    const [left, top] = ctx.camera.view;
+    if (b.pos.y < top) crash(ctx);  // flew off the top of the screen
 
     for (const e of ctx.findAll("scrolls")) {
-      if (e.pos.x < -PIPE.width) ctx.destroy(e);
+      if (e.pos.x < left - PIPE.width) ctx.destroy(e);
     }
   },
 });

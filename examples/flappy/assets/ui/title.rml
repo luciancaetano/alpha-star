@@ -9,7 +9,7 @@
     .small { margin-top: 16dp; font-size: 7dp; color: #c1bbeb; }
   </style>
 </head>
-<body>
+<body class="safe">
   <p class="eyebrow shadow" data-t="title.tagline">A COSMIC ADVENTURE</p>
   <h1 class="shadow">FLAPPY<span class="orbit">ORBIT</span></h1>
   <!-- data-t: the engine fills these with ctx.t(key) in the current locale. -->

@@ -52,5 +52,6 @@ The engine binaries must match the SDK (`alpha --version` = bundled engines' ver
 - Tests differ between runs: something non-deterministic (Date, real time, iteration over external state). Use `ctx.random`, `ctx.time`, `ctx.dt`.
 - Handler acts twice / on a dead entity: several contacts per step; check `e.alive` or a `data` flag.
 - UI text reset or buttons dead after `ctx.go`: documents reload hidden and handlers drop on scene change; redo show/set/on in `enter`.
-- Pixel art blurry or uneven: `config.window.scaling: "integer"`, `filter: "nearest"` or `"sharp"`.
+- Dark bands around the game on a phone or resized window: `config.window.aspect` is `"keep"`; use the default `"expand"` (or `keep_width` / `keep_height`) and size scenery to `ctx.camera.view`.
+- Pixel art blurry or uneven: `config.window.scale: "integer"`, `filter: "nearest"` or `"sharp"`.
 - World text shows `?`: only ASCII + Latin-1 draw in world text; use RmlUi with a font that has the glyphs.

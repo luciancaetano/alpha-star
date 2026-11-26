@@ -2,6 +2,7 @@
 
 #include <RmlUi/Core/Context.h>
 #include <RmlUi/Core/Element.h>
+#include <RmlUi/Core/ElementDocument.h>
 #include <SDL3/SDL.h>
 
 #include <string>
@@ -227,4 +228,22 @@ TEST_CASE("ui input: keyboard Tab moves focus, Escape is back, motion and text p
   SDL_Event other{};
   other.type = SDL_EVENT_WINDOW_SHOWN;
   CHECK_FALSE(alpha::ui::consumes(m.ui, other));
+}
+
+TEST_CASE("ui: class=\"safe\" elements are padded by the safe area, also in documents loaded later") {
+  Sandbox box;
+  Ui ui{100, 100};
+  const char* hud = R"(<rml><head><style>body { width: 100%; height: 100%; } #corner { display: block; width: 5px; height: 5px; }</style></head>
+<body class="safe"><div id="corner"></div></body></rml>)";
+  ui.add("hud", box.write("hud.rml", hud));
+  ui.show("hud");
+  ui.safe_area({12, 3, 0, 7});
+  ui.context().Update();
+  Rml::Element* corner = ui.context().GetDocument(0)->GetElementById("corner");
+  CHECK(corner->GetAbsoluteOffset().x == doctest::Approx(12));
+  CHECK(corner->GetAbsoluteOffset().y == doctest::Approx(3));
+  ui.add("hud", box.write("hud.rml", hud));  // reloaded (hot reload): padded at once
+  ui.show("hud");
+  ui.context().Update();
+  CHECK(ui.context().GetDocument(0)->GetElementById("corner")->GetAbsoluteOffset().x == doctest::Approx(12));
 }

@@ -45,7 +45,7 @@ function animate(p: Hero, ctx: Play, move: number) {
 - Override per asset: `{ file, filter }` on images and maps (their tilesets), `filter` on sheets. Filled shapes: `smooth`. Fonts: `{ file, pixelMode }`.
 - `"nearest"`: crisp; uneven/jagged at non-whole scales or rotated. `"linear"`: smooth art, photos (pixel art blurs). `"sharp"`: pixel art at any size or angle (square pixels, soft ~1 px edges); 16x that image's texture memory.
 - Never put `pixelMode` on an image/sheet/map: the engine rejects it (`pixelMode is not an image option; use filter: ...`). Older README text shows that form; `filter` is current.
-- Crisp pixel art also wants `config.window.scaling: "integer"` (camera-and-window.md).
+- Crisp pixel art also wants `config.window.scale: "integer"` (camera-and-window.md).
 - Particles with an image or sheet shape use their source's filtering.
 
 ## Rules and gotchas
