@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Networking - alpha-star</title><link rel="stylesheet" href="style.css"></head>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="tutorial-hop.html">Tutorial: a one-file game</a></li><li><a href="first-game.html">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Build your game</h3><ul><li><a href="input.html">Input</a></li><li><a href="physics.html">Physics</a></li><li><a href="tilemaps.html">Sprites, camera, LDtk levels</a></li><li><a href="particles.html">Particles and effects</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="net.html" class="here">Networking</a></li></ul><h3>Ship and automate</h3><ul><li><a href="testing.html">Testing</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li><li><a href="mcp.html">MCP for agents</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<main><h1 id="networking">Networking</h1>
+<p><strong>What you'll build:</strong> a game that joins a WebSocket server, shows what the server says and answers it, and a test that plays it against a fake server with no network.</p>
+<p><code>alpha:net</code> gives a game TCP, UDP and WebSocket (<code>ws://</code> and <code>wss://</code>) clients. There are no callbacks: at the start of each fixed step the engine delivers what arrived, and during the step the socket's state and messages stay the same. You read with <code>receive()</code> and write with <code>send()</code>.</p>
+<h2 id="1-open-a-socket-in-enter">1. Open a socket in <code>enter</code></h2>
+<pre><code>import { define } from "alpha";
+import { net, type Socket } from "alpha:net";
+
+interface Chat {
+  actions: "say";
+  axes: never;
+  sounds: never;
+  images: never;
+  tags: {};
+  ui: { hud: "status" | "last" };
+  scenes: "play";
+}
+
+const { scene, game } = define&lt;Chat&gt;();
+let ws: Socket;
+
+const play = scene("play", {
+  enter() {
+    ws = net.ws("ws://localhost:9000/chat");
+  },
+  update(ctx) {
+    for (const m of ws.receive()) ctx.ui.set("hud", "last", String(m.data));
+    if (ctx.input.pressed("say")) ws.send("hello");
+    ctx.ui.set("hud", "status", ws.state === "closed" ? `offline: ${ws.error ?? "closed"}` : ws.state);
+  },
+});
+
+export default game({
+  config: { title: "Chat", size: [320, 180], actions: { say: ["Space"] } },
+  assets: { ui: { hud: "ui/hud.rml" } },
+  start: "play",
+  scenes: { play },
+});</code></pre>
+<p>Open sockets in <code>enter</code> (or later), not at module top level: test runs (<code>simulate</code>) only see sockets their own game instance opened. A socket that fails never throws; it becomes <code>"closed"</code> and <code>ws.error</code> says why (<code>connect to localhost:9000 refused</code>, <code>ws handshake failed: server answered HTTP 404</code>, ...). To reconnect, open a new socket.</p>
+<h2 id="2-pick-a-transport">2. Pick a transport</h2>
+<table><thead><tr><th></th><th><code>net.tcp(host, port, opts)</code></th><th><code>net.udp(host, port, opts)</code></th><th><code>net.ws(url, opts)</code></th></tr></thead><tbody><tr><td>Message</td><td>framed by <code>framing</code></td><td>one datagram</td><td>one WebSocket message</td></tr><tr><td>Order / delivery</td><td>guaranteed</td><td>none</td><td>guaranteed</td></tr><tr><td><code>data</code></td><td>string for <code>"lines"</code>, else <code>Uint8Array</code></td><td><code>Uint8Array</code></td><td>string (text) or <code>Uint8Array</code> (binary)</td></tr></tbody></table>
+<p>TCP framing: <code>"u32"</code> (default) and <code>"u16"</code> put the payload length first (big-endian); <code>"lines"</code> sends UTF-8 lines ending in <code>\n</code>; <code>"raw"</code> delivers each chunk read, with no boundaries. WebSocket: <code>protocols</code> and <code>headers</code> (for example <code>Authorization</code>) go in the handshake; ping/pong and fragments are handled for you. <code>wss://</code> checks the server's certificate against the system's trusted roots.</p>
+<p>Limits: 32 open sockets, 1 MiB per message (UDP 1200 bytes), 8 MiB queued each way per socket. Call <code>receive()</code> every step: a socket whose inbound queue fills up closes with an error.</p>
+<h2 id="3-test-it-against-a-fake-server">3. Test it against a fake server</h2>
+<p>In <code>alpha test</code>, sockets reach an in-memory network instead of the real one:</p>
+<pre><code>import { simulate, netFake } from "alpha/test";
+import game from "../src/main";
+
+export function showsWhatTheServerSays() {
+  const srv = netFake.server("ws", "ws://localhost:9000/chat", { latencySteps: 3 });
+  srv.onConnect((peer) =&gt; peer.send("welcome"));
+  const run = simulate(game, { seconds: 0.5, inputs: { say: [20] } });
+  run.expect.noErrors();
+  run.expect.text("hud", "last").equals("welcome");
+  if (srv.messages()[0] !== "hello") throw new Error(`server got ${String(srv.messages()[0])}`);
+}</code></pre>
+<p>Each test starts with no servers. Latency is in steps and UDP <code>loss</code> uses a fixed seed, so a test passes or fails the same way every time.</p>
+<h2 id="4-repeat-a-network-bug">4. Repeat a network bug</h2>
+<p>Run the engine with <code>--net-record net.tape</code> to write everything the game's sockets received, step by step, when it exits; run it again with <code>--net-replay net.tape</code> to deliver the same messages with no network. MCP agents see the sockets in <code>state</code> (<code>net</code>: kind, endpoint, state, error, byte counts).</p>
+<p>Android exports ask for the INTERNET permission only when the game's code imports <code>alpha:net</code>.</p></main></body></html>

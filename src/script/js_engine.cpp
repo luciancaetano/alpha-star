@@ -41,12 +41,12 @@ void Engine::add_builtin(std::string name, std::string_view source) {
   builtins_[std::move(name)] = std::string(source);
 }
 
-// "built-in modules: alpha, ..." (internal "alpha:" modules are not listed). Which
-// builtins exist depends on the build flavor, e.g. alpha/test is not in shipping.
+// "built-in modules: alpha, ..." (internal "alpha:" modules are not listed; alpha:net is
+// for games). Which builtins exist depends on the build flavor, e.g. alpha/test is not in shipping.
 std::string Engine::public_builtins() const {
   std::string names;
   for (const auto& [name, source] : builtins_) {
-    if (name.find(':') == std::string::npos) names += (names.empty() ? "" : ", ") + name;
+    if (name.find(':') == std::string::npos || name == "alpha:net") names += (names.empty() ? "" : ", ") + name;
   }
   return "built-in modules: " + names;
 }

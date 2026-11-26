@@ -1,6 +1,6 @@
 {
   "name": "@alpha-star/sdk",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Types and CLI for alpha-star games: check, export packs (JS + assets), run.",
   "type": "module",
   "repository": {
@@ -43,8 +43,8 @@
     "zod": "3.25.76"
   },
   "optionalDependencies": {
-    "@alpha-star/engine-android-arm64": "0.6.0",
-    "@alpha-star/engine-linux-x64": "0.6.0",
-    "@alpha-star/engine-win32-x64": "0.6.0"
+    "@alpha-star/engine-android-arm64": "0.6.1",
+    "@alpha-star/engine-linux-x64": "0.6.1",
+    "@alpha-star/engine-win32-x64": "0.6.1"
   }
 }

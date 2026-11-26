@@ -22,6 +22,7 @@
 #include "core/tags.hpp"
 #include "core/timers.hpp"
 #include "ecs/world.hpp"
+#include "net/hub.hpp"
 #include "ui/ui.hpp"
 
 namespace alpha::script {
@@ -79,6 +80,8 @@ struct ScriptState {
   std::unique_ptr<ui::Ui> ui;
   // Time natives spent this frame by section (timers, physics, ...); Host collects it.
   core::FrameTimes times;
+  // alpha:net sockets, made on the first one; destroyed first, closing them all.
+  std::unique_ptr<net::Hub> net;
 };
 
 

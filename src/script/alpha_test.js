@@ -12,6 +12,54 @@ function fail(message) {
   throw new Error(message);
 }
 
+// ---- netFake: in-memory servers that alpha:net sockets reach in test runs ----
+
+let fakeServers = [];
+
+function fakePeer(id) {
+  return Object.freeze({ id, send: (data) => N.netFakePeer(id, "send", data), close: (code = 1000) => N.netFakePeer(id, "close", code) });
+}
+
+// Delivers what each server saw since the last step to its handlers. The test runner
+// starts each test on a fresh network (netFakeGeneration): older servers are dropped.
+function pollFakes() {
+  const generation = N.netFakeGeneration();
+  fakeServers = fakeServers.filter((s) => s.generation === generation);
+  for (const s of fakeServers) {
+    const ev = N.netFakePoll(s.id);
+    for (const p of ev.connects) s.onConnect?.(s.peer(p));
+    for (const [p, data] of ev.messages) {
+      s.log.push(data);
+      s.onMessage?.(s.peer(p), data);
+    }
+    for (const p of ev.closes) s.onClose?.(s.peer(p));
+  }
+}
+
+const FAKE_KINDS = ["tcp", "udp", "ws"];
+
+export const netFake = Object.freeze({
+  server(kind, endpoint, opts = {}) {
+    if (!FAKE_KINDS.includes(kind)) fail(`netFake.server: kind must be one of ${FAKE_KINDS.join("|")}, got ${JSON.stringify(kind)}`);
+    if (typeof endpoint !== "string") fail(`netFake.server: endpoint must be "host:port" (tcp/udp) or the ws:// url, got ${JSON.stringify(endpoint)}`);
+    const { latencySteps = 0, loss = 0, ...extra } = opts;
+    if (Object.keys(extra).length) fail(`netFake.server: unknown option "${Object.keys(extra)[0]}"; options: latencySteps, loss`);
+    if (!Number.isInteger(latencySteps) || latencySteps < 0 || latencySteps > 600) fail(`netFake.server: latencySteps must be an integer 0..600, got ${latencySteps}`);
+    if (typeof loss !== "number" || !(loss >= 0 && loss <= 1)) fail(`netFake.server: loss must be 0..1, got ${loss}`);
+    const peers = new Map();
+    const s = { id: N.netFakeServer(kind, endpoint, latencySteps, loss), generation: N.netFakeGeneration(), log: [] };
+    s.peer = (id) => peers.get(id) ?? peers.set(id, fakePeer(id)).get(id);
+    fakeServers.push(s);
+    return Object.freeze({
+      onConnect: (fn) => void (s.onConnect = fn),
+      onMessage: (fn) => void (s.onMessage = fn),
+      onClose: (fn) => void (s.onClose = fn),
+      messages: () => [...s.log],
+      peers: () => [...peers.values()],
+    });
+  },
+});
+
 function framesOf(seconds) {
   if (typeof seconds !== "number" || !(seconds > 0)) fail(`simulate: seconds must be a positive number, got ${seconds}`);
   return Math.round(seconds / DT);
@@ -235,6 +283,7 @@ function runGame(game, opts) {
         if (paused) continue;
         sim.within(() => holdFrame(players, f, touches));
         sim.step(DT);
+        pollFakes();
       } catch (e) {
         error = e;  // the game pauses here, as it would in the engine
       }

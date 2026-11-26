@@ -1,5 +1,5 @@
 // Compiles an alpha-star game: type-check, then bundle into one ES module.
-// Engine modules ("alpha", "alpha/*") stay external; the engine provides them.
+// Engine modules ("alpha", "alpha/*", "alpha:net") stay external; the engine provides them.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +9,7 @@ import * as esbuild from "esbuild";
 const SDK_DIR = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const TYPES = path.join(SDK_DIR, "types", "alpha.d.ts");
 const TSCONFIG = path.join(SDK_DIR, "tsconfig.game.json");
-const ENGINE_MODULES = ["alpha", "alpha/*"];
+const ENGINE_MODULES = ["alpha", "alpha/*", "alpha:net"];
 const TARGET = "es2023"; // QuickJS-ng feature level
 
 /** @returns {{ file: string, line: number, column: number, message: string }[]} */

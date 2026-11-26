@@ -1,6 +1,6 @@
 # Testing
 
-> summary: Headless deterministic tests with alpha/test simulate(), its options (inputs, clicks, touches, saves, settings, appPauses, platform, size) and checks (expect, entities, state); read before writing or debugging test/main.test.ts.
+> summary: Headless deterministic tests with alpha/test simulate(), its options (inputs, clicks, touches, saves, settings, appPauses, platform, size), checks (expect, entities, state) and netFake servers for alpha:net games; read before writing or debugging test/main.test.ts.
 
 `alpha test` (npm test) type-checks and bundles `test/main.test.ts`, then runs every exported function headlessly. A test fails by throwing.
 
@@ -54,6 +54,12 @@ export function runningRightCollectsTheFirstCoins() {
   run.expect.text("hud", "coins").equals("coins 2/8");
 }
 ```
+
+## Network games
+
+`netFake.server(kind, endpoint, { latencySteps?, loss? })` from `alpha/test`: in `alpha test` every
+`alpha:net` socket reaches these in-memory servers (`onConnect`, `onMessage`, `onClose`, `messages()`,
+`peer.send/close`), never the real network. See net.md.
 
 ## Rules and gotchas
 

@@ -152,3 +152,11 @@
 | Dev tools layout | `devtools::tools_scale` (larger of the display content scale and the screen's shorter side / 1080, within 1..4: ImGui sizes and `FontScaleDpi`, crisp text) and `devtools::layout_panels` (pure: overlay + time on top, console along the bottom, entities + profiler between, side by side in landscape / stacked in portrait, inside `SDL_GetWindowSafeArea`). Windows go back to their places each time the tools open. |
 
 - **Showcase landing**: GitHub Pages entry (`docs/site/index.html`), generated from `alpha-sdk/scripts/landing.mjs` with a six-example slider and real captures in `docs/guide/assets/`. The setup guide lives at `getting-started.html`.
+| alpha:net | Embedded module (`src/script/net.js`) with TCP, UDP and WebSocket clients for games; validates options and calls `netOpen/netSend/netReceive/netInfo/netClose`. |
+| Socket (net) | `net::Socket`: one script socket. Arrivals are pumped any time; `deliver(step)` makes them and the state visible at the start of a fixed step; sends queue until `flush()` after the step. |
+| Hub (net) | `net::Hub`: every socket of one game instance (`ScriptState::net`), the 32-socket cap, the per-step order pump -> deliver -> script -> flush; destroying it closes every socket. |
+| Link | `net::Link`: a transport carrying whole messages (`TcpLink` over a `ByteStream`, UDP and WebSocket links in `platform/net_*`, `FakeNet` links in tests). |
+| ByteStream | `net::ByteStream`: an ordered byte stream that never blocks (SDL3_net TCP, or Mbed TLS over one for `wss://`). |
+| Framing | How TCP bytes become messages: `lines`, `u16`, `u32` (length prefix) or `raw` (`net::Deframer`). |
+| netFake | `alpha/test` in-memory servers (`net::FakeNet`): in test runs every socket reaches them; latency in steps, UDP loss from a fixed seed. |
+| Net tape | `net::Tape`: deliveries per socket and step, written by `--net-record` and delivered again by `--net-replay` with no network. |

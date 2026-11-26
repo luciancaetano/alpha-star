@@ -28,7 +28,13 @@ set(ALPHA_TEST_SOURCES
   core/touch_test.cpp
   core/touch_pad_test.cpp
   core/values_test.cpp
-  core/version_test.cpp)
+  core/version_test.cpp
+  net/framing_test.cpp
+  net/tcp_link_test.cpp
+  net/ws_handshake_test.cpp)
+if(ALPHA_DEBUG_TOOLS)
+  list(APPEND ALPHA_TEST_SOURCES net/socket_test.cpp net/tape_test.cpp)
+endif()
 set(ALPHA_TEST_LIBS alpha_core)
 
 if(ALPHA_WITH_RUNTIME_DEPS)
@@ -47,6 +53,8 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     platform/gamepads_test.cpp
     platform/log_file_test.cpp
     platform/mobile_test.cpp
+    platform/net_real_test.cpp
+    platform/net_tls_test.cpp
     platform/sdl_input_test.cpp
     platform/window_test.cpp
     render/effects_render_test.cpp
@@ -74,6 +82,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/entity_links_test.cpp
     script/world_freeze_test.cpp
     script/flow_test.cpp
+    script/net_script_test.cpp
     script/physics_script_test.cpp
     script/pixel_mode_test.cpp
     script/prefs_script_test.cpp
@@ -120,6 +129,9 @@ target_include_directories(alpha_tests PRIVATE script)
 target_compile_definitions(alpha_tests PRIVATE DOCTEST_CONFIG_USE_STD_HEADERS
   ALPHA_TEST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures"
   ALPHA_TEST_FONT="${PROJECT_SOURCE_DIR}/examples/flappy/assets/fonts/PressStart2P-Regular.ttf")
+if(ALPHA_WITH_RUNTIME_DEPS)  # Mbed TLS's test certificates: a local wss:// server
+  target_compile_definitions(alpha_tests PRIVATE ALPHA_TEST_TLS_DATA="${mbedtls_SOURCE_DIR}/framework/data_files")
+endif()
 if(TARGET glslang-standalone)  # the debug-engine compile path, against the built tool
   target_compile_definitions(alpha_tests PRIVATE ALPHA_TEST_GLSLANG="$<TARGET_FILE:glslang-standalone>")
   add_dependencies(alpha_tests glslang-standalone)

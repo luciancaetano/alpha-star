@@ -39,9 +39,16 @@ add_library(alpha_core
   core/touch_pad.cpp
   core/touch_stick.cpp
   core/version.cpp
-  core/window.cpp)
-if(ALPHA_DEBUG_TOOLS)  # hot reload's file watch: dev/release only
-  target_sources(alpha_core PRIVATE core/pack_watch.cpp)
+  core/window.cpp
+  net/framing.cpp
+  net/hub.cpp
+  net/message.cpp
+  net/sha1.cpp
+  net/socket.cpp
+  net/tcp_link.cpp
+  net/ws_handshake.cpp)
+if(ALPHA_DEBUG_TOOLS)  # hot reload's file watch and the alpha/test network fake: dev/release only
+  target_sources(alpha_core PRIVATE core/pack_watch.cpp net/fake_net.cpp net/tape.cpp)
 endif()
 target_include_directories(alpha_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(alpha_core PUBLIC ALPHA_VERSION="${PROJECT_VERSION}")
@@ -53,7 +60,7 @@ if(NOT ALPHA_WITH_RUNTIME_DEPS)
 endif()
 
 # Script runtime JS is embedded in the binary: the player ships one executable.
-set(ALPHA_JS_FILES alpha alpha_test audio flow i18n ldtk levels physics prefs runtime tween)
+set(ALPHA_JS_FILES alpha alpha_test audio flow i18n ldtk levels net physics prefs runtime tween)
 # Each file becomes adjacent raw literals of <= 8000 chars: MSVC rejects a single
 # literal over ~16 KB (C2026), while concatenated ones may reach 64 KB.
 foreach(js ${ALPHA_JS_FILES})
@@ -99,6 +106,12 @@ add_library(alpha_engine
   platform/log_file.cpp
   platform/mobile.cpp
   platform/music_stream.cpp
+  platform/net_links.cpp
+  platform/net_roots.cpp
+  platform/net_stream.cpp
+  platform/net_tls.cpp
+  platform/net_udp.cpp
+  platform/net_ws.cpp
   platform/sdl_input.cpp
   platform/shader_compiler.cpp
   platform/shader_files.cpp
@@ -138,6 +151,7 @@ add_library(alpha_engine
   script/js_engine.cpp
   script/js_value.cpp
   script/map_bindings.cpp
+  script/net_bindings.cpp
   script/spec_fields.cpp
   script/spec_parser.cpp
   script/sprite_bindings.cpp
@@ -177,7 +191,10 @@ target_include_directories(alpha_engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(alpha_engine PUBLIC alpha_core SDL3::SDL3 box2d::box2d EnTT::EnTT qjs SDL3_image::SDL3_image
   RmlUi::Core alpha_rmlui_sdl Freetype::Freetype alpha_codecs
-  alpha_harfbuzz alpha_sheenbidi)
+  alpha_harfbuzz alpha_sheenbidi SDL3_net::SDL3_net alpha_wslay mbedtls)
+if(WIN32)
+  target_link_libraries(alpha_engine PUBLIC crypt32)  # wss:// trusts the Windows ROOT store
+endif()
 alpha_set_warnings(alpha_engine)
 
 # devtools: Dear ImGui engine dev tools (F12). Only with ALPHA_DEVTOOLS; a
@@ -218,7 +235,8 @@ if(ALPHA_MCP)
 endif()
 
 if(ALPHA_DEBUG_TOOLS)  # hot reload: dev/release only
-  target_sources(alpha_engine PRIVATE script/hot_reload.cpp script/test_report.cpp script/perf_report.cpp)
+  target_sources(alpha_engine PRIVATE script/hot_reload.cpp script/test_report.cpp script/perf_report.cpp
+    script/net_fake_bindings.cpp)
 endif()
 
 if(ANDROID)

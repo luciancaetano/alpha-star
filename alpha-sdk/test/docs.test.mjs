@@ -16,12 +16,13 @@ test("every guide page in the navigation exists", (t) => {
   for (const [, pages] of NAV) for (const [file] of pages) if (file !== "reference") assert.ok(fs.existsSync(`${GUIDE}/${file}.md`), file);
 });
 
-test("the reference lists every declaration of both modules with its JSDoc and members", () => {
+test("the reference lists every declaration of each module with its JSDoc and members", () => {
   const api = apiEntries();
-  assert.deepEqual(Object.keys(api), ["alpha", "alpha/test"]);
+  assert.deepEqual(Object.keys(api), ["alpha", "alpha:net", "alpha/test"]);
   const names = (m) => api[m].map((e) => e.name);
   for (const n of ["GameTypes", "Context", "Entity", "Camera", "define", "vec"]) assert.ok(names("alpha").includes(n), n);
-  for (const n of ["simulate", "SimulateOptions", "Expect"]) assert.ok(names("alpha/test").includes(n), n);
+  for (const n of ["simulate", "SimulateOptions", "Expect", "netFake"]) assert.ok(names("alpha/test").includes(n), n);
+  for (const n of ["net", "Socket", "Framing"]) assert.ok(names("alpha:net").includes(n), n);
   const camera = api.alpha.find((e) => e.name === "Camera");
   assert.match(camera.doc, /which part of the world/);
   const shake = camera.members.find((m) => m.sig.startsWith("shake("));

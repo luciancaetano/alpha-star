@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { androidValues, defaultPackage, exportAndroid, findToolchain, orientationFor, SDK_PACKAGES, TEMPLATE, VARIANTS }
+import { androidValues, defaultPackage, exportAndroid, findToolchain, orientationFor, SDK_PACKAGES, TEMPLATE, usesNet, VARIANTS }
   from "../lib/android.mjs";
 import { stampOf } from "../lib/bytecode.mjs";
 import { bundledEngine, shippingEngine } from "../lib/engine.mjs";
@@ -62,6 +62,7 @@ test("android export assembles a Gradle project: pack in assets, ids and orienta
   assert.match(gradle, /System\.getenv\("ALPHA_ANDROID_KEYSTORE"\)/);  // release key from env, none stored
   assert.doesNotMatch(gradle, /\{\{/);
   assert.match(read(main, "AndroidManifest.xml"), /android:screenOrientation="sensorPortrait"/);
+  assert.doesNotMatch(read(main, "AndroidManifest.xml"), /INTERNET|\{\{/);  // no alpha:net import: no network permission
   assert.match(read(main, "res", "values", "strings.xml"), /Flappy &lt;Star&gt;/);
   assert.equal(read(main, "res", "mipmap-hdpi", "ic_launcher.png"), "PNGDATA");
   assert.ok(fs.existsSync(path.join(main, "java", "org", "libsdl", "app", "SDLActivity.java")));
@@ -188,4 +189,15 @@ test("the Java glue is SDL's own, version-matched with the engine's SDL", { skip
   for (const f of fs.readdirSync(sdl)) assert.equal(lf(read(ours, f)), lf(read(sdl, f)), f);
   assert.match(fs.readFileSync(path.join(REPO, "cmake", "Dependencies.cmake"), "utf8"), /release-3\.4\.20/);
   assert.match(read(ours, "SDLActivity.java"), /SDL_MICRO_VERSION = 20;/);
+});
+
+test("the INTERNET permission is asked only by games that import alpha:net", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-net-"));
+  fs.mkdirSync(path.join(root, "src"));
+  fs.writeFileSync(path.join(root, "src", "main.ts"), "import { define } from 'alpha';\n");
+  assert.equal(usesNet(root), false);
+  fs.writeFileSync(path.join(root, "src", "online.ts"), "import { net } from \"alpha:net\";\n");
+  assert.equal(usesNet(root), true);
+  assert.match(androidValues({ title: "g" }, null, null, true).values.NET_PERMISSION, /android\.permission\.INTERNET/);
+  fs.rmSync(root, { recursive: true, force: true });
 });

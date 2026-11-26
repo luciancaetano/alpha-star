@@ -1485,6 +1485,95 @@ declare module "alpha" {
   };
 }
 
+/**
+ * TCP, UDP and WebSocket clients (`import { net } from "alpha:net"`). Client only.
+ *
+ * Sockets never block and run no callbacks. At the start of each fixed step the
+ * engine delivers what arrived and the socket's state; during the step both stay
+ * the same (stable, reproducible). `receive()` drains what was delivered; `send()`
+ * queues and the bytes go out after the step. Open sockets in a scene's `enter`
+ * (or later), not at module top level: `simulate()` runs see only those.
+ * In `alpha test` every socket reaches the in-memory `netFake` network instead.
+ */
+declare module "alpha:net" {
+  /** How TCP bytes become messages: "lines" (UTF-8 ending in 
+; 
+ accepted; strings),
+   * "u16" / "u32" (big-endian payload length first; bytes) or "raw" (each read chunk; bytes). */
+  export type Framing = "lines" | "u16" | "u32" | "raw";
+
+  export interface TcpOptions {
+    /** Default "u32". */
+    framing?: Framing;
+    /** Largest message either way. Default and maximum 1 MiB (65535 for "u16"). */
+    maxMessageBytes?: number;
+    /** Seconds for DNS + connect together, (0, 120]. Default 10. */
+    connectTimeout?: number;
+  }
+  export interface UdpOptions {
+    /** Largest datagram either way. Default and maximum 1200 (safe for any path MTU). */
+    maxMessageBytes?: number;
+  }
+  export interface WsOptions {
+    /** Sec-WebSocket-Protocol offers, e.g. ["chat"]; the server may pick one. */
+    protocols?: string[];
+    /** Extra handshake headers (e.g. Authorization). Host, Upgrade, Connection and
+     * Sec-WebSocket-* are set by the engine and refused here. At most 8 KiB in all. */
+    headers?: Record<string, string>;
+    /** Largest message either way. Default and maximum 1 MiB. */
+    maxMessageBytes?: number;
+    /** Seconds for DNS + connect + TLS + handshake, (0, 120]. Default 10. */
+    connectTimeout?: number;
+  }
+
+  /** connecting -> open -> closing -> closed; a failure goes straight to closed
+   * with `error`. closed is final: reconnect by opening a new socket. */
+  export type SocketState = "connecting" | "open" | "closing" | "closed";
+
+  export interface Message {
+    /** A string for WebSocket text and TCP "lines"; otherwise a Uint8Array. */
+    data: string | Uint8Array;
+    /** The fixed step it was delivered on (counts this game's steps). */
+    step: number;
+  }
+
+  export interface Socket {
+    readonly kind: "tcp" | "udp" | "ws";
+    /** As of the start of this step (close() makes it "closing" at once). */
+    readonly state: SocketState;
+    /** Why the socket closed when it failed (e.g. "connect to h:7777 refused",
+     * "ws handshake failed: server answered HTTP 404"); null otherwise. */
+    readonly error: string | null;
+    /** WebSocket close code (e.g. 1000); null for tcp/udp or before closing. */
+    readonly closeCode: number | null;
+    /** Bytes: sent and received so far, waiting to go out, delivered but not received. */
+    readonly stats: { sent: number; received: number; queuedOut: number; queuedIn: number };
+    /**
+     * Queues a message: a string (WebSocket text frame; UTF-8 bytes for tcp/udp) or a
+     * Uint8Array (binary). Allowed while "connecting" (sent once open). false when
+     * closing/closed or the 8 MiB outbound queue is full (nothing queued).
+     * Throws over maxMessageBytes, or for a "lines" message containing 
+.
+     */
+    send(data: string | Uint8Array): boolean;
+    /** Messages delivered and not yet received, oldest first; a second call in the same step returns []. */
+    receive(): Message[];
+    /** Idempotent. WebSocket code: 1000 (default) or 3000..4999; reason at most 123 UTF-8 bytes.
+     * What was sent before still goes out. A clean local close leaves error null. */
+    close(code?: number, reason?: string): void;
+  }
+
+  export const net: {
+    /** At most 32 sockets not yet closed per game. */
+    tcp(host: string, port: number, opts?: TcpOptions): Socket;
+    /** Datagrams to and from host:port only; "open" at once; no delivery, order or
+     * uniqueness guarantee. */
+    udp(host: string, port: number, opts?: UdpOptions): Socket;
+    /** "ws://host[:port]/path" or "wss://..." (TLS, verified against the system's trusted roots). */
+    ws(url: string, opts?: WsOptions): Socket;
+  };
+}
+
 declare module "alpha/test" {
   import type { AnimationOf, AxisOf, DataOf, Game, GameTypes, LocaleOf, MusicOf, Os, TagOf, Vec2 } from "alpha";
 
@@ -1589,4 +1678,41 @@ declare module "alpha/test" {
    * exported functions of test/main.test.ts, run by `alpha test`.
    */
   export function simulate<G extends GameTypes>(game: Game<G>, opts: SimulateOptions<G>): Run<G>;
+
+  /** A connection to a netFake server, seen from the server. */
+  export interface FakePeer {
+    readonly id: number;
+    /** Arrives at the game's socket after the server's latency; false once closed. */
+    send(data: string | Uint8Array): boolean;
+    /** Closes the connection (WebSocket: with `code`, default 1000) after what was already sent. */
+    close(code?: number): void;
+  }
+
+  export interface FakeServer {
+    /** Runs after each simulated step for each new connection. */
+    onConnect(fn: (peer: FakePeer) => void): void;
+    /** Runs after each simulated step for each message the game sent. */
+    onMessage(fn: (peer: FakePeer, data: string | Uint8Array) => void): void;
+    onClose(fn: (peer: FakePeer) => void): void;
+    /** Everything the game sent to this server so far, oldest first. */
+    messages(): Array<string | Uint8Array>;
+    peers(): FakePeer[];
+  }
+
+  export interface FakeServerOptions {
+    /** Steps each connect and message takes, 0..600. Default 0 (next step). */
+    latencySteps?: number;
+    /** UDP only: share of datagrams dropped, 0..1, from a fixed seed (same drops every run). */
+    loss?: number;
+  }
+
+  /**
+   * In-memory network for tests: in `alpha test` every alpha:net socket reaches it,
+   * never the real network. Each test starts with no servers; a socket whose endpoint
+   * has none closes with "connect to ... refused". Handlers run between simulated steps.
+   */
+  export const netFake: {
+    /** endpoint: "host:port" for tcp/udp, the socket's url for ws ("ws://localhost:9000/game"; the default port may be left out). */
+    server(kind: "tcp" | "udp" | "ws", endpoint: string, opts?: FakeServerOptions): FakeServer;
+  };
 }

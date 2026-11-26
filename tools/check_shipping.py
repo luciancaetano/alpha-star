@@ -26,12 +26,13 @@ from pathlib import Path
 import toolchain
 
 # flag -> byte patterns that only exist when that feature is compiled in.
+# ("simulated failure" is SDL_net's own packet-loss text, in every flavor.)
 MARKERS = {
     "ALPHA_DEVTOOLS": [rb"(?i)imgui"],
     "ALPHA_MCP": [rb"(?i)modelcontextprotocol", rb"jsonrpc", rb"alpha-control", rb"--control", rb"--hidden",
                   rb"ALPHA_CONTROL_TOKEN"],
     "ALPHA_DEBUG_TOOLS": [rb"--screenshot", rb"--frames", rb"--tap-every", rb"--devtools", rb"--assets", rb"--compile",
-                          rb"alpha/test", rb"simulate", rb"holdActions", rb"holdAxis", rb"testNames", rb"instanceCreate",
+                          rb"alpha/test", rb"simulate(?!d failure)", rb"holdActions", rb"holdAxis", rb"testNames", rb"instanceCreate",
                           rb"stepBudget", rb"uiView", rb"tagCounts", rb"previous game keeps running",
                           rb"glslang", rb"ALPHA_GLSLANG", rb"shadercross", rb"ALPHA_SHADERCROSS"],
 }

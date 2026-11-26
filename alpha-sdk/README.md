@@ -259,6 +259,26 @@ with `fallbacks`). Tests: `simulate(game, { settings: { locale: "pt" }, saves: {
 then `run.music`, `run.locale`, `run.settings`, `run.saves`, `expect.music("theme")`. MCP
 `game_state` adds `locale` and `music`.
 
+## Networking (TCP, UDP, WebSocket)
+
+```ts
+import { net } from "alpha:net";
+let ws;                                                      // open in enter, keep in a module variable
+enter() { ws = net.ws("wss://game.example.com/room", { headers: { Authorization: "Bearer t" } }); }
+update(ctx) {
+  for (const m of ws.receive()) apply(JSON.parse(m.data));  // delivered at the start of the step
+  if (ws.state === "open") ws.send(JSON.stringify(input));  // queued; written after the step
+  if (ws.state === "closed") show(ws.error);                // failures never throw
+}
+net.tcp("host", 7777, { framing: "lines" | "u16" | "u32" | "raw" });
+net.udp("host", 7778);                                       // datagrams, 1200 bytes max
+```
+
+No callbacks: messages and state change only between steps. Limits: 32 sockets, 1 MiB messages,
+8 MiB queued per socket. Tests use `netFake.server("ws", url, { latencySteps })` from `alpha/test`
+(no real network in `alpha test`); `--net-record` / `--net-replay` repeat a session offline. TLS
+(`wss://`) verifies against the system's roots. Android asks for INTERNET only if the game imports `alpha:net`.
+
 ## Using alpha-star with an AI agent (MCP)
 
 `alpha mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server

@@ -245,12 +245,11 @@ int no_game() {
   return 2;
 }
 
-// VSync (config.window.vsync) with the shortest frame queue the driver allows (input latency).
-void limit_latency(SDL_Renderer* sdl, bool vsync) {
-  SDL_SetRenderVSync(sdl, vsync ? 1 : SDL_RENDERER_VSYNC_DISABLED);
-  [[maybe_unused]] const bool short_queue = alpha::platform::limit_frame_queue(sdl);
-#if ALPHA_DEBUG_TOOLS  // diagnostics
-  SDL_Log("renderer %s, frame queue: %s", SDL_GetRendererName(sdl), short_queue ? "1 frame" : "driver default");
+// The host before its game boots: the screen to lay out for, debug network tapes.
+void prepare(alpha::script::Host& host, [[maybe_unused]] const Options& o) {
+  host.set_screen(alpha::platform::phone_screen());  // the first scene fills the phone
+#if ALPHA_DEBUG_TOOLS
+  host.tape_net(o.net_record, o.net_replay);  // --net-record / --net-replay
 #endif
 }
 
@@ -269,7 +268,7 @@ int main(int argc, char** argv) {
   if (game.empty()) return no_game();
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) return fail("SDL_Init");
   alpha::script::Host host(save_path_for);
-  host.set_screen(alpha::platform::phone_screen());  // the first scene fills the phone
+  prepare(host, options);
   const alpha::script::GameInfo info = host.load(game);
 #if ALPHA_SHIPPING && !defined(__ANDROID__)  // no console: logs go to <pref dir>/log.txt (Android: logcat)
   alpha::platform::redirect_logs(alpha::platform::pref_file(info.title, "log.txt"), host.log());
@@ -283,7 +282,7 @@ int main(int argc, char** argv) {
     host.mixer().stop_all();  // same rule as the normal exit: SDL audio streams go before SDL_Quit
     return fail("SDL_CreateWindowAndRenderer");
   }
-  limit_latency(sdl, info.window.vsync);
+  alpha::platform::limit_latency(sdl, info.window.vsync);
   alpha::render::Renderer renderer(sdl, info.width, info.height, info.window.stretch);
   {
     Tools tools(window, sdl);  // gone before its renderer

@@ -16,6 +16,7 @@
 #include "script/input_bindings.hpp"
 #include "script/instance_bindings.hpp"
 #include "script/map_bindings.hpp"
+#include "script/net_bindings.hpp"
 #include "script/sprite_bindings.hpp"
 #include "script/system_bindings.hpp"
 #include "script/ui_bindings.hpp"
@@ -39,6 +40,7 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
   engine->add_builtin("alpha:audio", embedded::kAudio);
   engine->add_builtin("alpha:prefs", embedded::kPrefs);
   engine->add_builtin("alpha:i18n", embedded::kI18n);
+  engine->add_builtin("alpha:net", embedded::kNet);
   engine->add_builtin("alpha:runtime", embedded::kRuntime);
   const Value global(ctx, JS_GetGlobalObject(ctx));
   Value natives(ctx, JS_NewObject(ctx));
@@ -58,6 +60,7 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
   install_postfx_bindings(ctx, natives.get());
   install_physics_bindings(ctx, natives.get());
   install_joint_bindings(ctx, natives.get());
+  install_net_bindings(ctx, natives.get());
   JS_SetPropertyStr(ctx, global.get(), "__native", natives.release());
 }
 

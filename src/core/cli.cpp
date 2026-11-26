@@ -28,16 +28,24 @@ int count_of(std::string_view text) {
 
 // Each applies one `--flag value` of its feature; false when the flag is not theirs.
 #if ALPHA_DEBUG_TOOLS
+// Flags naming a file: tests, assets, reports, network tapes.
+bool path_option(CliOptions& o, std::string_view flag, std::string_view value) {
+  if (flag == "--test") o.test_file = value;
+  else if (flag == "--assets") o.test_assets = value;
+  else if (flag == "--perf") o.perf = value;
+  else if (flag == "--net-record") o.net_record = value;
+  else if (flag == "--net-replay") o.net_replay = value;
+  else return false;
+  return true;
+}
+
 bool debug_option(CliOptions& o, std::string_view flag, std::string_view value) {
   if (flag == "--frames") o.frames = count_of(value);
   else if (flag == "--screenshot") o.screenshot = value;
   else if (flag == "--tap") o.tap = value;
   else if (flag == "--tap-every") o.tap_every = count_of(value);
-  else if (flag == "--test") o.test_file = value;
-  else if (flag == "--assets") o.test_assets = value;
-  else if (flag == "--perf") o.perf = value;
   else if (flag == "--platform") o.platform = parse_os(value);
-  else return false;
+  else return path_option(o, flag, value);
   return true;
 }
 #else

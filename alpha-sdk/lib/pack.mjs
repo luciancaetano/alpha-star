@@ -22,14 +22,14 @@ const SHIM = path.join(path.dirname(fileURLToPath(import.meta.url)), "alpha-shim
 
 const problem = (message, file = "") => ({ file, line: 0, column: 0, message });
 
-// Bundles the game with "alpha" replaced by the shim and imports it in Node.
+// Bundles the game with "alpha" (and "alpha/test", "alpha:net") replaced by the shim and imports it in Node.
 export async function readGameDef(entry) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-def-"));
   const outfile = path.join(tmp, "def.mjs");
   const shim = {
     name: "alpha-shim",
     setup(b) {
-      b.onResolve({ filter: /^alpha(\/.*)?$/ }, () => ({ path: SHIM }));
+      b.onResolve({ filter: /^alpha((\/|:).*)?$/ }, () => ({ path: SHIM }));
     },
   };
   try {

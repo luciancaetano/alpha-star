@@ -29,6 +29,7 @@ is in the repository only (`cd examples/flappy && npm install && npm start` from
 | Game rules as pure functions, undo, saves, plural translations | [puzzle](#puzzle) |
 | Collision categories, many moving things, layers, postfx | [shmup](#shmup) |
 | Custom GPU shaders, lights, on-screen touch buttons | [shaders](#shaders) |
+| Talking to a server over WebSocket, tests with a fake server | [ghosts](#ghosts) |
 
 Each section below shows the core idea with an excerpt from the real files.
 
@@ -217,6 +218,29 @@ ctx.postfx.set(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time:
 
 `alpha run` compiles the `.frag` files with glslang (and recompiles them on save under
 `--watch`); `alpha export` packs SPIR-V. Guide: [Shaders and lighting](shaders.html).
+
+## ghosts
+
+A square you move; its position goes to a WebSocket server ten times a second, and every
+`{ id, x, y }` the server relays is drawn as a ghost. With no server it plays alone. It lives
+in `examples/ghosts` (not an `alpha init` template); `npm run server` starts a local relay
+(`server/relay.mjs`, plain Node) and two `npm start` windows see each other.
+
+**Read what arrived this step, send after** (`src/main.ts`):
+
+```ts
+for (const m of ws.receive()) {
+  const s = seen(m.data);          // parse defensively: never trust a server
+  if (!s) continue;
+  const ghost = ctx.findAll("ghost").find((g) => g.data.peer === s.id);
+  if (ghost) ghost.pos = [s.x, s.y];
+  else ctx.spawn({ tags: ["ghost"], data: { peer: s.id }, pos: [s.x, s.y], shape: { rect: [10, 10], color: "#8ecae6", alpha: 0.5 } });
+}
+if (ws.state === "open" && ++step % SEND_EVERY === 0) ws.send(JSON.stringify({ x: me.pos.x, y: me.pos.y }));
+```
+
+**Test against a fake server** (`test/main.test.ts`): `netFake.server("ws", SERVER, { latencySteps: 3 })`
+answers on connect; no test touches the real network. Guide: [Networking](net.html).
 
 ## Change one thing and see it
 

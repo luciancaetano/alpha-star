@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 
 #include "platform/mobile.hpp"
 #include "platform/vfs.hpp"
@@ -43,7 +44,30 @@ GameInfo game_info(JSContext* ctx, const Value& info) {
 Host::Host(SavePathFor save_path_for)
     : save_path_for_(std::move(save_path_for)), vm_(std::make_unique<Vm>(save_path_for_, log_)) {}
 
-Host::~Host() = default;
+Host::~Host() {
+#if ALPHA_DEBUG_TOOLS
+  if (net_record_.empty()) return;
+  vm_->main().net.reset();  // closes the sockets first
+  try {
+    platform::vfs::write_atomic(net_record_, vm_->instances.tape_text(), platform::vfs::Backup::none);
+  } catch (const std::exception& e) {
+    std::fprintf(stderr, "--net-record %s: %s\n", net_record_.c_str(), e.what());
+  }
+#endif
+}
+
+#if ALPHA_DEBUG_TOOLS
+void Host::tape_net(const std::string& record, const std::string& replay) {
+  try {
+    if (!replay.empty()) vm_->instances.replay_net(platform::vfs::read_text(replay).value_or(""));
+  } catch (const std::exception& e) {
+    log_.push(core::LogLevel::Error, "--net-replay " + replay + ": " + e.what());
+  }
+  if (record.empty()) return;
+  net_record_ = record;
+  vm_->instances.record_net();
+}
+#endif
 
 GameInfo Host::load(const std::string& path) {
   // A pack directory (from `alpha export`) or its main.js directly.
@@ -94,6 +118,9 @@ void Host::collect_times() {
 }
 
 void Host::end_frame() {
+  // alpha:net reads every frame, so while the game is paused its sockets still drain
+  // into their queues (up to core::kMaxNetQueueBytes); steps deliver them.
+  if (vm_->main().net) vm_->main().net->pump();
   perf_.push(frame_times_);
   frame_times_ = {};
 }
@@ -203,6 +230,7 @@ std::vector<TestResult> Host::run_tests(const std::string& path, const std::stri
   std::vector<TestResult> results;
   for (const std::string& name : strings_arg(ctx, names.get(), "test names")) {
     TestResult result{name, ""};
+    vm_->instances.reset_fake_net();  // each test starts with no netFake servers
     try {
       vm_->engine->call(tests.prop(name.c_str()), {});
     } catch (const std::exception& e) {

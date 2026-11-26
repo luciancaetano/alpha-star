@@ -10,5 +10,7 @@ namespace alpha::platform {
 // Returns true if the renderer's backend supports it and it was applied
 // (Windows / direct3d11); other backends are left unchanged.
 bool limit_frame_queue(SDL_Renderer* renderer);
+// VSync (config.window.vsync) with the shortest frame queue the driver allows.
+void limit_latency(SDL_Renderer* renderer, bool vsync);
 
 }  // namespace alpha::platform

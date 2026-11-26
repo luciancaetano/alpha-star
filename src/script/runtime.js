@@ -740,6 +740,7 @@ function defineLayers(layers) {
 
 function stepGame(s, ctx, dt) {
   s.stepDt = dt;
+  N.netDeliver();  // alpha:net: what arrived and socket states, stable for this step
   for (const id of N.uiEvents()) s.uiHandlers.get(id)?.();  // clicks since the last step
   s.current.def.update?.(ctx);
   runSystems(s.systems, ctx, s.frozen, s.entities.entity);
@@ -766,6 +767,7 @@ function stepGame(s, ctx, dt) {
     s.pending = null;
     enter(s, ctx, name, params);
   }
+  N.netFlush();  // alpha:net: this step's sends go out
 }
 
 function snapshotOf(e) {

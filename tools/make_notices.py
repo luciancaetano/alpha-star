@@ -68,6 +68,12 @@ NOTICES = {
                   lambda d: (d / "sheenbidi-src" / "LICENSE").read_text(encoding="utf-8")),
     "monocypher": ("Monocypher 4.0.2 (game.jsbc encryption) - https://monocypher.org",
                    lambda d: (d / "monocypher-src" / "LICENCE.md").read_text(encoding="utf-8")),
+    "sdl3_net": ("SDL_net 3.2.0 (alpha:net sockets) - https://github.com/libsdl-org/SDL_net",
+                 lambda d: (d / "sdl3_net-src" / "LICENSE.txt").read_text(encoding="utf-8")),
+    "wslay": ("wslay 1.1.1 (alpha:net WebSocket frames) - https://github.com/tatsuhiro-t/wslay",
+              lambda d: (d / "wslay-src" / "COPYING").read_text(encoding="utf-8")),
+    "mbedtls": ("Mbed TLS 3.6.8 (alpha:net wss://) - https://github.com/Mbed-TLS/mbedtls",
+                lambda d: (d / "mbedtls-src" / "LICENSE").read_text(encoding="utf-8")),
     "builtin-font": ("Built-in 8x8 font (text with no assets.fonts)", lambda d: font_license()),
 }
 

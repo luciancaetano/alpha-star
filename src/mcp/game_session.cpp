@@ -67,6 +67,7 @@ GameState GameSession::state() {
   s.music = host_.mixer().music_name();
   s.app_paused = host_.app_paused();
   s.input = input_json(host_.controls().touch);
+  s.net = net_json(host_.net());
   s.perf = perf_summary();
   return s;
 }

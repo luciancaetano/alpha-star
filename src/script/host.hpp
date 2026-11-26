@@ -56,6 +56,8 @@ class Host {
   core::Controls& controls() { return vm_->main().controls; }
   // Gamepad vibrations the game asked for since the last call (ctx.input.rumble).
   core::RumbleRequests take_rumble();
+  // The game's alpha:net sockets; nullptr before it opens one.
+  const net::Hub* net() const { return vm_->main().net.get(); }
   // blend: how far real time is into the next fixed step (FixedStep::fraction);
   // 1 draws the current state exactly.
   render::Frame frame(float blend = 1.0f);
@@ -77,6 +79,10 @@ class Host {
   const std::string& reload_error() const { return reload_error_; }
   // The directory the game was loaded from: what a file watch should watch.
   const std::filesystem::path& pack_dir() const { return pack_dir_; }
+  // --net-record PATH: the game's alpha:net deliveries are written there when the
+  // host goes away. --net-replay PATH: delivered from that file, with no network.
+  // Empty paths do nothing; an unreadable replay file is logged and ignored.
+  void tape_net(const std::string& record, const std::string& replay);
 #endif
 
   // Game UI (RmlUi). Events go to the UI first: false when the UI consumed the
@@ -163,6 +169,7 @@ class Host {
   core::PerfHistory perf_{600};  // 10 s at 60 fps
 #if ALPHA_DEBUG_TOOLS
   std::string reload_error_;
+  std::string net_record_;
 #endif
 };
 

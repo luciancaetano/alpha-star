@@ -4,7 +4,7 @@
 
 - **Windows:** Git, Node.js 20+, Python 3, CMake 3.28+, Visual Studio 2022 with the C++20 desktop tools.
 - Network access on the first configure: CMake fetches SDL3, Box2D, QuickJS-ng, RmlUi, FreeType,
-  HarfBuzz, SheenBidi and the other
+  HarfBuzz, SheenBidi, SDL_net, wslay, Mbed TLS (`alpha:net`) and the other
   native dependencies into `build/<preset>/_deps`.
 
 Limit the build to 8 parallel jobs and run one build at a time:

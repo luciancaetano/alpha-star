@@ -50,6 +50,7 @@ Fields state_fields(const GameState& s) {
           {"appPaused", json::boolean(s.app_paused)},
           {"perf", s.perf.empty() ? "null" : s.perf},
           {"input", s.input.empty() ? "null" : s.input},
+          {"net", s.net.empty() ? "[]" : s.net},
           {"ui", json::object(docs)}};
 }
 
@@ -61,6 +62,25 @@ std::string input_json(const core::TouchPad& pad) {
     sticks.emplace_back(pad.sticks()[i].name, json::object({{"value", vec(st.value)}, {"finger", finger}}));
   }
   return json::object({{"touchSticks", json::object(sticks)}});
+}
+
+std::string net_json(const net::Hub* hub) {
+  std::vector<std::string> sockets;
+  if (!hub) return "[]";
+  for (const auto& [id, s] : hub->sockets()) {
+    const net::Stats st = s->stats();
+    sockets.push_back(json::object(
+        {{"id", json::num(id)},
+         {"kind", json::str(net::kind_name(s->kind()))},
+         {"endpoint", json::str(s->endpoint())},
+         {"state", json::str(net::state_name(s->state()))},
+         {"error", s->error().empty() ? "null" : json::str(s->error())},
+         {"stats", json::object({{"sent", json::num(static_cast<double>(st.sent))},
+                                 {"received", json::num(static_cast<double>(st.received))},
+                                 {"queuedOut", json::num(static_cast<double>(st.queued_out))},
+                                 {"queuedIn", json::num(static_cast<double>(st.queued_in))}})}}));
+  }
+  return json::array(sockets);
 }
 
 Fields log_fields(const core::LogRing& log, std::size_t since) {

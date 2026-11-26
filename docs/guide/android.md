@@ -103,6 +103,12 @@ Switching apps pauses the game: `ctx.onPause` runs, no steps run and audio stops
 Android kills the app in the background. Saves live in the app's private storage. Test it with
 `appPauses` ([Testing](testing.html)).
 
+### Network permission
+
+The exported manifest asks for `android.permission.INTERNET` only when your game's code imports
+`alpha:net` ([Networking](net.html)); other games ship without it. If Android drops a connection
+while the app is in the background, the socket shows up as `"closed"` with an `error`.
+
 ## Variants: debug, release, store
 
 ```

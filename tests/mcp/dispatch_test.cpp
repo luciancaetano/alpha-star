@@ -30,7 +30,7 @@ struct FakeSession final : Session {
     s.music = "theme";
     s.app_paused = true;
     s.perf = R"({"frames":0})";
-    s.ui["hud"] = {true, {{"score", "3"}}};
+    s.ui["hud"] = {true, {{"score", "3"}}, {}, {}};
     return s;
   }
   void set_paused(bool p) override { paused = p; }

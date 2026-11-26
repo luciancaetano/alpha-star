@@ -4,11 +4,12 @@
 
 #include "core/error.hpp"
 #include "core/limits.hpp"
+#include "platform/net_links.hpp"
 
 namespace alpha::script {
 
 Instances::Instances(std::function<std::string(const std::string&)> save_path_for, core::LogRing& log)
-    : log_(log) {
+    : log_(log), links_(platform::real_links()) {
   auto state = std::make_unique<ScriptState>();
   state->save_path_for = std::move(save_path_for);
   active_ = state.get();
@@ -47,5 +48,45 @@ void Instances::destroy(std::uint32_t id) {
   if (id == kMain || id == active_id_) throw core::Error("cannot destroy the main or the active game instance");
   states_.erase(id);
 }
+
+#if ALPHA_DEBUG_TOOLS
+void Instances::reset_fake_net() {
+  fake_ = std::make_unique<net::FakeNet>();
+  ++fake_generation_;
+  links_ = [this](const net::Address& a) { return fake_->factory()(a); };
+}
+
+namespace {
+
+// --net-replay: a socket that never reaches anything; the tape says what it saw.
+class SilentLink final : public net::Link {
+ public:
+  net::LinkStatus pump(std::deque<net::Message>&) override { return {}; }
+  void write(std::deque<net::Message>& out) override { out.clear(); }
+  void close(int, const std::string&) override {}
+};
+
+}  // namespace
+
+void Instances::record_net() {
+  tape_ = std::make_shared<net::Tape>();
+  replay_ = false;
+}
+
+void Instances::replay_net(const std::string& tape) {
+  tape_ = std::make_shared<net::Tape>(net::Tape::parse(tape));
+  replay_ = true;
+  links_ = [](const net::Address&) { return std::make_unique<SilentLink>(); };
+}
+
+void Instances::attach_tape(ScriptState& state) {
+  if (tape_ && &state == &main() && state.net) state.net->use_tape(tape_, replay_);
+}
+
+net::FakeNet& Instances::fake_net() {
+  if (!fake_) throw core::Error("netFake works only in test runs (alpha test)");
+  return *fake_;
+}
+#endif
 
 }  // namespace alpha::script

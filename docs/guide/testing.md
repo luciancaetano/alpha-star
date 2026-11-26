@@ -298,6 +298,11 @@ simulate(game, { seconds: 0.3 }).expect.particles().atLeast(5);
 simulate(game, { seconds: 1 }).expect.particles().equals(0);
 ```
 
+### Network games
+
+Games that use `alpha:net` are tested against `netFake` servers from `alpha/test`: in `alpha test`
+no socket reaches the real network. See [Networking](net.html#3-test-it-against-a-fake-server).
+
 ## Gotchas
 
 - **Shared option objects need a type.** `const opts = { ... } as const` makes the arrays

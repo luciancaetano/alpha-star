@@ -24,6 +24,8 @@ struct CliOptions {
   std::string compile_source;  // --compile <main.js> <out.jsbc>: write bytecode, then exit
   std::string compile_out;
   std::string perf;      // --perf PATH: per-section frame times as JSON at exit (bench)
+  std::string net_record;  // --net-record PATH: alpha:net deliveries per step, written at exit
+  std::string net_replay;  // --net-replay PATH: those deliveries again, with no network
   int control_port = 0;  // agent control channel (ALPHA_MCP); 0 = off
   bool hidden = false;   // no visible window (agent runs; ALPHA_MCP)
   std::optional<Os> platform;  // --platform android: ctx.platform as on that OS (UI previews)

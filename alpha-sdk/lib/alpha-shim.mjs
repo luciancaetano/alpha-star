@@ -26,6 +26,11 @@ export const vec = {
   dist: (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]),
 };
 
+// "alpha:net": sockets that never connect (the exporter only reads the game's definition).
+const inert = (kind) => Object.freeze({ kind, state: "closed", error: null, closeCode: null,
+  stats: { sent: 0, received: 0, queuedOut: 0, queuedIn: 0 }, send: () => false, receive: () => [], close() {} });
+export const net = { tcp: () => inert("tcp"), udp: () => inert("udp"), ws: () => inert("ws") };
+
 export function simulate() {
   throw new Error("alpha/test: simulate() is not available in the exporter");
 }

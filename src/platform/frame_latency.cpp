@@ -36,4 +36,12 @@ bool limit_frame_queue(SDL_Renderer*) { return false; }
 
 #endif
 
+void limit_latency(SDL_Renderer* renderer, bool vsync) {
+  SDL_SetRenderVSync(renderer, vsync ? 1 : SDL_RENDERER_VSYNC_DISABLED);
+  [[maybe_unused]] const bool short_queue = limit_frame_queue(renderer);
+#if ALPHA_DEBUG_TOOLS  // diagnostics
+  SDL_Log("renderer %s, frame queue: %s", SDL_GetRendererName(renderer), short_queue ? "1 frame" : "driver default");
+#endif
+}
+
 }  // namespace alpha::platform

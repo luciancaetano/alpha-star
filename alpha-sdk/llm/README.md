@@ -4,7 +4,7 @@
 
 Public site: https://luciancaetano.github.io/alpha-star/ (six real example captures, including Shader Lab, in a keyboard-accessible slider). The setup guide is `getting-started.html`; typed API docs are `reference.html`.
 
-Source of truth: `types/alpha.d.ts` (modules `"alpha"`, `"alpha/test"`). Real usage: `examples/*/src` and `templates/`. Not installed yet: install.md. Then start with overview.md.
+Source of truth: `types/alpha.d.ts` (modules `"alpha"`, `"alpha/test"`, `"alpha:net"`). Real usage: `examples/*/src` and `templates/`. Not installed yet: install.md. Then start with overview.md.
 
 | File | Summary |
 |---|---|
@@ -23,6 +23,7 @@ Source of truth: `types/alpha.d.ts` (modules `"alpha"`, `"alpha/test"`). Real us
 | [shaders.md](shaders.md) | Custom full-screen Vulkan GLSL fragment shaders (assets.shaders + ctx.postfx): the GLSL contract (sets, locations, float std140 uniforms), wave and grayscale examples, how alpha run compiles (glslang to SPIR-V, shadercross to MSL) and alpha export packs .spv + .msl, and the Vulkan requirement per platform; read when a built-in post effect is not enough. |
 | [tweens-and-timers.md](tweens-and-timers.md) | ctx.tween on entities and plain objects (eases, yoyo, repeat, onDone), ctx.every/ctx.after timers and the vec helpers; read when animating values over time or scheduling work. |
 | [saves-and-i18n.md](saves-and-i18n.md) | Persistent save slots with versioning/migration, player settings (volumes, locale, rebinds, accessibility flags) and localization with ctx.t, plurals and data-t; read when persisting progress, adding options menus or translating text. |
+| [net.md](net.md) | TCP, UDP and WebSocket (ws:// and wss://) clients from `alpha:net`: opening sockets in enter, the per-step receive/send model, framing, states and errors, limits, netFake servers for tests and --net-record/--net-replay; read when a game talks to a server. |
 | [testing.md](testing.md) | Headless deterministic tests with alpha/test simulate(), its options (inputs, clicks, saves, settings, appPauses, platform) and checks (expect, entities, state); read before writing or debugging test/main.test.ts. |
 | [exporting.md](exporting.md) | alpha export packs, standalone builds with the shipping engine and game.jsbc bytecode, signing, other targets and Android APKs; read when building something a player will run. |
 | [mcp.md](mcp.md) | The alpha mcp server's tools for agents (check, test, export, start, step, input, state, screenshot, logs, reload) and the play-test loop; read when driving a running game as an AI agent. |

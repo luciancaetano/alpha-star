@@ -139,6 +139,58 @@ target_include_directories(alpha_rmlui_sdl SYSTEM PUBLIC ${rmlui_SOURCE_DIR}/Bac
 target_compile_definitions(alpha_rmlui_sdl PUBLIC RMLUI_SDL_VERSION_MAJOR=3)
 target_link_libraries(alpha_rmlui_sdl PUBLIC RmlUi::Core SDL3::SDL3)
 
+# alpha:net. SDL3_net 3.2.0 (zlib): non-blocking TCP/UDP sockets and DNS, polled on the
+# main thread (platform/net_*). wslay 1.1.1 (MIT): RFC 6455 WebSocket frames with no I/O of
+# its own; it reads and writes through our transport. Mbed TLS 3.6.8 (Apache-2.0): wss://,
+# fed through the same transport (mbedtls_ssl_set_bio). Release tarball: generated files included.
+set(SDLNET_SAMPLES OFF CACHE BOOL "" FORCE)
+set(SDLNET_INSTALL OFF CACHE BOOL "" FORCE)
+set(SDLNET_TESTS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(SDL3_net
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL_net.git
+  GIT_TAG release-3.2.0
+  GIT_SHALLOW TRUE
+  SYSTEM)
+FetchContent_Declare(wslay
+  GIT_REPOSITORY https://github.com/tatsuhiro-t/wslay.git
+  GIT_TAG release-1.1.1
+  GIT_SHALLOW TRUE
+  SOURCE_SUBDIR no-cmake  # sources only: alpha_wslay below builds them
+  SYSTEM)
+set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
+set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(MBEDTLS_FATAL_WARNINGS OFF CACHE BOOL "" FORCE)
+set(USE_SHARED_MBEDTLS_LIBRARY OFF CACHE BOOL "" FORCE)
+set(USE_STATIC_MBEDTLS_LIBRARY ON CACHE BOOL "" FORCE)
+FetchContent_Declare(mbedtls
+  URL https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.8/mbedtls-3.6.8.tar.bz2
+  SYSTEM)
+FetchContent_MakeAvailable(SDL3_net wslay mbedtls)
+if(WIN32)
+  set(ALPHA_WSLAY_NET "#define HAVE_WINSOCK2_H 1
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;")
+else()
+  set(ALPHA_WSLAY_NET "#define HAVE_ARPA_INET_H 1\n#define HAVE_NETINET_IN_H 1")
+endif()
+file(CONFIGURE OUTPUT ${CMAKE_BINARY_DIR}/wslay/config.h CONTENT "${ALPHA_WSLAY_NET}\n" @ONLY)
+file(CONFIGURE OUTPUT ${CMAKE_BINARY_DIR}/wslay/wslay/wslayver.h
+  CONTENT "#ifndef WSLAYVER_H\n#define WSLAYVER_H\n#define WSLAY_VERSION \"1.1.1\"\n#endif\n" @ONLY)
+add_library(alpha_wslay STATIC
+  ${wslay_SOURCE_DIR}/lib/wslay_event.c ${wslay_SOURCE_DIR}/lib/wslay_frame.c
+  ${wslay_SOURCE_DIR}/lib/wslay_net.c ${wslay_SOURCE_DIR}/lib/wslay_queue.c ${wslay_SOURCE_DIR}/lib/wslay_stack.c)
+target_include_directories(alpha_wslay SYSTEM PUBLIC ${wslay_SOURCE_DIR}/lib/includes ${CMAKE_BINARY_DIR}/wslay)
+target_include_directories(alpha_wslay PRIVATE ${wslay_SOURCE_DIR}/lib)
+target_compile_definitions(alpha_wslay PRIVATE HAVE_CONFIG_H)
+if(WIN32)
+  target_link_libraries(alpha_wslay PRIVATE ws2_32)
+endif()
+if(MSVC)
+  target_compile_options(alpha_wslay PRIVATE /w)
+else()
+  target_compile_options(alpha_wslay PRIVATE -w)
+endif()
+
 # Multi-language text (platform/shaper): HarfBuzz shapes TrueType/OpenType runs
 # (ligatures, Arabic joining, Indic/Thai clusters); SheenBidi orders mixed
 # left-to-right / right-to-left runs (UAX #9). Both compiled from source as

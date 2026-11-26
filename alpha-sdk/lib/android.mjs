@@ -50,7 +50,18 @@ const xml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 // The project's values from config.title / config.size / config.android; problems name the field.
 // The engine path is relative to the project's app/ folder, so a committed project builds in any clone.
 // engineSrc null: prebuilt engine (ENGINE_CMAKE empty: the Gradle template skips CMake).
-export function androidValues(config, engineSrc, appDir = engineSrc) {
+// INTERNET only for games whose sources import alpha:net (players see the permission).
+export function usesNet(root) {
+  const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).some((d) => {
+    if (d.name === "node_modules" || d.name.startsWith(".")) return false;
+    const p = path.join(dir, d.name);
+    if (d.isDirectory()) return walk(p);
+    return /\.(m?[jt]s)$/.test(d.name) && /["']alpha:net["']/.test(fs.readFileSync(p, "utf8"));
+  });
+  return walk(root);
+}
+
+export function androidValues(config, engineSrc, appDir = engineSrc, net = false) {
   const a = config.android ?? {};
   const values = {
     PACKAGE: a.package ?? defaultPackage(config.title),
@@ -59,6 +70,7 @@ export function androidValues(config, engineSrc, appDir = engineSrc) {
     ORIENTATION: orientationFor(config.size),
     VERSION_CODE: String(a.versionCode ?? 1),
     VERSION_NAME: String(a.version ?? "1.0").replace(/"/g, ""),
+    NET_PERMISSION: net ? '<uses-permission android:name="android.permission.INTERNET" />' : "",
     ENGINE_CMAKE: engineSrc ? path.relative(appDir, path.join(engineSrc, "CMakeLists.txt")).split(path.sep).join("/") : "",
   };
   const problems = [];
@@ -209,7 +221,7 @@ export async function exportAndroid({ root, entry, out, target, engineSrc, atlas
   const source = engine.source ?? null;
   const def = await readGameDef(entry);
   if (!def) return fail([problem("main module must `export default game({...})`", entry)]);
-  const { values, problems } = androidValues(def.config ?? {}, source, path.join(path.resolve(out), "app"));
+  const { values, problems } = androidValues(def.config ?? {}, source, path.join(path.resolve(out), "app"), usesNet(root));
   if (problems.length) return fail(problems);
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-android-"));
   try {

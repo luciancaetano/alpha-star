@@ -1,0 +1,15 @@
+{
+  "name": "ghosts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "alpha check",
+    "export": "alpha export",
+    "start": "alpha run",
+    "test": "alpha test",
+    "server": "node server/relay.mjs"
+  },
+  "devDependencies": {
+    "@alpha-star/sdk": "file:../../alpha-sdk"
+  }
+}

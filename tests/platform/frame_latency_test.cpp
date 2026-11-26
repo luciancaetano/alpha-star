@@ -14,3 +14,16 @@ TEST_CASE("limit_frame_queue leaves non-Direct3D-11 renderers alone") {
   SDL_DestroyRenderer(software);
   SDL_DestroySurface(surface);
 }
+
+TEST_CASE("limit_latency sets vsync either way on any renderer") {
+  SDL_Surface* surface = SDL_CreateSurface(8, 8, SDL_PIXELFORMAT_RGBA32);
+  SDL_Renderer* software = SDL_CreateSoftwareRenderer(surface);
+  REQUIRE(software);
+  alpha::platform::limit_latency(software, false);
+  int vsync = -2;
+  SDL_GetRenderVSync(software, &vsync);
+  CHECK(vsync == SDL_RENDERER_VSYNC_DISABLED);
+  alpha::platform::limit_latency(software, true);
+  SDL_DestroyRenderer(software);
+  SDL_DestroySurface(surface);
+}

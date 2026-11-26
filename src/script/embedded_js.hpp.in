@@ -18,5 +18,6 @@ inline constexpr std::string_view kPhysics = @ALPHA_JS_physics@;
 inline constexpr std::string_view kAudio = @ALPHA_JS_audio@;
 inline constexpr std::string_view kPrefs = @ALPHA_JS_prefs@;
 inline constexpr std::string_view kI18n = @ALPHA_JS_i18n@;
+inline constexpr std::string_view kNet = @ALPHA_JS_net@;
 
 }  // namespace alpha::script::embedded

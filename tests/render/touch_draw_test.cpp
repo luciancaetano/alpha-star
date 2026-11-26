@@ -12,7 +12,7 @@ namespace {
 
 const TouchScreen kScreen{{{0, 0}, {640, 360}}, {640, 360}};
 
-Picture pic(int w) { return {std::make_shared<Image>(Image{w, w, std::vector<std::uint8_t>(w * w * 4), Filter::nearest}), {0, 0, w, w}}; }
+Picture pic(int w) { return {std::make_shared<Image>(Image{w, w, std::vector<std::uint8_t>(static_cast<std::size_t>(w * w * 4)), Filter::nearest}), {0, 0, w, w}}; }
 
 TouchPad pad(StickConfig stick, ButtonConfig button, bool active = true) {
   TouchPad p;

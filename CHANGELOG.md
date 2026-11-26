@@ -7,6 +7,27 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-26
+
+### Added
+- `alpha:net`: TCP, UDP and WebSocket (`ws://` and `wss://`) clients for games (`net.tcp/udp/ws`). No callbacks:
+  arrivals and socket state are delivered at the start of each fixed step, sends go out after it. TCP framing
+  `lines | u16 | u32 | raw`; WebSocket protocols/headers, ping/pong, fragments and close codes; TLS verified against
+  the system's roots. Limits: 32 sockets, 1 MiB messages (UDP 1200 bytes), 8 MiB queued per socket.
+- `alpha/test` `netFake.server(kind, endpoint, { latencySteps, loss })`: in-memory servers every socket reaches in
+  `alpha test` (deterministic latency and UDP loss).
+- `--net-record PATH` / `--net-replay PATH` (dev/release engines): repeat a network session with no network.
+- MCP `state.net`: the game's sockets (kind, endpoint, state, error, byte counts).
+- `examples/ghosts`: an online example with a plain-Node relay server (`npm run server`) and netFake tests.
+
+### Changed
+- Android exports ask for the INTERNET permission only when the game's sources import `alpha:net`.
+- New engine dependencies: SDL_net 3.2.0, wslay 1.1.1, Mbed TLS 3.6.8 (notices in `alpha-sdk/notices/`).
+
+### Fixed
+- Linux/macOS builds: sign-conversion in `tests/render/touch_draw_test.cpp` and a missing field initializer in
+  `tests/mcp/dispatch_test.cpp` (CI of 0.6.0 failed on them).
+
 ## [0.6.0] - 2026-11-26
 
 Script API reform, phases 1-4 (breaking; see `docs/RFC_API_1.0.md`; the examples show the new style).

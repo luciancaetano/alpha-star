@@ -29,6 +29,7 @@ struct GameState {
   bool app_paused = false;                     // the app is paused (focus lost, minimized, background)
   std::string perf;  // JSON: frame time spreads per section (core::to_json) + JS heap
   std::string input;  // JSON: {touchSticks: {name: {value, finger}}} (state_json::input_json)
+  std::string net;    // JSON: alpha:net sockets [{id, kind, endpoint, state, error, stats}] (state_json::net_json)
 };
 
 // Inject an action like a device would: a one-step tap, or held until released.

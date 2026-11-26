@@ -74,7 +74,7 @@ what was just verified ([Testing](testing.html)), so it stays true.
 
 | Tool | Arguments | Returns |
 |---|---|---|
-| `game_state` | | `scene`, `paused`, `error` (the script error that paused the game, mapped to your TypeScript source, or `null`), `frame`, `fps`, `entities` `[{ id, tags, pos, rotation, z, velocity }]`, `ui` `{ document: { shown, texts: { elementId: text } } }`, `input` `{ touchSticks: { name: { value: [x, y], finger } } }` |
+| `game_state` | | `scene`, `paused`, `error` (the script error that paused the game, mapped to your TypeScript source, or `null`), `frame`, `fps`, `entities` `[{ id, tags, pos, rotation, z, velocity }]`, `ui` `{ document: { shown, texts: { elementId: text } } }`, `input` `{ touchSticks: { name: { value: [x, y], finger } } }`, `net` `[{ id, kind, endpoint, state, error, stats }]` (the game's `alpha:net` sockets) |
 | `game_screenshot` | | a PNG of the current frame (game + UI, at window size) |
 | `game_logs` | `since?` | `console.log/warn/error` lines and script errors since the cursor; pass the returned `next` as `since` next time |
 

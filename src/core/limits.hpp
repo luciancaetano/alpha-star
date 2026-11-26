@@ -37,5 +37,13 @@ inline constexpr std::size_t kMaxShaderBlobBytes = std::size_t{4} << 20;
 inline constexpr std::size_t kMaxTouchSticks = 4;
 inline constexpr std::size_t kMaxTouchButtons = 12;
 inline constexpr std::size_t kMaxTouches = 10;
+// alpha:net: sockets not yet closed per game instance, bytes per TCP/WS message,
+// per UDP datagram (fits any path MTU), per socket inbound or outbound queue,
+// and of extra WebSocket handshake headers. Socket options may lower them, never raise.
+inline constexpr std::size_t kMaxNetSockets = 32;
+inline constexpr std::size_t kMaxNetMessageBytes = std::size_t{1} << 20;
+inline constexpr std::size_t kMaxUdpDatagramBytes = 1200;
+inline constexpr std::size_t kMaxNetQueueBytes = std::size_t{8} << 20;
+inline constexpr std::size_t kMaxNetHeaderBytes = std::size_t{8} << 10;
 
 }  // namespace alpha::core
