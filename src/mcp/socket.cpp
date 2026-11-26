@@ -14,6 +14,7 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -26,6 +27,7 @@
 namespace alpha::mcp {
 
 namespace {
+
 
 #ifdef _WIN32
 using Native = SOCKET;
@@ -121,12 +123,24 @@ Socket Socket::listen(int port) {
   return Socket(static_cast<std::intptr_t>(s));
 }
 
+namespace {
+
+// Small request/response lines: without this, Nagle holds a second small reply until
+// the peer's delayed ACK (40 ms or more on Linux) and pipelined answers stall.
+void no_delay(Native s) {
+  const int on = 1;
+  setsockopt(s, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&on), static_cast<Length>(sizeof on));
+}
+
+}  // namespace
+
 Socket Socket::connect(int port) {
   const Native s = open_tcp();
   const sockaddr_in addr = loopback(port);
   if (::connect(s, reinterpret_cast<const sockaddr*>(&addr), static_cast<Length>(sizeof addr)) != 0 || !set_non_blocking(s)) {
     fail(s, "cannot connect to 127.0.0.1:" + std::to_string(port));
   }
+  no_delay(s);
   return Socket(static_cast<std::intptr_t>(s));
 }
 
@@ -144,6 +158,7 @@ Socket Socket::accept() const {
   if (s == static_cast<Native>(-1)) return {};
   Socket client(static_cast<std::intptr_t>(s));
   if (!is_loopback(ntohl(peer.sin_addr.s_addr)) || !set_non_blocking(s)) return {};
+  no_delay(s);
   return client;
 }
 
