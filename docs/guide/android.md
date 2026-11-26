@@ -144,7 +144,9 @@ const [x, y, w, h] = ctx.safeArea;   // the whole view on desktop
 ## Dev tools on the phone
 
 The debug variant carries the engine dev tools (Dear ImGui). Open and close them the way React
-Native opens its dev menu: **shake the phone**, or send the Menu key from the computer with
+Native opens its dev menu: **shake the phone** firmly side to side (a few quick back-and-forth jolts
+above ~2 g within a second; taps, tilts and walking are ignored, and a toggle is followed by a 1.5 s
+cooldown), or send the Menu key from the computer with
 `adb shell input keyevent 82` (Ctrl+M in the emulator). A gamepad's Back+Start works too. Release
 APKs and AABs have no dev tools at all. The debug APK has no MCP channel (`alpha mcp` drives desktop
 engines); its panels scale with the screen (the larger of the OS content scale and the shorter side / 1080) and

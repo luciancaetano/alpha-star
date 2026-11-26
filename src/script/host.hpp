@@ -96,6 +96,9 @@ class Host {
   // The screen shows `size` game pixels now (config.window.aspect): the scene
   // camera, later scenes and the UI follow.
   void resize_view(core::Vec2 size);
+  // The screen in output pixels: the first scene of a (re)boot is laid out
+  // for it (ctx.camera.view at enter is already the revealed world).
+  void set_screen(std::optional<core::Vec2> pixels);
 
   // Audio produced by the game; the platform layer drains it every frame.
   core::Mixer& mixer() { return vm_->main().mixer; }
@@ -152,6 +155,7 @@ class Host {
   std::string main_path_;  // the game's main.js (or .js module)
   std::filesystem::path pack_dir_;
   GameInfo info_;
+  std::optional<core::Vec2> screen_;  // set_screen: each (re)boot lays out for it
   std::string error_;
   double step_ms_ = 0.0;
   bool app_paused_ = false;

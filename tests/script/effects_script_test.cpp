@@ -248,3 +248,11 @@ TEST_CASE("expand: the scene camera follows the logical size") {
   host.resize_view({160, 100});
   CHECK(host.world()->view().size == alpha::core::Vec2{160, 100});
 }
+
+TEST_CASE("Host::set_screen before load: the first scene's enter already sees the revealed world") {
+  Sandbox box;
+  Host host(box.save());
+  host.set_screen(alpha::core::Vec2{1000, 1600});  // a tall screen for a 100 x 100 game: 100 x 160 (aspect "expand")
+  host.load(box.write("g.js", game("", "check(ctx.camera.view.join() === '0,-30,100,160', 'enter ' + ctx.camera.view);")));
+  CHECK_MESSAGE(!host.paused(), host.error());
+}

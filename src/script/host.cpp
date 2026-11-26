@@ -50,6 +50,7 @@ GameInfo Host::load(const std::string& path) {
   main_path_ = platform::vfs::is_directory(pack) ? platform::pack_entry(pack).string() : path;
   pack_dir_ = std::filesystem::path(main_path_).parent_path();
   try {
+    vm_->main().screen = screen_;
     info_ = boot(*vm_, main_path_, "");
   } catch (const std::exception& e) {
     pause(e);
@@ -146,6 +147,11 @@ render::Frame Host::frame(float blend) {
   return f;
 }
 
+void Host::set_screen(std::optional<core::Vec2> pixels) {
+  screen_ = pixels;
+  vm_->main().screen = pixels;
+}
+
 void Host::resize_view(core::Vec2 size) {
   ScriptState& s = vm_->main();
   if (s.ui) s.ui->safe_area(s.window.safe);
@@ -213,6 +219,7 @@ std::string Host::carried_scene() {
 std::string Host::reload() {
   auto next = std::make_unique<Vm>(save_path_for_, log_);
   try {
+    next->main().screen = screen_;
     const GameInfo info = boot(*next, main_path_, carried_scene());
     vm_ = std::move(next);
     info_ = info;

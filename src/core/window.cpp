@@ -47,6 +47,15 @@ Presentation present(Vec2 design, Vec2 output, Stretch stretch) {
   return {logical, scale, (output - logical * scale) * 0.5f};
 }
 
+Vec2 oriented(Vec2 screen, Vec2 design) {
+  return (screen.x > screen.y) == (design.x > design.y) ? screen : Vec2{screen.y, screen.x};
+}
+
+std::optional<Vec2> phone_display(Os os, Vec2 display) {
+  if (!is_mobile(os) || display.x <= 0 || display.y <= 0) return std::nullopt;
+  return display;
+}
+
 Vec2 initial_window_size(Vec2 game, Scale scale) { return game * (scale == Scale::Integer ? 2.0f : 1.5f); }
 
 bool starts_fullscreen(const WindowConfig& config, Os os) { return config.fullscreen || is_mobile(os); }

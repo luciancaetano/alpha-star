@@ -1,11 +1,13 @@
 #include "script/camera_bindings.hpp"
 
 #include <array>
+#include <optional>
 #include <cmath>
 #include <string>
 
 #include "core/error.hpp"
 #include "core/particles.hpp"
+#include "platform/mobile.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
 #include "script/spec_fields.hpp"
@@ -92,23 +94,23 @@ JSValue camera_view(JSContext* ctx, ScriptState& s, JSValueConst*) {
   return out;
 }
 
-#if ALPHA_DEBUG_TOOLS  // test runner only
-// presentView(config, width, height): headless runs shown on a `width` x
-// `height` pixel screen (simulate({ size })) see the game size config.window
-// presents there, as the engine would. Call before the first scene.
+// presentView(config, width?, height?): before the first scene, the view takes
+// the size config.window presents on the screen: `width` x `height` pixels
+// (simulate({ size })), or else the engine's screen (Host::set_screen, turned
+// to the game's orientation on phones); without either it stays config.size.
 JSValue present_view(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  const core::Vec2 output{ranged(ctx, argv[1], "size[0]", 1.0, 16384.0), ranged(ctx, argv[2], "size[1]", 1.0, 16384.0)};
+  std::optional<core::Vec2> output = s.screen;
+  if (output && core::is_mobile(platform::running_os())) output = core::oriented(*output, s.design_size);
+  if (!JS_IsUndefined(argv[1])) output = core::Vec2{ranged(ctx, argv[1], "size[0]", 1.0, 16384.0), ranged(ctx, argv[2], "size[1]", 1.0, 16384.0)};
+  if (!output) return JS_UNDEFINED;
   const core::WindowConfig config = window_config(ctx, Value(ctx, JS_DupValue(ctx, argv[0])));
-  s.view_size = core::present(s.design_size, output, config.stretch).logical;
-  s.window.size = output;
+  s.view_size = core::present(s.design_size, *output, config.stretch).logical;
   if (s.ui) s.ui->resize(static_cast<int>(s.view_size.x), static_cast<int>(s.view_size.y));
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 1> kTestNatives{{{"presentView", guarded<present_view>, 3}}};
-#endif
-
-constexpr std::array<Native, 7> kNatives{{
+constexpr std::array<Native, 8> kNatives{{
+    {"presentView", guarded<present_view>, 3},
     {"cameraView", guarded<camera_view>, 0},
     {"cameraGet", guarded<camera_get>, 0},       {"cameraSet", guarded<camera_set>, 4},
     {"cameraFollow", guarded<camera_follow>, 4}, {"cameraShake", guarded<camera_shake>, 2},
@@ -119,9 +121,6 @@ constexpr std::array<Native, 7> kNatives{{
 
 void install_camera_bindings(JSContext* ctx, JSValueConst target) {
   install(ctx, target, kNatives);
-#if ALPHA_DEBUG_TOOLS
-  install(ctx, target, kTestNatives);
-#endif
 }
 
 }  // namespace alpha::script

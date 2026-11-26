@@ -35,6 +35,7 @@ struct ScriptState {
   core::Timers timers;
   core::Vec2 gravity;
   core::Vec2 design_size;  // config.size: each scene's camera starts centered on it
+  std::optional<core::Vec2> screen;  // the real screen in output pixels (engine; Host::set_screen)
   core::Vec2 view_size;    // what the screen shows: config.size grown by config.window.aspect
   std::unique_ptr<ecs::World> world;
   // The game's save.json path for its title; save slots and settings sit next

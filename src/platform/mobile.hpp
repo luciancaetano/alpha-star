@@ -5,6 +5,7 @@
 #include <string>
 
 #include "core/os.hpp"
+#include "core/vec2.hpp"
 
 // What differs on phones (Android), kept to hints and the pack location so the
 // rest of the engine runs unchanged. Desktop builds call the same functions:
@@ -28,6 +29,9 @@ void preview_os(std::optional<core::Os> os);  // nullopt: the real one again
 // there is none: game.jsbc or main.js next to the executable (`alpha export
 // --standalone`); on Android the APK's assets (SDL reads relative paths from them).
 std::string bundled_pack();
+// The display in pixels on phones (the game window will fill it); nullopt on
+// desktop, where the first window has the game's own aspect.
+std::optional<core::Vec2> phone_screen();
 
 // The file a pack directory runs: its game.jsbc (compiled standalone export)
 // when present, else its main.js. Bytecode is only ever taken from the pack itself.

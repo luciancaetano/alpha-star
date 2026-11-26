@@ -6,6 +6,7 @@
 #include <optional>
 
 #include "core/bytecode.hpp"
+#include "core/window.hpp"
 #include "platform/vfs.hpp"
 
 namespace alpha::platform {
@@ -27,6 +28,11 @@ const char* orientations(int width, int height) {
 void prepare_mobile(int width, int height) {
   SDL_SetHint(SDL_HINT_ORIENTATIONS, orientations(width, height));
   SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
+}
+
+std::optional<core::Vec2> phone_screen() {
+  const SDL_DisplayMode* mode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+  return core::phone_display(running_os(), mode ? core::Vec2{static_cast<float>(mode->w), static_cast<float>(mode->h)} : core::Vec2{});
 }
 
 std::string bundled_pack() {

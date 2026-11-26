@@ -651,7 +651,7 @@ function bootGame(s, ctx, g, start, what, from) {
   }
   N.configure(c.seed ?? 0, ...(c.gravity ?? [0, 0]), c.size[0], c.size[1]);
   N.uiCreate(c.size[0], c.size[1]);
-  if (s.screen) N.presentView(c, s.screen[0], s.screen[1]);
+  N.presentView(c, ...(s.screen ?? []));
   N.collisionCategories(collisionCategories(c.collision));
   for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bind("actions", action, inputs);
   if (c.deadzone !== undefined) N.deadzone(c.deadzone);

@@ -62,6 +62,8 @@ class Renderer {
   SDL_Renderer* sdl() const { return sdl_; }
   // Game pixels the screen shows now (the game size grown along the revealed axes).
   core::Vec2 logical_size() const { return size_; }
+  // Output pixels at the last draw (the window, high-DPI included).
+  core::Vec2 output_size() const { return output_; }
   // Saves what draw() produced, before present(). Returns false on failure.
   bool save_bmp(const std::string& path) const;
 
@@ -88,6 +90,7 @@ class Renderer {
   SDL_Renderer* sdl_;
   core::Vec2 game_size_;
   core::Vec2 size_;
+  core::Vec2 output_;
   core::Stretch stretch_;
   core::PixelGrid grid_;       // game pixels -> output pixels, this frame
   float window_scale_ = 1.0f;  // output pixels per game pixel

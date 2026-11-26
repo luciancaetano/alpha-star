@@ -38,6 +38,12 @@ struct Presentation {
   Vec2 offset;
 };
 Presentation present(Vec2 design, Vec2 output, Stretch stretch);
+// `screen` turned to the orientation of `design` (phones rotate to the game's
+// orientation, so a portrait display size serves a landscape game swapped).
+Vec2 oriented(Vec2 screen, Vec2 design);
+// The screen a game boots on: a phone's `display` (its window fills it);
+// nullopt on desktop or for an unknown (empty) display.
+std::optional<Vec2> phone_display(Os os, Vec2 display);
 
 // config.window, fixed at boot.
 struct WindowConfig {

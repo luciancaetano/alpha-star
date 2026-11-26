@@ -55,7 +55,8 @@ void Renderer::present_logical() {
   int w = 0;
   int h = 0;
   SDL_GetRenderOutputSize(sdl_, &w, &h);
-  size_ = core::present(game_size_, {static_cast<float>(w), static_cast<float>(h)}, stretch_).logical;
+  output_ = {static_cast<float>(w), static_cast<float>(h)};
+  size_ = core::present(game_size_, output_, stretch_).logical;
   SDL_SetRenderLogicalPresentation(sdl_, static_cast<int>(size_.x), static_cast<int>(size_.y), sdl_presentation(stretch_.scale));
 }
 

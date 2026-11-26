@@ -68,6 +68,18 @@ TEST_CASE("integer: whole-number scale; the revealed axes fill the output up to 
   CHECK(shown({320, 180}, {200, 100}, Aspect::Keep, Scale::Integer).scale == doctest::Approx(1));  // never below 1
 }
 
+TEST_CASE("a phone's display size turns to the game's orientation") {
+  CHECK(alpha::core::oriented({1080, 2340}, {320, 180}) == Vec2{2340, 1080});
+  CHECK(alpha::core::oriented({1080, 2340}, {288, 512}) == Vec2{1080, 2340});
+  CHECK(alpha::core::oriented({2340, 1080}, {320, 180}) == Vec2{2340, 1080});
+}
+
+TEST_CASE("only phones boot laid out for their display") {
+  CHECK(alpha::core::phone_display(alpha::core::Os::android, {1080, 2340}) == Vec2{1080, 2340});
+  CHECK_FALSE(alpha::core::phone_display(alpha::core::Os::windows, {1920, 1080}).has_value());
+  CHECK_FALSE(alpha::core::phone_display(alpha::core::Os::ios, {0, 0}).has_value());
+}
+
 TEST_CASE("odd and empty outputs stay sane") {
   const auto odd = shown({320, 180}, {1001, 999}, Aspect::Expand);
   CHECK(odd.logical.x == 320);

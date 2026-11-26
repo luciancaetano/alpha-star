@@ -193,6 +193,7 @@ void report_render([[maybe_unused]] const Options& o, [[maybe_unused]] alpha::sc
 // ctx.window requests applied, real state recorded; with expand the scene sees the new size.
 void sync_window(SDL_Window* window, alpha::script::Host& host, const alpha::render::Renderer& renderer) {
   alpha::platform::sync_window(window, host.window());
+  host.set_screen(renderer.output_size());  // hot reloads lay out for it
   host.resize_view(renderer.logical_size());
 }
 
@@ -268,6 +269,7 @@ int main(int argc, char** argv) {
   if (game.empty()) return no_game();
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) return fail("SDL_Init");
   alpha::script::Host host(save_path_for);
+  host.set_screen(alpha::platform::phone_screen());  // the first scene fills the phone
   const alpha::script::GameInfo info = host.load(game);
 #if ALPHA_SHIPPING && !defined(__ANDROID__)  // no console: logs go to <pref dir>/log.txt (Android: logcat)
   alpha::platform::redirect_logs(alpha::platform::pref_file(info.title, "log.txt"), host.log());

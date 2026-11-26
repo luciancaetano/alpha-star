@@ -23,7 +23,9 @@ android {
             cmake {
                 // 16 KB-aligned ELF segments: Google Play requires them (Android 15+ 16 KB page devices).
                 arguments "-DANDROID_PLATFORM=android-21", "-DANDROID_STL=c++_static", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
-                          "-DALPHA_BUILD_TESTS=OFF", "-DCMAKE_BUILD_TYPE=Release"
+                          "-DALPHA_BUILD_TESTS=OFF", "-DCMAKE_BUILD_TYPE=Release",
+                          // game.jsbc key secret (cmake/BytecodeKey.cmake); empty = the checkout's build/jsbc.secret
+                          "-DALPHA_JSBC_SECRET=" + (System.getenv("ALPHA_JSBC_SECRET") ?: "")
                 targets "alpha_star"
             }
         }
