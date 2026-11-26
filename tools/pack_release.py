@@ -37,6 +37,8 @@ TARGETS = {"win32-x64": ("win32", "x64", "alpha_star.exe"), "linux-x64": ("linux
 # Shader compilers next to the release engine (tools/stage_engine.py SHADER_TOOLS): GLSL -> SPIR-V -> MSL.
 SHADER_TOOLS = {"win32-x64": ["glslang.exe", "shadercross.exe"], "linux-x64": ["glslang", "shadercross"]}
 ANDROID = "android-arm64"  # prebuilt APK engine (tools/stage_android.py), installed on every OS
+# npm provenance requires repository.url to match the GitHub repo that builds the package.
+REPOSITORY = {"type": "git", "url": "git+https://github.com/luciancaetano/alpha-star.git"}
 ANDROID_FLAVORS, ANDROID_LIBS = ("debug", "shipping"), ("libmain.so", "libSDL3.so")
 ALL_TARGETS = [*TARGETS, ANDROID]
 JUNK = re.compile(r"\.(pdb|ilk|obj|o|lib|exp|log|tmp|map)$|node_modules/|CMakeFiles|__pycache__|\.DS_Store"
@@ -130,7 +132,7 @@ def android_package(version, root, stage):
         "installed on every OS, since APKs build anywhere).\n\n- `debug/`: debug APKs (dev tools)\n"
         "- `shipping/`: release APKs and AABs\n", encoding="utf-8")
     files = [f"{f}/{lib}" for f in ANDROID_FLAVORS for lib in ANDROID_LIBS]
-    pkg = {"name": f"@alpha-star/engine-{ANDROID}", "version": version, "license": "MIT",
+    pkg = {"name": f"@alpha-star/engine-{ANDROID}", "version": version, "license": "MIT", "repository": REPOSITORY,
            "description": "alpha-star prebuilt Android engine (arm64-v8a) for @alpha-star/sdk",
            "files": [*files, "LICENSE", "THIRD_PARTY_NOTICES.txt", "README.md"]}
     (dest / "package.json").write_text(json.dumps(pkg, indent=2) + "\n", encoding="utf-8")
@@ -162,7 +164,7 @@ def engine_package(target, version, release, shipping, stage):
         f"# @alpha-star/engine-{target}\n\nThe alpha-star engine for {target}, installed by `@alpha-star/sdk` "
         f"(optional dependency, exact version {version}).\n\n- `{exe}`: release engine (`alpha run`, `alpha test`, "
         f"`alpha mcp`)\n- `{SHADER_TOOLS[target][0]}`, `{SHADER_TOOLS[target][1]}`: shader compilers (`alpha export`: GLSL -> SPIR-V -> MSL)\n- `shipping/{exe}`: player engine (`alpha export --standalone`)\n", encoding="utf-8")
-    pkg = {"name": f"@alpha-star/engine-{target}", "version": version, "license": "MIT",
+    pkg = {"name": f"@alpha-star/engine-{target}", "version": version, "license": "MIT", "repository": REPOSITORY,
            "description": f"alpha-star engine binaries for {target} (used by @alpha-star/sdk)",
            "os": [os_name], "cpu": [cpu], "preferUnplugged": True,
            "files": [exe, *SHADER_TOOLS[target], f"shipping/{exe}", "LICENSE", "THIRD_PARTY_NOTICES.txt", "README.md"]}
