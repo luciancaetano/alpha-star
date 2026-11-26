@@ -1,5 +1,7 @@
 # Getting started
 
+Explore the [alpha-star showcase](index.html) for a slider with real captures of six engine examples, including Shader Lab.
+
 alpha-star is a small 2D engine for games written by AI agents and the people working with them.
 You write TypeScript against one typed API; the engine (C++, SDL3, Box2D, QuickJS) runs it with a
 fixed step and a seeded random, so every run with the same inputs is the same run, and headless

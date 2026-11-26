@@ -4,7 +4,7 @@ name: docs-pages
 on:
   push:
     branches: [main]
-    paths: ["docs/guide/**", "alpha-sdk/types/**", "alpha-sdk/scripts/**", "aster.png", ".github/workflows/pages.yml"]
+    paths: ["docs/guide/**", "alpha-sdk/types/**", "alpha-sdk/scripts/**", "aster.png", "logo.png", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
