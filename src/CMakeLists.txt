@@ -49,7 +49,7 @@ if(NOT ALPHA_WITH_RUNTIME_DEPS)
 endif()
 
 # Script runtime JS is embedded in the binary: the player ships one executable.
-set(ALPHA_JS_FILES alpha alpha_test audio i18n maps physics prefs runtime tween)
+set(ALPHA_JS_FILES alpha alpha_test audio i18n ldtk levels physics prefs runtime tween)
 # Each file becomes adjacent raw literals of <= 8000 chars: MSVC rejects a single
 # literal over ~16 KB (C2026), while concatenated ones may reach 64 KB.
 foreach(js ${ALPHA_JS_FILES})

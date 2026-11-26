@@ -13,7 +13,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import * as esbuild from "esbuild";
 import { buildAtlas } from "./atlas.mjs";
 import { build } from "./build.mjs";
-import { mapReferences } from "./maps.mjs";
+import { worldReferences } from "./ldtk.mjs";
 import { BYTECODE_FILE, compileBytecode } from "./bytecode.mjs";
 import { bundledEngine, describeTargets, engineFile, shippingEngine } from "./engine.mjs";
 import { compileShaders, glslangTool, shadercrossTool } from "./shaders.mjs";
@@ -42,7 +42,7 @@ export async function readGameDef(entry) {
   }
 }
 
-// "file" or { file, filter? / pixelMode? } (images, maps, fonts): the file and its filtering.
+// "file" or { file, filter? / pixelMode? } (images, worlds, fonts): the file and its filtering.
 const entryFile = (entry) => (typeof entry === "string" ? entry : entry?.file ?? "");
 const entryPixel = (entry, fallback) => (typeof entry?.pixelMode === "boolean" ? entry.pixelMode : fallback);
 const FILTERS = ["nearest", "linear", "sharp"];
@@ -65,7 +65,7 @@ export function assetFiles(def) {
   for (const [name, sheet] of Object.entries(assets.sheets ?? {})) {
     files.push({ key: `assets.sheets.${name}.image`, file: sheet?.image ?? "", filter: entryFilter(sheet, pixel) });
   }
-  for (const kind of ["fonts", "ui", "maps", "music", "locales"]) {
+  for (const kind of ["fonts", "ui", "worlds", "music", "locales"]) {
     for (const [name, entry] of Object.entries(assets[kind] ?? {})) files.push({ key: `assets.${kind}.${name}`, file: entryFile(entry) });
   }
   for (const [name, font] of Object.entries(assets.fonts ?? {})) {
@@ -115,8 +115,8 @@ function packFiles(root, def) {
     if (p) return { files, problems: [p] };
     files.push(...found);
   }
-  for (const f of files.filter((x) => /^assets\.maps\.[^.]+$/.test(x.key))) {
-    const { found, problem: p } = mapReferences(root, f);
+  for (const f of files.filter((x) => /^assets\.worlds\.[^.]+$/.test(x.key))) {
+    const { found, problem: p } = worldReferences(root, f);
     if (p) return { files, problems: [p] };
     files.push(...found);
   }

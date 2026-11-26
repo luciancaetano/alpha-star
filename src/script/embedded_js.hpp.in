@@ -9,7 +9,8 @@ inline constexpr std::string_view kAlpha = @ALPHA_JS_alpha@;
 #if ALPHA_DEBUG_TOOLS  // the alpha/test module is absent from other builds
 inline constexpr std::string_view kAlphaTest = @ALPHA_JS_alpha_test@;
 #endif
-inline constexpr std::string_view kMaps = @ALPHA_JS_maps@;
+inline constexpr std::string_view kLdtk = @ALPHA_JS_ldtk@;
+inline constexpr std::string_view kLevels = @ALPHA_JS_levels@;
 inline constexpr std::string_view kRuntime = @ALPHA_JS_runtime@;
 inline constexpr std::string_view kTween = @ALPHA_JS_tween@;
 inline constexpr std::string_view kPhysics = @ALPHA_JS_physics@;

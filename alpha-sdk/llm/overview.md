@@ -27,7 +27,7 @@ export interface Platformer {
   images: never;                       // `never` if none
   tags: "player" | "coin" | "walls";
   sheets: { hero: "idle" | "run" };    // optional
-  maps: "level1"; layers: "far" | "fx"; fonts: "pixel";   // optional
+  worlds: "main"; layers: "far" | "fx"; fonts: "pixel";   // optional
   ui: { hud: "coins"; won: never };    // `{}` if no UI
   scenes: { play: undefined; over: { score: number } };    // enter() params per scene
 }
@@ -76,7 +76,7 @@ export default scene("play", {
 
 `ctx` (scene-scoped: entities, handlers, tweens, timers, camera, postfx cleared on scene change):
 `config, dt, time, state, input, random, save, settings, locale, t, ui, audio, camera, postfx, window, app`,
-`spawn, destroy, find, findAll, positions, spawnMap, map, onHit, onHitEnd, onEnter, onExit, onPause, onResume, onLowMemory, raycast, raycastAll, queryCircle, queryRect, joint, tween, every, after, go`.
+`spawn, destroy, find, findAll, positions, spawnLevel, world, onHit, onHitEnd, onEnter, onExit, onPause, onResume, onLowMemory, raycast, raycastAll, queryCircle, queryRect, joint, tween, every, after, go`.
 
 - `ctx.go(scene, params?)` switches at the end of the step.
 - `ctx.dt` is the constant fixed step; `ctx.time` = seconds since enter.

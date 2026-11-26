@@ -1,10 +1,10 @@
-// Bench (d): a 500x500 tile map (8 px tiles) with the camera scrolling across it.
+// Bench (d): a 500x500 LDtk tile layer (8 px tiles) with the camera scrolling across it.
 import { define } from "alpha";
 const { scene, game } = define();
 
 const play = scene("play", {
   enter(ctx) {
-    ctx.spawnMap("big");
+    ctx.spawnLevel("big", "Big", { background: false });
   },
   update(ctx) {
     ctx.camera.pos.x = (ctx.camera.pos.x + 3) % 3600;
@@ -14,7 +14,7 @@ const play = scene("play", {
 
 export default game({
   config: { title: "bench-tilemap", size: [640, 360], seed: 1, actions: {} },
-  assets: { maps: { big: "big.tmj" } },
+  assets: { worlds: { big: "big.ldtk" } },
   start: "play",
   scenes: { play },
 });

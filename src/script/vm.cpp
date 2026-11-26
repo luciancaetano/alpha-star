@@ -31,7 +31,8 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
 #if ALPHA_DEBUG_TOOLS  // test runner only; importing it elsewhere lists the builtins that exist
   engine->add_builtin("alpha/test", embedded::kAlphaTest);
 #endif
-  engine->add_builtin("alpha:maps", embedded::kMaps);
+  engine->add_builtin("alpha:ldtk", embedded::kLdtk);
+  engine->add_builtin("alpha:levels", embedded::kLevels);
   engine->add_builtin("alpha:tween", embedded::kTween);
   engine->add_builtin("alpha:physics", embedded::kPhysics);
   engine->add_builtin("alpha:audio", embedded::kAudio);

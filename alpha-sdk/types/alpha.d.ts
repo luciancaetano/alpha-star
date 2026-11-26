@@ -48,8 +48,8 @@ declare module "alpha" {
      * e.g. `{ hero: "idle" | "run" | "jump" }`. Optional: omit if the game has none.
      */
     sheets?: { [sheet: string]: string };
-    /** Tiled map names (assets.maps), e.g. "level1". Optional. */
-    maps?: string;
+    /** LDtk world names (assets.worlds), e.g. "main". Optional. */
+    worlds?: string;
     /** Draw layer names (config.layers), e.g. "bg" | "fx". Optional. */
     layers?: string;
     /** Font names (assets.fonts), used by world text and .rcss. Optional (any name). */
@@ -86,8 +86,8 @@ declare module "alpha" {
   export type SheetsOf<G extends GameTypes> = G extends { sheets: infer S extends { [k: string]: string } } ? S : {};
   /** Every animation name of every sheet. */
   export type AnimationOf<G extends GameTypes> = SheetsOf<G>[keyof SheetsOf<G>] & string;
-  /** The game's map names (`never` without `maps`). */
-  export type MapOf<G extends GameTypes> = G extends { maps: infer M extends string } ? M : never;
+  /** The game's LDtk world names (`never` without `worlds`). */
+  export type WorldOf<G extends GameTypes> = G extends { worlds: infer W extends string } ? W : never;
 
   export type UiTypes = { [doc: string]: string };
 
@@ -567,49 +567,137 @@ declare module "alpha" {
     readonly view: readonly [x: number, y: number, width: number, height: number];
   }
 
-  /** One object of a Tiled object layer, as plain data. */
-  export interface MapObject {
+  /**
+   * An LDtk field value as plain data: numbers, strings (also colors "#rrggbb" and
+   * enum values), booleans, null, Point as a cell [cx, cy], EntityRef as iids
+   * (`level.entity(ref.entity)` gives the spawned entity), Tile as a tileset rect, arrays.
+   */
+  export type LevelField =
+    | null
+    | number
+    | string
+    | boolean
+    | [cx: number, cy: number]
+    | { entity: string; layer: string; level: string }
+    | { tileset: string | null; rect: [x: number, y: number, w: number, h: number] }
+    | LevelField[];
+
+  /** One LDtk entity instance, as plain data (a copy). */
+  export interface LevelEntity {
+    /** The LDtk entity identifier, e.g. "Player". */
+    id: string;
+    iid: string;
+    /** World pixels of its pivot point (level position + layer offset + `local`). */
+    pos: Vec2;
+    /** Pixels of its pivot inside the layer (LDtk `px`). */
+    local: Vec2;
+    /** Cell [cx, cy] in its layer. */
+    grid: Vec2;
+    size: Vec2;
+    /** 0..1 each: [0, 0] = top-left, [0.5, 1] = bottom middle. */
+    pivot: Vec2;
+    /** Its Entities layer. */
+    layer: string;
+    tags: string[];
+    fields: { [name: string]: LevelField };
+    /** Editor tile of the entity, if it has one. */
+    tile: { tileset: string | null; rect: [x: number, y: number, w: number, h: number] } | null;
+  }
+
+  /** The top tile of a cell (level.tile). */
+  export interface LevelTile {
+    /** Tile id in the layer's tileset (row-major). */
     id: number;
-    name: string;
-    /** Tiled's class / type field. */
-    type: string;
-    /** Top-left in map pixels (point objects: the point). */
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    rotation: number;
-    point: boolean;
-    properties: { [name: string]: string | number | boolean };
+    flipX: boolean;
+    flipY: boolean;
+    /** Enum values tagged on this tile in the tileset (LDtk "Enum tags"). */
+    tags: string[];
+    /** The tile's custom data string, or null. */
+    data: string | null;
   }
 
-  /** A loaded Tiled map (ctx.map / ctx.spawnMap). */
-  export interface TileMap {
-    readonly name: string;
-    /** In tiles. */
-    readonly width: number;
-    readonly height: number;
-    readonly tileSize: Vec2;
-    /** In pixels. */
+  /** A level as data: ctx.world(w).level(id), and the base of a spawned Level. */
+  export interface LevelData {
+    /** LDtk identifier, e.g. "Level_0". */
+    readonly id: string;
+    readonly iid: string;
+    /** World pixels of its top-left (its LDtk world position, or spawnLevel's `pos`). */
+    readonly pos: Vec2;
     readonly size: Vec2;
-    readonly properties: { [name: string]: string | number | boolean };
-    /** Layer names in draw order. */
+    readonly depth: number;
+    /** Background color "#rrggbb", or null. */
+    readonly bg: string | null;
+    readonly fields: { [name: string]: LevelField };
+    /** Layer identifiers in draw order (bottom first). */
     readonly layers: string[];
-    /** A copy of an object layer's objects; throws listing the object layers. */
-    objects(layer: string): MapObject[];
+    /** Adjacent levels; `dir` is LDtk's: "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw" | "<" | ">" | "o". */
+    readonly neighbours: { level: string | null; dir: string }[];
+    /** Entity instances (copies, world pixels), all or one identifier; an identifier not in the project throws. */
+    entities(id?: string): LevelEntity[];
+    /** IntGrid value at a cell (0 = empty or outside the layer). */
+    int(layer: string, cx: number, cy: number): number;
+    /** The top tile at a cell of a tile / auto / IntGrid layer, or null. */
+    tile(layer: string, cx: number, cy: number): LevelTile | null;
+    /** The cell under a world point (grid of `layer`, default the first layer). */
+    toCell(pos: Vec2, layer?: string): Vec2;
+    /** World pixels of a cell's center (grid of `layer`, default the first layer). */
+    toWorld(cell: Vec2, layer?: string): Vec2;
   }
 
-  export interface SpawnMapOptions<T extends string> {
-    /** Tile layers that become static colliders (merged rects) tagged with the layer name. */
-    collide?: T[];
-    /** z of every tile layer (default 0; later layers draw over earlier ones). */
+  /** A spawned level (ctx.spawnLevel): data plus live edits. */
+  export interface Level<T extends string = string> extends LevelData {
+    /**
+     * Sets an IntGrid cell to a value (number or its LDtk identifier; 0 clears).
+     * Collision rules of that layer rebuild their merged colliders. Auto-layer
+     * tiles are not re-run: change visuals with setTile.
+     */
+    setInt(layer: string, cx: number, cy: number, value: number | string): void;
+    /** Replaces the tiles of a cell with tile id `tile` (null clears). The layer redraws in place. */
+    setTile(layer: string, cx: number, cy: number, tile: number | null, opts?: { flipX?: boolean; flipY?: boolean; alpha?: number }): void;
+    /** The entity a factory spawned for LDtk entity `iid` (resolves EntityRef fields), or null. */
+    entity(iid: string): Entity<T> | null;
+    /** Removes everything spawnLevel made: tile layers, colliders, background and factory entities still alive. */
+    destroy(): void;
+  }
+
+  /** A loaded LDtk project (ctx.world): data only. */
+  export interface World {
+    readonly name: string;
+    readonly layout: "Free" | "GridVania" | "LinearHorizontal" | "LinearVertical";
+    /** Level identifiers in project order. */
+    readonly levels: string[];
+    /** A level's data; throws listing the levels. */
+    level(id: string): LevelData;
+    /** The level whose world rect holds a point, or null. */
+    levelAt(pos: Vec2): LevelData | null;
+    /** An entity instance anywhere in the world by iid (with its level id), or null. */
+    entity(iid: string): (LevelEntity & { level: string }) | null;
+  }
+
+  /** A collision rule for one IntGrid value. */
+  export type IntGridCollider<T extends string> =
+    | T
+    | { tag: T; oneWay?: boolean; sensor?: boolean; friction?: number; restitution?: number };
+
+  export interface SpawnLevelOptions<T extends string, S> {
+    /**
+     * IntGrid layers that become merged static colliders: a tag for every
+     * non-zero value (`{ Collisions: "wall" }`), or a rule per value / identifier
+     * (`{ Collisions: { wall: "wall", platform: { tag: "ledge", oneWay: true } } }`).
+     */
+    collide?: { [intGridLayer: string]: T | { [value: string]: IntGridCollider<T> } };
+    /** LDtk entity identifier -> factory; it returns spawn spec(s) or null. */
+    entities?: { [entity: string]: (e: LevelEntity) => S | S[] | null | undefined };
+    /** z of every tile layer and the background (default 0; later layers draw over earlier ones). */
     z?: number;
-    /** Where the map's top-left goes (default [0, 0]). */
+    /** World pixels of the level's top-left (default its LDtk world position). */
     pos?: Vec2;
     /** config.layers layer of every tile layer (default: the unnamed layer). */
     layer?: string;
-    /** Per Tiled tile layer name: its config.layers layer (overrides `layer`). */
-    layers?: { [tiledLayer: string]: string };
+    /** Per LDtk layer identifier: its config.layers layer (overrides `layer`), e.g. parallax. */
+    layers?: { [ldtkLayer: string]: string };
+    /** Fill the level's LDtk background color under it (default false: config.background shows). */
+    background?: boolean;
   }
 
   // ---- services -------------------------------------------------------------
@@ -894,12 +982,18 @@ declare module "alpha" {
     positions(tag: G["tags"]): Positions;
 
     /**
-     * Draws the map's visible tile layers (one batched, culled entity per layer and
-     * tileset) and makes `collide` layers solid. Scene-scoped like spawn: call it in enter.
+     * Spawns an LDtk level: draws its visible tile layers (one batched, culled entity
+     * per layer, animated tiles in a second one), makes `collide` IntGrid values solid,
+     * runs `entities` factories. Scene-scoped like spawn: call it in enter (or later for
+     * room transitions; `level.destroy()` removes it).
      */
-    spawnMap(name: MapOf<G>, opts?: SpawnMapOptions<G["tags"]>): TileMap;
-    /** A map's data (sizes, object layers) without spawning anything. */
-    map(name: MapOf<G>): TileMap;
+    spawnLevel(
+      world: WorldOf<G>,
+      level: string,
+      opts?: SpawnLevelOptions<G["tags"], EntitySpec<G["tags"], G["images"], SheetsOf<G>, LayerOf<G>, FontOf<G>, CategoryOf<G>>>,
+    ): Level<G["tags"]>;
+    /** An LDtk world's data (levels, entities, cells) without spawning anything. */
+    world(name: WorldOf<G>): World;
 
     /** Solid contact between tags starts. `a` has tagA, `b` has tagB; `contact` normal points a -> b. */
     onHit(tagA: G["tags"], tagB: G["tags"], fn: HitHandler<G["tags"]>): void;
@@ -1065,8 +1159,11 @@ declare module "alpha" {
        * `{ hero: { image: "img/hero.png", frame: [16, 16], animations: { run: { frames: [0, 1, 2, 3], fps: 10 } } } }`.
        */
       sheets?: { [K in keyof SheetsOf<G>]: SheetAsset<SheetsOf<G>[K] & string> };
-      /** Map name -> Tiled map (.tmj JSON; tilesets embedded or .tsj; CSV tile layers). */
-      maps?: Record<MapOf<G>, ImageAsset>;
+      /**
+       * World name -> LDtk project (.ldtk; levels embedded or saved as .ldtkl). `filter` applies to
+       * its tilesets. Animate a tile with tileset custom data `{"frames": [ids], "fps": n}`.
+       */
+      worlds?: Record<WorldOf<G>, ImageAsset>;
       /**
        * Custom full-screen shader name -> `{ file: "shaders/wave.frag", uniforms: { amount: 0.5 } }`,
        * then `ctx.postfx.add("wave", { amount: 1 })`. See ShaderAsset.

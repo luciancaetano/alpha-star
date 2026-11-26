@@ -22,7 +22,7 @@ build/gate/container at a time, `podman machine start` only for the Linux gate a
 | 5 | Gameplay joystick: axes, triggers, deadzone, players, rumble, hot-plug, simulate axes | done (this commit; LOG 125-138) |
 | 6 | MCP server (agent drives the game: start, input, state, screenshots, errors) | done (this commit; LOG 139-152) |
 | 7 | Hot reload (pack re-export -> running engine reloads) | done (this commit; LOG 153-162) |
-| 8 | Camera (follow/zoom/shake/bounds) + sprite sheets & animation + atlas packing + tilemaps (Tiled import) | done (this commit; LOG 163-176) |
+| 8 | Camera (follow/zoom/shake/bounds) + sprite sheets & animation + atlas packing + tilemaps (Tiled import; Tiled replaced by LDtk in 0.4.0) | done (this commit; LOG 163-176) |
 | 9 | Particles, tint/alpha/blend, layers/parallax, world text, fullscreen & scaling modes | done (this commit; LOG 177-190) |
 | 10 | Physics: end events, raycasts/queries, layers/filters, materials, joints, one-way, CCD; tween/easing, vector math, parent/child, entity data, prefabs; per-asset pixelMode filtering | done (this commit; LOG 191-205) |
 | 11 | Audio: OGG/MP3, streaming music, buses, crossfade, pan; save slots/versioning, settings; localization; accessibility | done (this commit; LOG 206-220) |

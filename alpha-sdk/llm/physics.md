@@ -68,4 +68,4 @@ Impulse to change velocity by dv: `e.body.applyImpulse([0, -e.body.mass * 300])`
 - Tweening a kinematic body's x/y moves it by velocity, so riders are carried (tweens-and-timers.md).
 - Handlers, joints and queries are scene-scoped. Joints go away with either body.
 - Motor `max` near what the job needs; a huge max overpowers limits.
-- Static map colliders come from `ctx.spawnMap(name, { collide: [...] })` (tilemaps.md).
+- Static level colliders come from `ctx.spawnLevel(world, level, { collide: { IntGridLayer: "tag" } })` (tilemaps.md).

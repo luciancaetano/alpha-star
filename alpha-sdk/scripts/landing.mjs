@@ -2,7 +2,7 @@ const REPO = "https://github.com/luciancaetano/alpha-star";
 
 const GAMES = [
   ["shaders", "Give every frame a new look.", "Shader Lab", "Six custom GLSL effects, orbiting lights and adjustable intensity.", "GLSL / Lighting"],
-  ["platformer", "A little world. A big jump.", "Platformer", "Sprite animation, Tiled maps, camera follow and Box2D physics.", "Physics / Tilemaps"],
+  ["platformer", "A little world. A big jump.", "Platformer", "Sprite animation, LDtk levels, camera follow and Box2D physics.", "Physics / Tilemaps"],
   ["topdown", "Bring a friend. Clear the arena.", "Top-down arena", "Two players, auto-aim, sensor bullets and particle blasts.", "Co-op / Particles"],
   ["shmup", "Find your way through the fire.", "Space shooter", "Fast shots, collision categories and a scrolling star field.", "Collision / Layers"],
   ["puzzle", "One more move. One more try.", "Sokoban puzzle", "Pure game rules, undo, saved progress and accessible UI.", "Saves / Game UI"],

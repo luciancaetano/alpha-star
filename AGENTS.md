@@ -38,7 +38,7 @@ cmake/          dependency + warnings config
 ```
 make build-debug | build-prod | run-debug | debug   # debug = run under VS/lldb/gdb (GAME=path/to/pack)
 make flappy                                         # build engine + examples/flappy, then play
-                                                    # examples/platformer: sheets, Tiled map, camera
+                                                    # examples/platformer: sheets, LDtk level, camera
 make sdk-engine | sdk-engine-linux                  # stage release engine into alpha-sdk/engine/
 make deploy-engine                                  # sdk-engine + sdk-engine-linux + templates + skills + docs site + notices check + SDK tests
 make gate                                           # full Windows gate (tools/gate.py, resource-guarded)
@@ -71,7 +71,8 @@ rasterized at logical size and scaled. Pack notices: `alpha-sdk/notices/*.txt` f
 (`--check` verifies them against `build/dev/_deps`); rerun it when a dependency changes.
 Physics lives in `src/physics/` (Box2D v3: `physics_world` bodies/contacts/pre-solve one-way,
 `queries` rays/overlaps, `joints`); script glue in `script/physics_bindings`, `joint_bindings`
-and the embedded `physics.js` / `tween.js` modules. Texture filtering is per image
+and the embedded `physics.js` / `tween.js` modules. LDtk levels: embedded `ldtk.js` (parse)
+/ `levels.js` (spawnLevel, edits) modules. Texture filtering is per image
 (`core::Image::smooth`, from `pixelMode`); never set a global scale mode.
 Lighting/post effects: `render::Compositor` (built-ins: render targets + add/modulate blends + vertex colors on SDL_Renderer,
 no shaders); data in `core/postfx` + `core/lighting`, render-only. Custom shaders (`assets.shaders`, `core/shader`): Vulkan

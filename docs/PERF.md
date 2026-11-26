@@ -16,7 +16,7 @@ pessimistic; compare rows of the same table.
 | physics | 2000 dynamic circle bodies falling into a box |
 | particles | 4 emitters x 5000 = 20000 live particles (the world cap) |
 | particles_smooth | the same with `pixelMode: false` (antialiased circle/rect particles, step E) |
-| tilemap | 500 x 500 tile layer (8 px tiles), camera scrolling |
+| tilemap | 500 x 500 LDtk Tiles layer (8 px tiles), camera scrolling |
 | ui | RmlUi document, 200 elements whose text changes every frame |
 
 ## Baseline (before step 13's fixes)
@@ -67,7 +67,7 @@ start is dominated by SDL, the window and the renderer. Bytecode is about hiding
   (10.92 ms / 2000); `ctx.positions` = 2 native calls per frame in total = 0.32 us
   (3.17 ms / 10000, the rest is the JS loop): **17x cheaper**. Hence the batch API; per-entity
   proxies stay for gameplay code touching few entities.
-- `spawnMap` cell grouping: one plain loop reusing the current tileset (was forEach + Map lookup
+- Map spawn cell grouping (then `spawnMap`, now `spawnLevel`): one plain loop reusing the current tileset (was forEach + Map lookup
   per cell): a 500 x 500 layer now boots inside the call budget.
 - Remaining hot spots, not changed: render submission of large vertex counts (particles 118k
   vertices = 1.4 ms, 10000 sprites = 3.8 ms; one SDL_RenderGeometry call each), RmlUi text

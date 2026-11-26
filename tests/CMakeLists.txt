@@ -63,7 +63,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/input_script_test.cpp
     script/hot_reload_test.cpp
     script/reload_test.cpp
-    script/map_script_test.cpp
+    script/level_script_test.cpp
     script/simulate_test.cpp
     script/effects_script_test.cpp
     script/postfx_script_test.cpp

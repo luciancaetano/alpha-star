@@ -17,8 +17,10 @@
 | `...("x"): not in config.actions; actions: ...` | Add the action to `config.actions` (and `GameTypes.actions`). |
 | unknown animation (lists the sheet's animations) | Use a name from `assets.sheets.<s>.animations`. |
 | `start "x" is not a scene; scenes: ...` / `scenes.k must be scene("k", {...})` | `start` and the `scenes` map must match `GameTypes.scenes`; each value from `scene("k", ...)`. |
-| `spawnMap("x"): not in assets.maps; have: ...` | Declare the map in `assets.maps` and `GameTypes.maps`. |
-| `...pixelMode is not an image option; use filter: ...` | Images/sheets/maps take `filter: "nearest" \| "linear" \| "sharp"`; `pixelMode` is only for config and fonts. |
+| `spawnLevel("x"): not in assets.worlds; have: ...` | Declare the world in `assets.worlds` and `GameTypes.worlds`. |
+| `assets.maps (Tiled) was replaced by assets.worlds ...` | Make the level in LDtk and load it with `assets.worlds` + `ctx.spawnLevel` (tilemaps.md). |
+| `world "w" has no level "x"; it has: ...` / `has no IntGrid layer "x"; it has: ...` | Use the LDtk identifiers listed. |
+| `...pixelMode is not an image option; use filter: ...` | Images/sheets/worlds take `filter: "nearest" \| "linear" \| "sharp"`; `pixelMode` is only for config and fonts. |
 | `entity N: data must stay JSON-safe ...` | Only numbers, strings, booleans, null, arrays, plain objects in `entity.data`. |
 | `postfx.set("x"): not added in this scene; ... use postfx.add` | Call `ctx.postfx.add` first (each scene starts with none). |
 | `postfx "crt": unknown param "amount"; have: strength` | Use the listed params. |
@@ -27,8 +29,8 @@
 | `config.lighting must be { ambient: "#rrggbb" }` | Fix the config shape. |
 | `config.layers.x must be { z: number, parallax?: number }` | Fix the layer entry. |
 | `key: file "x" not found (paths are relative to ...)` | Asset path wrong; paths are relative to the project and must stay inside it. |
-| `... references "x", not found inside the project` | A map/.rml/.rcss links a missing file. |
-| `...: save tilesets as JSON (.tsj) in Tiled` | Re-save the tileset as .tsj. |
+| `... references "x", not found inside the project` | A world/.rml/.rcss links a missing file. |
+| `multi-world projects are not supported; turn off "Multi-worlds"` | One world per .ldtk project (LDtk project settings). |
 | `main module must export default game({...})` | `src/main.ts` must `export default game({...})`. |
 | a throw when reading `entity.body` / `.text` / `.tint` or calling `.emit` | The entity was spawned without `body` / text shape / shape or emitter / `emitter`. |
 

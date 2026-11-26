@@ -168,34 +168,32 @@ test("export with atlas: false copies images as they are", async () => {
   assert.ok(fs.existsSync(path.join(p.out, "img/hero.png")));
 });
 
-const MAP_ASSETS = `{ sounds: { a: "assets/a.wav", b: "assets/a.wav" }, maps: { level1: "maps/level1.tmj" } }`;
-const MAP_FILES = {
+const WORLD_ASSETS = `{ sounds: { a: "assets/a.wav", b: "assets/a.wav" }, worlds: { main: "levels/main.ldtk" } }`;
+const WORLD_FILES = {
   "assets/a.wav": "WAV",
-  "maps/level1.tmj": JSON.stringify({ tilesets: [{ firstgid: 1, source: "../tilesets/ground.tsj" },
-                                                 { firstgid: 9, image: "deco.png", tilewidth: 8, tileheight: 8 }] }),
-  "tilesets/ground.tsj": JSON.stringify({ image: "../img/ground.png" }),
+  "levels/main.ldtk": JSON.stringify({
+    defs: { tilesets: [{ relPath: "../img/ground.png" }, { relPath: null, embedAtlas: "LdtkIcons" }] },
+    levels: [{ identifier: "A" }, { identifier: "B", externalRelPath: "main/B.ldtkl" }],
+  }),
   "img/ground.png": "PNG",
-  "maps/deco.png": "PNG2",
+  "levels/main/B.ldtkl": "{}",
 };
 
-test("export copies maps with their tilesets and tileset images", async () => {
-  const p = project(MAP_ASSETS, MAP_FILES);
+test("export copies LDtk worlds with their tileset images and external levels", async () => {
+  const p = project(WORLD_ASSETS, WORLD_FILES);
   const { ok, problems } = await exportPack(p);
   assert.deepEqual(problems, []);
   assert.ok(ok);
-  for (const file of ["maps/level1.tmj", "tilesets/ground.tsj", "img/ground.png", "maps/deco.png"]) {
+  for (const file of ["levels/main.ldtk", "img/ground.png", "levels/main/B.ldtkl"]) {
     assert.ok(fs.existsSync(path.join(p.out, file)), file);
   }
 });
 
-test("export names the map and the tileset it cannot use", async () => {
-  const { "img/ground.png": _gone, ...files } = MAP_FILES;
-  const r1 = await exportPack(project(MAP_ASSETS, files));
-  assert.equal(r1.ok, false);
-  assert.match(r1.problems[0].message, /assets\.maps\.level1: tilesets\/ground\.tsj references "\.\.\/img\/ground\.png", not found/);
-  const tsx = { ...MAP_FILES, "maps/level1.tmj": JSON.stringify({ tilesets: [{ firstgid: 1, source: "a.tsx" }] }) };
-  const r2 = await exportPack(project(MAP_ASSETS, tsx));
-  assert.match(r2.problems[0].message, /a\.tsx: save tilesets as JSON \(\.tsj\)/);
+test("export names the world and the file it cannot find", async () => {
+  const { "img/ground.png": _gone, ...files } = WORLD_FILES;
+  const r = await exportPack(project(WORLD_ASSETS, files));
+  assert.equal(r.ok, false);
+  assert.match(r.problems[0].message, /assets\.worlds\.main: levels\/main\.ldtk references "\.\.\/img\/ground\.png", not found/);
 });
 
 test("export copies sound files in { file, bus }, music and locale files", async () => {

@@ -69,6 +69,9 @@ struct BodySpec {
 struct TileQuad {
   Vec2 pos;
   Region src;
+  bool flip_x = false;
+  bool flip_y = false;
+  float alpha = 1.0f;  // times the shape's color (LDtk tile opacity x layer opacity)
 };
 
 // A whole tile layer drawn as one entity (one batch, culled per tile).

@@ -4,11 +4,11 @@ export interface Platformer {
   axes: "moveX";
   sounds: "jump" | "coin" | "land";
   images: never;
-  /** "walls" is the Tiled layer whose tiles become colliders (spawnMap collide). */
+  /** "walls": colliders made from the LDtk IntGrid layer "Walls" (spawnLevel collide). */
   tags: "player" | "coin" | "walls" | "dust" | "popup" | "scenery" | "ledge" | "lift";
   /** Sheet -> its animation names (assets.sheets in main.ts). */
   sheets: { hero: "idle" | "run" | "jump" | "fall"; coin: "spin" };
-  maps: "level1";
+  worlds: "main";
   /** config.layers: far scenery (parallax), the level, floating effects on top. */
   layers: "far" | "fx";
   fonts: "pixel";

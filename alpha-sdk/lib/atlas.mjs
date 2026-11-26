@@ -4,7 +4,7 @@
 //   { "filters": { "nearest": { "<file as written in assets>": ["alpha-atlas-0.png", [x, y, w, h]] },
 //                  "linear": { ...same, on "alpha-atlas-linear-N.png" pages }, "sharp": { ... } },
 //     "pages": { "<page file>": { "filter": "nearest" | "linear" | "sharp" } } }
-// Tilesets of maps are not packed (they already are atlases).
+// Tilesets of LDtk worlds are not packed (they already are atlases).
 import { decodePng, encodePng } from "./png.mjs";
 
 export const MAX_PAGE = 2048;

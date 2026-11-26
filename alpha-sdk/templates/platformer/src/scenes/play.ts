@@ -66,18 +66,16 @@ export default scene("play", {
   state: () => ({ coins: 0, total: 0, grounded: false, fallSpeed: 0 }),
 
   enter(ctx) {
-    const map = ctx.spawnMap("level1", { collide: ["walls"] });
-    const spawns = map.objects("spawns");
-    const start = spawns.find((o) => o.name === "player") ?? spawns[0];
-    const hero = ctx.spawn(player([start.x, start.y]));
-    for (let x = 0; x < map.size[0] * 0.2 + ctx.camera.view[2]; x += 70) ctx.spawn(hill(x, 45 + (x % 3) * 15));
-    for (const o of spawns.filter((s) => s.type === "coin")) ctx.spawn(coin(o));
+    // LDtk level: IntGrid "Walls" -> merged colliders tagged "walls"; entities through factories.
+    const level = ctx.spawnLevel("main", "Level_0", { collide: { Walls: "walls" }, entities: { Player: (e) => player(e.pos), Coin: coin } });
+    const hero = ctx.find("player");
+    for (let x = 0; x < level.size[0] * 0.2 + ctx.camera.view[2]; x += 70) ctx.spawn(hill(x, 45 + (x % 3) * 15));
     ctx.state.total = ctx.findAll("coin").length;
     for (const l of LEDGES) ctx.spawn(ledge(l.pos, l.width));
     const lifter = ctx.spawn(lift());
     ctx.tween(lifter, { to: { x: LIFT.toX }, seconds: LIFT.seconds, ease: "sineInOut", yoyo: true, repeat: Infinity });
 
-    ctx.camera.bounds([0, 0, map.size[0], map.size[1]]);
+    ctx.camera.bounds([0, 0, level.size[0], level.size[1]]);
     ctx.camera.follow(hero, { lerp: CAMERA.lerp, deadzone: CAMERA.deadzone });
     ctx.ui.show("hud");
     ctx.ui.set("hud", "coins", `coins 0/${ctx.state.total}`);

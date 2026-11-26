@@ -59,30 +59,33 @@ engine (`run`/`test`/`mcp`) and `shipping/` (players). In an alpha-star checkout
 `engine/<platform>-<arch>/` instead (staged by `tools/stage_engine.py`). Override with
 `--engine <path>` or `$ALPHA_STAR`.
 
-## Sprites, camera and tilemaps
+## Sprites, camera and LDtk levels
 
 ```ts
 assets: {
   sheets: { hero: { image: "img/hero.png", frame: [16, 16],
                     animations: { run: { frames: [1, 2, 3, 4], fps: 12 }, jump: { frames: [5], loop: false } } } },
-  maps: { level1: "maps/level1.tmj" },   // Tiled JSON; .tsj or embedded tilesets; CSV layers
+  worlds: { main: "levels/world.ldtk" },  // LDtk project (1.0+); tileset images, .ldtkl levels
 }
 const hero = ctx.spawn({ tags: ["player"], pos: [40, 100], shape: { sheet: "hero", animation: "run" } });
 hero.animation = "jump";          // switch (same name keeps playing); hero.play("run") restarts
 hero.flipX = true;
-const map = ctx.spawnMap("level1", { collide: ["walls"] });   // colliders tagged "walls"
-ctx.map("level1").objects("spawns");                           // object layer as plain data
+const level = ctx.spawnLevel("main", "Level_0", {
+  collide: { Walls: "walls" },                                // IntGrid -> static boxes tagged "walls"
+  entities: { Coin: (e) => coin(e.pos) } });                  // LDtk entity -> spawn spec
+level.setInt("Walls", 3, 7, 0);                               // edit a cell; colliders rebuild
+ctx.world("main").levelAt([400, 100]);                        // data only
 ctx.camera.follow(hero, { lerp: 0.15, deadzone: [48, 32] });
-ctx.camera.bounds([0, 0, ...map.size]);
+ctx.camera.bounds([0, 0, ...level.size]);
 ctx.camera.shake(3, 0.25);
 ctx.camera.toWorld(ctx.input.mouse());
 ```
 
-Declare the names in `GameTypes`: `sheets: { hero: "run" | "jump" }`, `maps: "level1"`
+Declare the names in `GameTypes`: `sheets: { hero: "run" | "jump" }`, `worlds: "main"`
 (both optional). Animations and the camera advance on the fixed step, so `simulate`
 runs stay deterministic; `expect.animation("player").equals("run")` checks one.
 `alpha export` packs PNG images and sheets into `alpha-atlas-N.png` pages (fewer draw
-calls; transparent to game code) and copies maps with their tilesets and images.
+calls; transparent to game code) and copies `.ldtk` projects with their tileset images and `.ldtkl` levels.
 
 ## Particles, looks, layers, world text, window
 
@@ -97,7 +100,7 @@ ctx.spawn({ tags: ["popup"], pos, shape: { text: "+1", font: "pixel", size: 8, c
 ```
 
 `config.layers: { far: { z: -100, parallax: 0.2 }, fx: { z: 100 } }` + `layer: "far"` on specs
-(and `spawnMap(name, { layer, layers })` for tile layers). `config.window: { fullscreen?, aspect?:
+(and `spawnLevel(world, level, { layer, layers })` for tile layers). `config.window: { fullscreen?, aspect?:
 "expand" | "keep_width" | "keep_height" | "keep", scale?: "fractional" | "integer", resizable?, altEnter? }`
 (Godot-style: the default `expand` fills any screen with more world, never bars); `ctx.camera.view`
 ([x, y, w, h] the world the screen shows: size scenery and spawns to it); `ctx.window.fullscreen`,

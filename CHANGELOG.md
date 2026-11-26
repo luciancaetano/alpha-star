@@ -7,7 +7,22 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-26
+
+### Removed (breaking)
+- Tiled maps: `assets.maps`, `ctx.spawnMap`, `ctx.map`, `GameTypes.maps`, `MapObject`, `TileMap`.
+  A game that still declares `assets.maps` stops at boot with a message naming `assets.worlds`.
+
 ### Added
+- LDtk levels (`assets.worlds`, `.ldtk` with embedded or external `.ldtkl` levels): `ctx.world(name)`
+  (levels, `levelAt`, entities by iid, neighbours; Free, GridVania and Linear layouts) and
+  `ctx.spawnLevel(world, level, opts)`: tile layers keep LDtk flips and opacity (one batched,
+  culled entity per layer), IntGrid values become merged static colliders with per-value tags /
+  `oneWay` / `sensor`, entity factories receive typed fields (Point, EntityRef, Tile, FilePath,
+  enums), animated tiles from tileset custom data `{"frames": [...], "fps": n}`, and the live level
+  reads and edits cells (`int`, `tile` with enum tags and custom data, `setInt` rebuilds colliders,
+  `setTile` redraws in place, `toCell` / `toWorld`, `entity(iid)`, `destroy()`). `alpha export`
+  copies tileset images and external levels. The platformer example and template use LDtk.
 - Custom shaders also compile to MSL (Metal): SDL_shadercross, built without DXC, turns glslang's
   SPIR-V into `.msl` (`alpha run` on load, `alpha export` into packs); `core::ShaderFormat::Msl`
   (entry point `main0`), picked on Metal devices. GLSL stays the only shader language; the same

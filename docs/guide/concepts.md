@@ -82,7 +82,7 @@ Later, you can add these fields to a spec as needed:
 
 | Field | What it adds | Read next |
 |---|---|---|
-| `shape` | A circle, rectangle, image, animated sprite or world text | [Sprites and tilemaps](tilemaps.md) |
+| `shape` | A circle, rectangle, image, animated sprite or world text | [Sprites and LDtk levels](tilemaps.md) |
 | `body` | Physics and collisions | [Physics](physics.md) |
 | `emitter` | Particles such as sparks or dust | [Particles](particles.md) |
 | `data` | Your own JSON game data on an entity | [API reference](reference.md) |
@@ -145,7 +145,7 @@ Nothing in a game can depend on dev features: they are absent from the shipping 
 Return here when you want to adjust how your game looks at different window sizes.
 **Filtering** controls how an image looks when it gets larger, smaller or rotated.
 
-Each image, sheet or map picks how it is sampled when drawn scaled or rotated:
+Each image, sheet or LDtk world (its tileset images) picks how it is sampled when drawn scaled or rotated:
 
 ```js
 assets: { images: {

@@ -31,14 +31,17 @@ def bmp(path, w, h, rgba):
 
 def tilemap(out, size=500):
     bmp(out / "tiles.bmp", 16, 8, (90, 160, 90, 255))
-    tileset = {"name": "tiles", "image": "tiles.bmp", "imagewidth": 16, "imageheight": 8, "tilewidth": 8,
-               "tileheight": 8, "columns": 2, "tilecount": 2, "margin": 0, "spacing": 0}
-    (out / "tiles.tsj").write_text(json.dumps(tileset), encoding="utf-8")
-    data = [1 + (x + y) % 2 for y in range(size) for x in range(size)]
-    layer = {"type": "tilelayer", "name": "ground", "width": size, "height": size, "data": data}
-    level = {"orientation": "orthogonal", "infinite": False, "width": size, "height": size, "tilewidth": 8,
-             "tileheight": 8, "tilesets": [{"firstgid": 1, "source": "tiles.tsj"}], "layers": [layer]}
-    (out / "big.tmj").write_text(json.dumps(level), encoding="utf-8")
+    tileset = {"uid": 1, "identifier": "Tiles", "relPath": "tiles.bmp", "pxWid": 16, "pxHei": 8, "tileGridSize": 8,
+               "spacing": 0, "padding": 0, "__cWid": 2, "__cHei": 1}
+    tiles = [{"px": [x * 8, y * 8], "src": [((x + y) % 2) * 8, 0], "t": (x + y) % 2, "f": 0}
+             for y in range(size) for x in range(size)]
+    layer = {"__identifier": "Ground", "__type": "Tiles", "__cWid": size, "__cHei": size, "__gridSize": 8,
+             "iid": "G", "layerDefUid": 1, "__tilesetDefUid": 1, "gridTiles": tiles}
+    level = {"identifier": "Big", "iid": "L", "worldX": 0, "worldY": 0, "pxWid": size * 8, "pxHei": size * 8,
+             "layerInstances": [layer]}
+    project = {"jsonVersion": "1.5.3", "worldLayout": "Free", "defs": {"tilesets": [tileset], "layers": [], "entities": []},
+               "levels": [level]}
+    (out / "big.ldtk").write_text(json.dumps(project), encoding="utf-8")
 
 
 def stage(name, root):

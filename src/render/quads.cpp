@@ -60,7 +60,9 @@ void tiles(const core::DrawItem& item, const core::Box& area, std::vector<Vertex
     const core::Vec2 a = origin + t.pos;
     const core::Vec2 b = a + (grid.tile.x > 0 ? grid.tile : core::Vec2{static_cast<float>(t.src.w), static_cast<float>(t.src.h)});
     if (!core::overlaps({a, b}, area)) continue;
-    box(a, b, uv_of(*item.shape.image, t.src, false, false), color, out);
+    core::Color c = color;
+    c.a = static_cast<std::uint8_t>(static_cast<float>(c.a) * t.alpha + 0.5f);
+    box(a, b, uv_of(*item.shape.image, t.src, t.flip_x, t.flip_y), c, out);
   }
 }
 

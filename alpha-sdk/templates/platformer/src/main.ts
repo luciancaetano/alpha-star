@@ -47,8 +47,8 @@ export default game({
       },
       coin: { image: "assets/img/coin.png", frame: [8, 8], animations: { spin: { frames: [0, 1, 2, 3], fps: 8 } } },
     },
-    // Tiled map (JSON). Its tileset (tiles.tsj) and the tileset image are packed with it.
-    maps: { level1: "assets/maps/level1.tmj" },
+    // LDtk world (.ldtk). Its tileset image is packed with it.
+    worlds: { main: "assets/levels/world.ldtk" },
     fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", license: "assets/fonts/OFL.txt" } },
     ui: { hud: "assets/ui/hud.rml", won: "assets/ui/won.rml" },
   },

@@ -36,7 +36,7 @@ To work on the engine itself, use the repository as described below.
 | Gameplay | Scenes with state and lifecycle, entities defined by specs, tags, timers and tweens. Simulation at 60 steps per second and a seeded random generator. |
 | 2D rendering | Sprites, sheets and animations, image atlases, camera, layers, parallax and particles. |
 | Physics | Box2D v3: bodies, collisions, sensors, queries, raycasts, joints and one-way platforms. |
-| Maps | Import of Tiled JSON maps, tilesets and collider generation. |
+| Levels | LDtk projects (`.ldtk`): tile layers, IntGrid colliders, entities with typed fields, multi-level worlds. |
 | UI and text | Game UI in RmlUi (`.rml`/`.rcss`), gamepad navigation, TTF/OTF fonts, BMFont and an embedded font. |
 | Input | Actions and axes for keyboard, mouse, gamepads and touch; multiple local players, rumble and hot-plugging of controllers while running. |
 | Audio | WAV, OGG and MP3, synthesized sounds, streamed music, volume buses and stereo panning. |
@@ -142,7 +142,7 @@ The engine's control channel is local, uses a per-run token, and is not present 
 | Game | Demonstrates |
 |---|---|
 | [Flappy Orbit](examples/flappy) | Menu and game scenes, UI, music, settings, localization and saved high score. |
-| [Platformer](examples/platformer) | Sprite sheets, Tiled map, camera, platforms, collisions and particles. |
+| [Platformer](examples/platformer) | Sprite sheets, LDtk level, camera, platforms, collisions and particles. |
 | [Topdown](examples/topdown) | Two players, auto-aim, physics queries, rumble and lighting. |
 | [Puzzle](examples/puzzle) | Sokoban with pure rules, undo moves, saved progress and accessibility options. |
 | [Shmup](examples/shmup) | Collision categories, batch movement, parallax, bloom and CRT. |
@@ -164,7 +164,7 @@ A **pack** is the folder the engine runs. The common export contains JavaScript 
 
 Android export uses `alpha export --target android-arm64` and requires the Android toolchain to build the APK. Desktop signing via `--sign` depends on an external command configured in `ALPHA_SIGN_CMD`.
 
-See [Exporting](docs/guide/exporting.md), [Android](docs/guide/android.md) and the [version limitations](docs/RELEASE_0.3.0.md#known-limitations). The existing map integration is with **Tiled**; LDtk is not a delivered integration. The current visual effects act on the world, not on the RmlUi UI.
+See [Exporting](docs/guide/exporting.md), [Android](docs/guide/android.md) and the [version limitations](docs/RELEASE_0.3.0.md#known-limitations). Levels come from **LDtk** (Tiled import was replaced in 0.4.0). The current visual effects act on the world, not on the RmlUi UI.
 
 ## Developing the engine
 

@@ -91,7 +91,7 @@ Five games are available as `alpha init` templates. `blank` is an additional sta
 | Example | Template | Shows |
 |---|---|---|
 | `flappy` | - | Title / play / over / settings scenes, RmlUi with buttons and gamepad navigation, streamed OGG music, bus volumes, English / Portuguese, best score save, TTF pixel font |
-| `platformer` | `platformer` | Sprite sheets and animation, a Tiled map with merged colliders, camera follow / bounds / shake, raycast ground check, one-way ledge, tweened lift, parallax layer, dust particles, world text |
+| `platformer` | `platformer` | Sprite sheets and animation, an LDtk level with merged IntGrid colliders and entity factories, camera follow / bounds / shake, raycast ground check, one-way ledge, tweened lift, parallax layer, dust particles, world text |
 | `topdown` | `topdown` | Two players (`ctx.input.player(n)`), movement axes, auto-aim, sensor bullets, `queryCircle` bomb, one-shot particle blasts, rumble, panned sounds, best score save |
 | `puzzle` | `puzzle` | Sokoban rules as pure functions tested directly, undo, level progress and best moves in saves, i18n with plural forms and `data-t`, reduced motion, high contrast |
 | `shmup` | `shmup` | Collision categories, kinematic enemies, fast sensor shots, 120 stars moved with the `ctx.positions` batch API, parallax and fx layers, generated WAV music with fade in / out, blink tween |

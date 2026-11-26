@@ -7,7 +7,8 @@
 // in the engine under the same instance id. The engine's own game is instance
 // 0; every headless test run is a fresh instance, so runs never see
 // each other. Every call into an instance selects it natively first.
-import { joinPath, loadMap, mapView, spawnLayers } from "alpha:maps";
+import { joinPath, loadWorld } from "alpha:ldtk";
+import { levelOf, spawnLevel, stepLevels, worldView } from "alpha:levels";
 import { aliveOf, bodyOf, contactOf, physicsCtx, tweenAccess } from "alpha:physics";
 import { makeTweens } from "alpha:tween";
 import { defineBuses, loadAudio, makeAudio } from "alpha:audio";
@@ -133,11 +134,12 @@ function preload(s, assets, pixel) {
     const filter = filterOf(sheet, `assets.sheets.${name}`, fallback);
     N.loadSheet(...sheetArgs(name, sheet, atlas, filter), filter);
   }
-  s.maps = new Map(Object.entries(assets.maps ?? {}).map(([name, m]) => {
-    const e = fileEntry(m, `assets.maps.${name}`, "filter");
-    const map = loadMap(name, e.file);
-    map.filter = filterOf(e.obj, `assets.maps.${name}`, fallback);  // its tilesets filter like this
-    return [name, map];
+  if (assets.maps !== undefined) fail("assets.maps (Tiled) was replaced by assets.worlds (LDtk .ldtk projects); see the tilemaps guide");
+  s.worlds = new Map(Object.entries(assets.worlds ?? {}).map(([name, w]) => {
+    const e = fileEntry(w, `assets.worlds.${name}`, "filter");
+    const world = loadWorld(name, e.file);
+    world.filter = filterOf(e.obj, `assets.worlds.${name}`, fallback);  // its tilesets filter like this
+    return [name, world];
   }));
   loadFonts(assets.fonts ?? {}, pixel);
   for (const [name, file] of Object.entries(assets.ui ?? {})) N.loadUi(name, file);
@@ -383,10 +385,10 @@ function makeCamera() {
   };
 }
 
-function mapOf(s, name, what) {
-  const map = s.maps.get(name);
-  if (!map) fail(`${what}("${name}"): not in assets.maps; have: ${[...s.maps.keys()].join(", ") || "(none)"}`);
-  return map;
+function worldOf(s, name, what) {
+  const world = s.worlds.get(name);
+  if (!world) fail(`${what}("${name}"): not in assets.worlds; have: ${[...s.worlds.keys()].join(", ") || "(none)"}`);
+  return world;
 }
 
 function persistSettings(s) {
@@ -527,11 +529,13 @@ function makeCtx(s) {
     spawn: (spec) => spawnWith(s, spec),
     ...physicsCtx((id) => s.entities.entity(id)),
     tween: (target, opts) => s.tweens.add(target, opts, aliveOf(target)),
-    map: (name) => mapView(mapOf(s, name, "map")),
-    spawnMap(name, opts = {}) {
-      const map = mapOf(s, name, "spawnMap");
-      spawnLayers(map, opts, (spec) => N.spawn(spec));
-      return mapView(map);
+    world: (name) => worldView(worldOf(s, name, "world")),
+    spawnLevel(world, level, opts = {}) {
+      const w = worldOf(s, world, "spawnLevel");
+      const helpers = { spawn: (spec) => spawnWith(s, spec), kill: (e) => { if (e.alive) N.destroy(e.id); }, time: s.sceneTime };
+      const { rec, view } = spawnLevel(w, levelOf(w, level, `spawnLevel("${world}")`), opts, helpers);
+      s.levels.push(rec);
+      return view;
     },
     destroy: (e) => N.destroy(e.id),
     find(tag) {
@@ -600,6 +604,7 @@ function enter(s, ctx, name, params, kept) {
   s.entities.clear();
   s.handlers = [];
   s.tweens.clear();
+  s.levels = [];
   N.uiReset();
   s.uiHandlers.clear();
   s.sceneTime = 0;
@@ -703,6 +708,7 @@ function stepGame(s, ctx, dt) {
   const t0 = N.perfNow();
   for (const id of N.advanceTimers(dt)) s.timers.get(id)?.();
   s.tweens.step(dt);
+  stepLevels(s.levels, s.sceneTime);
   N.perfAdd(1, N.perfNow() - t0);  // section 1 = timers (with tweens)
   const events = N.stepWorld(dt);
   s.entities.forget(events.freed);
@@ -751,7 +757,7 @@ export function createInstance(id, store, platform, screen) {
     platform: Object.freeze({ os, mobile: os === "android" || os === "ios" }),
     game: null, current: null, currentName: null, currentParams: undefined, pending: null, handlers: [], uiHandlers: new Map(),
     store, screen, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60, appPaused: false,
-    timers: new Map(), entities: makeEntities(), maps: new Map(), tweens: makeTweens(tweenAccess),
+    timers: new Map(), entities: makeEntities(), worlds: new Map(), levels: [], tweens: makeTweens(tweenAccess),
   };
   const ctx = makeCtx(s);
   return {
