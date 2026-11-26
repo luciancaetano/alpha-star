@@ -4,10 +4,11 @@
 
 Public site: https://luciancaetano.github.io/alpha-star/ (six real example captures, including Shader Lab, in a keyboard-accessible slider). The setup guide is `getting-started.html`; typed API docs are `reference.html`.
 
-Source of truth: `types/alpha.d.ts` (modules `"alpha"`, `"alpha/test"`). Real usage: `examples/*/src` and `templates/`. Start with overview.md.
+Source of truth: `types/alpha.d.ts` (modules `"alpha"`, `"alpha/test"`). Real usage: `examples/*/src` and `templates/`. Not installed yet: install.md. Then start with overview.md.
 
 | File | Summary |
 |---|---|
+| [install.md](install.md) | Installing @alpha-star/sdk from npm (new game, existing project, global), the per-platform engine packages, checking the version and fixing a missing engine; read when setting up a machine or project for alpha-star. |
 | [overview.md](overview.md) | Project layout, the types.ts/alpha.ts/scenes/main.ts pattern, GameConfig, the scene lifecycle and ctx, and the alpha CLI; read this first before writing any alpha-star game code. |
 | [entities.md](entities.md) | EntitySpec fields, spawn/find/destroy, prefabs as plain functions, tags, parent/child, entity data, looks and bulk positions; read when creating or changing game objects. |
 | [sprites-and-images.md](sprites-and-images.md) | Image assets, sprite sheets and animations, flips, texture filtering (filter nearest\|linear\|sharp, config.pixelMode) and atlas packing; read when drawing images or animated sprites. |

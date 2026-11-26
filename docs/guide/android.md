@@ -13,13 +13,18 @@ The project holds:
   APK through SDL, the same code that reads a pack folder on desktop. `game.jsbc` is compiled by
   the SDK's release engine for this machine: the bytecode format is the same on every
   little-endian 64-bit platform, and the engine built for the APK from the same source carries the
-  same build id (QuickJS source hash + `-64`). It is encrypted with the key of this checkout's
-  engine build (`build/jsbc.secret`, or `$ALPHA_JSBC_SECRET` passed to Gradle), so build the APK
-  from the checkout the SDK's engines were staged from. `--no-bytecode` ships `main.js` instead;
+  same build id (QuickJS source hash + `-64`). It is encrypted with the engine key, which every
+  engine of one SDK version shares (the packages are built together by GitHub Actions; the export
+  checks the key and says what to reinstall when they differ). `--no-bytecode` ships `main.js` instead;
 - SDL 3.4.20's Java glue (`SDLActivity`, version-checked against the engine at start);
-- a CMake build of the engine from the alpha-star source, **shipping flavor** (no dev tools, MCP or
-  debug features), `arm64-v8a` only. The SDK finds the source in the repo it sits in, or pass
-  `--engine-src <alpha-star checkout>` / set `ALPHA_ENGINE_SRC`.
+- the engine, `arm64-v8a` only: the debug APK gets the dev-tools flavor, release APKs and AABs the
+  **shipping flavor** (no dev tools, MCP or debug features). It comes **prebuilt** from
+  `@alpha-star/engine-android-arm64` (an optional dependency of the SDK, installed on every OS),
+  copied to `app/src/debug/jniLibs` and `app/src/release/jniLibs`: no engine source, NDK or CMake
+  needed. To build the engine from source instead (engine work), pass `--engine-src <alpha-star
+  checkout>` or set `ALPHA_ENGINE_SRC`; Gradle then compiles it with CMake (and needs the NDK and
+  CMake below). Inside an alpha-star checkout without a staged prebuilt engine
+  (`tools/stage_android.py`), the checkout's source is used.
 
 ## Game config
 
@@ -42,17 +47,18 @@ Without it the exporter writes the project and prints what is missing. You need:
 1. A JDK 17 or newer (`JAVA_HOME`).
 2. The Android SDK command-line tools, unpacked to `<sdk>/cmdline-tools/latest`
    (`%LOCALAPPDATA%\Android\Sdk` on Windows, or set `ANDROID_HOME`).
-3. The packages the project pins:
+3. The packages the project pins (the NDK and CMake only when building the engine from source):
 
 ```
-sdkmanager "platforms;android-35" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.31.6"
+sdkmanager "platforms;android-35" "build-tools;36.0.0"
+sdkmanager "ndk;27.2.12479018" "cmake;3.31.6"     # only with --engine-src
 ```
 
 Newer command-line tools (the `android sdk` CLI) name packages with `/` instead of `;`
 (`"ndk/27.2.12479018"`); with `;` they answer `Package ... not found`.
 
 Gradle 8.12 comes with the project's wrapper (it downloads itself on the first build). The first
-build also fetches the engine's dependencies (SDL, Box2D, QuickJS, RmlUi, FreeType...).
+build from source also fetches the engine's dependencies (SDL, Box2D, QuickJS, RmlUi, HarfBuzz...).
 
 ## Build and install
 

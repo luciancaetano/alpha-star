@@ -5,6 +5,26 @@
 Types and the `alpha` CLI for alpha-star games (TypeScript, bundled to one JS
 module the engine runs). Run every command from the game project folder.
 
+## Install
+
+Needs Node.js 20+. npm also installs the prebuilt engine for your machine (Windows x64, Linux x64)
+and the prebuilt Android engine (`alpha export --target android-arm64` needs no NDK or engine source).
+
+```
+npx @alpha-star/sdk init my-game --template platformer   # new game
+cd my-game && npm install && npm test && npm start
+
+npm install --save-dev @alpha-star/sdk                   # existing project
+npm install --global @alpha-star/sdk                     # `alpha` on your PATH
+npx alpha --version                                      # SDK version (= engine version)
+npx alpha skills                                         # agent skills
+```
+
+Do not install with `--omit=optional`: that skips the engine. Other platforms: build the engine
+from source and pass `--engine <path>` or set `ALPHA_STAR` (engine packages are described below).
+
+## Commands
+
 ```
 alpha init <dir> [--template t]     new project: blank | platformer | topdown | puzzle | shmup | shaders
 alpha --version                     SDK version (= the bundled engines' version)
@@ -234,9 +254,9 @@ directory (`{"command": "npx", "args": ["alpha", "mcp"], "cwd": "<game folder>"}
 | `game_reload` | Re-export and hot-reload the running game (keeps scene, params, JSON `ctx.state`, save); type/load errors change nothing and come back as the error |
 | `game_stop` | Close the game (also done when the server exits) |
 
-A typical loop: edit code → `alpha_check` → `alpha_test` → `game_start` →
-`game_pause` → `game_input` + `game_step` → `game_state` / `game_screenshot` →
-fix → repeat. Input goes through the game's own actions, exactly like a device,
+A typical loop: edit code â†’ `alpha_check` â†’ `alpha_test` â†’ `game_start` â†’
+`game_pause` â†’ `game_input` + `game_step` â†’ `game_state` / `game_screenshot` â†’
+fix â†’ repeat. Input goes through the game's own actions, exactly like a device,
 and `game_step` is deterministic (fixed step, seeded random).
 
 ## Hot reload

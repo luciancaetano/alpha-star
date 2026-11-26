@@ -7,7 +7,33 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-26
+
+First version meant for npm. Summary, install and known limitations:
+[docs/RELEASE_0.3.0.md](docs/RELEASE_0.3.0.md).
+
+### Added
+- Custom shaders: Vulkan GLSL fragment shaders (`assets.shaders`, compiled to SPIR-V by glslang;
+  `alpha export` ships `.spv`), run through `ctx.postfx`; Shader Lab example + `shaders` template.
+- Multi-language text: HarfBuzz shaping, bidi (SheenBidi), CJK line breaking, font `fallbacks`,
+  world text `dir` and `width`, the same pipeline for RmlUi text.
+- `ctx.platform`, `ctx.safeArea`, `ctx.camera.view`, UI `class="safe"`, `simulate({ size, platform })`.
+- Antialiased particles (`emitter.smooth`).
+- Android: real APKs verified on a device, `--variant debug|release|bundle`, `alpha run --target
+  android-arm64`, immersive fullscreen, dev tools on shake / Menu key, 16 KB-aligned `.so`.
+- Prebuilt Android engine `@alpha-star/engine-android-arm64` (debug + shipping `libmain.so`/`libSDL3.so`,
+  `tools/stage_android.py`): `alpha export --target android-arm64` needs no engine source, NDK or
+  CMake (`--engine-src` still builds from source). Desktop engine packages now include `glslang`
+  (shader games export from an npm install).
+- Release pipeline `.github/workflows/release.yml`: every binary built by GitHub Actions with one
+  game.jsbc key, published to npm under `@alpha-star/*` and as a GitHub release.
+- `alpha skills` installs the agent skills; docs site landing page with example captures.
+
 ### Changed
+- **Breaking:** `config.window.scaling` replaced by Godot-style `config.window.aspect`
+  (`expand` default | `keep_width` | `keep_height` | `keep`) and `config.window.scale`
+  (`fractional` | `integer`); the old field fails with the replacement named.
+- SDL 3.2 -> 3.4.
 - `game.jsbc` is encrypted: XChaCha20-Poly1305 (Monocypher 4.0.2) with a per-engine-build key
   shared by the release (compiles) and shipping (runs) engines, a random nonce per export, the
   header authenticated (format 2, 112 bytes). Decrypted only in memory, wiped after load. Old

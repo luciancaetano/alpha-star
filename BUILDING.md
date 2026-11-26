@@ -97,10 +97,24 @@ The code rules are in [AGENTS.md](AGENTS.md).
 - `.github/workflows/ci.yml` (every push and PR): the full gate on Windows and Linux, staged
   engines, SDK tests, examples, standalone export check, release tarballs.
 - `.github/workflows/engines.yml` (push to `main`, or run by hand): builds the Windows debug engine
-  (preset `dev`), the Windows and Linux release + shipping engines (`tools/stage_engine.py`), then the
+  (preset `dev`), the Windows and Linux release + shipping engines (`tools/stage_engine.py`), the
+  prebuilt Android engine (`tools/stage_android.py`, NDK + CMake pinned by the Gradle template), then the
   SDK with both staged into `alpha-sdk/engine/<target>/` (`npm ci`, `npm test`,
   `tools/pack_release.py --install-test`). Artifacts: `engine-win32-x64-debug`, `engine-win32-x64`,
-  `engine-linux-x64`, `sdk-release` (the npm tarballs; never published).
+  `engine-linux-x64`, `engine-android-arm64`, `sdk-release` (the npm tarballs; this workflow never publishes).
+- `.github/workflows/release.yml` (push to `main` that changes `alpha-sdk/package.json`, or run by
+  hand): if `v<version>` is not tagged and not on npm, calls `engines.yml` (templates synced before
+  packing), publishes `@alpha-star/engine-win32-x64`, `@alpha-star/engine-linux-x64`, `@alpha-star/engine-android-arm64`, then
+  `@alpha-star/sdk` with npm provenance (reruns skip what is already published), then tags
+  `v<version>` and creates the GitHub release (CHANGELOG section as notes; npm tarballs, MANIFEST,
+  engine zip/tar.gz). To release: bump the version in `alpha-sdk/package.json` (+ optional deps,
+  lock), `CMakeLists.txt` and add the `CHANGELOG.md` section, then push to `main`.
+  Every published binary comes from these jobs; all of them use the repository secret
+  `ALPHA_JSBC_SECRET` as the game.jsbc key, so a pack compiled by the desktop release engine runs
+  on the shipping and Android engines (`pack_release.py` checks it). Setup once: repository secrets
+  `NPM_TOKEN` (npm automation token, publish rights on the `@alpha-star` scope) and
+  `ALPHA_JSBC_SECRET` (a long random string; never change it) and an environment named `npm` (add required reviewers there to approve
+  each publish).
 - The Linux package list lives in `.github/actions/linux-deps` (mirrors `tools/linux/Containerfile`).
 
 ## GitHub Pages showcase

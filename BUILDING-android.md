@@ -4,8 +4,11 @@ How to set up the Android toolchain on Windows so that `alpha export --target an
 an APK. The game config side (package id, icon, touch input, signing) is in
 [docs/guide/android.md](docs/guide/android.md).
 
-The exporter writes a Gradle project and compiles the engine from source (**shipping** flavor,
-`arm64-v8a`), so it needs a JDK, the Android SDK and exactly these packages, pinned by the project
+The exporter writes a Gradle project. By default it uses the **prebuilt** engine from
+`@alpha-star/engine-android-arm64` (built by GitHub Actions with `tools/stage_android.py`), so a
+game only needs a JDK and the SDK Platform + Build-Tools below. With `--engine-src` /
+`ALPHA_ENGINE_SRC` (or in this checkout when no prebuilt engine is staged) Gradle compiles the
+engine from source and also needs the NDK and CMake. All pinned by the project
 (`alpha-sdk/lib/android.mjs`, `TOOLCHAIN`):
 
 | Package | Version | sdkmanager name |
@@ -89,8 +92,10 @@ adb version
 
 ## 4. Build the APK
 
-From a game folder (e.g. `examples/flappy`), inside an engine checkout (or pass
-`--engine-src <alpha-star checkout>` / set `ALPHA_ENGINE_SRC`):
+From a game folder (e.g. `examples/flappy`). In this checkout, `python tools/stage_android.py`
+builds the prebuilt engine (both flavors, into `alpha-sdk/engine/android-arm64/`; needs the NDK, CMake
+and its ninja on PATH); without it, or with `--engine-src <alpha-star checkout>` / `ALPHA_ENGINE_SRC`,
+Gradle builds the engine from source:
 
 ```powershell
 npm install

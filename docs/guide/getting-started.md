@@ -7,6 +7,27 @@ You write TypeScript against one typed API; the engine (C++, SDL3, Box2D, QuickJ
 fixed step and a seeded random, so every run with the same inputs is the same run, and headless
 tests are never flaky.
 
+## Install
+
+You need **Node.js 20+**. The SDK (`@alpha-star/sdk`) brings the `alpha` CLI and the types; npm
+also installs the engine for your machine (`@alpha-star/engine-win32-x64` or
+`@alpha-star/engine-linux-x64`, plus `@alpha-star/engine-android-arm64` for APKs; optional
+dependencies with the same version, all built by GitHub Actions). Nothing else to build.
+
+| Goal | Command |
+|---|---|
+| New game (nothing installed yet) | `npx @alpha-star/sdk init my-game --template platformer` |
+| Add to an existing project | `npm install --save-dev @alpha-star/sdk` |
+| `alpha` on your PATH | `npm install --global @alpha-star/sdk` |
+| Check the install | `npx alpha --version` (prints the SDK version; the engine has the same one) |
+| Agent skills (Claude Code, Cursor...) | `npx alpha skills` |
+
+Do not install with `--omit=optional` / `--no-optional`: that skips the engine. On macOS or Linux
+arm64 there is no engine package yet: the SDK still type-checks and exports; build the engine from
+source ([BUILDING.md](https://github.com/luciancaetano/alpha-star/blob/main/BUILDING.md)) and pass
+`--engine <path>` or set `ALPHA_STAR`. Upgrade with `npm install --save-dev @alpha-star/sdk@latest`
+(the engine follows, since the versions are pinned together).
+
 ## Make a game
 
 ```

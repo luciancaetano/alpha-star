@@ -11,7 +11,23 @@ The project combines an engine in **C++20, SDL3, Box2D v3 and QuickJS-ng** with 
 The agent workflow is already implemented: an MCP server lets an agent start the game, send inputs, advance the simulation, query entities, capture images and read errors. You can also develop by hand with the same API and CLI, without any mandatory AI service.
 
 > [!NOTE]
-> The repository is at version **0.2.0**, under development. The [release notes](docs/RELEASE_0.2.0.md) record the preparation of the packages, not a publication. The quick start below uses the local code and does not depend on the SDK being available on npm.
+> The repository is at version **0.3.0**, the first version prepared for npm. See the [release notes](docs/RELEASE_0.3.0.md) for packages and known limitations.
+
+## Install
+
+Needs **Node.js 20+**. The SDK package brings the `alpha` CLI and the types, and npm installs the prebuilt engines with it (Windows x64, Linux x64 and Android arm64, all built by GitHub Actions; nothing to compile):
+
+```
+npx @alpha-star/sdk init my-game --template platformer
+cd my-game
+npm install
+npm test        # headless tests
+npm start       # play (F12 opens the dev tools)
+```
+
+In an existing project: `npm install --save-dev @alpha-star/sdk`. For `alpha` on your PATH: `npm install --global @alpha-star/sdk`. Agent skills: `npx alpha skills`. Don't install with `--omit=optional` (that skips the engine). On other platforms, build the engine from source ([BUILDING.md](BUILDING.md)) and pass `--engine <path>` or set `ALPHA_STAR`. More: [Getting started](docs/guide/getting-started.md#install).
+
+To work on the engine itself, use the repository as described below.
 
 ## Implemented features
 
@@ -25,7 +41,7 @@ The agent workflow is already implemented: an MCP server lets an agent start the
 | Input | Actions and axes for keyboard, mouse, gamepads and touch; multiple local players, rumble and hot-plugging of controllers while running. |
 | Audio | WAV, OGG and MP3, synthesized sounds, streamed music, volume buses and stereo panning. |
 | Persistence | Saves, settings and localization, including plurals. |
-| Effects | Bloom, CRT, pixelate, tint, vignette and 2D lighting. These are predefined effects; there is no custom shader API. |
+| Effects | Bloom, CRT, pixelate, tint, vignette and 2D lighting. Plus custom Vulkan GLSL shaders (compiled to SPIR-V) through the same post-effect API. |
 | Development | Hot reload, headless tests, MCP and F12 dev tools: inspector, console, pause, step-by-step advance, physics visualization and profiler. |
 | Distribution | Script and asset packs; standalone export with a player engine and bytecode; Android project generation. |
 
@@ -148,7 +164,7 @@ A **pack** is the folder the engine runs. The common export contains JavaScript 
 
 Android export uses `alpha export --target android-arm64` and requires the Android toolchain to build the APK. Desktop signing via `--sign` depends on an external command configured in `ALPHA_SIGN_CMD`.
 
-See [Exporting](docs/guide/exporting.md), [Android](docs/guide/android.md) and the [version limitations](docs/RELEASE_0.2.0.md#known-limitations). The existing map integration is with **Tiled**; LDtk is not a delivered integration. The current visual effects act on the world, not on the RmlUi UI.
+See [Exporting](docs/guide/exporting.md), [Android](docs/guide/android.md) and the [version limitations](docs/RELEASE_0.3.0.md#known-limitations). The existing map integration is with **Tiled**; LDtk is not a delivered integration. The current visual effects act on the world, not on the RmlUi UI.
 
 ## Developing the engine
 
