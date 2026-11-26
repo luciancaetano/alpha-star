@@ -5,7 +5,10 @@ import assert from 'node:assert/strict';
 test('landing keeps the guide and includes six real captures with resolvable local links', () => {
   const files = buildSite();
   assert.match(files['index.html'], /landing\.css/);
-  assert.match(files['getting-started.html'], /id="make-a-game"/);
+  assert.match(files['getting-started.html'], /id="2-create-a-project"/);
+  // External links keep their .md (GitHub renders it); only this site's pages become .html.
+  assert.match(files['getting-started.html'], /href="https:\/\/github\.com\/[^"]+\/BUILDING\.md"/);
+  assert.match(files['getting-started.html'], /href="first-game\.html"/);
   for (const name of ['flappy', 'platformer', 'topdown', 'puzzle', 'shmup', 'shaders']) {
     assert.ok(Buffer.isBuffer(files[`screenshot-${name}.png`]), name);
     assert.match(files['index.html'], new RegExp(`screenshot-${name}\\.png`));

@@ -1,12 +1,13 @@
 // The small Markdown subset the docs use: # headings, ``` fences, - lists, | tables,
-// paragraphs; inline `code`, **bold**, [links](x.md) (.md -> .html). Nothing else.
+// paragraphs; inline `code`, **bold**, [links](x.md) (.md -> .html for pages of this site; absolute
+// URLs are left as written). Nothing else.
 export const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 function inline(text) {
   return escape(text).split(/(`[^`]+`)/).map((part) => {
     if (part.startsWith("`") && part.endsWith("`") && part.length > 1) return `<code>${part.slice(1, -1)}</code>`;
     return part.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, href) => `<a href="${href.replace(/\.md(#|$)/, ".html$1")}">${label}</a>`);
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, href) => `<a href="${/^[a-z]+:/i.test(href) ? href : href.replace(/\.md(#|$)/, ".html$1")}">${label}</a>`);
   }).join("");
 }
 

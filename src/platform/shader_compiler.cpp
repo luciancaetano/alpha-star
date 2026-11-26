@@ -100,13 +100,16 @@ bool shader_compiler_available() { return vfs::exists(tool()); }
 std::string shader_compiler_hint() { return "; no shader compiler at " + tool().string(); }
 
 core::ShaderBlobs compile_shader(const std::filesystem::path& source, const std::string& file, const std::string& what) {
-  // One compile per source edit: simulate instances and reboots reuse it.
+  // One compile per source edit and tool set: simulate instances and reboots reuse it; a
+  // compile made without shadercross (SPIR-V only) is not reused once it is there.
   static std::map<std::string, std::pair<std::int64_t, core::ShaderBlobs>, std::less<>> cache;
   const std::int64_t modified = vfs::info(source).value_or(vfs::Info{}).modified;
-  const auto hit = cache.find(source.generic_string());
+  const std::string key = source.generic_string() + "|" + tool().string() + "|" +
+                          (vfs::exists(cross_tool()) ? cross_tool().string() : std::string());
+  const auto hit = cache.find(key);
   if (hit != cache.end() && hit->second.first == modified && modified != 0) return hit->second.second;
   core::ShaderBlobs out = compile_all(source, file, what);
-  cache[source.generic_string()] = {modified, out};
+  cache[key] = {modified, out};
   return out;
 }
 

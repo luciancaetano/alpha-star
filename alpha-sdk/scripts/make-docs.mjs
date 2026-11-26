@@ -20,7 +20,7 @@ const MASCOT = path.join(REPO, "aster.png");
 
 // Navigation: [section, [[file (without .md), title]]]. reference is generated.
 export const NAV = [
-  ["Start", [["getting-started", "Getting started"], ["concepts", "Concepts"], ["examples", "Examples"]]],
+  ["Start", [["getting-started", "Getting started"], ["first-game", "Your first game"], ["concepts", "Concepts"], ["examples", "Examples"]]],
   ["Guides", [["input", "Input"], ["ui", "Game UI"], ["text", "Text and languages"], ["audio", "Audio and music"], ["physics", "Physics"],
               ["particles", "Particles, looks, layers"], ["shaders", "Shaders and lighting"], ["tilemaps", "Sprites, camera, tilemaps"],
               ["saves", "Saves, settings, i18n"], ["hot-reload", "Hot reload"], ["mcp", "MCP for agents"],

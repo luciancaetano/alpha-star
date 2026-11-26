@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your first game - alpha-star</title><link rel="stylesheet" href="style.css"></head>
+<body><nav><a class="brand" href="index.html"><img src="aster.png" alt="">alpha-star</a><h3>Start</h3><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="first-game.html" class="here">Your first game</a></li><li><a href="concepts.html">Concepts</a></li><li><a href="examples.html">Examples</a></li></ul><h3>Guides</h3><ul><li><a href="input.html">Input</a></li><li><a href="ui.html">Game UI</a></li><li><a href="text.html">Text and languages</a></li><li><a href="audio.html">Audio and music</a></li><li><a href="physics.html">Physics</a></li><li><a href="particles.html">Particles, looks, layers</a></li><li><a href="shaders.html">Shaders and lighting</a></li><li><a href="tilemaps.html">Sprites, camera, tilemaps</a></li><li><a href="saves.html">Saves, settings, i18n</a></li><li><a href="hot-reload.html">Hot reload</a></li><li><a href="mcp.html">MCP for agents</a></li><li><a href="testing.html">Testing</a></li><li><a href="exporting.html">Exporting</a></li><li><a href="android.html">Android</a></li></ul><h3>Reference</h3><ul><li><a href="reference.html">API reference</a></li><li><a href="agents.html">AGENTS.md for games</a></li></ul></nav>
+<main><h1 id="your-first-game">Your first game</h1>
+<p>Turn the <code>blank</code> starter into a movement playground you understand. Learn where to change speed, how input moves a character, and how to check that movement automatically.</p>
+<p><strong>Before you start:</strong> finish <a href="getting-started.html">Getting started</a> and open <code>my-game</code> in your editor. Use the generated <code>blank</code> project; keep its other files and assets. No extra artwork is needed.</p>
+<p>Follow the steps in order. <strong>Replace the file</strong> means the code block is complete. Other blocks show only the part to edit.</p>
+<h2 id="1-change-one-number-and-feel-the-difference">1. Change one number and feel the difference</h2>
+<p><strong>Replace the file</strong> <code>src/tuning.ts</code> with:</p>
+<pre><code>// Our play area, measured in game pixels.
+export const VIEW = { width: 320, height: 180 };
+
+// Keep adjustable numbers together so they are easy to find.
+export const PLAYER = {
+  speed: 180, // Pixels per second. The starter used 120: this is faster.
+  hop: 0.15, // Seconds for the growing part of the Space animation.
+};</code></pre>
+<p>Save, run <code>npm start</code>, and hold Right. <strong>Expected:</strong> the character moves faster. Close the window when you finish. Try <code>speed: 60</code>, then restore <code>180</code> for the rest of the tutorial.</p>
+<h2 id="2-understand-movement">2. Understand movement</h2>
+<p>A <strong>scene</strong> is one part of a game, such as play or a menu. This project starts in <code>play</code>. Its <code>enter</code> function runs when the scene starts; <code>update</code> runs repeatedly while you play.</p>
+<p><strong>Replace the file</strong> <code>src/scenes/play.ts</code> with this commented version:</p>
+<pre><code>import { vec } from "alpha";
+import { scene } from "../alpha";
+import { player } from "../prefabs/player";
+import { PLAYER, VIEW } from "../tuning";
+
+export default scene("play", {
+  enter(ctx) {
+    // ctx is the scene's toolbox. spawn creates a game object.
+    // player(...) supplies its picture, position and "player" tag.
+    ctx.spawn(player([VIEW.width / 2, VIEW.height / 2]));
+  },
+
+  update(ctx) {
+    // Find the object created in enter, using its tag.
+    const p = ctx.find("player");
+
+    // Keyboard axes give -1, 0 or +1; sticks allow values between.
+    const horizontal = ctx.input.axis("moveX");
+    const vertical = ctx.input.axis("moveY");
+
+    // Normalize so diagonal movement is not faster.
+    // No input gives [0, 0], so the character stays still.
+    const direction = vec.norm([horizontal, vertical]);
+
+    // Pixels/second times seconds/step gives pixels to move this step.
+    const movement = vec.scale(direction, PLAYER.speed * ctx.dt);
+
+    // x increases rightward; y increases downward.
+    // Keep the character's center inside our 320 by 180 play area.
+    p.pos.x = Math.max(0, Math.min(VIEW.width, p.pos.x + movement[0]));
+    p.pos.y = Math.max(0, Math.min(VIEW.height, p.pos.y + movement[1]));
+
+    // pressed is true only when the button first goes down.
+    if (ctx.input.pressed("jump")) {
+      ctx.audio.play("blip");
+      // A tween changes a value over time; yoyo returns to its old value.
+      ctx.tween(p, {
+        to: { scale: 1.4 },
+        seconds: PLAYER.hop,
+        ease: "quadOut", // Slow down as the character reaches its big size.
+        yoyo: true,
+      });
+    }
+  },
+});</code></pre>
+<p>Run <code>npm run check</code>, then <code>npm start</code>. <strong>Expected:</strong> arrows and WASD still move the character. Space makes it grow and return to normal with a sound. Holding Space does not repeat the effect; release and press again.</p>
+<p>The limit applies to the character's <strong>center</strong>, so part of its image can cross the edge. This lesson keeps the fixed play area even if you resize the window. <a href="concepts.html#image-filtering-and-window-stretch">Window concepts</a> explain the full visible area.</p>
+<h2 id="3-connect-a-key-to-an-action">3. Connect a key to an action</h2>
+<p>In <code>src/main.ts</code>, replace the existing <code>actions</code> line with:</p>
+<pre><code>// Several physical buttons can trigger the same named action.
+actions: { jump: ["Space", "J", "GamepadA"] },</code></pre>
+<p>Save and restart. <strong>Expected:</strong> J and Space trigger the same sound and animation. The scene reads <code>jump</code>, so it does not need to know which key you chose.</p>
+<p><code>jump</code> is already listed in <code>src/types.ts</code>. To invent an action name later, add it there and in <code>config.actions</code>. See <a href="input.html">Input</a> for more controls.</p>
+<h2 id="4-make-the-feedback-your-own">4. Make the feedback your own</h2>
+<p>In <code>src/scenes/play.ts</code>, change <code>to: { scale: 1.4 }</code> to <code>to: { scale: 1.8 }</code>. In <code>src/tuning.ts</code>, change <code>hop: 0.15</code> to <code>hop: 0.25</code>.</p>
+<p>Run <code>npm start</code> and press J. <strong>Expected:</strong> the character grows larger and takes longer to return. <code>scale: 1</code> is the original size; <code>1.8</code> is 180% of that size. <code>yoyo: true</code> handles the return trip.</p>
+<p>To see changes as you save, close the game and run:</p>
+<pre><code>npx alpha run --watch</code></pre>
+<p>Save a change to the scale, then press J again. If the game is in an unexpected state, stop with Ctrl+C and restart. See <a href="hot-reload.html">Hot reload</a> for what is preserved.</p>
+<h2 id="5-check-movement-automatically">5. Check movement automatically</h2>
+<p>A test runs the game with chosen inputs and checks the result. Keep the starter tests. <strong>Append</strong> this function to <code>test/main.test.ts</code>; that file already imports <code>simulate</code> and <code>game</code>.</p>
+<pre><code>export function holdingLeftMovesThePlayer() {
+  const run = simulate(game, {
+    seconds: 0.5,
+    // From simulation frame 0, hold the horizontal axis at -1 (left).
+    inputs: { axes: { moveX: [[0, -1]] } },
+  });
+
+  // Detect script errors and a missing or duplicated player first.
+  run.expect.noErrors();
+  run.expect.count("player").equals(1);
+  const [p] = run.entities("player");
+
+  // Start x = 160. At 180 pixels/second, half a second moves 90 pixels.
+  // Expected x = 70; allow a small rounding difference.
+  if (Math.abs(p.pos[0] - 70) &gt; 1) {
+    throw new Error(`Expected x near 70 after moving left, got ${p.pos[0]}`);
+  }
+}</code></pre>
+<p>Run <code>npm run check</code>, then <code>npm test</code>. <strong>Expected:</strong> the starter tests and your new test pass.</p>
+<p>To see why the test matters, temporarily set <code>speed</code> to <code>120</code> and run <code>npm test</code> again. Your new test should fail: the player ends near x = 100. Restore <code>180</code> and run the tests again; they should pass.</p>
+<p>If you deliberately choose another speed later, update the expected position using <code>160 - speed * 0.5</code>. Tests should describe the behavior you want.</p>
+<h2 id="6-try-a-small-challenge">6. Try a small challenge</h2>
+<ul><li>Change the background color in <code>src/main.ts</code>, save and check the window.</li><li>Make the Space effect twice the character's original size. Hint: <code>scale: 2</code>.</li><li>Add a test for upward movement. Hint: use <code>moveY</code>, start at y = 90, and check <code>p.pos[1]</code>.</li></ul>
+<p>You now have configurable movement, keyboard/gamepad controls, sound, animated feedback and a movement test. No physics setup is needed because this example changes position directly.</p>
+<p><strong>Next:</strong> <a href="concepts.html">Concepts</a> explains these pieces. Choose an <a href="examples.html">example game</a>, or follow <a href="exporting.html">Exporting</a> to share your game.</p></main></body></html>
