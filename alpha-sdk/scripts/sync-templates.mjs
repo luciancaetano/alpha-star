@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const SDK = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 export const EXAMPLES = path.join(SDK, "..", "examples");
-export const MIRRORED = ["platformer", "topdown", "puzzle", "shmup"];
-const SKIP = new Set(["node_modules", "dist", "build", "package-lock.json"]);
+export const MIRRORED = ["platformer", "topdown", "puzzle", "shmup", "shaders"];
+const SKIP = new Set(["node_modules", "dist", "build", "android", "package-lock.json"]);
 const renamed = (name) => (name === ".gitignore" ? "gitignore" : name);
 
 // { relative template path -> source file } for one example.

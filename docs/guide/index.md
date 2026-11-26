@@ -15,7 +15,7 @@ npm test          # headless tests (simulate + expect)
 npm start         # export the pack and play
 ```
 
-Templates: `blank` (one scene, one sprite), `platformer`, `topdown`, `puzzle`, `shmup`. Each is a
+Templates: `blank` (one scene, one sprite), `platformer`, `topdown`, `puzzle`, `shmup`, `shaders`. Each is a
 complete small game with tests, generated placeholder art (CC0) and an `AGENTS.md` that tells an
 AI agent how the project works.
 

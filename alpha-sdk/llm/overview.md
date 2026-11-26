@@ -88,7 +88,7 @@ export default scene("play", {
 ## CLI (run in the game folder)
 
 ```
-alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup]
+alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup|shaders]
 alpha --version          SDK version (= the bundled engines' version)
 alpha check              type-check only                 (npm run check)
 alpha test               run test/main.test.ts headless  (npm test)

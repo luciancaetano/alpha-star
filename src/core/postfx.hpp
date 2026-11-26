@@ -28,7 +28,7 @@ struct Effect {
   float radius = 0.5f;
   float size = 4.0f;
   Color color{255, 255, 255, 255};
-  ShaderPtr shader;
+  ShaderPtr shader{};
   ShaderUniforms uniforms{};
   bool operator==(const Effect&) const = default;
 };

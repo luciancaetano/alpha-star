@@ -145,3 +145,6 @@ void main() {
 - Effect names share one namespace: a shader may not be called like a built-in (`crt`, ...).
   Unknown uniforms, non-numbers and more than 16 uniforms are boot or script errors that list what
   the shader has.
+
+A complete example: `examples/shaders` (`alpha init --template shaders`) cycles six GLSL shaders with
+animated uniforms and tests every asset and uniform name.

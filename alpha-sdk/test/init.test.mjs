@@ -13,8 +13,8 @@ const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "bin",
 const alpha = (cwd, ...args) => spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: "utf8" });
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "alpha-init-"));
 
-test("the SDK ships the five templates", () => {
-  assert.deepEqual(templates(), ["blank", "platformer", "puzzle", "shmup", "topdown"]);
+test("the SDK ships the six templates", () => {
+  assert.deepEqual(templates(), ["blank", "platformer", "puzzle", "shaders", "shmup", "topdown"]);
 });
 
 test("templates mirror the example games (npm run templates after editing an example)", (t) => {

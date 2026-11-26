@@ -4,7 +4,7 @@ Types and the `alpha` CLI for alpha-star games (TypeScript, bundled to one JS
 module the engine runs). Run every command from the game project folder.
 
 ```
-alpha init <dir> [--template t]     new project: blank | platformer | topdown | puzzle | shmup
+alpha init <dir> [--template t]     new project: blank | platformer | topdown | puzzle | shmup | shaders
 alpha --version                     SDK version (= the bundled engines' version)
 alpha check                         type-check only
 alpha export [--out dist]           type-check, bundle, copy assets into a pack

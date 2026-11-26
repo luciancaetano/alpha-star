@@ -1,0 +1,12 @@
+<rml>
+<head>
+  <link type="text/rcss" href="lab.rcss"/>
+</head>
+<body>
+  <div class="info">
+    <p id="name">WAVE 1/6</p>
+    <p id="level">INTENSITY 75%</p>
+    <p id="hint">LEFT/RIGHT: SHADER  UP/DOWN: INTENSITY</p>
+  </div>
+</body>
+</rml>

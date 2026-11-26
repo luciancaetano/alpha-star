@@ -57,3 +57,5 @@ void main() {
 - `alpha run` compiles with glslang on boot and on every save (hot reload); compile errors pause the game: `assets.shaders.wave: shaders/wave.frag did not compile:` then one line per error: `ERROR: shaders/wave.frag:3: 'nope' : undeclared identifier`. `alpha export` writes `<name>.spv` next to where the .frag was and leaves the .frag out.
 - Runs on Vulkan only: Windows, Linux, Android. macOS/iOS: not yet (Metal planned). Without Vulkan (or the software renderer in headless tests) each effect is skipped with one logged warning: never rely on a shader for game logic. Render-only: `simulate()` never sees it.
 - Errors: `postfx "wave": unknown uniform "speed"; have: amount time`; `assets.shaders.wave: no compiled shader for "shaders/wave.frag" (looked for shaders/wave.spv ...)`.
+
+See also examples/shaders (`alpha init --template shaders`): six GLSL shaders (wave, chroma, sepia, posterize, scanlines, pulse) cycled with ctx.postfx, intensity + time uniforms, tests that catch bad assets and uniform names.

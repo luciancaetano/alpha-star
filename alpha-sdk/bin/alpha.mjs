@@ -20,7 +20,7 @@
 //   alpha test [--entry test/main.test.ts] [--engine path]
 //                                type-check + bundle the tests, run every exported
 //                                test function headlessly in the engine; exit 1 on failure
-//   alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup] [--sdk <npm spec>]
+//   alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup|shaders] [--sdk <npm spec>]
 //                                new project from a template: then npm install, npm test, npm start
 //   alpha skills [--agents claude,agents,...] [--list]
 //                                install or update the SDK's agent skills (e.g. alpha-harness) in
@@ -174,7 +174,7 @@ function initCmd(argv) {
   const opt = (name, fallback) => (argv.includes(`--${name}`) ? argv[argv.indexOf(`--${name}`) + 1] : fallback);
   const dir = argv[1];
   if (!dir || dir.startsWith("--")) {
-    console.error("usage: alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup] [--sdk <npm spec>]");
+    console.error("usage: alpha init <dir> [--template blank|platformer|topdown|puzzle|shmup|shaders] [--sdk <npm spec>]");
     return 2;
   }
   const r = initProject({ dir, template: opt("template", "blank"), sdk: opt("sdk", undefined) });

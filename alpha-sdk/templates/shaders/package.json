@@ -1,0 +1,20 @@
+{
+  "name": "shaders",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "alpha check",
+    "export": "alpha export",
+    "start": "alpha run",
+    "test": "alpha test",
+    "android:project": "alpha export --target android-arm64 --out android --no-build",
+    "android:run": "alpha run --target android-arm64 --out android",
+    "android:debug": "alpha export --target android-arm64 --out android --variant debug",
+    "android:release": "alpha export --target android-arm64 --out android --variant release",
+    "android:bundle": "alpha export --target android-arm64 --out android --variant bundle",
+    "start:mobile": "alpha run -- --platform android"
+  },
+  "devDependencies": {
+    "@alpha-star/sdk": "file:../../alpha-sdk"
+  }
+}

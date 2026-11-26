@@ -1,0 +1,11 @@
+/* No assets.fonts: the engine's built-in 8x8 font (sizes in multiples of 8). */
+body { width: 100%; height: 100%; font-size: 8dp; color: #e0e6ff; }
+/* Bottom-left: phones can cover the top edge with the status bar. */
+.info { position: absolute; bottom: 4dp; left: 6dp; }
+p { display: block; margin: 2dp 0dp; }
+#name { color: #ffd166; }
+#hint { color: #9bf6ff; }
+.pad { position: absolute; bottom: 4dp; right: 4dp; }
+.row { display: block; text-align: right; }
+button { display: inline-block; width: 32dp; margin: 2dp; padding: 6dp 0dp; text-align: center; background-color: #2b3170; tab-index: auto; }
+button:hover, button:focus, button:active { background-color: #ef476f; }

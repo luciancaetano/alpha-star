@@ -26,7 +26,7 @@ src/<module>/   engine code; one module per folder (core, ecs, physics, render, 
 tests/<module>/ doctest tests mirroring src/
 alpha-sdk/      npm package: script API types + `alpha` CLI (init/check/export/run/test/mcp) + bundled engines
                 + templates/ (`alpha init`; mirrored from examples/ by `npm run templates`)
-examples/       five small games (flappy, platformer, topdown, puzzle, shmup): agent reference material
+examples/       six small games (flappy, platformer, topdown, puzzle, shmup, shaders): agent reference material
 docs/guide/     docs site sources; `cd alpha-sdk && npm run docs` -> docs/site/ (API reference from alpha.d.ts)
 tools/          harness levers (limits, crapper, dryer, mutator, check_shipping)
 docs/           GLOSSARY.md, LOG.md

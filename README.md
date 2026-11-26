@@ -74,7 +74,7 @@ npm install
 npm run check
 ```
 
-Available templates: **`blank`, `platformer`, `topdown`, `puzzle` and `shmup`**. They include code, sample assets, tests and an `AGENTS.md` with guidance for working on the game. The `file:` dependency keeps the new project linked to this SDK checkout.
+Available templates: **`blank`, `platformer`, `topdown`, `puzzle`, `shmup` and `shaders`**. They include code, sample assets, tests and an `AGENTS.md` with guidance for working on the game. The `file:` dependency keeps the new project linked to this SDK checkout.
 
 In a game folder with the SDK installed:
 
@@ -130,8 +130,9 @@ The engine's control channel is local, uses a per-run token, and is not present 
 | [Topdown](examples/topdown) | Two players, auto-aim, physics queries, rumble and lighting. |
 | [Puzzle](examples/puzzle) | Sokoban with pure rules, undo moves, saved progress and accessibility options. |
 | [Shmup](examples/shmup) | Collision categories, batch movement, parallax, bloom and CRT. |
+| [Shader Lab](examples/shaders) | Six custom GLSL shaders cycled live, animated uniforms, lights, particles, on-screen buttons on phones. |
 
-All of them have tests. Flappy is a repository example; the other four are also `alpha init` templates.
+All of them have tests. Flappy is a repository example; the other five are also `alpha init` templates.
 
 ## Export and platforms
 
