@@ -1137,7 +1137,7 @@ declare module "alpha" {
       music?: Record<MusicOf<G>, string>;
       /**
        * Locale name -> JSON file of texts, e.g. `{ en: "locales/en.json", pt: "locales/pt.json" }`.
-       * Texts are UTF-8; world text draws ASCII + Latin-1, RmlUi whatever its fonts have.
+       * Texts are UTF-8; world text and RmlUi draw what their fonts (and `fallbacks`) have.
        */
       locales?: Record<LocaleOf<G>, string>;
       /** Image name -> file, or `{ file, filter }` to override config.pixelMode for it. */

@@ -16,7 +16,10 @@ const SDK = tarball("alpha-star-sdk-");
 const ENGINE = tarball(`alpha-star-engine-${hostTarget()}-`);
 const skip = !(SDK && ENGINE) && "run through python tools/pack_release.py --install-test (needs this machine's engine tarball)";
 
-const sh = (cwd, cmd, args) => spawnSync(cmd, args, { cwd, encoding: "utf8", shell: process.platform === "win32" });
+const win = process.platform === "win32";
+const sh = (cwd, cmd, args) => spawnSync(cmd, args, { cwd, encoding: "utf8", shell: win });
+// Paths as arguments: quoted for cmd.exe on Windows (shell), as they are elsewhere (no shell).
+const q = (p) => (win ? `"${p}"` : p);
 function ok(run, what) {
   assert.equal(run.status, 0, `${what} failed:\n${run.stdout}\n${run.stderr}`);
   return run.stdout;
@@ -29,17 +32,17 @@ test("packed tarballs install and run init, test and a standalone export", { ski
   const tool = path.join(tmp, "tool");
   fs.mkdirSync(tool);
   fs.writeFileSync(path.join(tool, "package.json"), '{ "name": "tool", "private": true }\n');
-  ok(sh(tool, "npm", ["install", "--prefer-offline", "--no-audit", "--no-fund", `"${sdk}"`, `"${engine}"`]), "npm install (tool)");
+  ok(sh(tool, "npm", ["install", "--prefer-offline", "--no-audit", "--no-fund", q(sdk), q(engine)]), "npm install (tool)");
   const alpha = path.join(tool, "node_modules", "@alpha-star", "sdk", "bin", "alpha.mjs");
   const version = JSON.parse(fs.readFileSync(path.join(tool, "node_modules", "@alpha-star", "sdk", "package.json"))).version;
   assert.equal(ok(sh(tool, "node", [alpha, "--version"]), "alpha --version").trim(), version);
   assert.equal(fs.existsSync(path.join(tool, "node_modules", "@alpha-star", "sdk", "engine")), false);
 
-  ok(sh(tmp, "node", [alpha, "init", "game", "--sdk", `"file:${sdk.split(path.sep).join("/")}"`]), "alpha init");
+  ok(sh(tmp, "node", [alpha, "init", "game", "--sdk", q(`file:${sdk.split(path.sep).join("/")}`)]), "alpha init");
   const game = path.join(tmp, "game");
-  ok(sh(game, "npm", ["install", "--prefer-offline", "--no-audit", "--no-fund", `"${engine}"`]), "npm install (game)");
+  ok(sh(game, "npm", ["install", "--prefer-offline", "--no-audit", "--no-fund", q(engine)]), "npm install (game)");
   const pkg = path.join(game, "node_modules", "@alpha-star", `engine-${hostTarget()}`);
-  const said = ok(sh(game, `"${path.join(pkg, engineFile(hostTarget()))}"`, ["--version"]), "engine --version");
+  const said = ok(sh(game, q(path.join(pkg, engineFile(hostTarget()))), ["--version"]), "engine --version");
   assert.equal(said.trim(), `alpha-star ${version}`);
   assert.match(ok(sh(game, "npm", ["test"]), "npm test"), /PASS/);
   ok(sh(game, "npx", ["alpha", "export", "--standalone", "--out", "build/game"]), "alpha export --standalone");

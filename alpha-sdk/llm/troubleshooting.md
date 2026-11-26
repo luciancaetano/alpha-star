@@ -56,4 +56,4 @@ The engine binaries must match the SDK (`alpha --version` = bundled engines' ver
 - UI text reset or buttons dead after `ctx.go`: documents reload hidden and handlers drop on scene change; redo show/set/on in `enter`.
 - Dark bands around the game on a phone or resized window: `config.window.aspect` is `"keep"`; use the default `"expand"` (or `keep_width` / `keep_height`) and size scenery to `ctx.camera.view`.
 - Pixel art blurry or uneven: `config.window.scale: "integer"`, `filter: "nearest"` or `"sharp"`.
-- World text shows `?`: only ASCII + Latin-1 draw in world text; use RmlUi with a font that has the glyphs.
+- World text shows boxes for some characters: the font lacks them (a warning names them); add a font with those glyphs as a `fallbacks` entry of the font asset.
