@@ -3,7 +3,7 @@ import type { Color, EntitySpec, Vec2 } from "alpha";
 import { ORBS, VIEW } from "../tuning";
 import type { ShaderLab } from "../types";
 
-type Spec = EntitySpec<ShaderLab, "orb" | "floor" | "label">;
+type Spec = EntitySpec<ShaderLab, "floor" | "label">;
 
 const COLORS: Color[] = ["#ff5d73", "#ffd166", "#06d6a0", "#4cc9f0", "#b388ff"];
 const TILE = 20;
@@ -15,10 +15,11 @@ export function orbitAt(i: number, time: number): Vec2 {
 }
 
 // A glowing orb: a light (config.lighting) and a trail of sparks (emitter).
-export function orb(i: number): Spec {
+export function orb(i: number): EntitySpec<ShaderLab, "orb"> {
   const color = COLORS[i % COLORS.length];
   return {
     tags: ["orb"],
+    data: { i },
     pos: orbitAt(i, 0),
     z: 2,
     shape: { circle: ORBS.radius, color, outline: "#ffffff" },

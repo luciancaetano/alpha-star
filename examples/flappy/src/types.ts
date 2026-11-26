@@ -15,6 +15,8 @@ export interface Flappy {
     over: "score" | "best" | "again";
     settings: "music" | "sfx" | "music-down" | "music-up" | "sfx-down" | "sfx-up" | "language" | "lang" | "back";
   };
+  /** Game events (ctx.emit / ctx.on), delivered at the end of the step. */
+  events: { scored: { score: number } };
   scenes: {
     title: undefined;
     play: undefined;

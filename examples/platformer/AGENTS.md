@@ -31,7 +31,7 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 | `src/tuning.ts` | Speeds, jump, gravity, camera lerp/deadzone/shake. Change feel here. |
 | `src/prefabs/player.ts`, `coin.ts` | `EntitySpec`s using sheets (`shape: { sheet, animation }`). |
 | `src/prefabs/effects.ts` | Landing dust (one-shot `emitter`), the "+1" world text, parallax hills (`layer: "far"`). |
-| `src/scenes/play.ts` | Spawns LDtk level `Level_0` (`Walls` colliders; `Player`/`Coin` entity factories); movement, animation choice, landing shake. |
+| `src/scenes/play.ts` | Spawns LDtk level `Level_0` (`Walls` colliders; `Player`/`Coin` entity factories); `systems`: `move` per player (movement, animation, landing shake), `floatPopup` per popup; a `coinTaken` event (`types.ts` `events`) updates the HUD and wins. |
 | `src/scenes/won.ts` | All coins collected. |
 | `assets/img/*.png` | Sprite sheets (16x16 hero frames: 0 idle, 1-4 run, 5 jump, 6 fall; 8x8 coin spin). |
 | `assets/levels/world.ldtk` | LDtk project, world `main`, level `Level_0`: IntGrid `Walls` (1 `ground`, 2 `brick`; solid), Tiles layers `Ground` and `Deco`, entities `Player` and `Coin`. Tileset `../tiles/tiles.png` (16x16; tile 4 animates 4-5 via custom data `{"frames":[4,5],"fps":2}`). |

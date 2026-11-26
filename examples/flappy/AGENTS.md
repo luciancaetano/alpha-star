@@ -86,7 +86,13 @@ the export copies each declared file into the pack and fails naming any missing 
   `.high-contrast ...` in `flappy.rcss`), `ctx.settings.reducedMotion`; `ctx.input.rebind(action, inputs)`.
 - **New image:** add to `images` in `types.ts`, the file (PNG/JPG/BMP) in `main.ts` `assets.images`,
   then `shape: { image: "name", size: [w, h] }`. All assets preload before the first scene.
-- **New entity kind:** add its tag to `tags`, write a prefab in `src/prefabs/`, `ctx.spawn(prefab())`.
+- **New entity kind:** add its tag to `tags` (tag -> its `data` shape, `{}` for none), write a prefab
+  in `src/prefabs/` returning `EntitySpec<Flappy, "tag">`, `ctx.spawn(prefab())`.
+- **Per-step logic:** `systems: [{ tag: "bird", each: fly }, ...]` in the scene run after `update`,
+  in array order, once per living entity of the tag (`fly(ctx, b: Entity<Flappy, "bird">)`); keep
+  `update` for scene changes. `play.ts`: the bird flies, scrolled-out pipes go.
+- **Events:** `events` in `types.ts`; `ctx.emit("scored", { score })` where it happens, `ctx.on("scored", fn)`
+  where others react (HUD + sound). Delivered at the end of the step.
 - **New scene:** add `name: Params | undefined` to `scenes`, create `src/scenes/name.ts`,
   register it in `main.ts` `scenes`. The compiler lists what is missing.
 - **UI (RmlUi):** screens are `.rml` documents styled with `.rcss` in `assets/ui/`. Declare each in
@@ -103,7 +109,7 @@ the export copies each declared file into the pack and fails naming any missing 
   on a spec; `entity.emit(n)` bursts (the bird throws 8 feathers per flap). Deterministic (game seed).
   `expect.particles().equals(n)` in tests.
 - **Look:** `tint`, `alpha` (0..1), `blend: "alpha" | "add" | "multiply"` on any shape, also settable at
-  runtime (`entity.alpha = 0.5`); the game-over screen fades a black rect's alpha in `update`.
+  runtime (`entity.alpha = 0.5`); the game-over screen fades a black rect in with `ctx.tween(fade, { to: { alpha }, seconds })`.
   World text: `shape: { text, font?, size, color, align }`. Layers: `config.layers` + `layer:` on specs.
   This game uses `config.pixelMode: false` (antialiased circles/rects, smooth images); a shape opts
   out with `smooth: false`, an image with `{ file, filter }` (the player is `"sharp"`: square pixels at any size or tilt), a font with `{ file, pixelMode: true }`.

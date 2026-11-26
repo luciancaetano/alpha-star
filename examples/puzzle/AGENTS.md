@@ -32,7 +32,7 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 | `src/types.ts` | Every name: actions, sounds, tags, the tile sheet's frames, locales, UI ids, scenes. |
 | `src/prefabs/tiles.ts` | One sheet sprite per cell; `toPixels` centers the level. |
 | `src/scenes/start.ts` | Continues at the saved level. |
-| `src/scenes/play.ts` | Input -> `move` -> state; sprites follow the state (tweened). Undo history. |
+| `src/scenes/play.ts` | `update`: language and restart; `systems`: `steer` (input -> `move` -> state; undo history), `hud`. Sprites follow the state (tweened, or `e.pos = [x, y]` at once). |
 | `src/scenes/solved.ts` | Saves the best move count and the next level; "next" button. |
 | `assets/locales/*.json` | Texts: `ctx.t("hud.moves", { count })` (plural forms), `data-t` in `.rml`. |
 | `assets/fonts/` | Noto Sans subsets (OFL). A new language: add its locale, then cut its script's Noto font to the locale's characters with the engine repo's `tools/subset_fonts.py` and list it in `assets.fonts.main.fallbacks`. |

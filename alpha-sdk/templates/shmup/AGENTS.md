@@ -29,7 +29,7 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 | `src/types.ts` | Every name: actions, axes, sounds, music, images, tags, layers, categories, UI, scenes. |
 | `src/tuning.ts` | Speeds, fire rate, enemy waves, star depths. Change feel here. |
 | `src/prefabs/actors.ts` | Ship, enemy (kinematic), shot (fast sensor), star, explosion. |
-| `src/scenes/play.ts` | Starfield, flying, firing, enemy sway, hits and lives. |
+| `src/scenes/play.ts` | `update`: CRT toggle and restart; `systems`: `scrollStars` (bulk), `fly` per ship, `sway` per enemy, `leave` per shot, `hud`. Hits and lives in contact handlers. |
 | `src/scenes/over.ts` | Fades the music out, "again" button. |
 
 ## How things work here

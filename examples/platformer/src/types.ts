@@ -14,4 +14,6 @@ export interface Platformer {
   fonts: "pixel";
   ui: { hud: "coins"; won: never };
   scenes: { play: undefined; won: undefined };
+  /** Game events (ctx.emit / ctx.on), delivered at the end of the step. */
+  events: { coinTaken: undefined };
 }

@@ -33,7 +33,9 @@ function toggleCrt(ctx: Play) {
   else ctx.postfx.remove("crt");
 }
 
+// Out of lives: the ship stops while the world plays on until the game-over scene.
 function fly(ctx: Play, s: Ship) {
+  if (s.data.lives <= 0) return void (s.body.velocity = [0, 0]);
   const move = vec.scale(vec.norm([ctx.input.axis("moveX"), ctx.input.axis("moveY")]), SHIP.speed);
   // Keep the ship on screen: stop pushing outward at the edges.
   const m = SHIP.margin;
@@ -49,15 +51,22 @@ function fly(ctx: Play, s: Ship) {
   }
 }
 
-// Enemies sway sideways as they fall (their own phase), and leave at the bottom.
-function steerEnemies(ctx: Play) {
+// An enemy sways sideways as it falls (its own phase), and leaves at the bottom.
+function sway(ctx: Play, e: Entity<Starfighter, "enemy">) {
   const [vx, vy, vw, vh] = ctx.camera.view;
-  for (const e of ctx.findAll("enemy")) {
-    const sway = ENEMY.sway * Math.cos((ctx.time * ENEMY.swayHz + e.data.phase / 50) * Math.PI * 2);
-    e.body.velocity = [e.pos.x < vx + 12 ? Math.abs(sway) : e.pos.x > vx + vw - 12 ? -Math.abs(sway) : sway, e.data.fall];
-    if (e.pos.y > vy + vh + 16) ctx.destroy(e);
-  }
-  for (const s of ctx.findAll("shot")) if (s.pos.y < vy - 8) ctx.destroy(s);
+  const side = ENEMY.sway * Math.cos((ctx.time * ENEMY.swayHz + e.data.phase / 50) * Math.PI * 2);
+  e.body.velocity = [e.pos.x < vx + 12 ? Math.abs(side) : e.pos.x > vx + vw - 12 ? -Math.abs(side) : side, e.data.fall];
+  if (e.pos.y > vy + vh + 16) ctx.destroy(e);
+}
+
+// A shot leaves at the top.
+function leave(ctx: Play, s: Entity<Starfighter, "shot">) {
+  if (s.pos.y < ctx.camera.view[1] - 8) ctx.destroy(s);
+}
+
+function hud(ctx: Play) {
+  ctx.ui.set("hud", "score", `${ctx.state.score}`.padStart(6, "0"));
+  ctx.ui.set("hud", "lives", "A".repeat(Math.max(0, ctx.find("ship").data.lives)));
 }
 
 function explode(ctx: Play, e: Entity<Starfighter>) {
@@ -108,14 +117,16 @@ export default scene("play", {
   },
 
   update(ctx) {
-    scrollStars(ctx);
-    const s = ctx.find("ship");
-    if (s.data.lives > 0) fly(ctx, s);
-    else s.body.velocity = [0, 0];
-    steerEnemies(ctx);
-    ctx.ui.set("hud", "score", `${ctx.state.score}`.padStart(6, "0"));
-    ctx.ui.set("hud", "lives", "A".repeat(Math.max(0, s.data.lives)));
     if (ctx.input.pressed("crt")) toggleCrt(ctx);
     if (ctx.input.pressed("restart")) ctx.go("play");
   },
+
+  // Run in this order after update; a tag system runs once per living entity.
+  systems: [
+    { name: "stars", run: scrollStars },
+    { tag: "ship", each: fly },
+    { tag: "enemy", each: sway },
+    { tag: "shot", each: leave },
+    { name: "hud", run: hud },
+  ],
 });

@@ -27,7 +27,7 @@ function place(ctx: Play, glide: boolean) {
   const put = (e: Entity<Crates>, cell: [number, number]) => {
     const [x, y] = toPixels(cell, level.size);
     if (glide && seconds > 0) ctx.tween(e, { to: { x, y }, seconds, ease: "quadOut" });
-    else [e.pos.x, e.pos.y] = [x, y];
+    else e.pos = [x, y];
   };
   put(ctx.find("player"), ctx.state.pos.player);
   for (const box of ctx.findAll("box")) {
@@ -61,6 +61,14 @@ function undo(ctx: Play) {
   place(ctx, false);
 }
 
+// Arrows move, undo steps back; nothing moves once the level is solved.
+function steer(ctx: Play) {
+  if (ctx.state.done) return;
+  if (ctx.input.pressed("undo")) undo(ctx);
+  const dir = DIRS.find((d) => ctx.input.pressed(d));
+  if (dir) tryMove(ctx, dir);
+}
+
 export default scene("play", {
   state: ({ level }) => ({ level, pos: parse(LEVELS[level]).start, history: [], moves: 0, done: false }),
 
@@ -79,11 +87,12 @@ export default scene("play", {
 
   update(ctx) {
     if (ctx.input.pressed("language")) ctx.locale = LANGUAGES[(LANGUAGES.indexOf(ctx.locale ?? "en") + 1) % LANGUAGES.length];
-    if (ctx.input.pressed("restart")) return ctx.go("play", { level: ctx.state.level });
-    if (ctx.state.done) return;
-    if (ctx.input.pressed("undo")) undo(ctx);
-    const dir = DIRS.find((d) => ctx.input.pressed(d));
-    if (dir) tryMove(ctx, dir);
-    hud(ctx);
+    if (ctx.input.pressed("restart")) ctx.go("play", { level: ctx.state.level });
   },
+
+  // Run in this order after update, every step.
+  systems: [
+    { name: "steer", run: steer },
+    { name: "hud", run: hud },
+  ],
 });

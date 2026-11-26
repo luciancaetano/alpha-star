@@ -50,10 +50,12 @@ export default scene("lab", {
     if (ctx.input.pressed("prev")) select(ctx, -1);
     if (ctx.input.pressed("more")) tweak(ctx, 1);
     if (ctx.input.pressed("less")) tweak(ctx, -1);
-    // Animated uniform: ctx.time drives each shader's motion (render-only, never game state).
-    ctx.postfx.set(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: ctx.time });
-    ctx.findAll("orb").forEach((o, i) => {
-      [o.pos.x, o.pos.y] = orbitAt(i, ctx.time);
-    });
   },
+
+  // Run in this order after update, every step; a tag system runs once per living entity.
+  systems: [
+    { tag: "orb", each: (ctx, o) => { o.pos = orbitAt(o.data.i, ctx.time); } },
+    // Animated uniform: ctx.time drives each shader's motion (render-only, never game state).
+    { name: "uniforms", run: (ctx) => ctx.postfx.set(SHADERS[ctx.state.index], { intensity: ctx.state.intensity, time: ctx.time }) },
+  ],
 });

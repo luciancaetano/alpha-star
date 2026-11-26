@@ -7,7 +7,9 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
-Script API 1.0, phase 1 (breaking; see `docs/RFC_API_1.0.md`).
+## [0.6.0] - 2026-11-26
+
+Script API reform, phases 1-4 (breaking; see `docs/RFC_API_1.0.md`; the examples show the new style).
 
 ### Changed (breaking)
 - `GameTypes.tags` maps each tag to the data its entities carry (`tags: { hero: {}; enemy: { hp: number } }`):

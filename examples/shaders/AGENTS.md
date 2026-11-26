@@ -30,7 +30,7 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 | `src/tuning.ts` | The shader cycle order (`SHADERS`), intensity step, orb orbit. |
 | `src/cycle.ts` | Pure rules: cycling with wrap-around, intensity clamp, HUD labels. |
 | `src/prefabs/scene.ts` | Floor tiles, orbs (shape + light + emitter), title text. |
-| `src/scenes/lab.ts` | Input, `ctx.postfx` add/remove/set, touch buttons, orb motion. |
+| `src/scenes/lab.ts` | Input (`update`), `ctx.postfx` set/remove, touch buttons; `systems`: orb motion (`tag: "orb"`, `data.i`), the animated uniforms. |
 | `assets/shaders/*.frag` | The six Vulkan GLSL fragment shaders. |
 
 ## How things work here

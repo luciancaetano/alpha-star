@@ -40,14 +40,12 @@ function land(ctx: Play, p: Hero) {
   }
 }
 
-// Coin popups rise and fade, then go away.
-function floatPopups(ctx: Play) {
-  for (const t of ctx.findAll("popup")) {
-    t.pos.y -= POPUP.rise * ctx.dt;
-    const alpha = t.alpha - POPUP.fade * ctx.dt;
-    if (alpha <= 0) ctx.destroy(t);
-    else t.alpha = alpha;
-  }
+// A coin popup rises and fades, then goes away.
+function floatPopup(ctx: Play, t: Entity<Platformer, "popup">) {
+  t.pos.y -= POPUP.rise * ctx.dt;
+  const alpha = t.alpha - POPUP.fade * ctx.dt;
+  if (alpha <= 0) ctx.destroy(t);
+  else t.alpha = alpha;
 }
 
 // A picked coin counts once, grows and fades out (tween), then goes away.
@@ -58,8 +56,31 @@ function pick(ctx: Play, c: Entity<Platformer, "coin">) {
   ctx.tween(c, { to: { scale: COIN_POP.scale, alpha: 0 }, seconds: COIN_POP.seconds, ease: "quadOut", onDone: () => ctx.destroy(c) });
   ctx.state.coins += 1;
   ctx.audio.play("coin");
+  ctx.emit("coinTaken");
+}
+
+// The HUD counts coins; the last one wins the level.
+function countCoins(ctx: Play) {
   ctx.ui.set("hud", "coins", `coins ${ctx.state.coins}/${ctx.state.total}`);
   if (ctx.state.coins === ctx.state.total) ctx.go("won");
+}
+
+// Runs and jumps; on the lift, moves with it (its velocity is what the tween drives).
+function move(ctx: Play, p: Hero) {
+  const dir = Math.sign(Math.round(ctx.input.axis("moveX") * 10));
+  const ground = groundUnder(ctx, p);
+  const grounded = ground !== null;
+  const carried = ground?.body.type === "kinematic" ? ground.body.velocity.x : 0;
+  if (grounded && !ctx.state.grounded) land(ctx, p);
+  ctx.state.grounded = grounded;
+  if (ctx.input.pressed("jump") && grounded) {
+    p.body.velocity.y = PLAYER.jump;
+    ctx.state.grounded = false;
+    ctx.audio.play("jump");
+  }
+  ctx.state.fallSpeed = Math.max(0, p.body.velocity.y);
+  p.body.velocity.x = carried + dir * PLAYER.speed;
+  animate(p, ctx, dir);
 }
 
 export default scene("play", {
@@ -81,27 +102,17 @@ export default scene("play", {
     ctx.ui.set("hud", "coins", `coins 0/${ctx.state.total}`);
 
     ctx.onEnter("player", "coin", (_p, c) => pick(ctx, c));
+    ctx.on("coinTaken", () => countCoins(ctx));
   },
 
   update(ctx) {
-    const p = ctx.find("player");
-    const move = Math.sign(Math.round(ctx.input.axis("moveX") * 10));
-    const ground = groundUnder(ctx, p);
-    const grounded = ground !== null;
-    // On the lift, move with it (its velocity is what the tween drives).
-    const carried = ground?.body.type === "kinematic" ? ground.body.velocity.x : 0;
-    if (grounded && !ctx.state.grounded) land(ctx, p);
-    ctx.state.grounded = grounded;
-    let vy = p.body.velocity.y;
-    if (ctx.input.pressed("jump") && grounded) {
-      vy = PLAYER.jump;
-      ctx.state.grounded = false;
-      ctx.audio.play("jump");
-    }
-    ctx.state.fallSpeed = Math.max(0, vy);
-    p.body.velocity = [carried + move * PLAYER.speed, vy];
-    animate(p, ctx, move);
-    floatPopups(ctx);
-    if (p.pos.y > 400 || ctx.input.pressed("restart")) ctx.go("play");  // fell into the pit
+    // Scene changes stay in update: fell into the pit, or restart.
+    if (ctx.find("player").pos.y > 400 || ctx.input.pressed("restart")) ctx.go("play");
   },
+
+  // Run in this order after update; a tag system runs once per living entity.
+  systems: [
+    { tag: "player", each: move },
+    { tag: "popup", each: floatPopup },
+  ],
 });
