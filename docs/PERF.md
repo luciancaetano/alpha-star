@@ -15,6 +15,7 @@ pessimistic; compare rows of the same table.
 | sprites_batch | 10000 image sprites moved with `ctx.positions("s")` + `write()` |
 | physics | 2000 dynamic circle bodies falling into a box |
 | particles | 4 emitters x 5000 = 20000 live particles (the world cap) |
+| particles_smooth | the same with `pixelMode: false` (antialiased circle/rect particles, step E) |
 | tilemap | 500 x 500 tile layer (8 px tiles), camera scrolling |
 | ui | RmlUi document, 200 elements whose text changes every frame |
 
@@ -71,3 +72,16 @@ start is dominated by SDL, the window and the renderer. Bytecode is about hiding
 - Remaining hot spots, not changed: render submission of large vertex counts (particles 118k
   vertices = 1.4 ms, 10000 sprites = 3.8 ms; one SDL_RenderGeometry call each), RmlUi text
   relayout (200 changing texts = 2.8 ms), Box2D p95 at 2000 bodies while they settle (3 ms).
+
+## Antialiased particles (step E)
+
+`particles_smooth` (20000 particles, half circles half rects, `pixelMode: false`), release engine, ms p50/p95/max:
+
+| build | render | verts |
+|---|---|---|
+| before (crisp octagons/quads) | 4.09/5.58/8.18 | 295566 |
+| smooth, 6+ segments per circle | 11.27/13.80/17.91 | 828873 |
+| smooth, 4+ segments (0.3 px error rule alone) + cached unit circle | 9.75/12.28/17.45 | 773031 |
+
+Render time is linear in vertices (~13 ns each on SDL's GPU path), so the cost is the feather ring
+(rect 30 vertices vs 6, circle 3n triangles). `particles` (crisp, default pixelMode) is unchanged: 1.67/3.32/5.05, 118482 verts.

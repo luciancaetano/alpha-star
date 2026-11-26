@@ -95,14 +95,25 @@ void image_triangles(const core::DrawItem& item, const core::Box& area, std::vec
   else sprite(item, out);
 }
 
-void particle_triangles(const core::DrawItem& item, const core::Box& area, std::vector<Vertex>& out) {
+namespace {
+
+core::Geometry sized(bool round, float size) {
+  if (round) return core::Circle{size * 0.5f};
+  return core::Rect{{size, size}};
+}
+
+}  // namespace
+
+void particle_triangles(const core::DrawItem& item, const core::Box& area, std::vector<Vertex>& out, float pixel) {
   const core::ShapeSpec& look = item.shape;
   const bool round = !look.image && std::holds_alternative<core::Circle>(look.geometry);
+  const bool smooth = look.smooth && !look.image;
   const Uv uv = look.image ? uv_of(*look.image, look.src, false, false) : Uv{};
   for (const core::ParticleQuad& p : item.particles) {
     const core::Vec2 h{p.size * 0.5f, p.size * 0.5f};
     if (!core::overlaps({p.pos - h, p.pos + h}, area)) continue;
-    if (round) fan(p.pos, h.x, kParticleSides, p.color, out);
+    if (smooth) smooth_particle(sized(round, p.size), p.pos, p.color, pixel, out);
+    else if (round) fan(p.pos, h.x, kParticleSides, p.color, out);
     else box(p.pos - h, p.pos + h, uv, p.color, out);
   }
 }

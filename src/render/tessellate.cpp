@@ -13,29 +13,36 @@ namespace alpha::render {
 namespace {
 
 constexpr float kMaxError = 0.3f;  // output pixels between the polygon and the true circle
-constexpr int kMinSegments = 12;
 constexpr int kMaxSegments = 128;
 
 struct Placement {
   core::Vec2 pos;
   float degrees;
   float grow;  // extra size on every side
+  int min_segments = kMinSegments;
 };
 
 using Rim = std::vector<core::Vec2>;
+
+// n points on the unit circle from angle 0, computed once per n.
+const std::vector<core::Vec2>& unit_circle(int n) {
+  thread_local std::array<std::vector<core::Vec2>, kMaxSegments + 1> table;
+  std::vector<core::Vec2>& pts = table[static_cast<std::size_t>(n)];
+  const float step = 2.0f * std::numbers::pi_v<float> / static_cast<float>(n);
+  for (int i = static_cast<int>(pts.size()); i < n; ++i) {
+    const float a = step * static_cast<float>(i);
+    pts.push_back({std::cos(a), std::sin(a)});
+  }
+  return pts;
+}
 
 // The shape's edge, moved out by `d` world units (in when negative), in order.
 void rim(const core::Geometry& g, const Placement& p, float d, float pixel, Rim& out) {
   out.clear();
   if (const auto* c = std::get_if<core::Circle>(&g)) {
     const float r = c->radius + p.grow;
-    const int n = circle_segments(r / pixel);
-    const float step = 2.0f * std::numbers::pi_v<float> / static_cast<float>(n);
     const float at = std::max(0.0f, r + d);
-    for (int i = 0; i < n; ++i) {
-      const float a = step * static_cast<float>(i);
-      out.push_back(p.pos + core::Vec2{std::cos(a) * at, std::sin(a) * at});
-    }
+    for (const core::Vec2 u : unit_circle(circle_segments(r / pixel, p.min_segments))) out.push_back(p.pos + u * at);
     return;
   }
   const core::Vec2 size = std::get<core::Rect>(g).size;
@@ -70,25 +77,26 @@ void ring(const Rim& inner, const Rim& outer, core::Color color, std::vector<Ver
   }
 }
 
-void shape(const core::ShapeSpec& s, const Placement& p, core::Color color, float pixel, std::vector<Vertex>& out) {
-  Rim inner;
-  if (!s.smooth) {
-    rim(s.geometry, p, 0.0f, pixel, inner);
+// Rims are reused across calls (thousands of particles per frame, no allocation each).
+void shape(const core::Geometry& g, bool smooth, const Placement& p, core::Color color, float pixel, std::vector<Vertex>& out) {
+  thread_local Rim inner;
+  thread_local Rim outer;
+  if (!smooth) {
+    rim(g, p, 0.0f, pixel, inner);
     return fill(p.pos, inner, color, out);
   }
-  Rim outer;
-  rim(s.geometry, p, -0.5f * pixel, pixel, inner);
-  rim(s.geometry, p, 0.5f * pixel, pixel, outer);
+  rim(g, p, -0.5f * pixel, pixel, inner);
+  rim(g, p, 0.5f * pixel, pixel, outer);
   fill(p.pos, inner, color, out);
   ring(inner, outer, color, out);
 }
 
 }  // namespace
 
-int circle_segments(float radius_px) {
-  if (radius_px <= kMaxError) return kMinSegments;
+int circle_segments(float radius_px, int min_segments) {
+  if (radius_px <= kMaxError) return min_segments;
   const float n = std::numbers::pi_v<float> / std::acos(1.0f - kMaxError / radius_px);
-  return std::clamp(static_cast<int>(std::ceil(n)), kMinSegments, kMaxSegments);
+  return std::clamp(static_cast<int>(std::ceil(n)), min_segments, kMaxSegments);
 }
 
 void fan(core::Vec2 center, float radius, int segments, core::Color color, std::vector<Vertex>& out) {
@@ -105,9 +113,13 @@ void fan(core::Vec2 center, float radius, int segments, core::Color color, std::
 void tessellate(const core::DrawItem& item, std::vector<Vertex>& out, float pixel) {
   const core::ShapeSpec& s = item.shape;
   if (s.outline) {
-    shape(s, {item.pos, item.rotation, kOutlineWidth}, core::shade(*s.outline, s.tint, s.alpha), pixel, out);
+    shape(s.geometry, s.smooth, {item.pos, item.rotation, kOutlineWidth}, core::shade(*s.outline, s.tint, s.alpha), pixel, out);
   }
-  shape(s, {item.pos, item.rotation, 0.0f}, core::shade(s.fill, s.tint, s.alpha), pixel, out);
+  shape(s.geometry, s.smooth, {item.pos, item.rotation, 0.0f}, core::shade(s.fill, s.tint, s.alpha), pixel, out);
+}
+
+void smooth_particle(const core::Geometry& g, core::Vec2 pos, core::Color color, float pixel, std::vector<Vertex>& out) {
+  shape(g, true, {pos, 0.0f, 0.0f, kMinParticleSegments}, color, pixel, out);
 }
 
 std::vector<Vertex> tessellate(std::span<const core::DrawItem> items, float pixel) {

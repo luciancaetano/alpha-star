@@ -98,7 +98,8 @@ crisp pixel art (nearest), `false` = smooth (linear). Images, sheets and maps ov
 `filter: "nearest" | "linear" | "sharp"` (`images: { logo: { file: "img/logo.png", filter: "linear" } }`,
 `sheets.hero.filter`, `maps.level1: { file, filter }` for its tilesets); `pixelMode` on them is an
 error. Fonts keep `fonts.title: { file, pixelMode }` (world-text glyph atlas).
-Particles with an image or sheet shape use their source's mode. `alpha export` puts crisp
+Particles with an image or sheet shape use their source's mode; circle/rect particles get antialiased edges
+with `pixelMode: false` (override per emitter with `emitter.smooth`). `alpha export` puts crisp
 and smooth images on separate atlas pages (`alpha-atlas-N.png`, `alpha-atlas-smooth-N.png`).
 
 ## Fonts and sharp text

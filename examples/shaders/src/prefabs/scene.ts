@@ -24,7 +24,7 @@ export function orb(i: number): Spec {
     z: 2,
     shape: { circle: ORBS.radius, color, outline: "#ffffff" },
     light: { radius: ORBS.light, color, intensity: 1.6 },
-    emitter: { rate: 30, lifetime: [0.3, 0.7], speed: [10, 30], size: [3, 1], color: [color, "#ffffff00"], blend: "add" },
+    emitter: { rate: 30, lifetime: [0.3, 0.7], speed: [10, 30], size: [3, 1], color: [color, "#ffffff00"], blend: "add", smooth: true },
   };
 }
 

@@ -64,16 +64,6 @@ core::ShapeSpec filled(JSContext* ctx, JSValueConst obj) {
   return out;
 }
 
-// shape.smooth: antialiased edges, default !config.pixelMode.
-bool smooth_of(JSContext* ctx, JSValueConst obj, bool fallback) {
-  if (!has(ctx, obj, "smooth")) return fallback;
-  const Value v = field(ctx, obj, "smooth");
-  if (!JS_IsBool(v.get())) {
-    throw core::Error(kPrefix + "shape.smooth must be true (antialiased edges) or false (crisp), got " + describe(ctx, v.get()));
-  }
-  return JS_ToBool(ctx, v.get()) == 1;
-}
-
 void shape(JSContext* ctx, JSValueConst obj, ScriptState& assets, core::EntitySpec& out) {
   if (!JS_IsObject(obj)) throw core::Error(kPrefix + "shape must be an object");
   if (has(ctx, obj, "text")) {
@@ -86,7 +76,7 @@ void shape(JSContext* ctx, JSValueConst obj, ScriptState& assets, core::EntitySp
     out.shape = image(ctx, obj, assets);
   } else {
     out.shape = filled(ctx, obj);
-    out.shape->smooth = smooth_of(ctx, obj, assets.smooth_shapes);
+    out.shape->smooth = smooth_of(ctx, obj, "shape.smooth", assets.smooth_shapes);
   }
   parse_look(ctx, obj, "shape.", *out.shape);
 }

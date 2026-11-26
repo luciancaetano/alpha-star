@@ -28,6 +28,9 @@ core::Color color_arg(JSContext* ctx, JSValueConst v, const std::string& path);
 core::Color color_named(JSContext* ctx, JSValueConst v, const std::string& what);
 // obj[name] as a number, or `fallback` when absent.
 float number_or(JSContext* ctx, JSValueConst obj, const char* name, const std::string& path, float fallback);
+// obj.smooth (antialiased edges) as a bool, `fallback` (!config.pixelMode) when absent;
+// `path` names the field in errors ("shape.smooth", "emitter.smooth").
+bool smooth_of(JSContext* ctx, JSValueConst obj, const std::string& path, bool fallback);
 // A number in [lo, hi]; errors name `what`, the range and the value.
 float ranged(JSContext* ctx, JSValueConst v, const std::string& what, double lo, double hi);
 

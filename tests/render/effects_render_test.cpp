@@ -214,6 +214,29 @@ TEST_CASE("scaling modes: integer and stretch keep the logical size; expand grow
   CHECK(expand.pixel(32, 60) == kBg);  // the grown area is drawn, no bars
 }
 
+TEST_CASE("smooth circle/rect particles get a feathered edge; crisp ones are fill or background") {
+  for (const Geometry& g : {Geometry{Circle{0.5f}}, Geometry{Rect{{1, 1}}}}) {
+    Canvas c;
+    DrawItem crisp{{g, kWhite}, {0, 0}, 0};
+    crisp.particles = {{{16, 16.5f}, 15.2f, kWhite}};
+    DrawItem smooth = crisp;
+    smooth.shape.smooth = true;
+    smooth.particles = {{{48, 16.5f}, 15.2f, kWhite}};
+    c.renderer.draw({kBg, {crisp, smooth}, {}});
+    const auto partial = [](Color p) { return p.r > kBg.r + 20 && p.r < kWhite.r - 20; };
+    int crisp_partial = 0;
+    int smooth_partial = 0;
+    for (int y = 0; y < 32; ++y) {
+      crisp_partial += partial(c.pixel(16, y));
+      smooth_partial += partial(c.pixel(48, y));
+    }
+    CHECK(crisp_partial == 0);
+    CHECK(smooth_partial >= 2);  // top and bottom edges
+    CHECK(c.pixel(48, 16) == kWhite);
+    CHECK(c.renderer.stats().draw_calls == 1);
+  }
+}
+
 // Measurement, not a check: alpha_tests -tc="*particle render bench*" --no-skip.
 TEST_CASE("particle render bench: 20000 particles, software renderer" * doctest::skip()) {
   Canvas c(Scaling::Letterbox, 64, 32);

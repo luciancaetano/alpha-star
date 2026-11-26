@@ -17,6 +17,7 @@ interface EmitterSpec {          // also takes tint?, alpha?, blend?
   size?: Span;                   // [birth, death] px (default 4)
   color?: Color | [Color, Color];// default ["#ffffffff", "#ffffff00"] (fades out)
   shape?: "circle" | "rect" | { image } | { sheet, frame? };   // default circle; tinted by color
+  smooth?: boolean;   // circle/rect: antialiased edges; default !config.pixelMode (images follow their filter)
   max?: number;                  // live particles of this emitter, 1..20000 (default 100)
   oneShot?: boolean;             // emit burst once; entity destroyed when the last particle dies
 }

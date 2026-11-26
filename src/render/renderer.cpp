@@ -110,9 +110,10 @@ void Renderer::add(const core::DrawItem& item, const core::View& view) {
   const core::ShapeSpec& shape = item.shape;
   if (shape.text) return add_text(item, view);
   batch({shape.image ? texture(shape.image) : nullptr, shape.blend, item.parallax}, view);
-  if (!item.particles.empty()) particle_triangles(item, area, batch_);
+  const float pixel = 1.0f / (core::parallax_view(view, item.parallax).zoom * window_scale_);
+  if (!item.particles.empty()) particle_triangles(item, area, batch_, pixel);
   else if (batch_key_.texture) image_triangles(item, area, batch_);
-  else tessellate(item, batch_, 1.0f / (core::parallax_view(view, item.parallax).zoom * window_scale_));
+  else tessellate(item, batch_, pixel);
   ++stats_.drawn;
 }
 

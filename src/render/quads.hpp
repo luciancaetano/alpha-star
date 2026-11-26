@@ -30,6 +30,8 @@ struct GlyphRun {
 void text_triangles(const core::DrawItem& item, const GlyphRun& run, std::vector<Vertex>& out);
 // Appends one quad (image or square) or octagon (circle) per particle that
 // overlaps `area`, scaled to the particle's size, in the particle's color.
-void particle_triangles(const core::DrawItem& item, const core::Box& area, std::vector<Vertex>& out);
+// Smooth circle/rect looks (ShapeSpec::smooth) get the shapes' feathered edge,
+// `pixel` world units wide (one output pixel); image looks follow their filter.
+void particle_triangles(const core::DrawItem& item, const core::Box& area, std::vector<Vertex>& out, float pixel = 1.0f);
 
 }  // namespace alpha::render

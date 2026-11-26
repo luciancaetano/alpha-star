@@ -212,6 +212,11 @@ declare module "alpha" {
     color?: Color | [Color, Color];
     /** Particle shape (default "circle"); images and sheet frames are tinted by `color`. */
     shape?: "circle" | "rect" | { image: I } | { sheet: S; frame?: number };
+    /**
+     * Circle/rect particles: true = antialiased (1 px feathered) edges, false = crisp. Default:
+     * `!config.pixelMode`, like filled shapes. Image/sheet particles follow their image's `filter`.
+     */
+    smooth?: boolean;
     /** Most live particles of this emitter, 1..20000 (default 100). */
     max?: number;
     oneShot?: boolean;
@@ -981,7 +986,7 @@ declare module "alpha" {
     /**
      * Look default: true (default) = crisp pixel art (nearest image filtering, hard shape
      * edges), false = smooth (linear filtering, antialiased circle/rect edges). Images, sheets
-     * and maps override it with `filter`; fonts with `{ file, pixelMode }`; filled shapes with `smooth`.
+     * and maps override it with `filter`; fonts with `{ file, pixelMode }`; filled shapes and emitters with `smooth`.
      */
     pixelMode?: boolean;
     /** Named draw layers, e.g. `{ bg: { z: -100, parallax: 0.2 }, fx: { z: 100 } }`. */

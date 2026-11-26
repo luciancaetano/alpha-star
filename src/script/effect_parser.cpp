@@ -144,6 +144,7 @@ core::EmitterSpec parse_emitter(JSContext* ctx, JSValueConst obj, const ScriptSt
   if (has(ctx, obj, "gravity")) out.gravity = vec2_arg(ctx, field(ctx, obj, "gravity").get(), kSpawn + "emitter.gravity");
   colors(ctx, obj, out);
   out.look = particle_look(ctx, obj, s);
+  if (!out.look.image) out.look.smooth = smooth_of(ctx, obj, kEmitter + "smooth", s.smooth_shapes);
   parse_look(ctx, obj, kEmitter, out.look);
   return s.reduced_motion ? core::reduced_motion(out) : out;
 }

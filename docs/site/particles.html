@@ -11,6 +11,7 @@
 trail.emit(8);           // burst on an entity spawned with an emitter
 trail.emitting = false;  // stop `rate` emission</code></pre>
 <p>A one-shot emitter's entity goes away with its last particle. At most 20000 live particles per scene. <code>ctx.settings.reducedMotion</code> scales counts to 1/4. Tests: <code>run.expect.particles().atLeast(5)</code>.</p>
+<p>Circle and rect particles follow <code>config.pixelMode</code> like filled shapes: crisp by default, antialiased (a 1-pixel feathered edge) with <code>pixelMode: false</code>. Override per emitter with <code>smooth: true | false</code>. Image and sheet particles follow their image's <code>filter</code>. Smooth particles cost about 2.5x the vertices of crisp ones (20000 live: ~10 ms vs ~4 ms render on the bench machine).</p>
 <h2 id="looks">Looks</h2>
 <pre><code>e.tint = "#ff000080"; e.alpha = 0.5; e.blend = "add"; e.scale = 2; e.flipX = true;</code></pre>
 <h2 id="layers">Layers</h2>

@@ -104,3 +104,42 @@ TEST_CASE("pixelMode: filled shapes are crisp by default, smooth with pixelMode 
   bad.load(box.write("b.js", shapes_game("", ", smooth: 1")));
   CHECK(bad.error().find("shape.smooth must be true (antialiased edges) or false (crisp), got 1") != std::string::npos);
 }
+
+namespace {
+
+// Three emitters (one live particle each): circle, rect smooth: true, circle smooth: false.
+std::string emitters_game(const std::string& pixel_config, const std::string& extra = "") {
+  const std::string e = "emitter: { burst: 1, lifetime: 5, ";
+  return "import { define } from 'alpha'; const { scene, game } = define();\n"
+         "const play = scene('play', { enter(ctx) {\n"
+         "  ctx.spawn({ tags: ['a'], pos: [0, 0], " + e + "shape: 'circle' } });\n"
+         "  ctx.spawn({ tags: ['b'], pos: [0, 0], " + e + "shape: 'rect', smooth: true } });\n"
+         "  ctx.spawn({ tags: ['c'], pos: [0, 0], " + e + "smooth: false" + extra + " } });\n"
+         "} });\n"
+         "export default game({ config: { title: 't', size: [100, 100], seed: 1, actions: {} " + pixel_config + " },\n"
+         "  start: 'play', scenes: { play } });\n";
+}
+
+std::string emitter_flags(Host& host) {
+  host.step({}, 1.0f / 60.0f);
+  return shape_flags(host);
+}
+
+}  // namespace
+
+TEST_CASE("pixelMode: circle/rect particles follow it like shapes, emitter.smooth overrides") {
+  Sandbox box;
+  Host pixel(box.save());
+  pixel.load(box.write("g.js", emitters_game("")));
+  REQUIRE_MESSAGE(!pixel.paused(), pixel.error());
+  CHECK(emitter_flags(pixel) == "PSP");
+
+  Host smooth(box.save());
+  smooth.load(box.write("h.js", emitters_game(", pixelMode: false")));
+  REQUIRE_MESSAGE(!smooth.paused(), smooth.error());
+  CHECK(emitter_flags(smooth) == "SSP");
+
+  Host bad(box.save());
+  bad.load(box.write("b.js", emitters_game("", ", smooth: 'yes'")));
+  CHECK(bad.error().find("emitter.smooth must be true (antialiased edges) or false (crisp), got yes") != std::string::npos);
+}
