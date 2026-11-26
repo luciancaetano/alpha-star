@@ -109,16 +109,19 @@ The code rules are in [AGENTS.md](AGENTS.md).
 - `.github/workflows/release.yml` (push to `main` that changes `alpha-sdk/package.json`, or run by
   hand): if `v<version>` is not tagged and not on npm, calls `engines.yml` (templates synced before
   packing), publishes `@alpha-star/engine-win32-x64`, `@alpha-star/engine-linux-x64`, `@alpha-star/engine-android-arm64`, then
-  `@alpha-star/sdk` with npm provenance (reruns skip what is already published), then tags
+  `@alpha-star/sdk` with `npm stage publish` over npm trusted publishing (OIDC: no npm token;
+  provenance automatic; reruns skip what is already published), then tags
   `v<version>` and creates the GitHub release (CHANGELOG section as notes; npm tarballs, MANIFEST,
   engine zip/tar.gz). To release: bump the version in `alpha-sdk/package.json` (+ optional deps,
   lock), `CMakeLists.txt` and add the `CHANGELOG.md` section, then push to `main`.
   Every published binary comes from these jobs; all of them use the repository secret
   `ALPHA_JSBC_SECRET` as the game.jsbc key, so a pack compiled by the desktop release engine runs
-  on the shipping and Android engines (`pack_release.py` checks it). Setup once: repository secrets
-  `NPM_TOKEN` (npm automation token, publish rights on the `@alpha-star` scope) and
-  `ALPHA_JSBC_SECRET` (a long random string; never change it) and an environment named `npm` (add required reviewers there to approve
-  each publish).
+  on the shipping and Android engines (`pack_release.py` checks it). Staged versions are installable
+  only after a maintainer approves them on npmjs.com (or `npm stage approve`, which asks for 2FA).
+  Setup once: the repository secret `ALPHA_JSBC_SECRET` (a long random string; never change it), an
+  environment named `npm`, and on npmjs.com, for each of the four packages, Settings -> Trusted
+  publishing -> GitHub Actions with repository `luciancaetano/alpha-star`, workflow `release.yml`,
+  environment `npm`. No `NPM_TOKEN`: the workflow sets no `NODE_AUTH_TOKEN` (npm would try it before OIDC).
 - The Linux package list lives in `.github/actions/linux-deps` (mirrors `tools/linux/Containerfile`).
 
 ## GitHub Pages showcase

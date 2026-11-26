@@ -3,11 +3,14 @@
 #   1. version: read the version; stop if v<version> is already tagged or on npm.
 #   2. engines.yml: Windows + Linux release/shipping engines, the prebuilt Android engine, SDK tests, tarballs (templates synced,
 #      skills copied by prepack, llm docs, notices), offline install test of all three packages.
-#   3. publish: engine packages first (the SDK's exact-version optionalDependencies), then the SDK,
-#      with npm provenance; then tag v<version> and a GitHub release with the tarballs.
+#   3. publish: stages engine packages first (the SDK's exact-version optionalDependencies), then the SDK,
+#      with `npm stage publish` over npm trusted publishing (OIDC, no npm token; provenance is automatic);
+#      then tag v<version> and a GitHub release with the tarballs. A maintainer approves each staged
+#      version on npmjs.com (or `npm stage approve`, 2FA) before it is installable.
 # Every binary in the packages is built here, never on a developer machine.
-# Repository secrets: NPM_TOKEN (npm automation token with publish rights on the @alpha-star scope)
-# and ALPHA_JSBC_SECRET (any long random string, kept forever: the game.jsbc key of every engine).
+# npm setup (once per package): npmjs.com -> package -> Settings -> Trusted publishing -> GitHub Actions,
+# repository luciancaetano/alpha-star, workflow release.yml, environment npm.
+# Repository secret: ALPHA_JSBC_SECRET (any long random string, kept forever: the game.jsbc key of every engine).
 # The docs site deploys on its own (pages.yml).
 name: release
 
@@ -39,10 +42,10 @@ jobs:
           node-version: "22"
       - id: v
         env:
-          HAS_SECRETS: ${{ secrets.NPM_TOKEN != '' && secrets.ALPHA_JSBC_SECRET != '' }}
+          HAS_SECRETS: ${{ secrets.ALPHA_JSBC_SECRET != '' }}
         run: |
           if [ "$HAS_SECRETS" != "true" ]; then
-            echo "::error::set the repository secrets NPM_TOKEN and ALPHA_JSBC_SECRET to release"; exit 1
+            echo "::error::set the repository secret ALPHA_JSBC_SECRET to release"; exit 1
           fi
           version=$(node -p "require('./alpha-sdk/package.json').version")
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -66,7 +69,7 @@ jobs:
     environment: npm
     permissions:
       contents: write   # tag + GitHub release
-      id-token: write   # npm provenance
+      id-token: write   # npm trusted publishing (OIDC) + provenance
     env:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
@@ -74,7 +77,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          registry-url: https://registry.npmjs.org
+      # Staged publishing and trusted publishing need npm >= 11.15.
+      - run: npm install -g npm@11
       - uses: actions/download-artifact@v4
         with:
           name: sdk-release
@@ -91,9 +95,8 @@ jobs:
         with:
           name: engine-android-arm64
           path: engines/android-arm64
-      - name: Publish to npm (engines, then SDK)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # No NODE_AUTH_TOKEN anywhere: npm would try a token (even an empty one) before OIDC.
+      - name: Stage on npm (engines, then SDK)
         run: |
           cd dist/release
           for pkg in alpha-star-engine-win32-x64 alpha-star-engine-linux-x64 alpha-star-engine-android-arm64 alpha-star-sdk; do
@@ -101,7 +104,7 @@ jobs:
             if npm view "$name@$VERSION" version >/dev/null 2>&1; then
               echo "$name@$VERSION already published (rerun): skipped"; continue
             fi
-            npm publish "$pkg-$VERSION.tgz" --access public --provenance
+            npm stage publish "$pkg-$VERSION.tgz" --access public
           done
       - name: Tag and GitHub release
         env:
