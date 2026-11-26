@@ -1,0 +1,30 @@
+{
+	"bmi-installation" : null,
+	"compiler-frontend-variant" : "GNU",
+	"compiler-id" : "Clang",
+	"compiler-simulate-id" : "",
+	"config" : "Release",
+	"cxx-modules" : {},
+	"database-info" : null,
+	"dir-cur-bld" : "C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a",
+	"dir-cur-src" : "C:/workspace/alpha-star",
+	"dir-top-bld" : "C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a",
+	"dir-top-src" : "C:/workspace/alpha-star",
+	"exports" : [],
+	"forward-modules-from-target-dirs" : [],
+	"include-dirs" : 
+	[
+		"_deps\\harfbuzz-src\\src"
+	],
+	"language" : "CXX",
+	"linked-target-dirs" : [],
+	"module-dir" : "C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/CMakeFiles/alpha_harfbuzz.dir",
+	"sources" : 
+	{
+		"CMakeFiles/alpha_harfbuzz.dir/_deps/harfbuzz-src/src/harfbuzz.cc.o" : 
+		{
+			"language" : "CXX",
+			"source" : "C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/harfbuzz-src/src/harfbuzz.cc"
+		}
+	}
+}

@@ -1,0 +1,192 @@
+{
+ "weapon": {
+  "bolt": {
+   "name": "Ember Bolt",
+   "evo": "Sunfire Lance",
+   "evoDesc": "Rapid lances of sunfire that pierce everything.",
+   "l1": "Fires at the nearest foe.",
+   "l2": "+1 bolt.",
+   "l3": "+5 damage.",
+   "l4": "+1 bolt, pierce 2.",
+   "l5": "Faster cooldown.",
+   "l6": "+1 bolt, +8 damage."
+  },
+  "whip": {
+   "name": "Flame Whip",
+   "evo": "Inferno Lash",
+   "evoDesc": "Twin infernal lashes, huge reach and damage.",
+   "l1": "Lashes horizontally.",
+   "l2": "Also lashes behind.",
+   "l3": "+8 damage.",
+   "l4": "+20% reach.",
+   "l5": "+8 damage.",
+   "l6": "Faster, +10 damage."
+  },
+  "lanterns": {
+   "name": "Halo Lanterns",
+   "evo": "Lantern Choir",
+   "evoDesc": "A choir of lanterns that never goes out.",
+   "l1": "Lanterns circle you.",
+   "l2": "+1 lantern.",
+   "l3": "+25% orbit, +4 dmg.",
+   "l4": "+1 lantern.",
+   "l5": "Lasts longer.",
+   "l6": "+1 lantern, +6 dmg."
+  },
+  "pool": {
+   "name": "Wax Pool",
+   "evo": "Molten Sea",
+   "evoDesc": "Vast molten lakes that melt whole hordes.",
+   "l1": "Burning wax under foes.",
+   "l2": "+1 pool.",
+   "l3": "+30% size.",
+   "l4": "+4 damage.",
+   "l5": "+1 pool, lasts longer.",
+   "l6": "+1 pool, +5 dmg."
+  },
+  "spark": {
+   "name": "Chain Spark",
+   "evo": "Storm Chandelier",
+   "evoDesc": "A crackling storm of endless lightning.",
+   "l1": "Strikes random foes.",
+   "l2": "+1 strike.",
+   "l3": "+10 damage.",
+   "l4": "+1 strike.",
+   "l5": "Bigger blast.",
+   "l6": "+2 strikes, +10 dmg."
+  }
+ },
+ "passive": {
+  "wick": {
+   "name": "Iron Wick",
+   "desc": "+10% damage."
+  },
+  "tome": {
+   "name": "Tallow Tome",
+   "desc": "-8% weapon cooldown."
+  },
+  "glass": {
+   "name": "Spark Glass",
+   "desc": "+10% area."
+  },
+  "prism": {
+   "name": "Prism Shard",
+   "desc": "+1 projectile."
+  },
+  "wing": {
+   "name": "Moth Wing",
+   "desc": "+10% move speed."
+  },
+  "heart": {
+   "name": "Hearth Heart",
+   "desc": "+20 max HP, +0.3 HP/s."
+  },
+  "lode": {
+   "name": "Lodestone",
+   "desc": "+30% pickup range."
+  }
+ },
+ "hero": {
+  "wick": {
+   "name": "Sir Wick",
+   "desc": "Ember Bolt. +10% speed."
+  },
+  "taper": {
+   "name": "Sister Taper",
+   "desc": "Flame Whip. +20% might."
+  },
+  "lumen": {
+   "name": "Old Lumen",
+   "desc": "Halo Lanterns. +25% area."
+  }
+ },
+ "upgrade": {
+  "might": "Might +5%",
+  "armor": "Armor +1",
+  "vigor": "Max HP +10",
+  "haste": "Recovery +0.1/s",
+  "swift": "Speed +5%",
+  "magnet": "Magnet +10%",
+  "growth": "Growth +6%",
+  "greed": "Greed +10%"
+ },
+ "event": {
+  "75": "A moth swarm!",
+  "150": "A gargoyle hunts you",
+  "210": "The shades close in",
+  "300": "THE MOTH QUEEN",
+  "390": "Wisps on the wind",
+  "450": "Gargoyles awaken",
+  "540": "The bog rises",
+  "600": "TWIN QUEENS",
+  "690": "The great migration",
+  "750": "Stone wings",
+  "810": "Last light",
+  "840": "The final hour",
+  "900": "THE SNUFFER COMES"
+ },
+ "title": {
+  "play": "PLAY",
+  "heroes": "HEROES",
+  "shop": "SHOP",
+  "lang": "PORTUGUÊS",
+  "gold": "{n} gold",
+  "best": "Best {time}",
+  "goal": "Survive until dawn"
+ },
+ "heroes": {
+  "title": "CHOOSE A CANDLE",
+  "cost": "{n} gold",
+  "picked": "CHOSEN",
+  "back": "BACK"
+ },
+ "shop": {
+  "title": "CANDLE SHOP",
+  "max": "MAX"
+ },
+ "hud": {
+  "foes": "{n} foes",
+  "gold": "{n} gold",
+  "lv": "LV {n}"
+ },
+ "levelup": {
+  "title": "LEVEL UP!",
+  "hint": "click or press 1 2 3",
+  "new": "NEW!",
+  "lv": "LV {n}"
+ },
+ "chest": {
+  "treasure": "TREASURE!",
+  "evolution": "EVOLUTION!",
+  "ok": "TAKE IT"
+ },
+ "paused": {
+  "title": "PAUSED",
+  "resume": "RESUME",
+  "quit": "GIVE UP",
+  "max": "MAX"
+ },
+ "over": {
+  "dawn": "DAWN BREAKS",
+  "dead": "SNUFFED OUT",
+  "time": "Survived {t}",
+  "level": "Level {n}",
+  "kills": "{n} foes melted",
+  "gold": "+{n} gold (bank {bank})",
+  "best": "Best {t}",
+  "again": "AGAIN",
+  "menu": "MENU"
+ },
+ "loot": {
+  "purse": "Gold Purse",
+  "purseDesc": "+25 gold.",
+  "cake": "Honey Cake",
+  "cakeDesc": "Heals 30 HP.",
+  "hoard": "Gold Hoard",
+  "hoardDesc": "+60 gold.",
+  "coin": "+gold",
+  "heal": "+30 HP",
+  "magnet": "MAGNET!",
+  "bell": "HOLY BELL!"
+ }
+}

@@ -300,6 +300,17 @@ function checkPlayer(n, what) {
   return n;
 }
 
+// config.touchSticks / touchButtons `scenes`: every name must be a scene of the game.
+function checkTouchScenes(game, c) {
+  for (const table of ["touchSticks", "touchButtons"]) {
+    for (const [name, spec] of Object.entries(c[table] ?? {})) {
+      for (const scene of Array.isArray(spec?.scenes) ? spec.scenes : []) {
+        if (!Object.hasOwn(game.scenes, scene)) fail(`config.${table}.${name}.scenes: "${scene}" is not a scene; scenes: ${Object.keys(game.scenes).join(", ")}`);
+      }
+    }
+  }
+}
+
 function checkAction(s, action, what) {
   const actions = s.game.config.actions ?? {};
   if (!Object.hasOwn(actions, action)) fail(`${what}("${action}"): not in config.actions; actions: ${Object.keys(actions).join(", ") || "(none)"}`);
@@ -323,6 +334,7 @@ function makeInput(s) {
     },
     bindings: (action) => [...(s.settings.bindings[checkAction(s, action, "input.bindings")] ?? s.game.config.actions[action])],
     mouse: () => N.mouse(),
+    touches: () => N.touches(),
     player: (n) => players[checkPlayer(n, `input.player(${n})`) - 1],
     players: () => N.players(),
     rumble: (strength, seconds, player) =>
@@ -583,6 +595,7 @@ function runHooks(s, ctx, kind) {
 function appChanged(s, ctx, paused) {
   if (s.appPaused === paused) return;
   s.appPaused = paused;
+  if (paused) N.touchRelease();  // touch sticks and buttons let go; their fingers drive nothing until lifted
   runHooks(s, ctx, paused ? "pause" : "resume");
 }
 
@@ -609,6 +622,7 @@ function enter(s, ctx, name, params, kept) {
   s.uiHandlers.clear();
   s.sceneTime = 0;
   s.current = s.game.scenes[name];
+  N.touchScene(name);
   s.currentName = name;
   s.currentParams = params;
   const def = s.current.def;
@@ -660,15 +674,17 @@ function bootGame(s, ctx, g, start, what, from) {
   N.uiCreate(c.size[0], c.size[1], uiFilter);
   N.presentView(c, ...(s.screen ?? []));
   N.collisionCategories(collisionCategories(c.collision));
-  for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bind("actions", action, inputs);
-  if (c.deadzone !== undefined) N.deadzone(c.deadzone);
-  for (const [axis, sources] of Object.entries(c.axes ?? {})) N.bind("axes", axis, sources);
   defineLayers(c.layers ?? {});
   defineLighting(c.lighting);
   defineBuses(c.audio);
   s.store.open(c.title ?? "alpha-star");
   s.save = makeSave(s.store, saveConfig(c.save));
   preload(s, s.game.assets ?? {}, pixelOf(c, "config", true));
+  checkTouchScenes(s.game, c);
+  N.touchControls(c.touchSticks, c.touchButtons, s.platform.mobile);  // skins need the assets; sources the binds
+  for (const [action, inputs] of Object.entries(c.actions ?? {})) N.bind("actions", action, inputs);
+  if (c.deadzone !== undefined) N.deadzone(c.deadzone);
+  for (const [axis, sources] of Object.entries(c.axes ?? {})) N.bind("axes", axis, sources);
   s.settings = readSettings(s.store);
   applySettings(s);
   const at = startOf(s, start, what, from);

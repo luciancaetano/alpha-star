@@ -1,0 +1,17 @@
+<rml><head><link type="text/rcss" href="candle.rcss"/>
+<style>
+  #bar { position: absolute; top: 2dp; left: 0dp; right: 0dp; text-align: center; }
+  #xp { font-family: icons; font-size: 16dp; }
+  #lv { color: #8fd3ff; margin-left: 3dp; }
+  #time { position: absolute; top: 15dp; left: 0dp; right: 0dp; text-align: center; font-size: 16dp; }
+  #slots { position: absolute; top: 18dp; left: 4dp; }
+  #stats { position: absolute; top: 18dp; right: 6dp; text-align: right; }
+  #banner { position: absolute; top: 36dp; left: 0dp; right: 0dp; text-align: center; font-size: 16dp; color: #ff9a6b; }
+</style></head>
+<body class="safe">
+  <p id="bar"><span id="xp"></span><span id="lv">LV 1</span></p>
+  <div id="slots"><p class="icon" id="weapons"></p><p class="icon" id="passives"></p></div>
+  <p id="time">00:00</p>
+  <div id="stats"><p id="kills">0</p><p class="gold" id="gold">0</p></div>
+  <p id="banner"></p>
+</body></rml>

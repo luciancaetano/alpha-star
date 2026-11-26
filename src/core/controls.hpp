@@ -6,6 +6,7 @@
 
 #include "core/axes.hpp"
 #include "core/input.hpp"
+#include "core/touch_pad.hpp"
 
 namespace alpha::core {
 
@@ -17,14 +18,17 @@ struct Rumble {
 inline constexpr float kMaxRumbleSeconds = 10.0f;
 using RumbleRequests = std::array<std::optional<Rumble>, kMaxPlayers>;
 
-// A game's view of its players' devices: actions, axes and how many players
-// have a device. Updated once per fixed step.
+// A game's view of its players' devices: actions, axes, touch controls and
+// how many players have a device. Updated once per fixed step: the touch pad
+// captures fingers first; its inputs and stick axes then feed actions and axes.
 class Controls {
  public:
   Actions actions;
   Axes axes;
+  TouchPad touch;
   std::size_t players = 1;
-  Vec2 mouse{};  // game pixels, as of this step
+  Vec2 mouse{};  // game pixels, as of this step (a free finger's, while one touches)
+  std::vector<Finger> fingers;  // this step's fingers no touch control captured
 
   void update(const InputFrame& frame);
   // player 0..kMaxPlayers-1 or kAnyPlayer (all). Throws Error unless

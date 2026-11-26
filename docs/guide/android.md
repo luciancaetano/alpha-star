@@ -52,6 +52,8 @@ actions: {
 - `"Touch"` is held while any finger is down; `"TouchLeft"` / `"TouchRight"` while one is on that
   half. A tap shorter than one step still presses. `ctx.input.mouse()` reads the first finger.
 - `"Back"` does **not** close the app: quit or open a menu from the game.
+- On-screen sticks and buttons: `config.touchSticks` / `config.touchButtons` add sources such as
+  `"TouchMoveX"` and `"TouchJump"` next to the keys (see [Input](input.html#touch-sticks-and-buttons-phones)).
 
 ### Show the right hints
 

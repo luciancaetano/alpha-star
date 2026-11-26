@@ -1,0 +1,21 @@
+<rml><head><link type="text/rcss" href="candle.rcss"/>
+<style>
+  #head { display: block; text-align: center; margin-top: 30dp; font-size: 16dp; color: #ffcf6b; }
+  #cards { display: block; width: 252dp; margin: 6dp auto 0dp auto; }
+  .card { display: inline-block; width: 76dp; height: 108dp; margin: 0dp 4dp; padding: 6dp 5dp; box-sizing: border-box;
+    decorator: image(card.png); text-align: center; tab-index: auto; vertical-align: top; }
+  .card:hover, .card:focus { image-color: #ffe8a0; margin-top: -4dp; }
+  .card .big { display: block; height: 32dp; margin-top: 4dp; }
+  .name { display: block; color: #ffcf6b; }
+  .tag { display: block; color: #8fd3ff; }
+  .desc { display: block; margin-top: 3dp; }
+</style></head>
+<body class="safe veil">
+  <p id="head" data-t="levelup.title">LEVEL UP!</p>
+  <div id="cards">
+    <div class="card" id="c1" autofocus><span class="big" id="c1icon"></span><span class="name" id="c1name"></span><span class="tag" id="c1tag"></span><span class="desc" id="c1desc"></span></div>
+    <div class="card" id="c2"><span class="big" id="c2icon"></span><span class="name" id="c2name"></span><span class="tag" id="c2tag"></span><span class="desc" id="c2desc"></span></div>
+    <div class="card" id="c3"><span class="big" id="c3icon"></span><span class="name" id="c3name"></span><span class="tag" id="c3tag"></span><span class="desc" id="c3desc"></span></div>
+  </div>
+  <p class="center dim" style="margin-top: 4dp;" data-t="levelup.hint">click or press 1 2 3</p>
+</body></rml>

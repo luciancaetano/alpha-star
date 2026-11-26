@@ -7,23 +7,20 @@
 
 namespace alpha::core {
 
-// Fingers on a touch screen as digital inputs of player 1 (virtual buttons):
-// "Touch" while any finger is down, "TouchLeft" / "TouchRight" while one is on
-// that half of the window. The pointer position comes from the mouse SDL
-// emulates for the first finger (ctx.input.mouse(), "MouseLeft").
+// Fingers on a touch screen between fixed steps, by id, in game pixels.
+// take() hands one step its fingers (core::Finger: began / ended during the
+// step, so a tap shorter than a step still arrives) and forgets lifted ones.
+// At most kMaxTouches fingers: more are ignored until one lifts.
 class Touches {
  public:
-  // x: 0..1 across the window. A finger already down just moves.
-  void down(std::uint64_t finger, float x);
-  void move(std::uint64_t finger, float x);
+  // A finger already down just moves.
+  void down(std::uint64_t finger, Vec2 pos);
+  void move(std::uint64_t finger, Vec2 pos);
   void up(std::uint64_t finger);  // also a cancelled touch
-  InputSet held() const;
+  std::vector<Finger> take();
 
  private:
-  struct Finger {
-    std::uint64_t id;
-    float x;
-  };
+  Finger* find(std::uint64_t finger);
   std::vector<Finger> fingers_;
 };
 

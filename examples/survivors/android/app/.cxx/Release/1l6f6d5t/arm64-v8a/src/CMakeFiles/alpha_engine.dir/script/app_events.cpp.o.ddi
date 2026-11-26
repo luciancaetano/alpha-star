@@ -1,0 +1,9 @@
+{
+  "revision": 0,
+  "rules": [
+    {
+      "primary-output": "src\\CMakeFiles\\alpha_engine.dir\\script\\app_events.cpp.o"
+    }
+  ],
+  "version": 1
+}

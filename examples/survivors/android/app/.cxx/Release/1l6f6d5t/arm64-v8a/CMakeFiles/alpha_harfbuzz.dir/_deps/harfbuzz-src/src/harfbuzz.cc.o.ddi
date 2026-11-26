@@ -1,0 +1,9 @@
+{
+  "revision": 0,
+  "rules": [
+    {
+      "primary-output": "CMakeFiles\\alpha_harfbuzz.dir\\_deps\\harfbuzz-src\\src\\harfbuzz.cc.o"
+    }
+  ],
+  "version": 1
+}

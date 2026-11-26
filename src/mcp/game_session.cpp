@@ -6,6 +6,7 @@
 #include <numeric>
 
 #include "core/error.hpp"
+#include "mcp/state_json.hpp"
 #include "platform/vfs.hpp"
 
 namespace alpha::mcp {
@@ -65,6 +66,7 @@ GameState GameSession::state() {
   s.locale = host_.locale();
   s.music = host_.mixer().music_name();
   s.app_paused = host_.app_paused();
+  s.input = input_json(host_.controls().touch);
   s.perf = perf_summary();
   return s;
 }

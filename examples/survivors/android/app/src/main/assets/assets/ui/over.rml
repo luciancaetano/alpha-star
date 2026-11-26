@@ -1,0 +1,10 @@
+<rml><head><link type="text/rcss" href="candle.rcss"/></head>
+<body class="safe veil">
+  <div class="panel" style="margin-top: 30dp;">
+    <h1 id="title">SNUFFED OUT</h1>
+    <p id="time"></p><p id="level"></p><p id="kills"></p>
+    <p class="gold" id="gold"></p><p class="dim" id="best"></p>
+    <button id="again" autofocus data-t="over.again">AGAIN</button>
+    <button id="menu" data-t="over.menu">MENU</button>
+  </div>
+</body></rml>

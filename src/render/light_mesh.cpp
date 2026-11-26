@@ -13,8 +13,9 @@ constexpr int kVignetteCells = 12;
 constexpr float kTau = 6.2831853f;
 
 core::Color dimmed(core::Color c, float k) {
-  const auto f = [k](std::uint8_t v) { return static_cast<std::uint8_t>(v * k + 0.5f); };
-  return {f(c.r), f(c.g), f(c.b), 255};
+  core::Color out = core::scaled(c, k);
+  out.a = 255;
+  return out;
 }
 
 core::Color black(float alpha) { return {0, 0, 0, static_cast<std::uint8_t>(std::clamp(alpha, 0.0f, 1.0f) * 255.0f + 0.5f)}; }

@@ -33,5 +33,9 @@ inline constexpr std::size_t kMaxInstances = 64;
 inline constexpr std::size_t kMaxShaderUniforms = 16;
 inline constexpr std::size_t kMaxShaders = 32;
 inline constexpr std::size_t kMaxShaderBlobBytes = std::size_t{4} << 20;
+// Touch controls (config.touchSticks / config.touchButtons) and fingers tracked at once.
+inline constexpr std::size_t kMaxTouchSticks = 4;
+inline constexpr std::size_t kMaxTouchButtons = 12;
+inline constexpr std::size_t kMaxTouches = 10;
 
 }  // namespace alpha::core

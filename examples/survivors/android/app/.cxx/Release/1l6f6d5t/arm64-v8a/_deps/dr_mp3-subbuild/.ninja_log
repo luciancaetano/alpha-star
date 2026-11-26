@@ -1,0 +1,24 @@
+# ninja log v6
+1	78	8174040070766677	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-mkdir	36e4a81c156b642e
+585	660	8174040076606074	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-copyfile	b723478cde4e3370
+1	78	8174040070766677	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-mkdir	36e4a81c156b642e
+78	446	8174040074461811	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-download	e9b9e5f3faea3f2f
+78	446	8174040074461811	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-download	e9b9e5f3faea3f2f
+446	517	8174040075166046	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-update	140bca8fbce8dc61
+517	585	8174040075856744	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-patch	ea49fe74a571bfa6
+446	517	8174040075166046	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-update	140bca8fbce8dc61
+517	585	8174040075856744	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-patch	ea49fe74a571bfa6
+871	940	8174040079394317	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-test	f59119c6fcdc4432
+585	660	8174040076606074	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-src/dr_mp3.h	b723478cde4e3370
+585	660	8174040076606074	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-copyfile	b723478cde4e3370
+660	732	8174040077323244	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-configure	76f8599cafbe49ea
+940	1037	8174040080369108	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-done	99f8a42f142d1e8f
+660	732	8174040077323244	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-configure	76f8599cafbe49ea
+732	801	8174040078016390	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-build	62dd208afb87c27b
+732	801	8174040078016390	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-build	62dd208afb87c27b
+802	870	8174040078708498	dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-install	8509a74a9ef9c8e8
+940	1037	8174040080369108	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-done	99f8a42f142d1e8f
+802	870	8174040078708498	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-install	8509a74a9ef9c8e8
+871	940	8174040079394317	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/dr_mp3-populate-test	f59119c6fcdc4432
+940	1037	8174040080369108	CMakeFiles/dr_mp3-populate-complete	99f8a42f142d1e8f
+940	1037	8174040080369108	C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/CMakeFiles/dr_mp3-populate-complete	99f8a42f142d1e8f

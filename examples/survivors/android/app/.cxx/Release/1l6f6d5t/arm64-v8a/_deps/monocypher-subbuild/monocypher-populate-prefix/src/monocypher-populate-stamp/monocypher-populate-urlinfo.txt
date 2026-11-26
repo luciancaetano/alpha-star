@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=C:/Users/lucia/AppData/Local/Android/Sdk/cmake/3.31.6/bin/cmake.exe;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/monocypher-subbuild/monocypher-populate-prefix/src/monocypher-populate-stamp/download-monocypher-populate.cmake;COMMAND;C:/Users/lucia/AppData/Local/Android/Sdk/cmake/3.31.6/bin/cmake.exe;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/monocypher-subbuild/monocypher-populate-prefix/src/monocypher-populate-stamp/verify-monocypher-populate.cmake;COMMAND;C:/Users/lucia/AppData/Local/Android/Sdk/cmake/3.31.6/bin/cmake.exe;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/monocypher-subbuild/monocypher-populate-prefix/src/monocypher-populate-stamp/extract-monocypher-populate.cmake
+source_dir=C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/monocypher-src
+work_dir=C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps
+url(s)=https://github.com/LoupVaillant/Monocypher/archive/refs/tags/4.0.2.tar.gz
+hash=SHA256=bc1ca30b1b2654e4e7daf2492c0d204200e55137f23fda6b7142fd7d523bd6b4
+      no_extract=
+

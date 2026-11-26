@@ -28,10 +28,13 @@ export default game({
     gravity: [0, 0],
     actions: {
       pick1: ["1"], pick2: ["2"], pick3: ["3"],
-      pause: ["Escape", "P", "GamepadStart"],
+      pause: ["Escape", "P", "GamepadStart", "TouchPause"],
       restart: ["R"],
     },
-    axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right"], moveY: ["GamepadLeftY", "W/S", "Up/Down"] },
+    axes: { moveX: ["GamepadLeftX", "A/D", "Left/Right", "TouchMoveX"], moveY: ["GamepadLeftY", "W/S", "Up/Down", "TouchMoveY"] },
+    // Phones: a floating stick anywhere on the left half moves; a small button in the top-right corner pauses.
+    touchSticks: { move: { zone: "left", radius: 28, scenes: ["play"] } },
+    touchButtons: { pause: { pos: [0.95, 0.08], radius: 14, label: "II", scenes: ["play"] } },
     window: { scale: "integer" },
     layers: { floor: { z: -50 }, fx: { z: 50 } },
     collision: { categories: ["hero", "enemy", "shot"] },

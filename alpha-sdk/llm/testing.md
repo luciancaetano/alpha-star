@@ -1,6 +1,6 @@
 # Testing
 
-> summary: Headless deterministic tests with alpha/test simulate(), its options (inputs, clicks, saves, settings, appPauses, platform, size) and checks (expect, entities, state); read before writing or debugging test/main.test.ts.
+> summary: Headless deterministic tests with alpha/test simulate(), its options (inputs, clicks, touches, saves, settings, appPauses, platform, size) and checks (expect, entities, state); read before writing or debugging test/main.test.ts.
 
 `alpha test` (npm test) type-checks and bundles `test/main.test.ts`, then runs every exported function headlessly. A test fails by throwing.
 
@@ -15,6 +15,8 @@ simulate(game, {
   scene?: "play",                                 // default: game's start
   inputs?: { jump: [30, 60], axes: { moveX: [[0, 1], [90, 0]] } },  // or an array, one per player
   clicks?: { "solved#next": [120] },              // "doc#id" -> frames
+  touches?: [{ id: 1, path: [[0, [80, 300]], [10, [140, 300]], [40, null]] }],  // fingers (game px; null = lift);
+                                                  // with platform "android" they drive config.touchSticks/touchButtons
   saves?: { main: { level: 1 } },                 // boot save slots (main = ctx.save)
   settings?: { locale: "pt", reducedMotion: true, volumes: { music: 0.5 } },
   appPauses?: [[60, 120]],                        // frames paused: onPause at from, onResume at to

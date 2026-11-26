@@ -7,10 +7,17 @@
 namespace alpha::core {
 
 void Controls::update(const InputFrame& frame) {
-  actions.update(frame);
-  axes.update(frame);
+  TouchFrame t = touch.update(frame.fingers);
+  InputFrame in = frame;
+  for (std::size_t p = 0; p < kMaxPlayers; ++p) {
+    in.players[p].held |= t.held[p];
+    in.players[p].touch = t.analog[p];
+  }
+  actions.update(in);
+  axes.update(in);
   players = frame.connected;
-  mouse = frame.mouse;
+  mouse = t.free.empty() ? frame.mouse : t.free.front().pos;
+  fingers = std::move(t.free);
 }
 
 void Controls::request_rumble(float strength, float seconds, std::size_t player) {

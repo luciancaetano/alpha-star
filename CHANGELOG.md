@@ -7,6 +7,18 @@ Nothing has been published yet; `docs/LOG.md` has every step in detail.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-26
+
+### Added
+- Touch sticks and buttons (`config.touch`): per-finger tracking, floating/fixed sticks with deadzone and 4/8 snapping,
+  skins from images or sheet frames, `scenes` filter, `Touch*` inputs and stick axes; mobile only.
+- `ctx.input.touches()`, `simulate({ touches })` in tests, MCP `game_state.input.touchSticks`.
+- `config.uiFilter` ("nearest" | "linear" | "sharp", default from `pixelMode`) for game UI images.
+
+### Changed
+- A script position set far from the last step's place is a teleport and is drawn in place, not blended.
+- The first window fits 90% of the display's usable area.
+
 ## [0.4.1] - 2026-11-26
 
 ### Fixed

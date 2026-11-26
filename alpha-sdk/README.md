@@ -207,6 +207,8 @@ ctx.audio.bus("music").volume = 0.5;                         // master / music /
 ctx.save.set("best", 9); ctx.save.slot("slot2").get("level", 1);
 ctx.locale = "pt"; ctx.t("coins", { count: 3 });            // "{count} moedas" via { one, other }
 ctx.input.rebind("jump", ["W", "GamepadA"]);
+// phones: config.touchSticks: { move: { zone: "left" } }, config.touchButtons: { jump: { pos: [0.88, 0.8], label: "A" } }
+//   -> sources "TouchMoveX"/"TouchMoveY" (axes) and "TouchJump" (actions); ctx.input.touches() for raw fingers
 ctx.settings.uiScale = 1.5; ctx.settings.highContrast = true; ctx.settings.reducedMotion = true;
 ```
 

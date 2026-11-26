@@ -70,9 +70,52 @@ function axisAt(points, f) {
   return v;
 }
 
-function holdFrame(players, f) {
+// opts.touches: [{ id, path: [[frame, [x, y] | null], ...] }] -> validated list (game pixels, screen space).
+function touchPaths(touches) {
+  if (touches === undefined) return [];
+  if (!Array.isArray(touches)) fail("simulate: touches must be an array of { id, path: [[frame, [x, y] | null], ...] }");
+  return touches.map((t, i) => {
+    const label = `simulate: touches[${i}]`;
+    if (!Number.isInteger(t?.id) || t.id < 0) fail(`${label}.id must be an integer >= 0, got ${JSON.stringify(t?.id)}`);
+    if (!Array.isArray(t.path)) fail(`${label}.path must be an array of [frame, [x, y] | null]`);
+    let last = -1;
+    for (const pt of t.path) {
+      const pos = Array.isArray(pt) ? pt[1] : undefined;
+      const posOk = pos === null || (Array.isArray(pos) && pos.length === 2 && pos.every(Number.isFinite));
+      if (!(Array.isArray(pt) && pt.length === 2 && Number.isInteger(pt[0]) && pt[0] > last && posOk)) {
+        fail(`${label}.path has ${JSON.stringify(pt)}; entries are [frame, [x, y] | null] with increasing integer frames >= 0 (null = the finger lifts)`);
+      }
+      last = pt[0];
+    }
+    return t;
+  });
+}
+
+// Where a touch path has its finger at frame f (null: not touching).
+function touchAt(path, f) {
+  let pos = null;
+  for (const [frame, p] of path) {
+    if (frame > f) break;
+    pos = p;
+  }
+  return pos;
+}
+
+// This frame's fingers, flat: id, x, y, flags (1 = touched down, 2 = lifted) per finger.
+function fingersAt(touches, f) {
+  const out = [];
+  for (const { id, path } of touches) {
+    const now = touchAt(path, f);
+    const before = f > 0 ? touchAt(path, f - 1) : null;
+    if (now) out.push(id, now[0], now[1], before ? 0 : 1);
+    else if (before) out.push(id, before[0], before[1], 2);
+  }
+  return out;
+}
+
+function holdFrame(players, f, touches) {
   const held = [0, 1, 2, 3].map((p) => players[p]?.presses.get(f) ?? []);
-  N.holdActions(...held, players.length);
+  N.holdActions(...held, players.length, fingersAt(touches, f));
   players.forEach((player, p) => {
     for (const [axis, points] of player.axes) {
       const v = axisAt(points, f);
@@ -181,6 +224,7 @@ function runGame(game, opts) {
     const players = playerInputs(opts.inputs, sim);
     const clicks = clicksByFrame(opts.clicks);
     const pauses = appPausesOf(opts.appPauses);
+    const touches = touchPaths(opts.touches);
     let error = null;
     for (let f = 0; f < frames && !error; ++f) {
       N.stepBudget();
@@ -189,7 +233,7 @@ function runGame(game, opts) {
         const paused = pauses.some(([from, to]) => from <= f && f < to);
         sim.app(paused);
         if (paused) continue;
-        sim.within(() => holdFrame(players, f));
+        sim.within(() => holdFrame(players, f, touches));
         sim.step(DT);
       } catch (e) {
         error = e;  // the game pauses here, as it would in the engine

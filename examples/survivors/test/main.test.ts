@@ -31,6 +31,15 @@ export function walkingMovesTheHero() {
   if (h.pos[0] < 50) fail(`hero should walk right, x ${h.pos[0]}`);
 }
 
+export function theTouchStickMovesTheHeroOnAPhone() {
+  // A finger on the left half grows the stick where it lands; dragging right walks right.
+  const run = simulate(game, { ...PLAY, seconds: 1, platform: "android",
+    touches: [{ id: 1, path: [[0, [80, 120]], [2, [120, 120]]] }] });
+  run.expect.noErrors();
+  const [h] = run.entities("hero");
+  if (h.pos[0] < 50) fail(`hero should walk right with the touch stick, x ${h.pos[0]}`);
+}
+
 export function gemsLevelUpAndACardCanBePicked() {
   // Gems come to the hero; the first level opens the cards (the world pauses on them).
   const run = simulate(game, { ...PLAY, seconds: 60, inputs: { pick1: [3590] } });

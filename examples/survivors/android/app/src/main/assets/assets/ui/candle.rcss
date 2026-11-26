@@ -1,0 +1,20 @@
+/* Laid out in game pixels (1dp = 1 px of the 384x216 view). Panels are plain RCSS (always crisp);
+   images (button, card, logo) are pixel art pre-enlarged x4 so they stay sharp (tools/process-art.py). */
+body { width: 100%; height: 100%; box-sizing: border-box; font-family: pixel; font-size: 8dp; color: #fff4d6; }
+p { display: block; }
+.icon { font-family: icons; font-size: 16dp; }
+.big { font-family: bigicons; font-size: 32dp; }
+.center { text-align: center; }
+.dim { color: #b7a7c9; }
+.gold { color: #ffd36b; }
+.veil { background-color: #0b0a12c8; }
+.panel {
+  display: block; width: 200dp; margin: 0dp auto; padding: 8dp 10dp 10dp 10dp; text-align: center;
+  background-color: #1d1328; border: 2dp #e9c27a; box-sizing: border-box;
+}
+h1 { display: block; font-size: 16dp; color: #ffcf6b; margin-bottom: 4dp; }
+button {
+  display: block; width: 92dp; height: 24dp; line-height: 22dp; margin: 4dp auto 0dp auto;
+  decorator: image(button.png); color: #3a2416; text-align: center; tab-index: auto;
+}
+button:hover, button:focus { color: #b02a10; image-color: #ffe8a0; }

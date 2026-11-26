@@ -16,5 +16,7 @@ struct Color {
 
 // Parses "#rgb", "#rrggbb" or "#rrggbbaa". nullopt if malformed.
 std::optional<Color> parse_color(std::string_view text);
+// r, g, b multiplied by k (0..1, rounded); alpha kept.
+Color scaled(Color c, float k);
 
 }  // namespace alpha::core

@@ -5,6 +5,7 @@
 
 #include "platform/mobile.hpp"
 #include "platform/vfs.hpp"
+#include "render/touch_draw.hpp"
 #include "script/error_overlay.hpp"
 #include "script/input_bindings.hpp"
 #include "script/window_config.hpp"
@@ -140,6 +141,9 @@ render::Frame Host::frame(float blend) {
     f.effects = world->postfx().chain();
   }
   f.lighting = vm_->main().lighting;
+  render::TouchOverlay touch = render::touch_overlay(vm_->main().controls.touch);
+  f.overlay = std::move(touch.shapes);
+  f.texts = std::move(touch.labels);
   if (paused()) f.texts = error_overlay(error_, static_cast<float>(info_.width));
 #if ALPHA_DEBUG_TOOLS
   else if (!reload_error_.empty()) f.texts = error_overlay(reload_error_, static_cast<float>(info_.width));
@@ -155,8 +159,10 @@ void Host::set_screen(std::optional<core::Vec2> pixels) {
 void Host::resize_view(core::Vec2 size) {
   ScriptState& s = vm_->main();
   if (s.ui) s.ui->safe_area(s.window.safe);
-  if (s.view_size == size) return;
+  const bool same = s.view_size == size;
   s.view_size = size;
+  s.controls.touch.set_screen(touch_screen(s));
+  if (same) return;
   if (s.world) s.world->resize_view(size);
   if (s.ui) s.ui->resize(static_cast<int>(size.x), static_cast<int>(size.y));
 }

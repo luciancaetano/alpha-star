@@ -1,0 +1,75 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Path to the alpha-star CMakeLists.txt (alpha export --engine-src), or empty: prebuilt engine.
+def engineCmake = "../../../../CMakeLists.txt"
+
+// arm64-v8a only. The engine is prebuilt (app/src/<debug|release>/jniLibs, from
+// @alpha-star/engine-android-arm64) when ENGINE_CMAKE is empty, else built from source by CMake. debug: the release flavor (dev tools: F12,
+// gamepad Back+Start, shake or Menu key; debug tools and logs). release (APK and AAB):
+// the shipping flavor (no dev tools, MCP or debug features). The game pack is in src/main/assets.
+android {
+    namespace = "org.libsdl.app"
+    compileSdk 35
+    buildToolsVersion "36.0.0"
+    ndkVersion "27.2.12479018"
+    defaultConfig {
+        applicationId "org.alphastar.candlewick"
+        minSdk 21
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+        if (engineCmake) externalNativeBuild {
+            cmake {
+                // 16 KB-aligned ELF segments: Google Play requires them (Android 15+ 16 KB page devices).
+                arguments "-DANDROID_PLATFORM=android-21", "-DANDROID_STL=c++_static", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
+                          "-DALPHA_BUILD_TESTS=OFF", "-DCMAKE_BUILD_TYPE=Release",
+                          // game.jsbc key secret (cmake/BytecodeKey.cmake); empty = the checkout's build/jsbc.secret
+                          "-DALPHA_JSBC_SECRET=" + (System.getenv("ALPHA_JSBC_SECRET") ?: "")
+                targets "alpha_star"
+            }
+        }
+    }
+    // Release keystore from the environment (never stored in the project):
+    // ALPHA_ANDROID_KEYSTORE (path), ALPHA_ANDROID_KEYSTORE_PASSWORD, ALPHA_ANDROID_KEY_ALIAS,
+    // ALPHA_ANDROID_KEY_PASSWORD. Without them the APK is debug-signed (installs with adb).
+    def keystore = System.getenv("ALPHA_ANDROID_KEYSTORE")
+    signingConfigs {
+        release {
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv("ALPHA_ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ALPHA_ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ALPHA_ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            // The release preset's flavor without MCP (its agent channel is for desktops; NDK libc++
+            // has no floating-point from_chars). CMake defaults leave the dev tools off.
+            if (engineCmake) externalNativeBuild { cmake { arguments "-DALPHA_SHIPPING=OFF", "-DALPHA_DEVTOOLS=ON", "-DALPHA_MCP=OFF", "-DALPHA_DEBUG_TOOLS=ON" } }
+        }
+        release {
+            minifyEnabled false
+            signingConfig keystore ? signingConfigs.release : signingConfigs.debug
+            if (engineCmake) externalNativeBuild { cmake { arguments "-DALPHA_SHIPPING=ON" } }
+        }
+    }
+    if (engineCmake) externalNativeBuild {
+        cmake {
+            path file(engineCmake)
+            version "3.31.6"
+        }
+    }
+    androidResources {
+        noCompress += ['js', 'json', 'ogg', 'mp3', 'wav', 'png', 'fnt', 'ttf', 'otf', 'rml', 'rcss']
+    }
+    lint {
+        abortOnError = false
+    }
+}

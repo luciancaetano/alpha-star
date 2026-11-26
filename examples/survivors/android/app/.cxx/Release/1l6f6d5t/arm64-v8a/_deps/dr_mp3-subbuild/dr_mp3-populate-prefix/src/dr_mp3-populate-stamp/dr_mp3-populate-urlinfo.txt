@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=C:/Users/lucia/AppData/Local/Android/Sdk/cmake/3.31.6/bin/cmake.exe;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/download-dr_mp3-populate.cmake;COMMAND;C:/Users/lucia/AppData/Local/Android/Sdk/cmake/3.31.6/bin/cmake.exe;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-subbuild/dr_mp3-populate-prefix/src/dr_mp3-populate-stamp/verify-dr_mp3-populate.cmake
+source_dir=C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/dr_mp3-src
+work_dir=C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps
+url(s)=https://raw.githubusercontent.com/mackron/dr_libs/aec2dd20667f54acfdb66031217df6d240f56c52/dr_mp3.h
+hash=SHA256=f5c8020eeebb79877184432efdd2651f24869f5bb8f379d45450fd0aed1ee915
+      no_extract=YES
+

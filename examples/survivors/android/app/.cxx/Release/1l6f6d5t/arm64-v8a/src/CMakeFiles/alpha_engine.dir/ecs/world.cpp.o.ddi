@@ -1,0 +1,9 @@
+{
+  "revision": 0,
+  "rules": [
+    {
+      "primary-output": "src\\CMakeFiles\\alpha_engine.dir\\ecs\\world.cpp.o"
+    }
+  ],
+  "version": 1
+}

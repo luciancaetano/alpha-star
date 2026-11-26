@@ -133,7 +133,7 @@ bool pump(Devices& d, Tools& tools, alpha::script::Host& host, SDL_Renderer* sdl
     SDL_ConvertEventToRenderCoordinates(sdl, &logical);
     if (!host.reaches_game(logical)) continue;
     alpha::platform::apply_event(d.input, logical, d.pads.slots());
-    alpha::platform::apply_touch(d.input, event);  // window-relative x: TouchLeft / TouchRight
+    alpha::platform::apply_touch(d.input, logical);  // fingers in game pixels (core::TouchPad captures)
   }
   app.drain(host);  // background / foreground: SDL hands them only to the lifecycle watch
   return true;

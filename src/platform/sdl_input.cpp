@@ -99,7 +99,7 @@ bool desktop(InputState& state, const SDL_Event& event) {
       return true;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
     case SDL_EVENT_MOUSE_BUTTON_UP:
-      set(state, 0, from_mouse(event.button.button), event.button.down);
+      if (event.button.which != SDL_TOUCH_MOUSEID) set(state, 0, from_mouse(event.button.button), event.button.down);
       return true;
     case SDL_EVENT_MOUSE_MOTION:
       state.mouse = {event.motion.x, event.motion.y};
@@ -126,14 +126,13 @@ void apply_event(InputState& state, const SDL_Event& event, const core::PadSlots
   }
 }
 
-void apply_touch(InputState& state, const SDL_Event& raw) {
-  const SDL_TouchFingerEvent& f = raw.tfinger;
-  if (raw.type == SDL_EVENT_FINGER_DOWN) {
-    state.touches.down(f.fingerID, f.x);
-    state.pressed[0] |= state.touches.held();
-  } else if (raw.type == SDL_EVENT_FINGER_MOTION) {
-    state.touches.move(f.fingerID, f.x);
-  } else if (raw.type == SDL_EVENT_FINGER_UP || raw.type == SDL_EVENT_FINGER_CANCELED) {
+void apply_touch(InputState& state, const SDL_Event& logical) {
+  const SDL_TouchFingerEvent& f = logical.tfinger;
+  if (logical.type == SDL_EVENT_FINGER_DOWN) {
+    state.touches.down(f.fingerID, {f.x, f.y});
+  } else if (logical.type == SDL_EVENT_FINGER_MOTION) {
+    state.touches.move(f.fingerID, {f.x, f.y});
+  } else if (logical.type == SDL_EVENT_FINGER_UP || logical.type == SDL_EVENT_FINGER_CANCELED) {
     state.touches.up(f.fingerID);
   }
 }
@@ -149,7 +148,7 @@ core::InputFrame consume(InputState& state, const core::PadSlots& slots) {
     frame.players[p] = {state.down[p] | state.pressed[p], state.analog[p]};
     state.pressed[p].reset();
   }
-  frame.players[0].held |= state.touches.held();
+  frame.fingers = state.touches.take();
   frame.connected = slots.players();
   frame.mouse = state.mouse;
   return frame;

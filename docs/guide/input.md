@@ -138,7 +138,53 @@ ctx.find("cursor").pos.y = world[1];
 
 Buttons are actions: `"MouseLeft"`, `"MouseRight"`, `"MouseMiddle"`. On touch screens `"Touch"`
 is any finger, `"TouchLeft"` / `"TouchRight"` a finger on that half of the screen, and a finger is
-also `"MouseLeft"` at `ctx.input.mouse()`. `"Back"` is the Android back button.
+also `"MouseLeft"` at `ctx.input.mouse()`. `"Back"` is the Android back button. Every finger:
+`ctx.input.touches()` (`{ id, pos, pressed, released }`, game pixels). Fingers a touch stick or
+button took (below) are none of these.
+
+### Touch sticks and buttons (phones)
+
+On-screen controls are config, not code: each one becomes an input source, so keyboard, gamepad
+and touch drive the same actions and axes.
+
+```ts
+export const config = {
+  touchSticks: {
+    move: { zone: "left" },                                   // default look
+    aim: { zone: "right", mode: "fixed",
+           skin: { base: "ui/stick_base", knob: "ui/stick_knob", tint: "#ffd27fcc" } },
+  },
+  touchButtons: {
+    jump: { pos: [0.88, 0.8], label: "A" },                     // fractions of ctx.safeArea
+    dash: { pos: [0.75, 0.88], skin: { up: "ui/btn_dash", down: "ui/btn_dash_down" } },
+  },
+  axes: {
+    moveX: ["A/D", "GamepadLeftX", "TouchMoveX"],
+    moveY: ["W/S", "GamepadLeftY", "TouchMoveY"],
+  },
+  actions: { jump: ["Space", "GamepadA", "TouchJump"], fire: ["MouseLeft", "TouchAimActive"] },
+};
+```
+
+Expected: on a phone a finger on the left half grows a stick where it lands and `moveX`/`moveY`
+follow it; tapping the "A" circle jumps. `update` reads `ctx.input.axis("moveX")` as before.
+
+- Sources of a stick `move`: `TouchMoveX` / `TouchMoveY` (axes, -1..1, +y down), `TouchMoveX-`,
+  `X+`, `Y-`, `Y+` (past 0.5) and `TouchMoveActive` (inputs). A button `jump`: `TouchJump`.
+- Stick fields: `zone` (`"left"`, `"right"` or `[x, y, w, h]` fractions of the safe area), `mode`
+  (`"floating"` default / `"fixed"` at `anchor`), `radius` (64), `deadzone` (0.15), `axes`
+  (`"both"`, `"x"`, `"y"`), `snap` (0, 4, 8), `visible` (`"touching"` / `"always"`), `opacity`
+  (0.6, 1 while touched), `skin` (`base`, `knob`, `baseSize`, `knobSize`, `pressed: { base, knob }`,
+  `tint`), `player`, `scenes` (e.g. `["play"]`: only there; default every scene).
+- Button fields: `pos`, `radius` (40), `hitSlop` (8), `label`, `visible` (`"always"` / `"never"`),
+  `opacity`, `skin` (`up`, `down` (default `up` darkened), `size`, `tint`), `player`, `scenes`.
+- Skin images are `assets.images` names or `"sheet:frame"`; a missing one fails at boot with a
+  "did you mean" hint.
+- Mobile only: on desktop they neither draw nor capture; `npx alpha run -- --platform android`
+  previews them (with a touch screen).
+- Each finger belongs to the first control it lands on (game UI first, then buttons, then sticks
+  in declaration order) until it lifts: dragging off a button keeps it pressed. Pausing the app
+  lets every control go. At most 4 sticks and 12 buttons; overlapping buttons are a config error.
 
 ### Several players
 
@@ -192,7 +238,14 @@ simulate(game, { seconds: 2, inputs: [{ fire: [0] }, { axes: { moveX: [[0, -1]] 
 ```
 
 Action frames press for one step each (frame 30 = 0.5 s); axis entries hold a value from that
-frame on. See [Testing](testing.md).
+frame on. Fingers go through the touch sticks and buttons like on a phone:
+
+```ts
+simulate(game, { seconds: 1, platform: "android",
+  touches: [{ id: 1, path: [[0, [80, 300]], [10, [140, 300]], [40, null]] }] });  // [frame, pos | null = lift]
+```
+
+See [Testing](testing.md).
 
 ## Recipes
 
@@ -273,8 +326,8 @@ if (ctx.input.pressed("back")) ctx.go("title");
 | Mouse | `MouseLeft`, `MouseRight`, `MouseMiddle` |
 | Gamepad buttons | `GamepadA`, `GamepadB`, `GamepadX`, `GamepadY`, `GamepadStart`, `GamepadBack`, `GamepadUp`, `GamepadDown`, `GamepadLeft`, `GamepadRight`, `GamepadLB`, `GamepadRB`, `GamepadLS`, `GamepadRS`, `GamepadLT`, `GamepadRT` |
 | Sticks as buttons | `GamepadLeftX-`, `GamepadLeftX+`, `GamepadLeftY-` (up), `GamepadLeftY+`, `GamepadRightX-`, `GamepadRightX+`, `GamepadRightY-`, `GamepadRightY+` |
-| Touch / phone | `Touch`, `TouchLeft`, `TouchRight`, `Back` |
-| Axis sources | `GamepadLeftX`, `GamepadLeftY`, `GamepadRightX`, `GamepadRightY`, `GamepadLT`, `GamepadRT`, or a key pair `"Neg/Pos"` such as `"A/D"` |
+| Touch / phone | `Touch`, `TouchLeft`, `TouchRight`, `Back`; touch controls: `Touch<Button>`, `Touch<Stick>X-`..`Y+`, `Touch<Stick>Active` |
+| Axis sources | `GamepadLeftX`, `GamepadLeftY`, `GamepadRightX`, `GamepadRightY`, `GamepadLT`, `GamepadRT`, a key pair `"Neg/Pos"` such as `"A/D"`, or a touch stick's `Touch<Stick>X` / `Touch<Stick>Y` |
 
 A misspelled name is an error at boot that lists every valid one.
 

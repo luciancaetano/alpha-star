@@ -723,12 +723,109 @@ declare module "alpha" {
     axis(name: X): number;
   }
 
+  /** One finger on the screen (ctx.input.touches()). */
+  export interface Touch {
+    id: number;
+    pos: Vec2;
+    pressed: boolean;
+    released: boolean;
+  }
+
+  /**
+   * A virtual stick on touch screens (config.touchSticks), read like a gamepad stick.
+   * Mobile only (ctx.platform.mobile; desktop `--platform android` previews it): elsewhere
+   * it neither draws nor captures fingers and its sources read 0. A stick "move" makes the
+   * sources TouchMoveX / TouchMoveY (axes, -1..1, +y down), TouchMoveX- / X+ / Y- / Y+
+   * (past 0.5) and TouchMoveActive (a finger on it) for config.axes / config.actions.
+   */
+  export interface TouchStick {
+    /** Where a new finger grabs it: a half of ctx.safeArea, or [x, y, w, h] fractions of it (0..1). */
+    zone: "left" | "right" | [number, number, number, number];
+    /** floating (default): the base appears where the finger lands; fixed: it stays at `anchor`. */
+    mode?: "floating" | "fixed";
+    /** fixed: center as fractions of ctx.safeArea; default the zone's center. */
+    anchor?: Vec2;
+    /** Knob reach in game pixels (default 64). */
+    radius?: number;
+    /** 0..0.9 (default 0.15): below it reads 0, above it is remapped to 0..1. */
+    deadzone?: number;
+    /** "both" (default), "x" or "y" only. */
+    axes?: "both" | "x" | "y";
+    /** Quantize the direction to 4 or 8 ways; 0 = analog (default). */
+    snap?: 0 | 4 | 8;
+    /** Default "touching" for floating, "always" for fixed. */
+    visible?: "always" | "touching";
+    /** 0..1 at rest (default 0.6); 1 while touched. */
+    opacity?: number;
+    /** Images instead of the default grey circles. */
+    skin?: StickSkin;
+    /** Whose input it is (default 1). */
+    player?: Player;
+    /** Scenes where it exists (draws and captures), e.g. ["play"]; default every scene. */
+    scenes?: string[];
+  }
+
+  /** Image names: assets.images names or "sheet:frame" (frame index of an assets.sheets sheet). */
+  export interface StickSkin {
+    base: string;
+    knob: string;
+    /** Diameter in game pixels (default radius * 2). */
+    baseSize?: number;
+    /** Default radius. */
+    knobSize?: number;
+    /** Images shown while touched. */
+    pressed?: { knob?: string; base?: string };
+    /** Multiplies the images, e.g. "#ffd27fcc". */
+    tint?: Color;
+  }
+
+  /**
+   * A virtual button on touch screens (config.touchButtons): button "jump" makes the input
+   * source TouchJump, held while its finger is down (dragging off does not release it).
+   * Mobile only, like TouchStick; a button wins over a stick zone it sits in. Buttons whose
+   * touch areas (radius + hitSlop) overlap are a config error.
+   */
+  export interface TouchButton {
+    /** Center as fractions of ctx.safeArea (0..1). */
+    pos: Vec2;
+    /** Game pixels (default 40). */
+    radius?: number;
+    /** Extra touch margin in game pixels (default 8). */
+    hitSlop?: number;
+    /** Text on the default look, e.g. "A". */
+    label?: string;
+    /** "never" = an invisible touch area (default "always"). */
+    visible?: "always" | "never";
+    /** 0..1 at rest (default 0.6); 1 while pressed. */
+    opacity?: number;
+    skin?: ButtonSkin;
+    player?: Player;
+    /** Scenes where it exists, e.g. ["play"]; default every scene. */
+    scenes?: string[];
+  }
+
+  export interface ButtonSkin {
+    /** Image at rest (assets.images name or "sheet:frame"). */
+    up: string;
+    /** Image while pressed; default `up` darkened. */
+    down?: string;
+    /** Diameter in game pixels (default radius * 2). */
+    size?: number;
+    tint?: Color;
+  }
+
   /** ctx.input: actions and axes of any player; `player(n)` for one. */
   export interface Input<A extends string, X extends string = never> extends PlayerInput<A, X> {
     /** Gamepads get players in connection order; a reconnected pad gets its slot back. */
     player(n: Player): PlayerInput<A, X>;
-    /** Mouse pointer in game pixels (screen space; ctx.camera.toWorld for the world). */
+    /** Mouse pointer in game pixels (screen space; ctx.camera.toWorld for the world). While a finger no touch control took is down, that finger. */
     mouse(): Vec2;
+    /**
+     * This step's fingers that no game UI element and no touch stick/button captured, in
+     * game pixels (screen space). `pressed`: touched down this step; `released`: lifted
+     * this step (pos = where). At most 10 fingers.
+     */
+    touches(): Touch[];
     /** Players with a device: 1 (keyboard) up to the highest connected gamepad's player. */
     players(): number;
     /** Vibrates gamepads: strength 0..1 for 0..10 seconds (0 stops); every player if omitted. No-op without a pad. */
@@ -1083,16 +1180,28 @@ declare module "alpha" {
      * Touch screens: "Touch" (any finger), "TouchLeft" / "TouchRight" (a finger on that
      * half of the screen; a touch is also "MouseLeft" at ctx.input.mouse()); "Back" is
      * the Android back button (bind it with "Escape": `back: ["Escape", "Back"]`).
-     * The name "axes" is reserved.
+     * Fingers a touch stick or button captured are none of these. Touch controls add
+     * their own inputs: "TouchJump" (config.touchButtons.jump), "TouchMoveX+" /
+     * "TouchMoveActive" (config.touchSticks.move). The name "axes" is reserved.
      */
     actions: Record<G["actions"], string[]>;
     /**
      * Axis -> sources; the axis reads the strongest one. A source is an analog axis
      * ("GamepadLeftX", "GamepadLeftY", "GamepadRightX", "GamepadRightY", "GamepadLT",
-     * "GamepadRT") or a "Negative/Positive" input pair: "A/D", "Left/Right".
-     * e.g. `{ moveX: ["GamepadLeftX", "A/D", "Left/Right"] }`.
+     * "GamepadRT"), a "Negative/Positive" input pair: "A/D", "Left/Right", or a touch
+     * stick axis: "TouchMoveX" (config.touchSticks.move).
+     * e.g. `{ moveX: ["GamepadLeftX", "A/D", "Left/Right", "TouchMoveX"] }`.
      */
     axes?: Record<AxisOf<G>, string[]>;
+    /**
+     * On-screen sticks for touch screens, name -> stick (at most 4), e.g.
+     * `{ move: { zone: "left" } }` -> axes sources "TouchMoveX" / "TouchMoveY". Drawn over
+     * the world and its effects, under the game UI; a finger on a UI element never reaches
+     * them. Zones may overlap: the first stick in the object wins the finger.
+     */
+    touchSticks?: Record<string, TouchStick>;
+    /** On-screen buttons for touch screens, name -> button (at most 12), e.g. `{ jump: { pos: [0.88, 0.8], label: "A" } }` -> input "TouchJump". */
+    touchButtons?: Record<string, TouchButton>;
     /** Stick (radial) and trigger deadzone, 0 <= d < 1. Default 0.2. */
     deadzone?: number;
     /**
@@ -1254,7 +1363,7 @@ declare module "alpha" {
 }
 
 declare module "alpha/test" {
-  import type { AnimationOf, AxisOf, Game, GameTypes, LocaleOf, MusicOf, Os } from "alpha";
+  import type { AnimationOf, AxisOf, Game, GameTypes, LocaleOf, MusicOf, Os, Vec2 } from "alpha";
 
   /**
    * One player's simulated input: action -> frames (pressed for one step each),
@@ -1291,6 +1400,14 @@ declare module "alpha/test" {
     appPauses?: [number, number][];
     /** What ctx.platform reports (default: the machine running the test). */
     platform?: Os;
+    /**
+     * Fingers on the screen, in game pixels: `path` entries `[frame, [x, y]]` move (or put
+     * down) the finger, `[frame, null]` lifts it. With `platform: "android"` they drive
+     * config.touchSticks / touchButtons end to end; otherwise they are plain touches
+     * (ctx.input.touches(), "Touch", "MouseLeft").
+     * e.g. `[{ id: 1, path: [[0, [80, 600]], [10, [140, 600]], [40, null]] }]`.
+     */
+    touches?: { id: number; path: Array<[frame: number, pos: Vec2 | null]> }[];
     /** Screen size in pixels to run on, e.g. a tall phone `[1080, 2340]`: config.window.aspect grows ctx.camera.view and ctx.safeArea as the engine would (default: config.size). */
     size?: [number, number];
   }

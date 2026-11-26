@@ -128,6 +128,20 @@ TEST_CASE("ui input: a mouse click is consumed only on an element with a handler
   CHECK_FALSE(alpha::ui::consumes(m.ui, mouse(25, 50, true)));  // hidden documents take nothing
 }
 
+TEST_CASE("ui input: a finger landing on a handled element is the UI's (touch controls never see it)") {
+  Menu m;
+  m.ui.show("menu");
+  m.ui.on("menu", "play", "click");
+  SDL_Event e{};
+  e.type = SDL_EVENT_FINGER_DOWN;
+  e.tfinger.x = 25;
+  e.tfinger.y = 50;
+  CHECK(alpha::ui::consumes(m.ui, e));
+  e.tfinger.x = 90;
+  e.tfinger.y = 90;
+  CHECK_FALSE(alpha::ui::consumes(m.ui, e));
+}
+
 TEST_CASE("ui input: gamepad autofocus, D-pad and stick navigation, A activates, B is back") {
   Menu m;
   CHECK_FALSE(tap(m.ui, SDL_GAMEPAD_BUTTON_SOUTH));  // nothing shown: A reaches the game

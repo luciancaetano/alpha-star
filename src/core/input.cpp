@@ -4,6 +4,7 @@
 
 #include "core/error.hpp"
 #include "core/index_of.hpp"
+#include "core/touch_pad.hpp"
 
 namespace alpha::core {
 
@@ -21,13 +22,14 @@ constexpr std::array<std::string_view, 80> kNames{
     "GamepadLeftX-", "GamepadLeftX+", "GamepadLeftY-", "GamepadLeftY+",
     "GamepadRightX-", "GamepadRightX+", "GamepadRightY-", "GamepadRightY+",
     "Touch", "TouchLeft", "TouchRight", "Back"};
-static_assert(kNames.size() <= kMaxInputs);
+static_assert(kNames.size() == kTouchInputBase);
 
-std::string unknown_input(std::string_view action, std::string_view input) {
+std::string unknown_input(std::string_view action, std::string_view input, const TouchPad* touch) {
   std::string msg = "action \"" + std::string(action) + "\": unknown input \"" +
                     std::string(input) + "\". Valid inputs:";
   for (std::string_view n : kNames) msg += " " + std::string(n);
-  return msg;
+  const std::string extra = touch ? touch->input_names() : "";
+  return extra.empty() ? msg : msg + "; touch controls: " + extra;
 }
 
 constexpr std::array<std::string_view, kAnalogCount> kAnalog{
@@ -58,11 +60,11 @@ InputSet analog_buttons(const AnalogValues& raw) {
   return held;
 }
 
-ActionId Actions::bind(std::string_view action, std::span<const std::string> inputs) {
+ActionId Actions::bind(std::string_view action, std::span<const std::string> inputs, const TouchPad* touch) {
   Action a{std::string(action), {}, {}, {}};
   for (const std::string& input : inputs) {
-    const auto code = parse_input(input);
-    if (!code) throw Error(unknown_input(action, input));
+    const auto code = touch ? touch->input(input) : parse_input(input);
+    if (!code) throw Error(unknown_input(action, input, touch));
     a.inputs.set(*code);
   }
   actions_.push_back(std::move(a));

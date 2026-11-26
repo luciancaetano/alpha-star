@@ -49,7 +49,18 @@ Fields state_fields(const GameState& s) {
           {"music", s.music.empty() ? "null" : json::str(s.music)},
           {"appPaused", json::boolean(s.app_paused)},
           {"perf", s.perf.empty() ? "null" : s.perf},
+          {"input", s.input.empty() ? "null" : s.input},
           {"ui", json::object(docs)}};
+}
+
+std::string input_json(const core::TouchPad& pad) {
+  Fields sticks;
+  for (std::size_t i = 0; i < pad.sticks().size(); ++i) {
+    const core::StickState& st = pad.stick_states()[i];
+    const std::string finger = st.finger ? json::num(static_cast<double>(*st.finger)) : "null";
+    sticks.emplace_back(pad.sticks()[i].name, json::object({{"value", vec(st.value)}, {"finger", finger}}));
+  }
+  return json::object({{"touchSticks", json::object(sticks)}});
 }
 
 Fields log_fields(const core::LogRing& log, std::size_t since) {

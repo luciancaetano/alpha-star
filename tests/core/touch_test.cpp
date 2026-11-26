@@ -1,36 +1,49 @@
 #include <doctest/doctest.h>
 
+#include "core/limits.hpp"
 #include "core/touch.hpp"
 
+using alpha::core::Finger;
 using alpha::core::parse_input;
 using alpha::core::Touches;
 
-namespace {
-
-bool holds(const Touches& t, const char* name) { return t.held().test(*parse_input(name)); }
-
-}  // namespace
-
-TEST_CASE("touch inputs: Touch while any finger is down, TouchLeft/TouchRight by screen half") {
+TEST_CASE("touches: each step gets its fingers with began / ended, lifted ones then go") {
   Touches t;
-  CHECK(t.held().none());
-  t.down(1, 0.2f);
-  CHECK(holds(t, "Touch"));
-  CHECK(holds(t, "TouchLeft"));
-  CHECK_FALSE(holds(t, "TouchRight"));
-  t.down(2, 0.9f);
-  CHECK(holds(t, "TouchRight"));
+  CHECK(t.take().empty());
+  t.down(1, {10, 20});
+  t.move(1, {15, 20});
+  auto step = t.take();
+  REQUIRE(step.size() == 1);
+  CHECK(step[0].id == 1);
+  CHECK(step[0].pos == alpha::core::Vec2{15, 20});
+  CHECK(step[0].began);
+  CHECK_FALSE(step[0].ended);
+  step = t.take();
+  REQUIRE(step.size() == 1);
+  CHECK_FALSE(step[0].began);  // still down, no longer new
   t.up(1);
-  CHECK_FALSE(holds(t, "TouchLeft"));
-  CHECK(holds(t, "Touch"));
-  t.move(2, 0.1f);  // dragged across the middle
-  CHECK(holds(t, "TouchLeft"));
-  CHECK_FALSE(holds(t, "TouchRight"));
-  t.down(2, 0.7f);  // the same finger again: still one finger
-  t.up(2);
-  CHECK(t.held().none());
-  t.up(9);  // unknown finger: nothing happens
-  CHECK(t.held().none());
+  step = t.take();
+  REQUIRE(step.size() == 1);
+  CHECK(step[0].ended);
+  CHECK(t.take().empty());
+}
+
+TEST_CASE("touches: a tap shorter than a step arrives with both flags; unknown fingers are ignored") {
+  Touches t;
+  t.down(3, {1, 2});
+  t.up(3);
+  t.move(9, {0, 0});
+  t.up(9);
+  const auto step = t.take();
+  REQUIRE(step.size() == 1);
+  CHECK(step[0].began);
+  CHECK(step[0].ended);
+}
+
+TEST_CASE("touches: at most kMaxTouches fingers") {
+  Touches t;
+  for (std::uint64_t id = 0; id < alpha::core::kMaxTouches + 3; ++id) t.down(id, {0, 0});
+  CHECK(t.take().size() == alpha::core::kMaxTouches);
 }
 
 TEST_CASE("touch and back are bindable input names") {

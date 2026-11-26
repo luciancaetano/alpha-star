@@ -1,0 +1,10 @@
+<rml><head><link type="text/rcss" href="candle.rcss"/></head>
+<body class="safe veil">
+  <div class="panel" style="margin-top: 44dp;">
+    <h1 id="title">TREASURE!</h1>
+    <p class="big" id="icon"></p>
+    <p class="gold" id="name"></p>
+    <p id="desc"></p>
+    <button id="ok" autofocus data-t="chest.ok">TAKE IT</button>
+  </div>
+</body></rml>

@@ -78,6 +78,22 @@ bool pad_axis(Ui& ui, const SDL_GamepadAxisEvent& a) {
   return ui.navigate(ui.pad().stick(ui.stick[0], ui.stick[1], seconds(a.timestamp)));
 }
 
+// A finger landing on what a click would hit: the UI owns it (touch controls never see it).
+bool finger_down(Ui& ui, const SDL_TouchFingerEvent& f) {
+  Rml::Context& context = ui.context();
+  context.Update();
+  context.ProcessMouseMove(static_cast<int>(f.x), static_cast<int>(f.y), 0);
+  return ui.interactive(context.GetHoverElement());
+}
+
+// Gamepad buttons and axes; false for any other event.
+bool gamepad(Ui& ui, const SDL_Event& event) {
+  if (event.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN || event.type == SDL_EVENT_GAMEPAD_BUTTON_UP) {
+    return pad_button(ui, event.gbutton);
+  }
+  return event.type == SDL_EVENT_GAMEPAD_AXIS_MOTION && pad_axis(ui, event.gaxis);
+}
+
 bool pointer(Ui& ui, const SDL_Event& event) {
   Rml::Context& context = ui.context();
   if (event.type == SDL_EVENT_MOUSE_WHEEL) {
@@ -100,10 +116,8 @@ bool consumes(Ui& ui, const SDL_Event& event) {
     case SDL_EVENT_TEXT_INPUT:
       ui.context().ProcessTextInput(Rml::String(event.text.text));
       return text_focused(ui.context());
-    case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-    case SDL_EVENT_GAMEPAD_BUTTON_UP: return pad_button(ui, event.gbutton);
-    case SDL_EVENT_GAMEPAD_AXIS_MOTION: return pad_axis(ui, event.gaxis);
-    default: return false;
+    case SDL_EVENT_FINGER_DOWN: return finger_down(ui, event.tfinger);
+    default: return gamepad(ui, event);
   }
 }
 

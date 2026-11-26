@@ -17,7 +17,7 @@
 | `alpha_test` | Headless tests: PASS/FAIL per test |
 | `alpha_export` | Build the pack (`out`, `standalone`) |
 | `game_start` | Export + launch with the control channel (`hidden` = no window); returns the state |
-| `game_state` | Scene, paused, script error (source-mapped), frame, fps, entities (id, tags, pos, rotation, z, velocity, layer, alpha, text, particles, data), joints, UI docs and texts, locale, music |
+| `game_state` | Scene, paused, script error (source-mapped), frame, fps, entities (id, tags, pos, rotation, z, velocity, layer, alpha, text, particles, data), joints, UI docs and texts, locale, music, input.touchSticks (value, finger) |
 | `game_step` | Pause and advance exactly N fixed steps (1/60 s), return the state |
 | `game_pause` / `game_resume` | Stop / restart real-time play |
 | `game_input` | `press` (one step), `hold`, `release` an action, or set an `axis` (-1..1), per player 1..4 |

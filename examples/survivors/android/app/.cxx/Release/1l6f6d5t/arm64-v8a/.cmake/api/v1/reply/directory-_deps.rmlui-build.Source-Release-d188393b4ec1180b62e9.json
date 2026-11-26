@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "_deps/rmlui-build/Source",
+		"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source"
+	}
+}

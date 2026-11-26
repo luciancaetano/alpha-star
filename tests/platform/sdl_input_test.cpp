@@ -143,33 +143,52 @@ TEST_CASE("mouse motion sets the pointer position every later step reports") {
 
 namespace {
 
-SDL_Event finger(Uint32 type, SDL_FingerID id, float x) {
+SDL_Event finger(Uint32 type, SDL_FingerID id, float x, float y = 50.0f) {
   SDL_Event e{};
   e.type = type;
   e.tfinger.fingerID = id;
   e.tfinger.x = x;
+  e.tfinger.y = y;
+  return e;
+}
+
+SDL_Event touch_mouse(bool down) {
+  SDL_Event e{};
+  e.type = down ? SDL_EVENT_MOUSE_BUTTON_DOWN : SDL_EVENT_MOUSE_BUTTON_UP;
+  e.button.which = SDL_TOUCH_MOUSEID;
+  e.button.button = SDL_BUTTON_LEFT;
+  e.button.down = down;
   return e;
 }
 
 }  // namespace
 
-TEST_CASE("fingers are player 1's Touch inputs; a tap within one step still presses") {
+TEST_CASE("fingers reach the step in game pixels; a tap within one step still arrives") {
   InputState s;
   const alpha::core::PadSlots slots;
-  apply_touch(s, finger(SDL_EVENT_FINGER_DOWN, 3, 0.8f));
-  apply_touch(s, finger(SDL_EVENT_FINGER_UP, 3, 0.8f));
-  const auto tapped = consume(s, slots).players[0].held;
-  CHECK(has(tapped, "Touch"));
-  CHECK(has(tapped, "TouchRight"));
-  CHECK(consume(s, slots).players[0].held.none());
-  apply_touch(s, finger(SDL_EVENT_FINGER_DOWN, 4, 0.1f));
-  apply_touch(s, finger(SDL_EVENT_FINGER_MOTION, 4, 0.9f));
-  consume(s, slots);
-  const auto moved = consume(s, slots).players[0].held;
-  CHECK(has(moved, "TouchRight"));
-  CHECK_FALSE(has(moved, "TouchLeft"));
-  apply_touch(s, finger(SDL_EVENT_FINGER_CANCELED, 4, 0.9f));
+  apply_touch(s, finger(SDL_EVENT_FINGER_DOWN, 3, 500.0f));
+  apply_touch(s, finger(SDL_EVENT_FINGER_UP, 3, 500.0f));
+  auto step = consume(s, slots).fingers;
+  REQUIRE(step.size() == 1);
+  CHECK(step[0].pos == alpha::core::Vec2{500.0f, 50.0f});
+  CHECK(step[0].began);
+  CHECK(step[0].ended);
+  CHECK(consume(s, slots).fingers.empty());
+  apply_touch(s, finger(SDL_EVENT_FINGER_DOWN, 4, 10.0f));
+  apply_touch(s, finger(SDL_EVENT_FINGER_MOTION, 4, 90.0f, 70.0f));
+  step = consume(s, slots).fingers;
+  REQUIRE(step.size() == 1);
+  CHECK(step[0].pos == alpha::core::Vec2{90.0f, 70.0f});
+  apply_touch(s, finger(SDL_EVENT_FINGER_CANCELED, 4, 90.0f));
   apply_touch(s, key(SDL_SCANCODE_A, true));  // not a finger: ignored
+  CHECK(consume(s, slots).fingers.at(0).ended);
+  CHECK(consume(s, slots).fingers.empty());
+}
+
+TEST_CASE("the mouse SDL emulates for touch presses no MouseLeft (free fingers do, in core::TouchPad)") {
+  InputState s;
+  const alpha::core::PadSlots slots;
+  apply_event(s, touch_mouse(true), slots);
   CHECK(consume(s, slots).players[0].held.none());
 }
 

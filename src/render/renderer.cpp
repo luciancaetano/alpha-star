@@ -74,13 +74,15 @@ void Renderer::draw(const Frame& frame) {
   stats_ = {};
   grid_ = platform::output_grid(sdl_);
   window_scale_ = grid_.scale.x;  // feathers stay 1 output pixel wide
-  core::View view = frame.view.value_or(core::View{size_ * 0.5f, 1.0f, 0.0f, size_});
+  const core::View screen{size_ * 0.5f, 1.0f, 0.0f, size_};
+  core::View view = frame.view.value_or(screen);
   view.size = size_;
   draw_shapes(frame.shapes, view);
   for (SDL_Texture* tex : doomed_) SDL_DestroyTexture(tex);
   doomed_.clear();
   compositor_.light(frame.lighting, core::light_discs(frame.lights, view));
   compositor_.finish(frame.effects);
+  draw_shapes(frame.overlay, screen);
   for (const core::TextItem& text : frame.texts) draw_text(text);
 }
 

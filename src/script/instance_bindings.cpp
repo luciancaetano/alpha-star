@@ -4,6 +4,7 @@
 #include <string>
 
 #include "core/error.hpp"
+#include "core/limits.hpp"
 #include "script/input_bindings.hpp"
 #include "script/js_engine.hpp"
 #include "script/js_value.hpp"
@@ -31,11 +32,28 @@ JSValue instance_destroy(JSContext* ctx, ScriptState&, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-// holdActions(p1, p2, p3, p4, players): one step with exactly these actions
-// held per player (arrays of names), as if their inputs were, and `players`
-// connected. Axes read 0 until holdAxis.
+// Flat id, x, y, flags (1 = began, 2 = ended) per finger -> the step's fingers.
+std::vector<core::Finger> fingers_arg(JSContext* ctx, JSValueConst v) {
+  const std::vector<double> n = numbers_arg(ctx, v, "fingers");
+  if (n.size() % 4 != 0 || n.size() / 4 > core::kMaxTouches) {
+    throw core::Error("simulate: at most " + std::to_string(core::kMaxTouches) + " fingers at once");
+  }
+  std::vector<core::Finger> out;
+  for (std::size_t i = 0; i < n.size(); i += 4) {
+    const auto flags = static_cast<int>(n[i + 3]);
+    out.push_back({static_cast<std::uint64_t>(n[i]), {static_cast<float>(n[i + 1]), static_cast<float>(n[i + 2])},
+                   (flags & 1) != 0, (flags & 2) != 0});
+  }
+  return out;
+}
+
+// holdActions(p1, p2, p3, p4, players, fingers): one step with exactly these
+// actions held per player (arrays of names), as if their inputs were,
+// `players` connected and these fingers (fingers_arg) on the screen. Axes
+// read 0 until holdAxis.
 JSValue hold_actions(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   core::InputFrame frame;
+  frame.fingers = fingers_arg(ctx, argv[5]);
   for (std::size_t p = 0; p < core::kMaxPlayers; ++p) {
     for (const std::string& name : strings_arg(ctx, argv[p], "held actions")) {
       const auto id = s.controls.actions.find(name);
@@ -78,7 +96,7 @@ JSValue step_budget(JSContext* ctx, ScriptState&, JSValueConst*) {
 // simulate() only: absent from shipping builds.
 constexpr std::array<Native, 6> kTestNatives{{
     {"instanceCreate", guarded<instance_create>, 0}, {"instanceDestroy", guarded<instance_destroy>, 1},
-    {"holdActions", guarded<hold_actions>, 5},       {"holdAxis", guarded<hold_axis>, 3},
+    {"holdActions", guarded<hold_actions>, 6},       {"holdAxis", guarded<hold_axis>, 3},
     {"tagCounts", guarded<tag_counts>, 0},           {"stepBudget", guarded<step_budget>, 0},
 }};
 #endif

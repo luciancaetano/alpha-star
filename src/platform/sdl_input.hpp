@@ -20,7 +20,7 @@ struct InputState {
   std::array<core::InputSet, core::kMaxPlayers> pressed;
   std::array<core::AnalogValues, core::kMaxPlayers> analog{};
   core::Vec2 mouse{};  // from the last motion event (already in game pixels)
-  core::Touches touches;  // player 1's fingers
+  core::Touches touches;  // player 1's fingers, in game pixels
 };
 
 // Maps SDL devices to core input codes; nullopt for unmapped buttons/keys.
@@ -32,9 +32,11 @@ std::optional<core::InputCode> from_gamepad(Uint8 button);
 // gamepads without a slot. Keyboard and mouse are player 1; a gamepad is the
 // player of its slot.
 void apply_event(InputState& state, const SDL_Event& event, const core::PadSlots& slots);
-// Finger events (window-relative, before render coordinates): Touch inputs of
-// player 1; a tap shorter than a step still presses. Ignores other events.
-void apply_touch(InputState& state, const SDL_Event& raw);
+// Finger events, already in game pixels (SDL_ConvertEventToRenderCoordinates):
+// the step's fingers (core::Touches). Ignores other events. The mouse SDL
+// emulates for touch presses no MouseLeft itself: a finger no touch control
+// captured does (core::TouchPad).
+void apply_touch(InputState& state, const SDL_Event& logical);
 // A player's device went away: nothing of theirs stays held.
 void release_player(InputState& state, std::size_t player);
 // Inputs to feed this step (held or pressed since last step); clears presses.

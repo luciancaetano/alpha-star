@@ -1,0 +1,45 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Debugger/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 64,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"librmlui_debugger.a"
+			],
+			"targetId" : "rmlui_debugger::@f9fc1faaf9111c646d43",
+			"targetIndex" : 22,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "_deps/rmlui-build/Source/Debugger",
+		"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Debugger"
+	}
+}

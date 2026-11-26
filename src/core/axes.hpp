@@ -26,14 +26,15 @@ using AxisId = std::uint16_t;
 
 // Named analog axes, each in [-1, 1]. A source is an analog name
 // ("GamepadLeftX", "GamepadLT", ...) or a "Negative/Positive" pair of inputs
-// ("A/D", "Left/Right", "GamepadLeft/GamepadRight") that reads -1, 0 or 1.
+// ("A/D", "Left/Right", "GamepadLeft/GamepadRight") that reads -1, 0 or 1, or
+// a touch stick axis ("TouchMoveX", resolved by the game's core::TouchPad).
 // The axis reads the source with the largest magnitude (first on ties).
 class Axes {
  public:
   // Throws Error unless 0 <= dz < 1.
   void set_deadzone(float dz);
   // Throws Error naming the bad source and the accepted forms.
-  AxisId bind(std::string_view axis, std::span<const std::string> sources);
+  AxisId bind(std::string_view axis, std::span<const std::string> sources, const TouchPad* touch = nullptr);
   std::optional<AxisId> find(std::string_view axis) const;
   // Declared names, space separated (for error messages).
   std::string names() const;
@@ -49,6 +50,7 @@ class Axes {
  private:
   struct Source {
     std::optional<Analog> analog;
+    std::optional<std::size_t> touch;  // index into PlayerInput::touch
     InputCode neg = 0;
     InputCode pos = 0;
   };
@@ -58,7 +60,8 @@ class Axes {
     std::array<float, kMaxPlayers> values{};
     std::array<std::optional<float>, kMaxPlayers> held{};
   };
-  static float resolve(const Axis& axis, const InputSet& held, const AnalogValues& analog);
+  static float resolve(const Axis& axis, const InputSet& held, const AnalogValues& analog, const TouchAnalog& touch);
+  static Source parse_source(std::string_view axis, std::string_view src, const TouchPad* touch);
 
   std::vector<Axis> axes_;
   float deadzone_ = kDefaultDeadzone;

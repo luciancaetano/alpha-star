@@ -11,6 +11,8 @@ namespace alpha::ui {
 //  - mouse button: consumed when it lands on an element with a ui.on handler
 //    (or inside one), or on a form control (input, textarea, select);
 //    touch arrives as mouse events (SDL's default), so the same rule holds;
+//  - finger down: consumed when it lands on such an element (in game pixels),
+//    so touch sticks and buttons never capture it;
 //  - key or gamepad button down: consumed when the UI acted on it (focus moved,
 //    a focused element was clicked by Enter/Space/A, Escape/B ran a "back"
 //    handler) or a text field has focus;

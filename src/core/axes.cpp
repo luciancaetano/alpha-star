@@ -5,6 +5,7 @@
 
 #include "core/error.hpp"
 #include "core/index_of.hpp"
+#include "core/touch_pad.hpp"
 
 namespace alpha::core {
 
@@ -16,14 +17,16 @@ std::string forms() {
   return msg + ") or a \"Negative/Positive\" pair of inputs such as \"A/D\" or \"Left/Right\".";
 }
 
-[[noreturn]] void bad_source(std::string_view axis, std::string_view source, std::string_view why) {
-  throw Error("axis \"" + std::string(axis) + "\": " + std::string(why) + " \"" + std::string(source) +
-              "\". " + forms());
+[[noreturn]] void bad_source(std::string_view axis, std::string_view source, std::string_view why,
+                             const TouchPad* touch) {
+  const std::string sticks = touch ? touch->axis_names() : "";
+  throw Error("axis \"" + std::string(axis) + "\": " + std::string(why) + " \"" + std::string(source) + "\"" +
+              (sticks.empty() ? "" : "; touch stick sources: " + sticks) + ". " + forms());
 }
 
-InputCode pair_input(std::string_view axis, std::string_view name) {
-  const auto code = parse_input(name);
-  if (!code) bad_source(axis, name, "unknown input");
+InputCode pair_input(std::string_view axis, std::string_view name, const TouchPad* touch) {
+  const auto code = touch ? touch->input(name) : parse_input(name);
+  if (!code) bad_source(axis, name, "unknown input", touch);
   return *code;
 }
 
@@ -63,20 +66,20 @@ void Axes::set_deadzone(float dz) {
   deadzone_ = dz;
 }
 
-AxisId Axes::bind(std::string_view axis, std::span<const std::string> sources) {
-  Axis a{std::string(axis), {}, {}};
-  for (const std::string& src : sources) {
-    if (const auto analog = parse_analog(src)) {
-      a.sources.push_back({analog, 0, 0});
-      continue;
-    }
-    const auto slash = src.find('/');
-    if (slash == std::string::npos || src.find('/', slash + 1) != std::string::npos) {
-      bad_source(axis, src, "unknown source");
-    }
-    const std::string_view s = src;
-    a.sources.push_back({std::nullopt, pair_input(axis, s.substr(0, slash)), pair_input(axis, s.substr(slash + 1))});
+Axes::Source Axes::parse_source(std::string_view axis, std::string_view src, const TouchPad* touch) {
+  if (const auto analog = parse_analog(src)) return {analog, std::nullopt, 0, 0};
+  if (const auto stick = touch ? touch->axis(src) : std::nullopt) return {std::nullopt, stick, 0, 0};
+  const auto slash = src.find('/');
+  if (slash == std::string_view::npos || src.find('/', slash + 1) != std::string_view::npos) {
+    bad_source(axis, src, "unknown source", touch);
   }
+  return {std::nullopt, std::nullopt, pair_input(axis, src.substr(0, slash), touch),
+          pair_input(axis, src.substr(slash + 1), touch)};
+}
+
+AxisId Axes::bind(std::string_view axis, std::span<const std::string> sources, const TouchPad* touch) {
+  Axis a{std::string(axis), {}, {}};
+  for (const std::string& src : sources) a.sources.push_back(parse_source(axis, src, touch));
   axes_.push_back(std::move(a));
   return static_cast<AxisId>(axes_.size() - 1);
 }
@@ -85,10 +88,12 @@ std::optional<AxisId> Axes::find(std::string_view axis) const { return index_by_
 
 std::string Axes::names() const { return names_of(axes_); }
 
-float Axes::resolve(const Axis& axis, const InputSet& held, const AnalogValues& analog) {
+float Axes::resolve(const Axis& axis, const InputSet& held, const AnalogValues& analog, const TouchAnalog& touch) {
   float best = 0.0f;
   for (const Source& s : axis.sources) {
-    const float v = s.analog ? analog[static_cast<std::size_t>(*s.analog)] : digital(held, s.neg, s.pos);
+    const float v = s.analog  ? analog[static_cast<std::size_t>(*s.analog)]
+                    : s.touch ? touch[*s.touch]
+                              : digital(held, s.neg, s.pos);
     best = stronger(best, v);
   }
   return std::clamp(best, -1.0f, 1.0f);
@@ -99,7 +104,7 @@ void Axes::update(const InputFrame& frame) {
     const PlayerInput& in = frame.players[p];
     const InputSet held = in.held | analog_buttons(in.analog);
     const AnalogValues analog = with_deadzone(in.analog, deadzone_);
-    for (Axis& a : axes_) a.values[p] = a.held[p].value_or(resolve(a, held, analog));
+    for (Axis& a : axes_) a.values[p] = a.held[p].value_or(resolve(a, held, analog, in.touch));
   }
 }
 

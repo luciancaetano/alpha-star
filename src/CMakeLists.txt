@@ -33,7 +33,11 @@ add_library(alpha_core
   core/tags.cpp
   core/tilemap.cpp
   core/timers.cpp
+  core/suggest.cpp
   core/touch.cpp
+  core/touch_button.cpp
+  core/touch_pad.cpp
+  core/touch_stick.cpp
   core/version.cpp
   core/window.cpp)
 if(ALPHA_DEBUG_TOOLS)  # hot reload's file watch: dev/release only
@@ -108,10 +112,13 @@ add_library(alpha_engine
   render/shader_states.cpp
   render/tessellate.cpp
   render/text_layout.cpp
+  render/touch_draw.cpp
   script/app_events.cpp
   script/asset_bindings.cpp
   script/audio_bindings.cpp
   script/error_overlay.cpp
+  script/touch_config.cpp
+  script/touch_skin.cpp
   script/host.cpp
   script/vm.cpp
   script/body_parser.cpp

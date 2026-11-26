@@ -26,7 +26,7 @@
   right: ["Right", "TouchRight"],                    // ...the right half
   back: ["Escape", "Back"],                          // the Android back button
 },</code></pre>
-<ul><li><code>"Touch"</code> is held while any finger is down; <code>"TouchLeft"</code> / <code>"TouchRight"</code> while one is on that half. A tap shorter than one step still presses. <code>ctx.input.mouse()</code> reads the first finger.</li><li><code>"Back"</code> does <strong>not</strong> close the app: quit or open a menu from the game.</li></ul>
+<ul><li><code>"Touch"</code> is held while any finger is down; <code>"TouchLeft"</code> / <code>"TouchRight"</code> while one is on that half. A tap shorter than one step still presses. <code>ctx.input.mouse()</code> reads the first finger.</li><li><code>"Back"</code> does <strong>not</strong> close the app: quit or open a menu from the game.</li><li>On-screen sticks and buttons: <code>config.touchSticks</code> / <code>config.touchButtons</code> add sources such as <code>"TouchMoveX"</code> and <code>"TouchJump"</code> next to the keys (see <a href="input.html#touch-sticks-and-buttons-phones">Input</a>).</li></ul>
 <h3 id="show-the-right-hints">Show the right hints</h3>
 <p><code>ctx.platform</code> is <code>{ os, mobile }</code> (<code>os</code>: <code>"windows"</code>, <code>"macos"</code>, <code>"linux"</code>, <code>"android"</code>, <code>"ios"</code>, <code>"web"</code>, <code>"other"</code>; <code>mobile</code> is true on Android and iOS). Use it for hints and layout, never for rules, so the simulation is the same everywhere. From <code>examples/flappy</code>:</p>
 <pre><code>if (ctx.platform.mobile) ctx.ui.set("title", "hint", ctx.t("title.hintTouch"));   // "tap to flap"</code></pre>

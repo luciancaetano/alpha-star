@@ -1,0 +1,21 @@
+ninja_dyndep_version = 1.0
+build src/CMakeFiles/alpha_devtools.dir/devtools/dev_tools.cpp.o: dyndep
+
+build src/CMakeFiles/alpha_devtools.dir/devtools/inspector.cpp.o: dyndep
+
+build src/CMakeFiles/alpha_devtools.dir/devtools/layout.cpp.o: dyndep
+
+build src/CMakeFiles/alpha_devtools.dir/devtools/panels.cpp.o: dyndep
+
+build src/CMakeFiles/alpha_devtools.dir/devtools/profiler.cpp.o: dyndep
+
+build src/CMakeFiles/alpha_devtools.dir/devtools/routing.cpp.o: dyndep
+
+build src/CMakeFiles/alpha_devtools.dir/devtools/scale.cpp.o: dyndep
+
+build src/CMakeFiles/alpha_devtools.dir/devtools/snapshot.cpp.o: dyndep
+
+build src/CMakeFiles/alpha_devtools.dir/devtools/time_control.cpp.o: dyndep
+
+build src/CMakeFiles/alpha_devtools.dir/devtools/shake_toggle.cpp.o: dyndep
+

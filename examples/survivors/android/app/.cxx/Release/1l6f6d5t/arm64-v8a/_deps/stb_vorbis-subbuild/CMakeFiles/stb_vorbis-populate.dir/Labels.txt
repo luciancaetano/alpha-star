@@ -1,0 +1,15 @@
+# Target labels
+ stb_vorbis-populate
+# Source files and their labels
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/CMakeFiles/stb_vorbis-populate
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/CMakeFiles/stb_vorbis-populate.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/CMakeFiles/stb_vorbis-populate-complete.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/stb_vorbis-populate-prefix/src/stb_vorbis-populate-stamp/stb_vorbis-populate-build.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/stb_vorbis-populate-prefix/src/stb_vorbis-populate-stamp/stb_vorbis-populate-configure.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/stb_vorbis-populate-prefix/src/stb_vorbis-populate-stamp/stb_vorbis-populate-copyfile.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/stb_vorbis-populate-prefix/src/stb_vorbis-populate-stamp/stb_vorbis-populate-download.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/stb_vorbis-populate-prefix/src/stb_vorbis-populate-stamp/stb_vorbis-populate-install.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/stb_vorbis-populate-prefix/src/stb_vorbis-populate-stamp/stb_vorbis-populate-mkdir.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/stb_vorbis-populate-prefix/src/stb_vorbis-populate-stamp/stb_vorbis-populate-patch.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/stb_vorbis-populate-prefix/src/stb_vorbis-populate-stamp/stb_vorbis-populate-test.rule
+C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/stb_vorbis-subbuild/stb_vorbis-populate-prefix/src/stb_vorbis-populate-stamp/stb_vorbis-populate-update.rule

@@ -1,0 +1,217 @@
+{
+  "buildFiles": [
+    "C:\\workspace\\alpha-star\\cmake\\BytecodeKey.cmake",
+    "C:\\workspace\\alpha-star\\cmake\\Dependencies.cmake",
+    "C:\\workspace\\alpha-star\\cmake\\Flavors.cmake",
+    "C:\\workspace\\alpha-star\\cmake\\Glslang.cmake",
+    "C:\\workspace\\alpha-star\\cmake\\Shadercross.cmake",
+    "C:\\workspace\\alpha-star\\cmake\\Warnings.cmake",
+    "C:\\workspace\\alpha-star\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\box2d-src\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\box2d-src\\src\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\doctest-src\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\entt-src\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\freetype-src\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\quickjs-src\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\rmlui-src\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\rmlui-src\\Samples\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\rmlui-src\\Source\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\rmlui-src\\Source\\Core\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\rmlui-src\\Source\\Core\\Elements\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\rmlui-src\\Source\\Core\\Layout\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\rmlui-src\\Source\\Debugger\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\sdl3-src\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\sdl3_image-src\\CMakeLists.txt",
+    "C:\\workspace\\alpha-star\\src\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\lucia\\AppData\\Local\\Android\\Sdk\\cmake\\3.31.6\\bin\\ninja.exe",
+      "-C",
+      "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\lucia\\AppData\\Local\\Android\\Sdk\\cmake\\3.31.6\\bin\\ninja.exe",
+    "-C",
+    "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "SDL3-shared::@405c074760d2f6728126": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "SDL3-shared",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\build\\intermediates\\cxx\\Release\\1l6f6d5t\\obj\\arm64-v8a\\libSDL3.so",
+      "runtimeFiles": []
+    },
+    "SDL3_image-static::@80cdc087d69ec7f1fccf": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "SDL3_image-static",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\sdl3_image-build\\libSDL3_image.a"
+    },
+    "SDL_uclibc::@405c074760d2f6728126": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "SDL_uclibc",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\sdl3-build\\libSDL_uclibc.a"
+    },
+    "alpha_codecs::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_codecs",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\libalpha_codecs.a"
+    },
+    "alpha_core::@145eef247bfb46b6828c": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_core",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\src\\libalpha_core.a"
+    },
+    "alpha_devtools::@145eef247bfb46b6828c": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_devtools",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\src\\libalpha_devtools.a"
+    },
+    "alpha_engine::@145eef247bfb46b6828c": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_engine",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\src\\libalpha_engine.a"
+    },
+    "alpha_harfbuzz::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_harfbuzz",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\libalpha_harfbuzz.a"
+    },
+    "alpha_imgui::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_imgui",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\libalpha_imgui.a"
+    },
+    "alpha_monocypher::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_monocypher",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\libalpha_monocypher.a"
+    },
+    "alpha_rmlui_sdl::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_rmlui_sdl",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\libalpha_rmlui_sdl.a"
+    },
+    "alpha_sheenbidi::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_sheenbidi",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\libalpha_sheenbidi.a"
+    },
+    "alpha_star::@145eef247bfb46b6828c": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "alpha_star",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\build\\intermediates\\cxx\\Release\\1l6f6d5t\\obj\\arm64-v8a\\libmain.so",
+      "runtimeFiles": [
+        "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\build\\intermediates\\cxx\\Release\\1l6f6d5t\\obj\\arm64-v8a\\libSDL3.so"
+      ]
+    },
+    "api-test::@f51d6c113a35db52c430": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "api-test",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\build\\intermediates\\cxx\\Release\\1l6f6d5t\\obj\\arm64-v8a\\api-test",
+      "runtimeFiles": []
+    },
+    "box2d::@20f5237e34ad7ded9806": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "box2d",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\box2d-build\\src\\libbox2d.a"
+    },
+    "doctest_with_main::@de8c2d1415f8a28c2e63": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "doctest_with_main",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\doctest-build\\libdoctest_with_main.a"
+    },
+    "freetype::@d06f9f5ffc3cc0b4bd77": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "freetype",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\freetype-build\\libfreetype.a"
+    },
+    "function_source::@f51d6c113a35db52c430": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "function_source",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\build\\intermediates\\cxx\\Release\\1l6f6d5t\\obj\\arm64-v8a\\function_source",
+      "runtimeFiles": []
+    },
+    "qjs::@f51d6c113a35db52c430": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "qjs",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\_deps\\quickjs-build\\libqjs.a"
+    },
+    "qjs_exe::@f51d6c113a35db52c430": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "qjs_exe",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\build\\intermediates\\cxx\\Release\\1l6f6d5t\\obj\\arm64-v8a\\qjs",
+      "runtimeFiles": []
+    },
+    "qjsc::@f51d6c113a35db52c430": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "qjsc",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\build\\intermediates\\cxx\\Release\\1l6f6d5t\\obj\\arm64-v8a\\qjsc",
+      "runtimeFiles": []
+    },
+    "rmlui_core::@583e44b40354f940ae80": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "rmlui_core",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\librmlui.a"
+    },
+    "rmlui_debugger::@f9fc1faaf9111c646d43": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "rmlui_debugger",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\.cxx\\Release\\1l6f6d5t\\arm64-v8a\\librmlui_debugger.a"
+    },
+    "run-test262::@f51d6c113a35db52c430": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "run-test262",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\build\\intermediates\\cxx\\Release\\1l6f6d5t\\obj\\arm64-v8a\\run-test262",
+      "runtimeFiles": []
+    },
+    "unicode_gen::@f51d6c113a35db52c430": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "unicode_gen",
+      "output": "C:\\workspace\\alpha-star\\examples\\survivors\\android\\app\\build\\intermediates\\cxx\\Release\\1l6f6d5t\\obj\\arm64-v8a\\unicode_gen",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "C:\\Users\\lucia\\AppData\\Local\\Android\\Sdk\\ndk\\27.2.12479018\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe",
+      "cppCompilerExecutable": "C:\\Users\\lucia\\AppData\\Local\\Android\\Sdk\\ndk\\27.2.12479018\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe"
+    }
+  },
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": [
+    "cxx",
+    "cpp",
+    "cc"
+  ]
+}

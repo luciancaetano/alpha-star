@@ -6,6 +6,7 @@
 #include "core/error.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
+#include "script/touch_config.hpp"
 
 namespace alpha::script {
 
@@ -17,9 +18,9 @@ JSValue bind(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const std::string name = string_arg(ctx, argv[1], "config." + table + " name");
   const auto list = strings_arg(ctx, argv[2], "config." + table + "." + name);
   if (table == "axes") {
-    s.controls.axes.bind(name, list);
+    s.controls.axes.bind(name, list, &s.controls.touch);
   } else {
-    s.controls.actions.bind(name, list);
+    s.controls.actions.bind(name, list, &s.controls.touch);
   }
   return JS_UNDEFINED;
 }
@@ -65,8 +66,47 @@ JSValue rumble(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
 
 JSValue mouse(JSContext* ctx, ScriptState& s, JSValueConst*) { return new_vec2(ctx, s.controls.mouse); }
 
-constexpr std::array<Native, 7> kNatives{{
-    {"mouse", guarded<mouse>, 0},
+// touchControls(config.touchSticks, config.touchButtons, mobile): before any
+// action or axis binds (they may name the controls' sources).
+JSValue touch_controls(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  auto sticks = touch_sticks(ctx, s, argv[0]);
+  auto buttons = touch_buttons(ctx, s, argv[1]);
+  s.controls.touch.configure(std::move(sticks), std::move(buttons), JS_ToBool(ctx, argv[2]) == 1);
+  s.controls.touch.set_screen(touch_screen(s));
+  return JS_UNDEFINED;
+}
+
+// touchScene(name): a scene started (touch controls of other scenes go inert).
+JSValue touch_scene(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  s.controls.touch.enter_scene(string_arg(ctx, argv[0], "scene"));
+  return JS_UNDEFINED;
+}
+
+JSValue touch_release(JSContext*, ScriptState& s, JSValueConst*) {
+  s.controls.touch.release_all();
+  return JS_UNDEFINED;
+}
+
+// touches() -> [{ id, pos, pressed, released }]: this step's fingers no touch control or UI took.
+JSValue touches(JSContext* ctx, ScriptState& s, JSValueConst*) {
+  JSValue out = JS_NewArray(ctx);
+  std::uint32_t i = 0;
+  for (const core::Finger& f : s.controls.fingers) {
+    JSValue t = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, t, "id", JS_NewFloat64(ctx, static_cast<double>(f.id)));
+    JS_SetPropertyStr(ctx, t, "pos", new_vec2(ctx, f.pos));
+    JS_SetPropertyStr(ctx, t, "pressed", JS_NewBool(ctx, f.began));
+    JS_SetPropertyStr(ctx, t, "released", JS_NewBool(ctx, f.ended));
+    JS_SetPropertyUint32(ctx, out, i++, t);
+  }
+  return out;
+}
+
+constexpr std::array<Native, 11> kNatives{{
+    {"touchScene", guarded<touch_scene>, 1},
+    {"touchRelease", guarded<touch_release>, 0},
+    {"mouse", guarded<mouse>, 0},            {"touchControls", guarded<touch_controls>, 3},
+    {"touches", guarded<touches>, 0},
     {"bind", guarded<bind>, 3},
     {"deadzone", guarded<deadzone>, 1},      {"action", guarded<action>, 3},
     {"axis", guarded<axis>, 2},              {"players", guarded<players>, 0},
@@ -82,6 +122,12 @@ std::size_t player_arg(JSContext* ctx, JSValueConst v) {
                       to_string(ctx, v));
   }
   return n == 0 ? core::kAnyPlayer : static_cast<std::size_t>(n) - 1;
+}
+
+core::TouchScreen touch_screen(const ScriptState& s) {
+  const core::Vec2 view = s.view_size.x > 0.0f ? s.view_size : s.design_size;
+  const core::Insets& in = s.window.safe;
+  return {{{in.left, in.top}, {view.x - in.right, view.y - in.bottom}}, view};
 }
 
 void install_input_bindings(JSContext* ctx, JSValueConst target) { install(ctx, target, kNatives); }

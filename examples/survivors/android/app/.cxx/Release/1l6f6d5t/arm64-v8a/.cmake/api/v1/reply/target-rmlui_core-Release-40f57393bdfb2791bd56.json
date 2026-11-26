@@ -1,0 +1,3226 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "librmlui.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"install",
+			"target_compile_options",
+			"set_common_target_options",
+			"target_compile_definitions",
+			"target_include_directories",
+			"target_precompile_headers",
+			"target_compile_features",
+			"target_sources"
+		],
+		"files" : 
+		[
+			"examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/CMakeLists.txt",
+			"examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/CMake/Utilities.cmake",
+			"examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/CMakeLists.txt",
+			"examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 4,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 469,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 358,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 106,
+				"parent" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 388,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 378,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 360,
+				"parent" : 0
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 449,
+				"parent" : 0
+			},
+			{
+				"command" : 7,
+				"file" : 1,
+				"line" : 101,
+				"parent" : 3
+			},
+			{
+				"command" : 8,
+				"file" : 0,
+				"line" : 236,
+				"parent" : 0
+			},
+			{
+				"file" : 2
+			},
+			{
+				"command" : 8,
+				"file" : 2,
+				"line" : 4,
+				"parent" : 11
+			},
+			{
+				"file" : 3
+			},
+			{
+				"command" : 8,
+				"file" : 3,
+				"line" : 4,
+				"parent" : 13
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D__BIONIC_NO_PAGE_SIZE_MACRO -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -O3 -DNDEBUG  -std=c++20 -fPIC"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wextra"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-pedantic"
+				},
+				{
+					"fragment" : "-Winvalid-pch -fpch-instantiate-templates -Xclang -emit-pch -Xclang -include -Xclang C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-build/Source/Core/CMakeFiles/rmlui_core.dir/cmake_pch.hxx -x c++-header"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 5,
+					"define" : "RMLUI_STATIC_LIB"
+				},
+				{
+					"backtrace" : 6,
+					"define" : "RMLUI_VERSION=\"6.3\""
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 7,
+					"path" : "C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					9
+				],
+				"standard" : "20"
+			},
+			"precompileHeaders" : 
+			[
+				{
+					"backtrace" : 8,
+					"header" : "C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/precompiled.h"
+				}
+			],
+			"sourceIndexes" : 
+			[
+				0
+			],
+			"sysroot" : 
+			{
+				"path" : "C:/Users/lucia/AppData/Local/Android/Sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/windows-x86_64/sysroot"
+			}
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D__BIONIC_NO_PAGE_SIZE_MACRO -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -O3 -DNDEBUG  -std=c++20 -fPIC"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wextra"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-pedantic"
+				},
+				{
+					"fragment" : "-Winvalid-pch -Xclang -include-pch -Xclang C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-build/Source/Core/CMakeFiles/rmlui_core.dir/cmake_pch.hxx.pch -Xclang -include -Xclang C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-build/Source/Core/CMakeFiles/rmlui_core.dir/cmake_pch.hxx"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 5,
+					"define" : "RMLUI_STATIC_LIB"
+				},
+				{
+					"backtrace" : 6,
+					"define" : "RMLUI_VERSION=\"6.3\""
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 7,
+					"path" : "C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					9
+				],
+				"standard" : "20"
+			},
+			"precompileHeaders" : 
+			[
+				{
+					"backtrace" : 8,
+					"header" : "C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/precompiled.h"
+				}
+			],
+			"sourceIndexes" : 
+			[
+				1,
+				2,
+				4,
+				6,
+				7,
+				9,
+				10,
+				11,
+				13,
+				14,
+				15,
+				18,
+				19,
+				20,
+				22,
+				24,
+				26,
+				28,
+				29,
+				30,
+				31,
+				33,
+				35,
+				36,
+				38,
+				40,
+				42,
+				44,
+				46,
+				48,
+				50,
+				52,
+				54,
+				56,
+				58,
+				59,
+				60,
+				62,
+				64,
+				66,
+				67,
+				69,
+				71,
+				72,
+				74,
+				75,
+				77,
+				78,
+				79,
+				80,
+				82,
+				83,
+				85,
+				86,
+				88,
+				89,
+				90,
+				92,
+				93,
+				95,
+				97,
+				99,
+				100,
+				102,
+				104,
+				105,
+				107,
+				109,
+				110,
+				111,
+				113,
+				116,
+				117,
+				119,
+				120,
+				122,
+				123,
+				124,
+				125,
+				129,
+				131,
+				132,
+				133,
+				134,
+				135,
+				137,
+				139,
+				141,
+				143,
+				145,
+				147,
+				149,
+				151,
+				153,
+				155,
+				157,
+				160,
+				161,
+				162,
+				163,
+				164,
+				166,
+				167,
+				169,
+				170,
+				171,
+				173,
+				174,
+				175,
+				176,
+				177,
+				179,
+				181,
+				183,
+				185,
+				186,
+				187,
+				189,
+				191,
+				192,
+				194,
+				196,
+				198,
+				200,
+				202,
+				203,
+				204,
+				205,
+				207,
+				209,
+				210,
+				211,
+				212,
+				213,
+				215,
+				216,
+				218,
+				220,
+				222,
+				224,
+				225,
+				346,
+				347,
+				348,
+				349,
+				350,
+				351,
+				353,
+				355,
+				356,
+				357,
+				359,
+				361,
+				363,
+				365,
+				367,
+				369,
+				371,
+				373,
+				375,
+				377,
+				379,
+				381,
+				383,
+				385,
+				387,
+				389,
+				391,
+				393,
+				395,
+				397,
+				399,
+				401,
+				403,
+				405,
+				407,
+				410,
+				412,
+				414,
+				416,
+				418,
+				420,
+				422,
+				424
+			],
+			"sysroot" : 
+			{
+				"path" : "C:/Users/lucia/AppData/Local/Android/Sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/windows-x86_64/sysroot"
+			}
+		}
+	],
+	"id" : "rmlui_core::@583e44b40354f940ae80",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 2,
+				"path" : "lib"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "C:/Program Files (x86)/alpha_star"
+		}
+	},
+	"name" : "rmlui_core",
+	"nameOnDisk" : "librmlui.a",
+	"paths" : 
+	{
+		"build" : "_deps/rmlui-build/Source/Core",
+		"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				4,
+				6,
+				7,
+				9,
+				10,
+				11,
+				13,
+				14,
+				15,
+				18,
+				19,
+				20,
+				22,
+				24,
+				26,
+				28,
+				29,
+				30,
+				31,
+				33,
+				35,
+				36,
+				38,
+				40,
+				42,
+				44,
+				46,
+				48,
+				50,
+				52,
+				54,
+				56,
+				58,
+				59,
+				60,
+				62,
+				64,
+				66,
+				67,
+				69,
+				71,
+				72,
+				74,
+				75,
+				77,
+				78,
+				79,
+				80,
+				82,
+				83,
+				85,
+				86,
+				88,
+				89,
+				90,
+				92,
+				93,
+				95,
+				97,
+				99,
+				100,
+				102,
+				104,
+				105,
+				107,
+				109,
+				110,
+				111,
+				113,
+				116,
+				117,
+				119,
+				120,
+				122,
+				123,
+				124,
+				125,
+				129,
+				131,
+				132,
+				133,
+				134,
+				135,
+				137,
+				139,
+				141,
+				143,
+				145,
+				147,
+				149,
+				151,
+				153,
+				155,
+				157,
+				160,
+				161,
+				162,
+				163,
+				164,
+				166,
+				167,
+				169,
+				170,
+				171,
+				173,
+				174,
+				175,
+				176,
+				177,
+				179,
+				181,
+				183,
+				185,
+				186,
+				187,
+				189,
+				191,
+				192,
+				194,
+				196,
+				198,
+				200,
+				202,
+				203,
+				204,
+				205,
+				207,
+				209,
+				210,
+				211,
+				212,
+				213,
+				215,
+				216,
+				218,
+				220,
+				222,
+				224,
+				225,
+				346,
+				347,
+				348,
+				349,
+				350,
+				351,
+				353,
+				355,
+				356,
+				357,
+				359,
+				361,
+				363,
+				365,
+				367,
+				369,
+				371,
+				373,
+				375,
+				377,
+				379,
+				381,
+				383,
+				385,
+				387,
+				389,
+				391,
+				393,
+				395,
+				397,
+				399,
+				401,
+				403,
+				405,
+				407,
+				410,
+				412,
+				414,
+				416,
+				418,
+				420,
+				422,
+				424
+			]
+		},
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				3,
+				5,
+				8,
+				12,
+				16,
+				17,
+				21,
+				23,
+				25,
+				27,
+				32,
+				34,
+				37,
+				39,
+				41,
+				43,
+				45,
+				47,
+				49,
+				51,
+				53,
+				55,
+				57,
+				61,
+				63,
+				65,
+				68,
+				70,
+				73,
+				76,
+				81,
+				84,
+				87,
+				91,
+				94,
+				96,
+				98,
+				101,
+				103,
+				106,
+				108,
+				112,
+				114,
+				115,
+				118,
+				121,
+				126,
+				127,
+				128,
+				130,
+				136,
+				138,
+				140,
+				142,
+				144,
+				146,
+				148,
+				150,
+				152,
+				154,
+				156,
+				158,
+				159,
+				165,
+				168,
+				172,
+				178,
+				180,
+				182,
+				184,
+				188,
+				190,
+				193,
+				195,
+				197,
+				199,
+				201,
+				206,
+				208,
+				214,
+				217,
+				219,
+				221,
+				223,
+				226,
+				227,
+				228,
+				229,
+				230,
+				231,
+				232,
+				233,
+				234,
+				235,
+				236,
+				237,
+				238,
+				239,
+				240,
+				241,
+				242,
+				243,
+				244,
+				245,
+				246,
+				247,
+				248,
+				249,
+				250,
+				251,
+				252,
+				253,
+				254,
+				255,
+				256,
+				257,
+				258,
+				259,
+				260,
+				261,
+				262,
+				263,
+				264,
+				265,
+				266,
+				267,
+				268,
+				269,
+				270,
+				271,
+				272,
+				273,
+				274,
+				275,
+				276,
+				277,
+				278,
+				279,
+				280,
+				281,
+				282,
+				283,
+				284,
+				285,
+				286,
+				287,
+				288,
+				289,
+				290,
+				291,
+				292,
+				293,
+				294,
+				295,
+				296,
+				297,
+				298,
+				299,
+				300,
+				301,
+				302,
+				303,
+				304,
+				305,
+				306,
+				307,
+				308,
+				309,
+				310,
+				311,
+				312,
+				313,
+				314,
+				315,
+				316,
+				317,
+				318,
+				319,
+				320,
+				321,
+				322,
+				323,
+				324,
+				325,
+				326,
+				327,
+				328,
+				329,
+				330,
+				331,
+				332,
+				333,
+				334,
+				335,
+				336,
+				337,
+				338,
+				339,
+				340,
+				341,
+				342,
+				343,
+				344,
+				345,
+				352,
+				354,
+				358,
+				360,
+				362,
+				364,
+				366,
+				368,
+				370,
+				372,
+				374,
+				376,
+				378,
+				380,
+				382,
+				384,
+				386,
+				388,
+				390,
+				392,
+				394,
+				396,
+				398,
+				400,
+				402,
+				404,
+				406,
+				408,
+				409,
+				411,
+				413,
+				415,
+				417,
+				419,
+				421,
+				423,
+				425
+			]
+		},
+		{
+			"name" : "Precompile Header File",
+			"sourceIndexes" : 
+			[
+				426
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-build/Source/Core/CMakeFiles/rmlui_core.dir/cmake_pch.hxx.cxx",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/BaseXMLParser.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Box.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/BoxShadowCache.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/BoxShadowCache.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/BoxShadowHash.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/CallbackTexture.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Clock.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Clock.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/CompiledFilterShader.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ComputedValues.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ComputeProperty.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ComputeProperty.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Context.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ContextInstancer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ContextInstancerDefault.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ContextInstancerDefault.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ControlledLifetimeResource.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ConvolutionFilter.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Core.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataController.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataController.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataControllerDefault.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataControllerDefault.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataExpression.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataExpression.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataModel.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataModel.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataModelHandle.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataTypeRegister.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataVariable.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataView.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataView.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataViewDefault.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DataViewDefault.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Decorator.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorGradient.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorGradient.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorNinePatch.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorNinePatch.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorShader.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorShader.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorText.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorText.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiled.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiled.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiledBox.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiledBox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiledHorizontal.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiledHorizontal.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiledImage.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiledImage.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiledVertical.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorTiledVertical.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorUtilities.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DecoratorUtilities.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DocumentHeader.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/DocumentHeader.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/EffectSpecification.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Element.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementAnimation.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementAnimation.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementBackgroundBorder.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementBackgroundBorder.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementDefinition.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementDefinition.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementDocument.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementEffects.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementEffects.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementHandle.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementHandle.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementInstancer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementMeta.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementMeta.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementScroll.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementStyle.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementStyle.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementText.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ElementUtilities.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Event.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/EventDispatcher.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/EventDispatcher.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/EventInstancer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/EventInstancerDefault.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/EventInstancerDefault.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/EventListenerInstancer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/EventSpecification.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/EventSpecification.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Factory.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FileInterface.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FileInterfaceDefault.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FileInterfaceDefault.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Filter.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FilterBasic.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FilterBasic.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FilterBlur.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FilterBlur.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FilterDropShadow.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FilterDropShadow.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffect.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffectBlur.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffectBlur.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffectGlow.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffectGlow.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffectInstancer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffectOutline.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffectOutline.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffectShadow.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEffectShadow.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/FontEngineInterface.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Geometry.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/GeometryBackgroundBorder.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/GeometryBackgroundBorder.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/GeometryBoxShadow.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/GeometryBoxShadow.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/IdNameMap.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Log.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/LogDefault.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/LogDefault.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Math.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Memory.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Memory.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/MeshUtilities.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ObserverPtr.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Plugin.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PluginRegistry.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PluginRegistry.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Pool.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/precompiled.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Profiling.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertiesIterator.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertiesIteratorView.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Property.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyDefinition.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyDictionary.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserAnimation.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserAnimation.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserBoxShadow.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserBoxShadow.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserColorStopList.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserColorStopList.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserColour.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserColour.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserDecorator.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserDecorator.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserFilter.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserFilter.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserFontEffect.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserFontEffect.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserKeyword.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserKeyword.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserNumber.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserNumber.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserRatio.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserRatio.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserString.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserString.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserTransform.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyParserTransform.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertyShorthandDefinition.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/PropertySpecification.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/RenderInterface.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/RenderInterfaceCompatibility.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/RenderManager.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/RenderManagerAccess.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/RenderManagerAccess.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ScriptInterface.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ScrollController.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/ScrollController.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Spritesheet.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Stream.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StreamFile.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StreamFile.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StreamMemory.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StringUtilities.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheet.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetContainer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetFactory.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetFactory.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetNode.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetNode.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetParser.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetParser.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetSelector.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetSelector.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/StyleSheetSpecification.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/SystemInterface.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Template.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Template.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TemplateCache.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TemplateCache.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Texture.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureDatabase.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureDatabase.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureLayout.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureLayout.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureLayoutRectangle.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureLayoutRectangle.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureLayoutRow.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureLayoutRow.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureLayoutTexture.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TextureLayoutTexture.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Traits.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Transform.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TransformPrimitive.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TransformState.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TransformState.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TransformUtilities.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TransformUtilities.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Tween.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/TypeConverter.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/URL.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Variant.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/WidgetScroll.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/WidgetScroll.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLNodeHandler.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLNodeHandlerBody.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLNodeHandlerBody.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLNodeHandlerDefault.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLNodeHandlerDefault.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLNodeHandlerHead.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLNodeHandlerHead.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLNodeHandlerTemplate.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLNodeHandlerTemplate.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLParser.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLParseTools.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/XMLParseTools.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Config/Config.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/BaseXMLParser.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Box.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/CallbackTexture.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Colour.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Colour.inl",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/CompiledFilterShader.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ComputedValues.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Containers/itlib/flat_map.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Containers/itlib/flat_set.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Containers/robin_hood.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Context.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ContextInstancer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ConvolutionFilter.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Core.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/DataModelHandle.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/DataStructHandle.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/DataTypeRegister.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/DataTypes.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/DataVariable.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Debug.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/DecorationTypes.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Decorator.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Dictionary.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/EffectSpecification.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Element.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Element.inl",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ElementDocument.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ElementInstancer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ElementScroll.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Elements/ElementForm.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Elements/ElementFormControl.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Elements/ElementFormControlInput.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Elements/ElementFormControlSelect.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Elements/ElementFormControlTextArea.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Elements/ElementProgress.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Elements/ElementTabSet.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ElementText.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ElementUtilities.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Event.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/EventInstancer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/EventListener.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/EventListenerInstancer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Factory.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/FileInterface.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Filter.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/FontEffect.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/FontEffectInstancer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/FontEngineInterface.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/FontGlyph.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/FontMetrics.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Geometry.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Header.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ID.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Input.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Log.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Math.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Matrix4.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Matrix4.inl",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Mesh.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/MeshUtilities.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/NumericValue.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ObserverPtr.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Platform.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Plugin.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Profiling.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/PropertiesIteratorView.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Property.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/PropertyDefinition.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/PropertyDictionary.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/PropertyIdSet.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/PropertyParser.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/PropertySpecification.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Rectangle.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/RenderBox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/RenderInterface.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/RenderInterfaceCompatibility.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/RenderManager.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ScriptInterface.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/ScrollTypes.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Span.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Spritesheet.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/StableVector.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Stream.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/StreamMemory.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/StringUtilities.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/StyleSheet.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/StyleSheetContainer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/StyleSheetSpecification.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/StyleSheetTypes.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/StyleTypes.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/SystemInterface.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/TextInputContext.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/TextInputHandler.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/TextShapingContext.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Texture.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Traits.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Transform.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/TransformPrimitive.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Tween.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/TypeConverter.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/TypeConverter.inl",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Types.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/UniqueRenderResource.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Unit.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/URL.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Utilities.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Variant.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Variant.inl",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Vector2.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Vector2.inl",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Vector3.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Vector3.inl",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Vector4.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Vector4.inl",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/Vertex.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/XMLNodeHandler.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 10,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Include/RmlUi/Core/XMLParser.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementFormControl.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementFormControlInput.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementFormControlSelect.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementFormControlTextArea.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementForm.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementImage.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementImage.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementLabel.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementLabel.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementProgress.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementTabSet.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementTextSelection.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/ElementTextSelection.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeButton.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeButton.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeCheckbox.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeCheckbox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputType.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputType.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeRadio.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeRadio.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeRange.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeRange.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeSubmit.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeSubmit.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeText.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/InputTypeText.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetDropDown.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetDropDown.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetSlider.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetSlider.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetTextInput.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetTextInput.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetTextInputMultiLine.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetTextInputMultiLine.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetTextInputSingleLine.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetTextInputSingleLine.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetTextInputSingleLinePassword.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/WidgetTextInputSingleLinePassword.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/XMLNodeHandlerSelect.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/XMLNodeHandlerSelect.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/XMLNodeHandlerTabSet.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/XMLNodeHandlerTabSet.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 12,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/XMLNodeHandlerTextArea.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements/XMLNodeHandlerTextArea.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/BlockContainer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/BlockContainer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/BlockFormattingContext.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/BlockFormattingContext.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/ContainerBox.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/ContainerBox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/FlexFormattingContext.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/FlexFormattingContext.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/FloatedBoxSpace.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/FloatedBoxSpace.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/FormattingContext.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/FormattingContext.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/InlineBox.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/InlineBox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/InlineContainer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/InlineContainer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/InlineLevelBox.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/InlineLevelBox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/InlineTypes.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LayoutBox.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LayoutBox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LayoutDetails.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LayoutDetails.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LayoutEngine.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LayoutEngine.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LayoutPools.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LayoutPools.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LineBox.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/LineBox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/ReplacedFormattingContext.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/ReplacedFormattingContext.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/TableFormattingContext.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/TableFormattingContext.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 14,
+			"compileGroupIndex" : 1,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/TableFormattingDetails.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout/TableFormattingDetails.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 0,
+			"path" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-build/Source/Core/CMakeFiles/rmlui_core.dir/cmake_pch.hxx",
+			"sourceGroupIndex" : 2
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

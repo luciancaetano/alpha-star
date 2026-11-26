@@ -138,7 +138,11 @@ simulate(game, { seconds: 0.1, platform: "android" }).expect.text("title", "hint
 
 // A 1080x2340 phone shows more world; the pipes (the difficulty) must not change.
 const phone = simulate(game, { scene: "play", seconds: 3.1, size: [1080, 2340], platform: "android" });</code></pre>
-<h3 id="10-app-pauses">10. App pauses</h3>
+<h3 id="10-fingers-touches">10. Fingers: <code>touches</code></h3>
+<pre><code>const run = simulate(game, { seconds: 1, platform: "android",
+  touches: [{ id: 1, path: [[0, [80, 300]], [10, [140, 300]], [40, null]] }] });</code></pre>
+<p>Each touch is one finger: <code>[frame, [x, y]]</code> puts it down or moves it (game pixels, screen space), <code>[frame, null]</code> lifts it. On a mobile <code>platform</code> the fingers go through <code>config.touchSticks</code> and <code>config.touchButtons</code> exactly as on a phone (capture, deadzone, axes); elsewhere they are plain touches (<code>ctx.input.touches()</code>, <code>"Touch"</code>, <code>"MouseLeft"</code>).</p>
+<h3 id="11-app-pauses">11. App pauses</h3>
 <p><code>appPauses: [[from, to]]</code> puts the app in the background between those frames (focus lost, phone switched app): <code>ctx.onPause</code> runs at <code>from</code>, no steps run, <code>ctx.onResume</code> runs at <code>to</code>.</p>
 <h2 id="recipes">Recipes</h2>
 <p><strong>Test pure rules without the engine.</strong> Logic that is a plain function needs no <code>simulate</code> (<code>examples/puzzle</code> tests its Sokoban rules this way):</p>

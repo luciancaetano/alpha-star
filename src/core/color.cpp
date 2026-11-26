@@ -5,6 +5,11 @@
 
 namespace alpha::core {
 
+Color scaled(Color c, float k) {
+  const auto f = [k](std::uint8_t v) { return static_cast<std::uint8_t>(v * k + 0.5f); };
+  return {f(c.r), f(c.g), f(c.b), c.a};
+}
+
 namespace {
 
 std::optional<std::uint8_t> hex_digit(char c) {

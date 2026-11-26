@@ -28,6 +28,9 @@ struct Frame {
   core::Color background;
   std::vector<core::DrawItem> shapes;  // already ordered (World::draw_items)
   std::vector<core::TextItem> texts;   // drawn over shapes, in order
+  // Screen-space shapes in game pixels (touch controls): over the lit world
+  // and its effects, under the texts.
+  std::vector<core::DrawItem> overlay;
   std::optional<core::View> view;
   // Render-only looks: lights (with `lighting` set) multiply the world by a
   // lightmap; `effects` then run over the lit world, in order. Texts stay unaffected.

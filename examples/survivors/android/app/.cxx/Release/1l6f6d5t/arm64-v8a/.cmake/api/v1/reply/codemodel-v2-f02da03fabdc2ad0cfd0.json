@@ -1,0 +1,624 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3,
+						5,
+						6,
+						7,
+						8,
+						9,
+						16
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.6.0"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						3,
+						7,
+						8,
+						9,
+						10,
+						11
+					]
+				},
+				{
+					"build" : "_deps/doctest-build",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.doctest-build-Release-3a007c4a156ca5eb8986.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/doctest-src",
+					"targetIndexes" : 
+					[
+						15
+					]
+				},
+				{
+					"build" : "_deps/sdl3-build",
+					"jsonFile" : "directory-_deps.sdl3-build-Release-f3eeec8c58e5c50d866e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/sdl3-src",
+					"targetIndexes" : 
+					[
+						0,
+						2
+					]
+				},
+				{
+					"build" : "_deps/box2d-build",
+					"childIndexes" : 
+					[
+						4
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.box2d-build-Release-08272d054157b3ab3f72.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/box2d-src"
+				},
+				{
+					"build" : "_deps/box2d-build/src",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.box2d-build.src-Release-ade4bb259bcdfaa20e03.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 3,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/box2d-src/src",
+					"targetIndexes" : 
+					[
+						14
+					]
+				},
+				{
+					"build" : "_deps/quickjs-build",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.quickjs-build-Release-f4977b24d838657d97c0.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 4,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/quickjs-src",
+					"targetIndexes" : 
+					[
+						13,
+						17,
+						18,
+						19,
+						20,
+						23,
+						24
+					]
+				},
+				{
+					"build" : "_deps/entt-build",
+					"jsonFile" : "directory-_deps.entt-build-Release-4fd60ec6e0460d045732.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 5,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/entt-src"
+				},
+				{
+					"build" : "_deps/sdl3_image-build",
+					"jsonFile" : "directory-_deps.sdl3_image-build-Release-5e32f08b5cfe6d5833f8.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 6,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/sdl3_image-src",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "_deps/freetype-build",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.freetype-build-Release-a6fef82ae69a690540f5.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 7,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/freetype-src",
+					"targetIndexes" : 
+					[
+						16
+					]
+				},
+				{
+					"build" : "_deps/rmlui-build",
+					"childIndexes" : 
+					[
+						10,
+						15
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.rmlui-build-Release-e4af6108201f8a3f225f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 8,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src"
+				},
+				{
+					"build" : "_deps/rmlui-build/Source",
+					"childIndexes" : 
+					[
+						11,
+						14
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.rmlui-build.Source-Release-d188393b4ec1180b62e9.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 9,
+					"projectIndex" : 8,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source"
+				},
+				{
+					"build" : "_deps/rmlui-build/Source/Core",
+					"childIndexes" : 
+					[
+						12,
+						13
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.rmlui-build.Source.Core-Release-8098eeb936259f33c043.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 10,
+					"projectIndex" : 8,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core",
+					"targetIndexes" : 
+					[
+						21
+					]
+				},
+				{
+					"build" : "_deps/rmlui-build/Source/Core/Elements",
+					"jsonFile" : "directory-_deps.rmlui-build.Source.Core.Elements-Release-619f2ed21197fe552394.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 11,
+					"projectIndex" : 8,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Elements"
+				},
+				{
+					"build" : "_deps/rmlui-build/Source/Core/Layout",
+					"jsonFile" : "directory-_deps.rmlui-build.Source.Core.Layout-Release-b6e36432add042dad1c4.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 11,
+					"projectIndex" : 8,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Core/Layout"
+				},
+				{
+					"build" : "_deps/rmlui-build/Source/Debugger",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.rmlui-build.Source.Debugger-Release-8ba27fe8ab934e168eb4.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 10,
+					"projectIndex" : 8,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Source/Debugger",
+					"targetIndexes" : 
+					[
+						22
+					]
+				},
+				{
+					"build" : "_deps/rmlui-build/Samples",
+					"jsonFile" : "directory-_deps.rmlui-build.Samples-Release-d6e469ca48f60f659aa4.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 9,
+					"projectIndex" : 8,
+					"source" : "examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a/_deps/rmlui-src/Samples"
+				},
+				{
+					"build" : "src",
+					"jsonFile" : "directory-src-Release-c94b7c2814d5a21df52c.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.6.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "src",
+					"targetIndexes" : 
+					[
+						4,
+						5,
+						6,
+						12
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8
+					],
+					"directoryIndexes" : 
+					[
+						0,
+						16
+					],
+					"name" : "alpha_star",
+					"targetIndexes" : 
+					[
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "doctest",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						15
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "SDL3",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0,
+						2
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3,
+						4
+					],
+					"name" : "box2d",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						14
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						5
+					],
+					"name" : "quickjs",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						13,
+						17,
+						18,
+						19,
+						20,
+						23,
+						24
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						6
+					],
+					"name" : "EnTT",
+					"parentIndex" : 0
+				},
+				{
+					"directoryIndexes" : 
+					[
+						7
+					],
+					"name" : "SDL3_image",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						8
+					],
+					"name" : "freetype",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						16
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15
+					],
+					"name" : "RmlUi",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						21,
+						22
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 2,
+					"id" : "SDL3-shared::@405c074760d2f6728126",
+					"jsonFile" : "target-SDL3-shared-Release-ace9c211a019f9aec8d4.json",
+					"name" : "SDL3-shared",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 7,
+					"id" : "SDL3_image-static::@80cdc087d69ec7f1fccf",
+					"jsonFile" : "target-SDL3_image-static-Release-95455c9b2b27efa25844.json",
+					"name" : "SDL3_image-static",
+					"projectIndex" : 6
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "SDL_uclibc::@405c074760d2f6728126",
+					"jsonFile" : "target-SDL_uclibc-Release-fb26b8c3afb3eb023b72.json",
+					"name" : "SDL_uclibc",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "alpha_codecs::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-alpha_codecs-Release-00f4388c496da9c0f72f.json",
+					"name" : "alpha_codecs",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 16,
+					"id" : "alpha_core::@145eef247bfb46b6828c",
+					"jsonFile" : "target-alpha_core-Release-4e1f84f348aae5c4cea6.json",
+					"name" : "alpha_core",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 16,
+					"id" : "alpha_devtools::@145eef247bfb46b6828c",
+					"jsonFile" : "target-alpha_devtools-Release-528ae0a3a1739cbc473c.json",
+					"name" : "alpha_devtools",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 16,
+					"id" : "alpha_engine::@145eef247bfb46b6828c",
+					"jsonFile" : "target-alpha_engine-Release-265e42b46dc5dd485931.json",
+					"name" : "alpha_engine",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "alpha_harfbuzz::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-alpha_harfbuzz-Release-52cbbc7992cc78d20f87.json",
+					"name" : "alpha_harfbuzz",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "alpha_imgui::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-alpha_imgui-Release-a5c0aa829022da7c2a05.json",
+					"name" : "alpha_imgui",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "alpha_monocypher::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-alpha_monocypher-Release-4d41366cb54d78ef21ab.json",
+					"name" : "alpha_monocypher",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "alpha_rmlui_sdl::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-alpha_rmlui_sdl-Release-a0c12cda77e8c8ceab6c.json",
+					"name" : "alpha_rmlui_sdl",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "alpha_sheenbidi::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-alpha_sheenbidi-Release-d51b7a2bbf7adeb0ddad.json",
+					"name" : "alpha_sheenbidi",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 16,
+					"id" : "alpha_star::@145eef247bfb46b6828c",
+					"jsonFile" : "target-alpha_star-Release-e3675f5d4b492400ee8a.json",
+					"name" : "alpha_star",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "api-test::@f51d6c113a35db52c430",
+					"jsonFile" : "target-api-test-Release-799b66f673661db0672e.json",
+					"name" : "api-test",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "box2d::@20f5237e34ad7ded9806",
+					"jsonFile" : "target-box2d-Release-9542d72e693ddc51459b.json",
+					"name" : "box2d",
+					"projectIndex" : 3
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "doctest_with_main::@de8c2d1415f8a28c2e63",
+					"jsonFile" : "target-doctest_with_main-Release-4dede0fb94eac0d67fc8.json",
+					"name" : "doctest_with_main",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "freetype::@d06f9f5ffc3cc0b4bd77",
+					"jsonFile" : "target-freetype-Release-1495e2ff14d26be6da7b.json",
+					"name" : "freetype",
+					"projectIndex" : 7
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "function_source::@f51d6c113a35db52c430",
+					"jsonFile" : "target-function_source-Release-f66ceff92f1aa8e86248.json",
+					"name" : "function_source",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "qjs::@f51d6c113a35db52c430",
+					"jsonFile" : "target-qjs-Release-a86cae153785059aaf90.json",
+					"name" : "qjs",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "qjs_exe::@f51d6c113a35db52c430",
+					"jsonFile" : "target-qjs_exe-Release-be60aa149b6cb5fe85c2.json",
+					"name" : "qjs_exe",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "qjsc::@f51d6c113a35db52c430",
+					"jsonFile" : "target-qjsc-Release-d098d454515c7166a8b0.json",
+					"name" : "qjsc",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 11,
+					"id" : "rmlui_core::@583e44b40354f940ae80",
+					"jsonFile" : "target-rmlui_core-Release-40f57393bdfb2791bd56.json",
+					"name" : "rmlui_core",
+					"projectIndex" : 8
+				},
+				{
+					"directoryIndex" : 14,
+					"id" : "rmlui_debugger::@f9fc1faaf9111c646d43",
+					"jsonFile" : "target-rmlui_debugger-Release-ee6369e97c7e7b0dcd2e.json",
+					"name" : "rmlui_debugger",
+					"projectIndex" : 8
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "run-test262::@f51d6c113a35db52c430",
+					"jsonFile" : "target-run-test262-Release-108008760758f49e8bb3.json",
+					"name" : "run-test262",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "unicode_gen::@f51d6c113a35db52c430",
+					"jsonFile" : "target-unicode_gen-Release-a9175ab741951f703115.json",
+					"name" : "unicode_gen",
+					"projectIndex" : 4
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/workspace/alpha-star/examples/survivors/android/app/.cxx/Release/1l6f6d5t/arm64-v8a",
+		"source" : "C:/workspace/alpha-star"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

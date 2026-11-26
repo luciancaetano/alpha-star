@@ -234,7 +234,19 @@ simulate(game, { seconds: 0.1, platform: "android" }).expect.text("title", "hint
 const phone = simulate(game, { scene: "play", seconds: 3.1, size: [1080, 2340], platform: "android" });
 ```
 
-### 10. App pauses
+### 10. Fingers: `touches`
+
+```ts
+const run = simulate(game, { seconds: 1, platform: "android",
+  touches: [{ id: 1, path: [[0, [80, 300]], [10, [140, 300]], [40, null]] }] });
+```
+
+Each touch is one finger: `[frame, [x, y]]` puts it down or moves it (game pixels, screen space),
+`[frame, null]` lifts it. On a mobile `platform` the fingers go through `config.touchSticks` and
+`config.touchButtons` exactly as on a phone (capture, deadzone, axes); elsewhere they are plain
+touches (`ctx.input.touches()`, `"Touch"`, `"MouseLeft"`).
+
+### 11. App pauses
 
 `appPauses: [[from, to]]` puts the app in the background between those frames (focus lost,
 phone switched app): `ctx.onPause` runs at `from`, no steps run, `ctx.onResume` runs at `to`.

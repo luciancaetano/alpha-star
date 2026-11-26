@@ -1,0 +1,9 @@
+{
+  "revision": 0,
+  "rules": [
+    {
+      "primary-output": "src\\CMakeFiles\\alpha_core.dir\\core\\glyph_layout.cpp.o"
+    }
+  ],
+  "version": 1
+}

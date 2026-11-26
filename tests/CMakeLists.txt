@@ -26,6 +26,7 @@ set(ALPHA_TEST_SOURCES
   core/sprite_test.cpp
   core/time_test.cpp
   core/touch_test.cpp
+  core/touch_pad_test.cpp
   core/values_test.cpp
   core/version_test.cpp)
 set(ALPHA_TEST_LIBS alpha_core)
@@ -51,6 +52,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     render/effects_render_test.cpp
     render/postfx_render_test.cpp
     render/shader_render_test.cpp
+    render/touch_draw_test.cpp
     render/renderer_test.cpp
     render/tessellate_test.cpp
     script/app_events_test.cpp
@@ -61,6 +63,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/bytecode_script_test.cpp
     script/perf_script_test.cpp
     script/input_script_test.cpp
+    script/touch_script_test.cpp
     script/hot_reload_test.cpp
     script/reload_test.cpp
     script/level_script_test.cpp

@@ -1,0 +1,10 @@
+<rml><head><link type="text/rcss" href="candle.rcss"/>
+<style> #build { white-space: pre-line; margin: 2dp 0dp 4dp 0dp; } </style></head>
+<body class="safe veil">
+  <div class="panel" style="margin-top: 24dp;">
+    <h1 data-t="paused.title">PAUSED</h1>
+    <p id="build"></p>
+    <button id="resume" autofocus data-t="paused.resume">RESUME</button>
+    <button id="quit" data-t="paused.quit">GIVE UP</button>
+  </div>
+</body></rml>
