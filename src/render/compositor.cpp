@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <utility>
 
 #include "render/light_mesh.hpp"
 
@@ -91,6 +92,7 @@ void Compositor::light(const std::optional<core::Lighting>& lighting, const std:
 
 void Compositor::finish(const std::vector<core::Effect>& chain) {
   for (const core::Effect& e : chain) apply(e);
+  shaders_.prune();
   if (!canvas_) return;
   blit(canvas_, nullptr, SDL_BLENDMODE_NONE, SDL_SCALEMODE_NEAREST);
   canvas_ = nullptr;
@@ -102,6 +104,7 @@ void Compositor::apply(const core::Effect& e) {
     case core::EffectKind::Bloom: return bloom(e);
     case core::EffectKind::Pixelate: return pixelate(e);
     case core::EffectKind::Tint: return tint(e);
+    case core::EffectKind::Shader: return shader(e);
     case core::EffectKind::Vignette:
       vignette_triangles(size_, e.strength, e.radius, mesh_);
       return geometry(SDL_BLENDMODE_BLEND);
@@ -146,6 +149,21 @@ void Compositor::tint(const core::Effect& e) {
   const SDL_FRect all{0, 0, size_.x, size_.y};
   SDL_RenderFillRect(sdl_, &all);
   SDL_SetRenderDrawBlendMode(sdl_, SDL_BLENDMODE_BLEND);
+}
+
+// The canvas drawn through the shader into the spare target, which becomes the canvas.
+void Compositor::shader(const core::Effect& e) {
+  SDL_GPURenderState* state = canvas_ ? shaders_.state(e) : nullptr;
+  SDL_Texture* out = state ? target(kPost, whole(size_.x), whole(size_.y)) : nullptr;
+  if (!out) return;
+  SDL_SetTextureBlendMode(canvas_, SDL_BLENDMODE_NONE);
+  SDL_SetTextureScaleMode(canvas_, SDL_SCALEMODE_NEAREST);
+  use(out);
+  SDL_SetGPURenderState(sdl_, state);
+  SDL_RenderTexture(sdl_, canvas_, nullptr, nullptr);
+  SDL_SetGPURenderState(sdl_, nullptr);
+  std::swap(targets_[kScene], targets_[kPost]);
+  canvas_ = out;
 }
 
 }  // namespace alpha::render

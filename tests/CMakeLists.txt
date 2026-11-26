@@ -16,6 +16,7 @@ set(ALPHA_TEST_SOURCES
   core/particles_test.cpp
   core/perf_test.cpp
   core/postfx_test.cpp
+  core/shader_test.cpp
   core/input_test.cpp
   core/log_ring_test.cpp
   core/pack_watch_test.cpp
@@ -45,6 +46,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     platform/window_test.cpp
     render/effects_render_test.cpp
     render/postfx_render_test.cpp
+    render/shader_render_test.cpp
     render/renderer_test.cpp
     render/tessellate_test.cpp
     script/app_events_test.cpp
@@ -61,6 +63,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/simulate_test.cpp
     script/effects_script_test.cpp
     script/postfx_script_test.cpp
+    script/shader_script_test.cpp
     script/entity_links_test.cpp
     script/physics_script_test.cpp
     script/pixel_mode_test.cpp
@@ -107,5 +110,9 @@ target_include_directories(alpha_tests PRIVATE script)
 target_compile_definitions(alpha_tests PRIVATE DOCTEST_CONFIG_USE_STD_HEADERS
   ALPHA_TEST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures"
   ALPHA_TEST_FONT="${PROJECT_SOURCE_DIR}/examples/flappy/assets/fonts/PressStart2P-Regular.ttf")
+if(TARGET shadercross)  # the debug-engine compile path, against the built tool
+  target_compile_definitions(alpha_tests PRIVATE ALPHA_TEST_SHADERCROSS="$<TARGET_FILE:shadercross>")
+  add_dependencies(alpha_tests alpha_shadercross)
+endif()
 alpha_set_warnings(alpha_tests)
 add_test(NAME alpha_tests COMMAND alpha_tests)

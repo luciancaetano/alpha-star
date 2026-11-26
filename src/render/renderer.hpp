@@ -79,6 +79,7 @@ class Renderer {
   void add(const core::DrawItem& item, const core::View& view);
   void flush(const core::View& view);
   SDL_Texture* texture(const core::ImagePtr& image);
+  SDL_Texture* white();
   void draw_text(const core::TextItem& text);
   void add_text(const core::DrawItem& item, const core::View& view);
   void batch(const BatchKey& key, const core::View& view);
@@ -100,6 +101,10 @@ class Renderer {
   // World-text atlases at output sizes; an evicted one frees its texture.
   FontCache fonts_;
   std::vector<SDL_Texture*> doomed_;  // evicted this frame
+  // 1x1 white: carries add/multiply for untextured batches (SDL 3.4's software
+  // renderer draws untextured rects with alpha blend whatever the draw blend mode;
+  // drawn with wrap addressing so it takes the triangle path).
+  SDL_Texture* white_ = nullptr;
   Compositor compositor_;
 };
 

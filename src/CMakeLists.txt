@@ -24,6 +24,7 @@ add_library(alpha_core
   core/postfx.cpp
   core/perf.cpp
   core/random.cpp
+  core/shader.cpp
   core/sheet.cpp
   core/source_map.cpp
   core/synth.cpp
@@ -88,6 +89,8 @@ add_library(alpha_engine
   platform/mobile.cpp
   platform/music_stream.cpp
   platform/sdl_input.cpp
+  platform/shader_compiler.cpp
+  platform/shader_files.cpp
   platform/vfs.cpp
   platform/window.cpp
   render/compositor.cpp
@@ -95,6 +98,7 @@ add_library(alpha_engine
   render/light_mesh.cpp
   render/quads.cpp
   render/renderer.cpp
+  render/shader_states.cpp
   render/tessellate.cpp
   render/text_layout.cpp
   script/app_events.cpp

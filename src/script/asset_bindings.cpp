@@ -4,11 +4,15 @@
 #include <memory>
 
 #include "core/error.hpp"
+#include "core/limits.hpp"
+#include "core/shader.hpp"
 #include "platform/music_stream.hpp"
+#include "platform/shader_files.hpp"
 #include "platform/vfs.hpp"
 #include "script/audio_bindings.hpp"
 #include "script/js_value.hpp"
 #include "script/native_guard.hpp"
+#include "script/spec_fields.hpp"
 #include "script/synth_parser.hpp"
 
 namespace alpha::script {
@@ -45,7 +49,34 @@ JSValue load_music(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 3> kNatives{{
+// assets.shaders.<name>.uniforms: { name: default } in cbuffer order.
+std::vector<std::pair<std::string, float>> uniforms_arg(JSContext* ctx, JSValueConst v, const std::string& what) {
+  std::vector<std::pair<std::string, float>> out;
+  if (JS_IsUndefined(v)) return out;
+  if (!JS_IsObject(v)) throw core::Error(what + " must be { name: default number }, got " + describe(ctx, v));
+  const std::vector<std::string> names = keys(ctx, v);
+  core::check_uniform_count(what, names.size());
+  for (const std::string& key : names) {
+    out.emplace_back(key, static_cast<float>(number_arg(ctx, field(ctx, v, key.c_str()).get(), what + "." + key)));
+  }
+  return out;
+}
+
+// loadShader(name, { file, uniforms? }): validated, its blobs compiled (dev) or read from the pack.
+JSValue load_shader(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  const std::string name = string_arg(ctx, argv[0], "shader name");
+  const std::string what = "assets.shaders." + name;
+  if (!JS_IsObject(argv[1])) throw core::Error(what + " must be { file: \"x.hlsl\", uniforms?: { name: number } }, got " + describe(ctx, argv[1]));
+  if (s.shaders.size() >= core::kMaxShaders) throw core::Error(what + ": at most " + std::to_string(core::kMaxShaders) + " shaders");
+  core::Shader shader = core::make_shader(name, string_arg(ctx, field(ctx, argv[1], "file").get(), what + ".file"),
+                                          uniforms_arg(ctx, field(ctx, argv[1], "uniforms").get(), what + ".uniforms"));
+  shader.blobs = platform::load_shader_blobs(s.asset_dir, shader.file, what);
+  s.shaders[name] = std::make_shared<const core::Shader>(std::move(shader));
+  return JS_UNDEFINED;
+}
+
+constexpr std::array<Native, 4> kNatives{{
+    {"loadShader", guarded<load_shader>, 2},
     {"loadSound", guarded<load_sound>, 3},
     {"synthSound", guarded<synth_sound>, 3},
     {"loadMusic", guarded<load_music>, 2},

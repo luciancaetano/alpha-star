@@ -280,7 +280,7 @@ int main(int argc, char** argv) {
   SDL_Renderer* sdl = nullptr;
   alpha::platform::prepare_mobile(info.width, info.height);
   const alpha::core::Vec2 size{static_cast<float>(info.width), static_cast<float>(info.height)};
-  if (!alpha::platform::open_window({info.title, size, info.window, options.hidden}, &window, &sdl)) {
+  if (!alpha::platform::open_window({info.title, size, info.window, options.hidden, info.shaders}, &window, &sdl)) {
     host.mixer().stop_all();  // same rule as the normal exit: SDL audio streams go before SDL_Quit
     return fail("SDL_CreateWindowAndRenderer");
   }

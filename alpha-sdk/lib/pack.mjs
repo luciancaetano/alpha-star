@@ -3,6 +3,7 @@
 //   <out>/<asset paths>  every file declared in game.assets, plus the files UI
 //                        documents reference (<link href>, src=, url(), image()),
 //                        BMFont pages and font license files, same relative paths
+//   <out>/<shader>.spv|.dxil|.msl compiled assets.shaders (lib/shaders.mjs; no .hlsl)
 //   <out>/THIRD_PARTY_NOTICES.txt  engine dependency notices + font licenses
 // The engine runs a pack with: alpha_star <out>
 import fs from "node:fs";
@@ -15,6 +16,7 @@ import { build } from "./build.mjs";
 import { mapReferences } from "./maps.mjs";
 import { BYTECODE_FILE, compileBytecode } from "./bytecode.mjs";
 import { bundledEngine, describeTargets, engineFile, shippingEngine } from "./engine.mjs";
+import { compileShaders, shadercrossTool } from "./shaders.mjs";
 
 const SHIM = path.join(path.dirname(fileURLToPath(import.meta.url)), "alpha-shim.mjs");
 
@@ -236,9 +238,10 @@ function gameFile(staging, standalone, { bytecode, compiler, bytecodeBits }) {
 // bytecode: standalone packs ship game.jsbc (no JS source, no source map) compiled by
 // `compiler` (default: this machine's release engine). bytecodeBits: also ship game.jsbc
 // without an engine binary, for a target built from source with that pointer width
-// (Android). Returns { ok, problems, files }. Writes nothing unless everything checks out.
+// (Android). shaderTool: shadercross for assets.shaders (default: next to the release engine).
+// Returns { ok, problems, files }. Writes nothing unless everything checks out.
 export async function exportPack({ root, entry, out, target = null, atlas = true, bytecode = true,
-                                   compiler = bundledEngine(), bytecodeBits = null }) {
+                                   compiler = bundledEngine(), bytecodeBits = null, shaderTool = shadercrossTool() }) {
   const standalone = target ? engineFor(target) : {};
   if (standalone.problem) return { ok: false, problems: [standalone.problem], files: [] };
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), "alpha-pack-"));
@@ -251,10 +254,14 @@ export async function exportPack({ root, entry, out, target = null, atlas = true
     if (!def) return { ok: false, problems: [problem("main module must `export default game({...})`", entry)], files: [] };
     const { files, problems } = packFiles(root, def);
     if (problems.length) return { ok: false, problems, files };
+    const shaders = path.join(staging, "shaders");
+    const shaderProblems = compileShaders({ root, def, out: shaders, tool: shaderTool });
+    if (shaderProblems.length) return { ok: false, problems: shaderProblems, files };
     fs.rmSync(out, { recursive: true, force: true });
     fs.mkdirSync(out, { recursive: true });
     fs.copyFileSync(path.join(staging, game.file), path.join(out, game.file));
     copyAssets(root, out, atlas ? writeAtlas(root, out, files) : files);
+    if (fs.existsSync(shaders)) fs.cpSync(shaders, out, { recursive: true });
     writeNotices(root, out, def);
     if (standalone.engine) {
       const dest = path.join(out, engineFile(target));

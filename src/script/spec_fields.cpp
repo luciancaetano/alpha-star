@@ -35,4 +35,18 @@ float number_or(JSContext* ctx, JSValueConst obj, const char* name, const std::s
   return static_cast<float>(number_arg(ctx, field(ctx, obj, name).get(), kSpawn + path));
 }
 
+std::vector<std::string> keys(JSContext* ctx, JSValueConst obj) {
+  JSPropertyEnum* tab = nullptr;
+  uint32_t len = 0;
+  std::vector<std::string> out;
+  if (JS_GetOwnPropertyNames(ctx, &tab, &len, obj, JS_GPN_STRING_MASK | JS_GPN_ENUM_ONLY) < 0) return out;
+  for (uint32_t i = 0; i < len; ++i) {
+    const char* name = JS_AtomToCString(ctx, tab[i].atom);
+    if (name) out.emplace_back(name);
+    JS_FreeCString(ctx, name);
+  }
+  JS_FreePropertyEnum(ctx, tab, len);
+  return out;
+}
+
 }  // namespace alpha::script

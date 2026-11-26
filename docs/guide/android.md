@@ -14,7 +14,7 @@ The project holds:
   the SDK's release engine for this machine: the bytecode format is the same on every
   little-endian 64-bit platform, and the engine built for the APK from the same source carries the
   same build id (QuickJS source hash + `-64`). `--no-bytecode` ships `main.js` instead;
-- SDL 3.2.10's Java glue (`SDLActivity`, version-checked against the engine at start);
+- SDL 3.4.20's Java glue (`SDLActivity`, version-checked against the engine at start);
 - a CMake build of the engine from the alpha-star source, **shipping flavor** (no dev tools, MCP or
   debug features), `arm64-v8a` only. The SDK finds the source in the repo it sits in, or pass
   `--engine-src <alpha-star checkout>` / set `ALPHA_ENGINE_SRC`.

@@ -139,6 +139,6 @@ test("the Java glue is SDL's own, version-matched with the engine's SDL", { skip
   assert.deepEqual(fs.readdirSync(ours).sort(), fs.readdirSync(sdl).sort());
   const lf = (s) => s.replace(/\r\n/g, "\n");  // git may check either copy out with other line endings
   for (const f of fs.readdirSync(sdl)) assert.equal(lf(read(ours, f)), lf(read(sdl, f)), f);
-  assert.match(fs.readFileSync(path.join(REPO, "cmake", "Dependencies.cmake"), "utf8"), /release-3\.2\.10/);
-  assert.match(read(ours, "SDLActivity.java"), /SDL_MICRO_VERSION = 10;/);
+  assert.match(fs.readFileSync(path.join(REPO, "cmake", "Dependencies.cmake"), "utf8"), /release-3\.4\.20/);
+  assert.match(read(ours, "SDLActivity.java"), /SDL_MICRO_VERSION = 20;/);
 });

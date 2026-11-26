@@ -30,7 +30,8 @@ MARKERS = {
                   rb"ALPHA_CONTROL_TOKEN"],
     "ALPHA_DEBUG_TOOLS": [rb"--screenshot", rb"--frames", rb"--tap-every", rb"--devtools", rb"--assets", rb"--compile",
                           rb"alpha/test", rb"simulate", rb"holdActions", rb"holdAxis", rb"testNames", rb"instanceCreate",
-                          rb"stepBudget", rb"uiView", rb"tagCounts", rb"previous game keeps running"],
+                          rb"stepBudget", rb"uiView", rb"tagCounts", rb"previous game keeps running",
+                          rb"shadercross", rb"ALPHA_SHADERCROSS"],
 }
 
 
@@ -75,7 +76,7 @@ def report(binary, hits, problems):
         print(f"  FORM  {problem}")
 
 
-SOURCE_SUFFIXES = (".js", ".mjs", ".cjs", ".ts", ".map")
+SOURCE_SUFFIXES = (".js", ".mjs", ".cjs", ".ts", ".map", ".hlsl")  # shaders ship as compiled blobs
 SOURCE_TEXT = [rb"sourceMappingURL", rb"export default", rb"import \{", rb"\bfunction\s*\w*\s*\([^)]*\)\s*\{"]
 
 

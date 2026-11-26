@@ -94,7 +94,9 @@ GameInfo Host::boot(Vm& vm, const std::string& path, const std::string& from) {
   const Value game = vm.import_bundle(path).prop("default");
   Value from_text(vm.engine->ctx(), JS_NewStringLen(vm.engine->ctx(), from.data(), from.size()));
   std::array<JSValueConst, 2> args{game.get(), from_text.get()};
-  return game_info(vm.engine->ctx(), vm.engine->call(vm.runtime("boot"), args));
+  GameInfo info = game_info(vm.engine->ctx(), vm.engine->call(vm.runtime("boot"), args));
+  info.shaders = !vm.main().shaders.empty();
+  return info;
 }
 
 void Host::step(const core::InputFrame& input, float dt) {

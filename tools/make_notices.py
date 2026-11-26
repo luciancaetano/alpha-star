@@ -49,8 +49,8 @@ def font_license():
 NOTICES = {
     "alpha-star": ("alpha-star engine", lambda d: (ROOT / "LICENSE").read_text(encoding="utf-8")),
     "freetype": ("FreeType 2.14.3 (font rasterizer) - https://freetype.org", freetype),
-    "sdl3": ("SDL 3.2.10 (Simple DirectMedia Layer) - https://libsdl.org", lambda d: (d / "sdl3-src" / "LICENSE.txt").read_text(encoding="utf-8")),
-    "sdl3_image": ("SDL_image 3.2.4 - https://github.com/libsdl-org/SDL_image",
+    "sdl3": ("SDL 3.4.20 (Simple DirectMedia Layer) - https://libsdl.org", lambda d: (d / "sdl3-src" / "LICENSE.txt").read_text(encoding="utf-8")),
+    "sdl3_image": ("SDL_image 3.4.8 - https://github.com/libsdl-org/SDL_image",
                    lambda d: (d / "sdl3_image-src" / "LICENSE.txt").read_text(encoding="utf-8")),
     "stb_image": ("stb_image 2.30 (inside SDL_image) - https://github.com/nothings/stb",
                   lambda d: stb(d / "sdl3_image-src" / "src" / "stb_image.h")),

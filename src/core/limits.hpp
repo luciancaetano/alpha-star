@@ -21,5 +21,10 @@ inline constexpr std::size_t kMaxTextChars = 4096;
 inline constexpr std::size_t kMaxSynthNotes = 256;
 // Game instances alive at once (the game plus simulate runs; each owns a world, UI and mixer).
 inline constexpr std::size_t kMaxInstances = 64;
+// Custom shaders (assets.shaders): float uniforms per shader (one 64-byte cbuffer),
+// shaders per game, and bytes per compiled blob read from a pack.
+inline constexpr std::size_t kMaxShaderUniforms = 16;
+inline constexpr std::size_t kMaxShaders = 32;
+inline constexpr std::size_t kMaxShaderBlobBytes = std::size_t{4} << 20;
 
 }  // namespace alpha::core

@@ -24,6 +24,7 @@ struct GameInfo {
   core::Color background{0, 0, 0, 255};
   core::WindowConfig window;  // config.window
   bool pause_on_focus_loss = true;  // config.pauseOnFocusLoss
+  bool shaders = false;              // assets.shaders: the window asks for the GPU renderer
 };
 
 // One exported test function of a test module; error is empty when it passed.

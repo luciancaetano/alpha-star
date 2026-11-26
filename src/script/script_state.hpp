@@ -17,6 +17,7 @@
 #include "core/mixer.hpp"
 #include "core/perf.hpp"
 #include "core/random.hpp"
+#include "core/shader.hpp"
 #include "core/sheet.hpp"
 #include "core/tags.hpp"
 #include "core/timers.hpp"
@@ -55,6 +56,8 @@ struct ScriptState {
   // size world-text boxes, per (font, pixel size).
   std::map<std::string, core::FontSourcePtr, std::less<>> fonts;
   std::map<std::pair<const core::FontSource*, int>, core::FontAtlasPtr> font_atlases;
+  // assets.shaders by name, with their compiled blobs (custom postfx effects).
+  std::map<std::string, core::ShaderPtr, std::less<>> shaders;
   // config.collision.categories, in order (category i has bit i + 1).
   std::vector<std::string> categories;
   // config.pixelMode false: filled shapes get antialiased edges unless shape.smooth says otherwise.

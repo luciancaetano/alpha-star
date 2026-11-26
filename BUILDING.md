@@ -28,6 +28,19 @@ cmake --build --preset dev        # -> build/dev/src/Debug/alpha_star.exe
 
 Same for the other presets (`cmake --preset release && cmake --build --preset release`).
 
+## Shader compiler (shadercross)
+
+Custom shaders (`assets.shaders`) are compiled by [SDL_shadercross](https://github.com/libsdl-org/SDL_shadercross)
+(`cmake/Shadercross.cmake`, pinned commit): HLSL -> SPIR-V, DXIL, MSL. The `dev` and `release` builds put the
+`shadercross` tool, `dxcompiler` and `dxil` next to `alpha_star` (building the engine builds it);
+`tools/stage_engine.py` stages them with the release engine for `alpha run` / `alpha export`. The `shipping`
+and Android builds never build it (`-DALPHA_SHADERCROSS=OFF` turns it off anywhere).
+
+- SPIRV-Cross is built from source (static, at shadercross's own submodule commit).
+- DXC is Microsoft's prebuilt release (`v1.9.2602`, SHA-256 pinned, the archive shadercross's own download
+  script uses): building DXC means building LLVM, about an hour and several GB per preset.
+- `ALPHA_SHADERCROSS=<path>` points a dev/release engine at another `shadercross` binary.
+
 ## Update the SDK engine (needed for `npm run start` in the examples)
 
 `alpha run` / `alpha test` (and so `npm run start` / `npm test` in a game folder) do **not** use

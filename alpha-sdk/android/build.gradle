@@ -1,5 +1,5 @@
 // alpha-star Android project, written by `alpha export --target android-arm64`.
-// Versions match SDL 3.2.10's android-project (the Java glue in app/src/main/java).
+// Versions match SDL 3.4.20's android-project (the Java glue in app/src/main/java).
 buildscript {
     repositories {
         mavenCentral()

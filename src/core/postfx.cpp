@@ -76,6 +76,17 @@ Effect make_effect(std::string_view name, const EffectNumbers& numbers, std::opt
   return out;
 }
 
+Effect make_shader_effect(const ShaderPtr& shader, const EffectNumbers& numbers) {
+  Effect out{EffectKind::Shader};
+  out.shader = shader;
+  out.uniforms = shader_uniforms(*shader, numbers);
+  return out;
+}
+
+std::string_view effect_name(const Effect& effect) {
+  return effect.kind == EffectKind::Shader ? std::string_view(effect.shader->name) : effect_name(effect.kind);
+}
+
 std::string_view effect_name(EffectKind kind) {
   for (const Rule& r : rules()) {
     if (r.kind == kind) return r.name;
@@ -95,18 +106,21 @@ std::string effect_names() {
 }
 
 bool needs_scene(const std::vector<Effect>& chain) {
-  return std::any_of(chain.begin(), chain.end(),
-                     [](const Effect& e) { return e.kind == EffectKind::Bloom || e.kind == EffectKind::Pixelate; });
+  const auto reads_frame = [](const Effect& e) {
+    return e.kind == EffectKind::Bloom || e.kind == EffectKind::Pixelate || e.kind == EffectKind::Shader;
+  };
+  return std::any_of(chain.begin(), chain.end(), reads_frame);
 }
 
 void PostFx::put(const Effect& effect) {
-  const auto it = std::find_if(chain_.begin(), chain_.end(), [&](const Effect& e) { return e.kind == effect.kind; });
+  const auto it = std::find_if(chain_.begin(), chain_.end(),
+                               [&](const Effect& e) { return effect_name(e) == effect_name(effect); });
   if (it != chain_.end()) *it = effect;
   else chain_.push_back(effect);
 }
 
-bool PostFx::remove(EffectKind kind) {
-  return std::erase_if(chain_, [kind](const Effect& e) { return e.kind == kind; }) > 0;
+bool PostFx::remove(std::string_view name) {
+  return std::erase_if(chain_, [name](const Effect& e) { return effect_name(e) == name; }) > 0;
 }
 
 }  // namespace alpha::core

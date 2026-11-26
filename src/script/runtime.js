@@ -124,6 +124,7 @@ function preload(s, assets, pixel) {
     N.loadFont(name, e.file, pixelOf(e.obj, `assets.fonts.${name}`, pixel));
   }
   for (const [name, file] of Object.entries(assets.ui ?? {})) N.loadUi(name, file);
+  for (const [name, shader] of Object.entries(assets.shaders ?? {})) N.loadShader(name, shader);
   s.i18n.load(assets.locales, s.game.config.locale);
   s.defaultLocale = s.i18n.locale;
 }

@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "core/color.hpp"
 #include "core/error.hpp"
@@ -19,6 +20,8 @@ inline const std::string kSpawn = "spawn: ";
 
 bool has(JSContext* ctx, JSValueConst obj, const char* name);
 Value field(JSContext* ctx, JSValueConst obj, const char* name);
+// The object's own enumerable string keys, in insertion order.
+std::vector<std::string> keys(JSContext* ctx, JSValueConst obj);
 // A "#rgb" / "#rrggbb" / "#rrggbbaa" string; `path` names the field in errors.
 core::Color color_arg(JSContext* ctx, JSValueConst v, const std::string& path);
 // The same color check where `what` is the whole field name (no "spawn: " prefix).

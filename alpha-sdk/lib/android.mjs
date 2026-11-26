@@ -1,5 +1,5 @@
 // `alpha export --target android-arm64`: a ready-to-build Gradle project.
-//   <out>/                  the SDK's android/ template (SDL 3.2.10 Java glue, Gradle wrapper)
+//   <out>/                  the SDK's android/ template (SDL 3.4.20 Java glue, Gradle wrapper)
 //   <out>/app/src/main/assets  the game pack (game.jsbc + assets/...), read through SDL's APK asset IO
 // The engine's libmain.so is built from the alpha-star source with the shipping flavor
 // (CMake externalNativeBuild). When the Android toolchain is installed, Gradle builds the

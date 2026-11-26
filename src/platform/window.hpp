@@ -18,6 +18,7 @@ struct WindowSetup {
   core::Vec2 game;  // config.size
   core::WindowConfig config;
   bool hidden = false;  // agent runs
+  bool gpu = false;     // assets.shaders: SDL's GPU renderer (custom shaders), else SDL's default
 };
 
 // Creates the window (sized for the scaling mode; fullscreen, resizable,

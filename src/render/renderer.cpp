@@ -1,6 +1,7 @@
 #include "render/renderer.hpp"
 
 #include <cmath>
+#include <cstdint>
 #include <utility>
 
 #include "core/image_filter.hpp"
@@ -67,6 +68,7 @@ void Renderer::present_logical() {
 
 Renderer::~Renderer() {
   for (const auto& [image, tex] : textures_) SDL_DestroyTexture(tex);
+  SDL_DestroyTexture(white_);
 }
 
 void Renderer::draw(const Frame& frame) {
@@ -151,14 +153,19 @@ void Renderer::flush(const core::View& view) {
   if (batch_.empty()) return;
   const core::View seen = core::parallax_view(view, batch_key_.parallax);
   const SDL_BlendMode mode = sdl_blend(batch_key_.blend);
-  if (batch_key_.texture) SDL_SetTextureBlendMode(batch_key_.texture, mode);
+  SDL_Texture* tex = batch_key_.texture || mode == SDL_BLENDMODE_BLEND ? batch_key_.texture : white();
+  if (tex) SDL_SetTextureBlendMode(tex, mode);
   else SDL_SetRenderDrawBlendMode(sdl_, mode);
   vertices_.clear();
   for (const Vertex& v : batch_) {
     const core::Vec2 p = core::to_screen(seen, v.pos);
     vertices_.push_back({{p.x, p.y}, to_sdl(v.color), {v.uv.x, v.uv.y}});
   }
-  SDL_RenderGeometry(sdl_, batch_key_.texture, vertices_.data(), static_cast<int>(vertices_.size()), nullptr, 0);
+  // Wrap addressing keeps the software renderer off its rect shortcut (which ignores the
+  // blend mode); the white texel looks the same either way.
+  if (tex == white_) SDL_SetRenderTextureAddressMode(sdl_, SDL_TEXTURE_ADDRESS_WRAP, SDL_TEXTURE_ADDRESS_WRAP);
+  SDL_RenderGeometry(sdl_, tex, vertices_.data(), static_cast<int>(vertices_.size()), nullptr, 0);
+  if (tex == white_) SDL_SetRenderTextureAddressMode(sdl_, SDL_TEXTURE_ADDRESS_AUTO, SDL_TEXTURE_ADDRESS_AUTO);
   ++stats_.draw_calls;
   stats_.vertices += static_cast<int>(vertices_.size());
   batch_.clear();
@@ -178,6 +185,14 @@ SDL_Texture* Renderer::texture(const core::ImagePtr& image) {
   SDL_SetTextureScaleMode(tex, image->filter == core::Filter::nearest ? SDL_SCALEMODE_NEAREST : SDL_SCALEMODE_LINEAR);
   textures_[image.get()] = tex;
   return tex;
+}
+
+SDL_Texture* Renderer::white() {
+  if (white_) return white_;
+  const std::uint32_t pixel = 0xffffffffu;
+  white_ = SDL_CreateTexture(sdl_, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, 1, 1);
+  if (white_) SDL_UpdateTexture(white_, nullptr, &pixel, 4);
+  return white_;
 }
 
 void Renderer::draw_text(const core::TextItem& text) {

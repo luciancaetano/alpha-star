@@ -81,6 +81,15 @@ ctx.spawn({ tags: ["popup"], pos, shape: { text: "+1", font: "pixel", size: 8, c
 `simulate(...).expect.particles().equals(n)` is exact. MCP `game_state` entities carry `layer`,
 `alpha`, `text` and `particles`.
 
+## Custom shaders
+
+`assets.shaders: { wave: { file: "shaders/wave.hlsl", uniforms: { amount: 0.5 } } }`, then
+`ctx.postfx.add("wave", { amount: 1 })` like a built-in effect. One HLSL fragment shader (frame at
+`t0, space2`, sampler `s0, space2`, float uniforms in one cbuffer at `b0, space3`, entry `main`, at most
+16 uniforms). `alpha run` compiles it on load and on every save (SDL_shadercross, staged with the engine);
+`alpha export` packs `.spv`/`.dxil`/`.msl` blobs instead of the `.hlsl`. Needs SDL's GPU renderer; elsewhere
+the effect is skipped with a warning. Details: the shaders guide and `llm/shaders.md`.
+
 ## Texture filtering (pixelMode)
 
 `config.pixelMode` (default `true`) is the game-wide filtering of images when scaled: `true` =

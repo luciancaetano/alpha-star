@@ -20,6 +20,25 @@ update(ctx) {
 ctx.spawn({ tags: ["torch"], pos: [100, 80], light: { radius: 110, color: "#ffd9a0", intensity: 1.5 } });</code></pre>
 <p>With <code>config.lighting</code>, the world is multiplied by a lightmap: <code>ambient</code> everywhere, plus each entity's <code>light</code> (full <code>color</code> x <code>intensity</code> at the entity, fading to nothing at <code>radius</code> world pixels). Lights add up, follow their entity (interpolated like shapes), its layer's parallax and the camera zoom. Without <code>config.lighting</code>, lights are ignored. A light needs no shape: spawn <code>{ tags, pos, light }</code> for a lamp. Limits: <code>radius</code> 1..4096, <code>intensity</code> 0..8.</p>
 <p>Lighting is applied before post effects, so <code>bloom</code> makes lit areas glow.</p>
-<h2 id="how-it-works-and-custom-shaders">How it works, and custom shaders</h2>
-<p>The engine renders with SDL 3.2's <code>SDL_Renderer</code> on every platform. Effects are built from what every SDL renderer supports: offscreen render targets, blend modes (add, modulate) and vertex colors, so they behave the same on a GPU and on the software renderer. If a renderer cannot make render targets, lighting, <code>bloom</code> and <code>pixelate</code> are skipped with one logged notice; the overlays (<code>crt</code>, <code>vignette</code>, <code>tint</code>) still draw.</p>
-<p>Custom shader code (<code>assets.shaders</code>) is not available yet: SDL 3.2 has no way to run a custom shader inside <code>SDL_Renderer</code>. It is planned with the move to SDL 3.4 (<code>SDL_GPURenderState</code>), with one source language cross-compiled at export.</p></main></body></html>
+<h2 id="how-the-built-in-effects-work">How the built-in effects work</h2>
+<p>The engine renders with SDL 3.4's <code>SDL_Renderer</code> on every platform. The built-in effects use only what every SDL renderer supports: offscreen render targets, blend modes (add, modulate) and vertex colors, so they behave the same on a GPU and on the software renderer. If a renderer cannot make render targets, lighting, <code>bloom</code> and <code>pixelate</code> are skipped with one logged notice; the overlays (<code>crt</code>, <code>vignette</code>, <code>tint</code>) still draw.</p>
+<h2 id="custom-shaders-assets-shaders">Custom shaders: <code>assets.shaders</code></h2>
+<p>Write your own full-screen effect as an HLSL fragment shader, declare it, and use it through <code>ctx.postfx</code> like a built-in:</p>
+<pre><code>// types.ts: shaders: { wave: "amount" | "time" }
+assets: {
+  shaders: { wave: { file: "shaders/wave.hlsl", uniforms: { amount: 0.5, time: 0 } } },
+},
+// a scene
+enter(ctx) { ctx.postfx.add("wave", { amount: 0.8 }); },
+update(ctx) { ctx.postfx.set("wave", { amount: 0.8, time: ctx.time }); },</code></pre>
+<p>The shader contract (SDL's GPU renderer conventions): the frame is <code>t0, space2</code> with its sampler at <code>s0, space2</code>; the uniforms are one <code>cbuffer</code> at <code>b0, space3</code> holding the declared floats **in the order of <code>uniforms</code>** (at most 16); the entry point is <code>main</code>.</p>
+<pre><code>cbuffer Params : register(b0, space3) { float amount; float time; };
+Texture2D u_texture : register(t0, space2);
+SamplerState u_sampler : register(s0, space2);
+struct PSInput { float4 v_color : COLOR0; float2 v_uv : TEXCOORD0; };
+
+float4 main(PSInput input) : SV_Target {
+    float2 uv = input.v_uv + float2(sin(input.v_uv.y * 40.0 + time * 6.0) * 0.004 * amount, 0);
+    return u_texture.Sample(u_sampler, uv) * input.v_color;
+}</code></pre>
+<ul><li><strong>One source, every GPU.</strong> <a href="https://github.com/libsdl-org/SDL_shadercross">SDL_shadercross</a> compiles the HLSL to SPIR-V (Vulkan, Android), DXIL (Direct3D 12) and MSL (Metal).</li><li>**<code>alpha run</code>** compiles the <code>.hlsl</code> when the game boots and again on every save (hot reload); a compile error pauses the game with the compiler's message, naming <code>assets.shaders.&lt;name&gt;</code>.</li><li>**<code>alpha export</code>** puts the compiled blobs (<code>shaders/wave.spv</code>, <code>.dxil</code>, <code>.msl</code>) in the pack instead of the <code>.hlsl</code>; shipping engines only load blobs and contain no compiler.</li><li>Custom shaders need <strong>SDL's GPU renderer</strong>, which a game with <code>assets.shaders</code> asks for at start. If it is not available (no Vulkan / D3D12 / Metal device), or the renderer is another one (the software renderer of headless tests), the effect is <strong>skipped</strong> with one logged warning; the game keeps running and the built-in effects still work.</li><li>Effect names share one namespace: a shader may not be called like a built-in (<code>crt</code>, ...). Unknown uniforms, non-numbers and more than 16 uniforms are boot or script errors that list what the shader has.</li></ul></main></body></html>

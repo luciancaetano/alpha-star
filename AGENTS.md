@@ -73,8 +73,10 @@ Physics lives in `src/physics/` (Box2D v3: `physics_world` bodies/contacts/pre-s
 `queries` rays/overlaps, `joints`); script glue in `script/physics_bindings`, `joint_bindings`
 and the embedded `physics.js` / `tween.js` modules. Texture filtering is per image
 (`core::Image::smooth`, from `pixelMode`); never set a global scale mode.
-Lighting/post effects: `render::Compositor` (render targets + add/modulate blends + vertex colors on SDL_Renderer,
-no shaders: SDL 3.2 cannot run custom shaders in SDL_Renderer); data in `core/postfx` + `core/lighting`, render-only.
+Lighting/post effects: `render::Compositor` (built-ins: render targets + add/modulate blends + vertex colors on SDL_Renderer,
+no shaders); data in `core/postfx` + `core/lighting`, render-only. Custom shaders (`assets.shaders`, `core/shader`): HLSL
+compiled by the SDL_shadercross tool (`cmake/Shadercross.cmake`, dev/release only; `alpha export` packs blobs), run with
+`SDL_GPURenderState` on SDL 3.4's GPU renderer (`render::ShaderStates`); skipped with a warning on any other renderer.
 Input order: dev tools → game UI (`ui::consumes`) → game actions; what the UI consumed never drives actions.
 Audio: `core::Mixer` is stereo with volume buses; music is a `core::Stream` (`platform/music_stream`,
 stb_vorbis / dr_mp3 in `alpha_codecs`) decoded in `mix()` on the main thread; streams hold SDL audio

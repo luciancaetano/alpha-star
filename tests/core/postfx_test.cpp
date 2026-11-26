@@ -49,8 +49,8 @@ TEST_CASE("PostFx keeps first-add order and replaces params in place") {
   REQUIRE(fx.chain().size() == 2);
   CHECK(fx.chain()[0].kind == EffectKind::Bloom);
   CHECK(fx.chain()[0].strength == doctest::Approx(1.5));
-  CHECK(fx.remove(EffectKind::Bloom));
-  CHECK_FALSE(fx.remove(EffectKind::Bloom));
+  CHECK(fx.remove("bloom"));
+  CHECK_FALSE(fx.remove("bloom"));
   CHECK(fx.chain().size() == 1);
   CHECK(effect_name(fx.chain()[0].kind) == "crt");
   CHECK(effect_kind("pixelate") == EffectKind::Pixelate);

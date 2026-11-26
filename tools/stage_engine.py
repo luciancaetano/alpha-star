@@ -27,6 +27,7 @@ def target():
     return f"{system}-{ARCH.get(platform.machine().lower(), platform.machine().lower())}"
 
 
+SHADER_TOOLS = ["shadercross.exe", "dxcompiler.dll", "dxil.dll"] if os.name == "nt" else     ["shadercross", "libdxcompiler.so", "libdxil.so"]
 FLAVORS = {"release": "", "shipping": "shipping"}  # preset -> subdir of engine/<target>
 
 
@@ -45,6 +46,10 @@ def stage(preset, subdir):
     dest = cfg.ROOT / "alpha-sdk" / "engine" / target() / subdir
     dest.mkdir(parents=True, exist_ok=True)
     shutil.copy2(exe, dest / exe.name)
+    if preset == "release":  # custom shader compiler for alpha run / alpha export (never shipped)
+        for tool in SHADER_TOOLS:
+            if (exe.parent / tool).is_file():
+                shutil.copy2(exe.parent / tool, dest / tool)
     print(f"stage_engine: {preset} {exe.name} -> {cfg.rel(dest / exe.name)}")
 
 

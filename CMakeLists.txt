@@ -17,6 +17,9 @@ include(Warnings)
 include(Dependencies)
 
 add_subdirectory(src)
+if(ALPHA_WITH_RUNTIME_DEPS)
+  include(Shadercross)
+endif()
 
 if(ALPHA_BUILD_TESTS)
   enable_testing()

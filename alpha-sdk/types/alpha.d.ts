@@ -60,6 +60,11 @@ declare module "alpha" {
     locales?: string;
     /** Extra volume buses (config.audio.buses), e.g. "ambience". Optional. */
     buses?: string;
+    /**
+     * Custom shader names (assets.shaders) -> their uniform names,
+     * e.g. `{ wave: "amount" | "time" }` (`never` for a shader without uniforms). Optional.
+     */
+    shaders?: { [shader: string]: string };
   }
 
   /** The game's music names (`never` without `music`). */
@@ -75,6 +80,7 @@ declare module "alpha" {
   export type FontOf<G extends GameTypes> = G extends { fonts: infer F extends string } ? F : string;
 
   /** The game's sheets (`{}` when GameTypes has no `sheets`). */
+  export type ShadersOf<G extends GameTypes> = G extends { shaders: infer S extends { [k: string]: string } } ? S : {};
   export type SheetsOf<G extends GameTypes> = G extends { sheets: infer S extends { [k: string]: string } } ? S : {};
   /** Every animation name of every sheet. */
   export type AnimationOf<G extends GameTypes> = SheetsOf<G>[keyof SheetsOf<G>] & string;
@@ -240,21 +246,39 @@ declare module "alpha" {
     /** Dark edges: strength 0..1 (0.5); radius 0..1 (0.5) = clear part from the center. */
     vignette: { strength?: number; radius?: number };
   }
+  /** A built-in effect or a custom shader (assets.shaders). */
+  export type EffectOf<S> = PostFxName | (keyof S & string);
+  /** A built-in's params, or a custom shader's uniforms by name (missing ones: their defaults). */
+  export type EffectParams<S, N> = N extends PostFxName ? PostFxParams[N]
+    : N extends keyof S ? { [U in S[N] & string]?: number } : never;
+  /**
+   * A custom full-screen shader: an HLSL fragment shader (see the shaders guide for its
+   * contract) and its float uniforms with defaults, in the order of its cbuffer
+   * (`register(b0, space3)`), at most 16. `alpha run` compiles it on load (and on every
+   * save); `alpha export` puts compiled blobs (.spv, .dxil, .msl) in the pack instead of
+   * the .hlsl. Runs only on SDL's GPU renderer (which games with shaders ask for); on any
+   * other renderer the effect is skipped with a logged warning.
+   */
+  export interface ShaderAsset<U extends string> {
+    file: string;
+    uniforms?: Record<U, number>;
+  }
   /**
    * The current scene's post effects, drawn over the (lit) world in the order first
    * added; UI and dev tools stay unaffected. Each scene starts with none. Render-only:
-   * simulate() and game state never see them. Works on every renderer (software too).
+   * simulate() and game state never see them. Built-ins work on every renderer (software
+   * too); custom shaders (assets.shaders, same calls) need the GPU renderer.
    */
-  export interface PostFx {
+  export interface PostFx<S = {}> {
     /** Adds the effect, or replaces its params when already added (keeping its place). */
-    add<N extends PostFxName>(name: N, params?: PostFxParams[N]): void;
+    add<N extends EffectOf<S>>(name: N, params?: EffectParams<S, N>): void;
     /** Like add, for an effect already added (error otherwise). Missing params reset to defaults. */
-    set<N extends PostFxName>(name: N, params?: PostFxParams[N]): void;
+    set<N extends EffectOf<S>>(name: N, params?: EffectParams<S, N>): void;
     /** False when it was not added. */
-    remove(name: PostFxName): boolean;
+    remove(name: EffectOf<S>): boolean;
     clear(): void;
     /** Names in draw order. */
-    list(): PostFxName[];
+    list(): EffectOf<S>[];
   }
 
   /** Plain data describing an entity. Build it with functions, not classes. */
@@ -806,8 +830,8 @@ declare module "alpha" {
     readonly ui: UI<G["ui"]>;
     readonly audio: Audio<G["sounds"], MusicOf<G>, BusOf<G>>;
     readonly camera: Camera;
-    /** Full-screen effects of the current scene (bloom, crt, pixelate, tint, vignette). */
-    readonly postfx: PostFx;
+    /** Full-screen effects of the current scene (bloom, crt, pixelate, tint, vignette, assets.shaders). */
+    readonly postfx: PostFx<ShadersOf<G>>;
     readonly window: GameWindow;
 
     spawn(spec: EntitySpec<G["tags"], G["images"], SheetsOf<G>, LayerOf<G>, FontOf<G>, CategoryOf<G>>): Entity<G["tags"], AnimationOf<G>>;
@@ -997,6 +1021,11 @@ declare module "alpha" {
       sheets?: { [K in keyof SheetsOf<G>]: SheetAsset<SheetsOf<G>[K] & string> };
       /** Map name -> Tiled map (.tmj JSON; tilesets embedded or .tsj; CSV tile layers). */
       maps?: Record<MapOf<G>, ImageAsset>;
+      /**
+       * Custom full-screen shader name -> `{ file: "shaders/wave.hlsl", uniforms: { amount: 0.5 } }`,
+       * then `ctx.postfx.add("wave", { amount: 1 })`. See ShaderAsset.
+       */
+      shaders?: { [K in keyof ShadersOf<G>]: ShaderAsset<ShadersOf<G>[K] & string> };
     };
   }
 

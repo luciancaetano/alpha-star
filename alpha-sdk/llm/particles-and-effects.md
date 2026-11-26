@@ -73,5 +73,5 @@ ctx.postfx.remove("crt"); ctx.postfx.clear(); ctx.postfx.list();
 - `ctx.settings.reducedMotion` scales rate, burst, max and emit counts to 1/4.
 - Lighting and postfx are render-only: tests and saves never see them. UI and dev tools draw on top, unaffected. Lighting is applied before postfx (bloom makes lit areas glow).
 - Postfx draw in first-added order; each scene starts with none. Unknown names/params or out-of-range values pause with an error listing what is allowed (e.g. `postfx "crt": unknown param "amount"; have: strength`).
-- No custom shaders (`assets.shaders` does not exist yet).
+- Custom full-screen shaders: `assets.shaders` + the same `ctx.postfx` calls; see shaders.md.
 - If a renderer cannot make render targets, lighting, bloom and pixelate are skipped with one notice.

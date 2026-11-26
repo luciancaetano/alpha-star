@@ -16,18 +16,20 @@ namespace alpha::script {
 
 namespace {
 
-std::vector<std::string> keys(JSContext* ctx, JSValueConst obj) {
-  JSPropertyEnum* tab = nullptr;
-  uint32_t len = 0;
-  std::vector<std::string> out;
-  if (JS_GetOwnPropertyNames(ctx, &tab, &len, obj, JS_GPN_STRING_MASK | JS_GPN_ENUM_ONLY) < 0) return out;
-  for (uint32_t i = 0; i < len; ++i) {
-    const char* name = JS_AtomToCString(ctx, tab[i].atom);
-    if (name) out.emplace_back(name);
-    JS_FreeCString(ctx, name);
-  }
-  JS_FreePropertyEnum(ctx, tab, len);
-  return out;
+std::string unknown(const ScriptState& s, const std::string& name) {
+  std::string have = core::effect_names();
+  for (const auto& [shader, ptr] : s.shaders) have += " " + shader;
+  return "postfx: unknown effect \"" + name + "\"; have: " + have + " (custom effects: assets.shaders)";
+}
+
+// A built-in effect, or an assets.shaders entry with its uniforms.
+core::Effect effect(const ScriptState& s, const std::string& name, const core::EffectNumbers& numbers,
+                    std::optional<core::Color> color) {
+  const auto shader = s.shaders.find(name);
+  if (shader == s.shaders.end() && !core::effect_kind(name)) throw core::Error(unknown(s, name));
+  if (shader == s.shaders.end()) return core::make_effect(name, numbers, color);
+  if (color) throw core::Error("postfx \"" + name + "\": color is not a uniform; shader uniforms are numbers");
+  return core::make_shader_effect(shader->second, numbers);
 }
 
 // postfxPut(name, params?): adds the effect or sets its params (order kept).
@@ -44,24 +46,19 @@ JSValue postfx_put(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
     if (key == "color") color = color_named(ctx, v.get(), what);
     else numbers[key] = static_cast<float>(number_arg(ctx, v.get(), what));
   }
-  world_of(s).postfx().put(core::make_effect(name, numbers, color));
+  world_of(s).postfx().put(effect(s, name, numbers, color));
   return JS_UNDEFINED;
 }
 
-core::EffectKind kind_arg(JSContext* ctx, JSValueConst v) {
-  const std::string name = string_arg(ctx, v, "postfx.remove(name)");
-  const auto kind = core::effect_kind(name);
-  if (!kind) throw core::Error("postfx: unknown effect \"" + name + "\"; have: " + core::effect_names());
-  return *kind;
-}
-
 JSValue postfx_remove(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
-  return JS_NewBool(ctx, world_of(s).postfx().remove(kind_arg(ctx, argv[0])));
+  const std::string name = string_arg(ctx, argv[0], "postfx.remove(name)");
+  if (!core::effect_kind(name) && !s.shaders.contains(name)) throw core::Error(unknown(s, name));
+  return JS_NewBool(ctx, world_of(s).postfx().remove(name));
 }
 
 JSValue postfx_list(JSContext* ctx, ScriptState& s, JSValueConst*) {
   std::vector<std::string> names;
-  for (const core::Effect& e : world_of(s).postfx().chain()) names.emplace_back(core::effect_name(e.kind));
+  for (const core::Effect& e : world_of(s).postfx().chain()) names.emplace_back(core::effect_name(e));
   return new_strings(ctx, names);
 }
 
