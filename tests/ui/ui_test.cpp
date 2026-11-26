@@ -89,6 +89,24 @@ TEST_CASE("ui: documents load hidden; show, set and view") {
   CHECK_FALSE(m.ui.view().at("menu").shown);
 }
 
+TEST_CASE("ui: toggle classes and set or remove attributes; the view shows both") {
+  Menu m;
+  m.ui.toggle("menu", "play", "low", true);
+  m.ui.toggle("menu", "play", "pulse", true);
+  m.ui.toggle("menu", "play", "pulse", false);
+  m.ui.attr("menu", "quit", "disabled", "");
+  m.ui.attr("menu", "box", "title", "hp 3");
+  m.ui.attr("menu", "box", "title", std::nullopt);
+  const auto view = m.ui.view().at("menu");
+  CHECK(view.classes.at("play") == "low");
+  CHECK(view.attributes.at("quit").at("disabled").empty());
+  CHECK_FALSE(view.attributes.at("box").count("title"));
+  CHECK_THROWS_WITH(m.ui.toggle("menu", "play", "two words", true), doctest::Contains("one word"));
+  CHECK_THROWS_WITH(m.ui.attr("menu", "play", "id", "x"), doctest::Contains("found by id"));
+  CHECK_THROWS_WITH(m.ui.attr("menu", "play", "onclick", "x"), doctest::Contains("use ctx.ui.on"));
+  CHECK_THROWS_WITH(m.ui.toggle("menu", "plya", "low", true), doctest::Contains("ids: box, clip, play, quit"));
+}
+
 TEST_CASE("ui: mistakes name what exists") {
   Menu m;
   CHECK_THROWS_WITH(m.ui.show("hud"), "unknown document \"hud\"; assets.ui has: menu");

@@ -52,7 +52,7 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 
 ## How things work here
 
-- **Icons in UI:** `ctx.ui.set` is text only, so item icons are BMFont glyphs: `A-E` weapons,
+- **Icons in UI:** item icons are BMFont glyphs set as text (many icons per line; `ctx.ui.attr` with `<img src>` also works): `A-E` weapons,
   `F-J` evolved, `a-g` passives, `$ %` coin/cake, `1-6` heroes, `#`/`-` XP bar, `*` empty slot.
   Newer powers use recolored copies: `glyph(g, h)` = `chr(0x100 + g * 8 + h)` (same rule in the art tool).
 - **New weapon:** add its id to `WeaponId`, a row in `powers.ts` (kind + mod pick its behavior; no code)
@@ -161,9 +161,10 @@ sprites will shake or flicker:
 - Timers you keep in `ctx.state` must still count `ctx.dt` only while playing (`ctx.dt` is not 0 when frozen).
 
 ### UI (RmlUi)
-- **`ctx.ui.set` is text only.** To show item icons in the UI, make a BMFont whose glyphs are the
-  icons (`A` = sword, `B` = bow...) and `set` those letters; bars work the same way with repeated
-  glyphs (`"####----"`).
+- **Text, classes and attributes:** `ctx.ui.set` for text, `ctx.ui.toggle(doc, id, cls, on)` for
+  states styled in .rcss, `ctx.ui.attr(doc, id, "src" | "value" | "disabled", v)` for `<img>` icons,
+  `<progress>` bars and disabled buttons. (Candlewick predates them: its icons are BMFont glyphs and
+  its bars repeated glyphs, `"####----"`; still a fine trick for many icons in one line of text.)
 - **Size the UI in `dp` = design pixels**, for the `config.size` canvas (a 384x216 game has
   384dp of width). Plain RCSS panels (`background-color` + `border`) are always crisp; avoid
   stretching one big frame image across the screen.

@@ -14,6 +14,7 @@
 
 #include "core/error.hpp"
 #include "platform/window.hpp"
+#include "ui/elements.hpp"
 #include "ui/translate.hpp"
 
 namespace alpha::ui {
@@ -159,6 +160,14 @@ void Ui::set(const std::string& name, const std::string& id, const std::string& 
   element(name, id).SetInnerRML(Rml::StringUtilities::EncodeRml(text));
 }
 
+void Ui::toggle(const std::string& name, const std::string& id, const std::string& cls, bool on) {
+  toggle_class(element(name, id), cls, on);
+}
+
+void Ui::attr(const std::string& name, const std::string& id, const std::string& attr, const std::optional<std::string>& value) {
+  set_attribute(element(name, id), attr, value);
+}
+
 std::uint32_t Ui::on(const std::string& name, const std::string& id, const std::string& event) {
   if (event != "click" && event != "back") throw core::Error("unknown event \"" + event + "\"; events: click, back");
   element(name, id);  // must exist now
@@ -190,7 +199,10 @@ std::map<std::string, DocumentView> Ui::view() const {
     DocumentView& v = out[name];
     v.shown = d.doc->IsVisible();
     each_element(d.doc, [&](Rml::Element* e) {
-      if (!e->GetId().empty()) v.texts[e->GetId()] = text_of(e);
+      if (e->GetId().empty()) return;
+      v.texts[e->GetId()] = text_of(e);
+      v.classes[e->GetId()] = classes_of(*e);
+      v.attributes[e->GetId()] = attributes_of(*e);
     });
   }
   return out;

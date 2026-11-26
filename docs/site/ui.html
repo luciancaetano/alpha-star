@@ -132,7 +132,14 @@ ctx.ui.set("hud", "score", 120);     // numbers are fine
 ctx.ui.set("hud", "lives", "x3");    // plain text, never parsed as markup
 ctx.ui.hide("hud");</code></pre>
 <p>Result: the element's content becomes exactly that text. Several documents can be shown at once (a HUD under a pause panel).</p>
-<h3 id="3-buttons">3. Buttons</h3>
+<h3 id="3-classes-and-attributes-state-images-bars">3. Classes and attributes: state, images, bars</h3>
+<p>Text is not everything a HUD shows. Turn classes on and off so the <code>.rcss</code> styles a state, and set attributes for images, bars and disabled buttons:</p>
+<pre><code>ctx.ui.toggle("hud", "hp", "low", ctx.state.hp &lt; 3);              // .low { color: #ff4040; }
+ctx.ui.attr("hud", "weapon", "src", `img/${ctx.state.weapon}.png`); // &lt;img id="weapon"/&gt;, relative to the .rml
+ctx.ui.attr("hud", "xp", "value", ctx.state.xp / ctx.state.next);   // &lt;progress id="xp"/&gt;, 0..1
+ctx.ui.attr("shop", "buy", "disabled", ctx.state.gold &lt; 10);        // true = present, false = removed</code></pre>
+<p><code>toggle</code> always takes the wanted state (<code>true</code> adds, <code>false</code> removes): call it every step with the condition. <code>attr</code> takes text, a number, <code>true</code>/<code>false</code> or <code>null</code> (removed). <code>id</code> and inline <code>on...</code> handlers cannot be set (use <code>ctx.ui.on</code>). Tests check both: <code>run.expect.classed("hud", "hp", "low").equals(true)</code>, <code>run.expect.attr("hud", "xp", "value").equals("0.5")</code>.</p>
+<h3 id="4-buttons">4. Buttons</h3>
 <pre><code>&lt;button id="play" autofocus&gt;PLAY&lt;/button&gt;
 &lt;button id="settings"&gt;SETTINGS&lt;/button&gt;</code></pre>
 <pre><code>button { tab-index: auto; }                         /* required: makes it focusable */
@@ -141,18 +148,18 @@ button:active { background-color: #16394c; }</code></pre>
 <pre><code>ctx.ui.on("title", "play", "click", () =&gt; ctx.go("play", { level: 1 }));
 ctx.ui.on("title", "settings", "click", () =&gt; ctx.go("settings"));</code></pre>
 <p><code>"click"</code> fires for a mouse click, a touch, or Enter / Space / gamepad A on the focused element. D-pad and left stick move focus; <code>autofocus</code> picks the first focused button. Handlers run at the start of the next step.</p>
-<h3 id="4-back-escape-gamepad-b-android-back">4. Back (Escape, gamepad B, Android back)</h3>
+<h3 id="5-back-escape-gamepad-b-android-back">5. Back (Escape, gamepad B, Android back)</h3>
 <pre><code>ctx.ui.on("settings", "back", "back", () =&gt; ctx.go("title"));   // any id of the shown document</code></pre>
 <p><code>"back"</code> fires while that document is shown. Input the UI uses never also triggers game actions, so the same Escape does not open your pause menu again.</p>
-<h3 id="5-layout-full-screen-safe-area-dp">5. Layout: full screen, safe area, dp</h3>
+<h3 id="6-layout-full-screen-safe-area-dp">6. Layout: full screen, safe area, dp</h3>
 <pre><code>body { width: 100%; height: 100%; box-sizing: border-box; }   /* with class="safe" on &lt;body&gt; */
 .corner { position: absolute; top: 4dp; right: 4dp; }</code></pre>
 <ul><li>Documents cover the whole screen, including what <code>config.window.aspect</code> reveals beyond <code>config.size</code>, so edge-anchored elements sit at the real edges.</li><li><code>class="safe"</code> pads an element by <code>ctx.safeArea</code> (phone cutouts, rounded corners). Put it on <code>&lt;body&gt;</code> and use <code>box-sizing: border-box</code>.</li><li>Use <code>dp</code> units: they follow <code>ctx.settings.uiScale</code>.</li><li>Text is rasterized at the screen's real resolution: sharp at any window size.</li></ul>
-<h3 id="6-fonts">6. Fonts</h3>
+<h3 id="7-fonts">7. Fonts</h3>
 <pre><code>assets: { fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", pixelMode: true, license: "assets/fonts/OFL.txt" } } },</code></pre>
 <pre><code>body { font-family: pixel; font-size: 8dp; }</code></pre>
 <p>The <code>assets.fonts</code> name is the <code>font-family</code>. TTF/OTF or BMFont <code>.fnt</code>. Without any fonts every family falls back to the built-in 8x8 font. Other scripts, right-to-left, CJK wrapping: <a href="text.html">Text and languages</a>.</p>
-<h3 id="7-translated-text">7. Translated text</h3>
+<h3 id="8-translated-text">8. Translated text</h3>
 <pre><code>&lt;h1 data-t="menu.title"&gt;MENU&lt;/h1&gt;</code></pre>
 <p>Elements with <code>data-t="key"</code> show <code>ctx.t(key)</code> and re-translate when <code>ctx.locale</code> changes. See <a href="saves.html">Saves, settings, i18n</a>.</p>
 <h2 id="recipes">Recipes</h2>

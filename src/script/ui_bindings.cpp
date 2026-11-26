@@ -2,6 +2,8 @@
 
 #include <array>
 #include <memory>
+#include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -73,9 +75,20 @@ JSValue ui_hide(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-JSValue ui_set(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+// uiEdit(doc, id, op, name, value): op "set" (value = text), "toggle" (name = class,
+// value = on) or "attr" (name, value = text or null to remove it).
+JSValue ui_edit(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   const auto [doc, id] = target(ctx, argv);
-  ui_of(s).set(doc, id, text_arg(ctx, argv[2], "text"));
+  const std::string op = arg(ctx, argv, 2, "op");
+  ui::Ui& ui = ui_of(s);
+  if (op == "set") {
+    ui.set(doc, id, text_arg(ctx, argv[4], "text"));
+  } else if (op == "toggle") {
+    ui.toggle(doc, id, arg(ctx, argv, 3, "class name"), JS_ToBool(ctx, argv[4]) == 1);
+  } else {
+    const bool remove = JS_IsNull(argv[4]);
+    ui.attr(doc, id, arg(ctx, argv, 3, "attribute name"), remove ? std::nullopt : std::optional{text_arg(ctx, argv[4], "value")});
+  }
   return JS_UNDEFINED;
 }
 
@@ -115,6 +128,16 @@ JSValue ui_view(JSContext* ctx, ScriptState& s, JSValueConst*) {
     for (const auto& [id, text] : view.texts) JS_SetPropertyStr(ctx, texts, id.c_str(), JS_NewString(ctx, text.c_str()));
     JS_SetPropertyStr(ctx, doc, "shown", JS_NewBool(ctx, view.shown));
     JS_SetPropertyStr(ctx, doc, "texts", texts);
+    JSValue classes = JS_NewObject(ctx);
+    for (const auto& [id, names] : view.classes) JS_SetPropertyStr(ctx, classes, id.c_str(), JS_NewString(ctx, names.c_str()));
+    JS_SetPropertyStr(ctx, doc, "classes", classes);
+    JSValue attrs = JS_NewObject(ctx);
+    for (const auto& [id, map] : view.attributes) {
+      JSValue one = JS_NewObject(ctx);
+      for (const auto& [k, v] : map) JS_SetPropertyStr(ctx, one, k.c_str(), JS_NewString(ctx, v.c_str()));
+      JS_SetPropertyStr(ctx, attrs, id.c_str(), one);
+    }
+    JS_SetPropertyStr(ctx, doc, "attrs", attrs);
     JS_SetPropertyStr(ctx, out, name.c_str(), doc);
   }
   return out;
@@ -127,7 +150,7 @@ constexpr std::array<Native, 2> kTestNatives{{
 constexpr std::array<Native, 9> kNatives{{
     {"uiCreate", guarded<ui_create>, 3}, {"loadUi", guarded<load_ui>, 2},
     {"loadFont", guarded<load_font>, 4}, {"uiShow", guarded<ui_show>, 1},
-    {"uiHide", guarded<ui_hide>, 1},     {"uiSet", guarded<ui_set>, 3},
+    {"uiHide", guarded<ui_hide>, 1},     {"uiEdit", guarded<ui_edit>, 5},
     {"uiOn", guarded<ui_on>, 3},         {"uiEvents", guarded<ui_events>, 0},
     {"uiReset", guarded<ui_reset>, 0},
 }};

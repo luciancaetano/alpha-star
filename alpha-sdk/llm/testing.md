@@ -27,6 +27,7 @@ simulate(game, {
 run.expect.scene(name); run.expect.noErrors();
 run.expect.count(tag).equals(n) / .atLeast(n);
 run.expect.text(doc, id).equals(s); run.expect.shown(doc);
+run.expect.classed(doc, id, cls).equals(bool); run.expect.attr(doc, id, name).equals(value | null);
 run.expect.animation(tag).equals(name | "");     // oldest living entity with the tag
 run.expect.particles().equals(n) / .atLeast(n);
 run.expect.music(name | null);

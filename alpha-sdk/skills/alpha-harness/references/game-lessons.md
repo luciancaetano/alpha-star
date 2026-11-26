@@ -17,9 +17,10 @@
   audio keep running. Skip your own world systems in `update` while frozen (they would still run).
 
 ### UI (RmlUi)
-- **`ctx.ui.set` is text only.** To show item icons in the UI, make a BMFont whose glyphs are the
-  icons (`A` = sword, `B` = bow...) and `set` those letters; bars work the same way with repeated
-  glyphs (`"####----"`).
+- **Text, classes and attributes:** `ctx.ui.set` for text, `ctx.ui.toggle(doc, id, cls, on)` for
+  states styled in .rcss, `ctx.ui.attr(doc, id, "src" | "value" | "disabled", v)` for `<img>` icons,
+  `<progress>` bars and disabled buttons. (Candlewick predates them: its icons are BMFont glyphs and
+  its bars repeated glyphs, `"####----"`; still a fine trick for many icons in one line of text.)
 - **Size the UI in `dp` = design pixels**, for the `config.size` canvas (a 384x216 game has
   384dp of width). Plain RCSS panels (`background-color` + `border`) are always crisp; avoid
   stretching one big frame image across the screen.

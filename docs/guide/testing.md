@@ -179,6 +179,8 @@ export function settingsMenuSetsVolumeAndLanguage() {
 | `count("enemy").equals(3)` / `.atLeast(3)` | that many living entities carry the tag |
 | `text("hud", "score").equals("12")` | the UI element's plain text matches |
 | `shown("hud")` | the UI document is shown |
+| `classed("hud", "hp", "low").equals(true)` | the UI element has (or lacks) that class (`ctx.ui.toggle`) |
+| `attr("hud", "xp", "value").equals("0.5")` | the UI element's attribute (`null` = absent; `ctx.ui.attr`) |
 | `animation("player").equals("run")` | the oldest entity with the tag plays that animation (`""` = none) |
 | `particles().equals(0)` / `.atLeast(5)` | live particles across every emitter |
 | `music("theme")` / `music(null)` | that music is playing / none is |

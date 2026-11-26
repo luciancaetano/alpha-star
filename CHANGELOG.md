@@ -26,6 +26,8 @@ Script API 1.0, phase 1 (breaking; see `docs/RFC_API_1.0.md`).
 - Phase 2: `scene.systems` (`(ctx) => void`, `{ name?, when?, run(ctx) }`, `{ name?, when?, tag, each(ctx, e) }`; run in
   order after `update`, `when` "running" | "frozen" | "always", errors name the system), typed game events
   (`GameTypes.events`, `ctx.emit` / `ctx.on`, delivered at the end of the step), `System`/`When`/`EventsOf` types.
+- Phase 3: `ctx.ui.toggle(doc, id, class, on)` and `ctx.ui.attr(doc, id, name, value)` (images, `<progress>` bars,
+  disabled), checked in tests by `expect.classed` / `expect.attr`.
 - `ctx.every` / `ctx.after` return a `Timer` (`active`, `cancel()`) and take `{ owner }` (the timer ends with that entity).
 
 ## [0.5.0] - 2026-11-26

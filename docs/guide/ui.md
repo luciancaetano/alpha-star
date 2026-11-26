@@ -170,7 +170,24 @@ ctx.ui.hide("hud");
 Result: the element's content becomes exactly that text. Several documents can be shown at once
 (a HUD under a pause panel).
 
-### 3. Buttons
+### 3. Classes and attributes: state, images, bars
+
+Text is not everything a HUD shows. Turn classes on and off so the `.rcss` styles a state, and set
+attributes for images, bars and disabled buttons:
+
+```ts
+ctx.ui.toggle("hud", "hp", "low", ctx.state.hp < 3);              // .low { color: #ff4040; }
+ctx.ui.attr("hud", "weapon", "src", `img/${ctx.state.weapon}.png`); // <img id="weapon"/>, relative to the .rml
+ctx.ui.attr("hud", "xp", "value", ctx.state.xp / ctx.state.next);   // <progress id="xp"/>, 0..1
+ctx.ui.attr("shop", "buy", "disabled", ctx.state.gold < 10);        // true = present, false = removed
+```
+
+`toggle` always takes the wanted state (`true` adds, `false` removes): call it every step with the
+condition. `attr` takes text, a number, `true`/`false` or `null` (removed). `id` and inline `on...`
+handlers cannot be set (use `ctx.ui.on`). Tests check both: `run.expect.classed("hud", "hp", "low").equals(true)`,
+`run.expect.attr("hud", "xp", "value").equals("0.5")`.
+
+### 4. Buttons
 
 ```xml
 <button id="play" autofocus>PLAY</button>
@@ -192,7 +209,7 @@ ctx.ui.on("title", "settings", "click", () => ctx.go("settings"));
 D-pad and left stick move focus; `autofocus` picks the first focused button. Handlers run at the
 start of the next step.
 
-### 4. Back (Escape, gamepad B, Android back)
+### 5. Back (Escape, gamepad B, Android back)
 
 ```ts
 ctx.ui.on("settings", "back", "back", () => ctx.go("title"));   // any id of the shown document
@@ -201,7 +218,7 @@ ctx.ui.on("settings", "back", "back", () => ctx.go("title"));   // any id of the
 `"back"` fires while that document is shown. Input the UI uses never also triggers game actions,
 so the same Escape does not open your pause menu again.
 
-### 5. Layout: full screen, safe area, dp
+### 6. Layout: full screen, safe area, dp
 
 ```css
 body { width: 100%; height: 100%; box-sizing: border-box; }   /* with class="safe" on <body> */
@@ -215,7 +232,7 @@ body { width: 100%; height: 100%; box-sizing: border-box; }   /* with class="saf
 - Use `dp` units: they follow `ctx.settings.uiScale`.
 - Text is rasterized at the screen's real resolution: sharp at any window size.
 
-### 6. Fonts
+### 7. Fonts
 
 ```ts
 assets: { fonts: { pixel: { file: "assets/fonts/PressStart2P-Regular.ttf", pixelMode: true, license: "assets/fonts/OFL.txt" } } },
@@ -229,7 +246,7 @@ The `assets.fonts` name is the `font-family`. TTF/OTF or BMFont `.fnt`. Without 
 family falls back to the built-in 8x8 font. Other scripts, right-to-left, CJK wrapping:
 [Text and languages](text.html).
 
-### 7. Translated text
+### 8. Translated text
 
 ```xml
 <h1 data-t="menu.title">MENU</h1>

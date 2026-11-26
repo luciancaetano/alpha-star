@@ -200,3 +200,30 @@ TEST_CASE("script ui: drawn over the game; release frees its textures") {
   SDL_DestroyRenderer(sdl);
   SDL_DestroySurface(surface);
 }
+
+TEST_CASE("script ui: toggle and attr, checked by simulate's classed / attr expectations") {
+  Sandbox box;
+  box.write("hud.rml", alpha::test::rml({"score", "best"}));
+  std::string game = alpha::test::tiny("update",
+      "ctx.ui.toggle('hud', 'score', 'hot', ctx.time > 0.1); ctx.ui.attr('hud', 'score', 'title', 7);"
+      " ctx.ui.attr('hud', 'best', 'disabled', ctx.time < 0.1);");
+  const std::string assets = "assets: { sounds: {} }";
+  game.replace(game.find(assets), assets.size(), "assets: { sounds: {}, ui: { hud: 'hud.rml' } }");
+  const std::string path = std::filesystem::path(box.write("g.js", game)).generic_string();
+  Host host(box.save());
+  const auto results = host.test(box.write("t.js", "import { simulate } from 'alpha/test';\n"
+      "import game from '" + path + "';\n"
+      "export function a() { const r = simulate(game, { seconds: 0.5 }); r.expect.noErrors();"
+      " r.expect.classed('hud', 'score', 'hot').equals(true); r.expect.attr('hud', 'score', 'title').equals('7');"
+      " r.expect.attr('hud', 'best', 'disabled').equals(null); }\n"
+      "export function b() { simulate(game, { seconds: 0.05 }).expect.classed('hud', 'score', 'hot').equals(true); }\n"));
+  REQUIRE(results.size() == 2);
+  CHECK_MESSAGE(results[0].passed(), results[0].error);
+  CHECK(results[1].error.find("expected hud#score to have class \"hot\"") != std::string::npos);
+
+  Host bad(box.save());
+  std::string wrong = alpha::test::tiny("enter", "ctx.ui.toggle('hud', 'score', 'hot');");
+  wrong.replace(wrong.find(assets), assets.size(), "assets: { sounds: {}, ui: { hud: 'hud.rml' } }");
+  bad.load(box.write("w.js", wrong));
+  CHECK(bad.error().find("on must be true (add the class) or false") != std::string::npos);
+}

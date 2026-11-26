@@ -149,6 +149,14 @@ function preload(s, assets, pixel) {
   s.defaultLocale = s.i18n.locale;
 }
 
+// ctx.ui.attr value: text or number as text, true = present (""), false / null = removed.
+function attrValue(attr, v) {
+  if (v === null || v === false) return null;
+  if (v === true) return "";
+  if (typeof v === "string" || (typeof v === "number" && Number.isFinite(v))) return String(v);
+  return fail(`ui.attr "${attr}": value must be a string, a number, true/false or null, got ${show(v)}`);
+}
+
 // ctx.ui errors start with the call, e.g. `ui.set("hud", "scroe"): no element ...`.
 function uiCall(what, args, fn) {
   try {
@@ -519,7 +527,12 @@ function makeCtx(s) {
     ui: {
       show: (name) => uiCall("show", [name], () => N.uiShow(name)),
       hide: (name) => uiCall("hide", [name], () => N.uiHide(name)),
-      set: (name, id, text) => uiCall("set", [name, id], () => N.uiSet(name, id, String(text))),
+      set: (name, id, text) => uiCall("set", [name, id], () => N.uiEdit(name, id, "set", null, String(text))),
+      toggle(name, id, cls, on) {
+        if (typeof on !== "boolean") fail(`ui.toggle("${name}", "${id}", "${cls}", on): on must be true (add the class) or false (remove it), got ${show(on)}`);
+        uiCall("toggle", [name, id, cls], () => N.uiEdit(name, id, "toggle", String(cls), on));
+      },
+      attr: (name, id, attr, value) => uiCall("attr", [name, id, attr], () => N.uiEdit(name, id, "attr", String(attr), attrValue(attr, value))),
       on(name, id, event, fn) {
         if (typeof fn !== "function") fail(`ui.on("${name}", "${id}", "${event}", fn): fn must be a function`);
         s.uiHandlers.set(uiCall("on", [name, id, event], () => N.uiOn(name, id, event)), fn);

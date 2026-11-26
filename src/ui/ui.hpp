@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -27,6 +28,8 @@ namespace alpha::ui {
 struct DocumentView {
   bool shown = false;
   std::map<std::string, std::string> texts;
+  std::map<std::string, std::string> classes;                            // id -> "a b"
+  std::map<std::string, std::map<std::string, std::string>> attributes;  // id -> name -> value
 };
 
 // One game's UI: an RmlUi context the size of the game's logical screen,
@@ -51,6 +54,9 @@ class Ui {
   void hide(const std::string& name);
   // Replaces the element's content with `text` (plain text, never markup).
   void set(const std::string& name, const std::string& id, const std::string& text);
+  // ui/elements.hpp rules: one class on/off; an attribute set or removed (nullopt).
+  void toggle(const std::string& name, const std::string& id, const std::string& cls, bool on);
+  void attr(const std::string& name, const std::string& id, const std::string& attr, const std::optional<std::string>& value);
   // Events: "click" (the element or anything inside it is clicked, by mouse,
   // touch, Enter/Space or gamepad A on focus) and "back" (Escape or gamepad B
   // while the element's document is shown). Each queues the returned handler

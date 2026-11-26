@@ -154,6 +154,7 @@ add_library(alpha_engine
   ui/pack_files.cpp
   ui/pad_nav.cpp
   ui/rml_renderer.cpp
+  ui/elements.cpp
   ui/translate.cpp
   ui/ui.cpp)
 # Bytecode build id (core/bytecode.hpp): game.jsbc runs only on an engine built from the same

@@ -1,6 +1,6 @@
 # RFC: script API 1.0 (breaking)
 
-Status: phases 1 and 2 implemented; phases 3-4 proposed.
+Status: phases 1-3 implemented; phase 4 proposed.
 Evidence: `examples/survivors` (Candlewick), the largest alpha-star game, and the "lessons" in its AGENTS.md.
 
 ## Why
@@ -94,11 +94,14 @@ export default scene("play", {
 - `ctx.every`/`ctx.after` return `Timer { active, cancel() }`; `{ owner: e }` ends one with its entity
   (tweens on an entity already ended with it).
 
-## Phase 3 (proposed): UI beyond text
+## Phase 3 (done): UI beyond text
 
-`ctx.ui.class(doc, id, cls, on)`, `ctx.ui.attr(doc, id, name, value)` (an `<img src>`, a progress
-`value`), `ctx.ui.list(doc, id, items)` from a template element. Removes the icon-font workaround
-for item icons and bars (Candlewick's `"####----"`).
+`ctx.ui.toggle(doc, id, cls, on)` (`on` required: no hidden toggle state, the condition is the
+argument) and `ctx.ui.attr(doc, id, name, value)` (text, number, `true` present, `false`/`null`
+removed; an `<img src>`, a `<progress value>`, `disabled`), both with ids typed by `GameTypes.ui`
+and checked in tests by `expect.classed` / `expect.attr`. Dropped from the proposal: `ctx.ui.list`
+(cloned elements would need ids the type system cannot know; a document with N declared slots,
+as Candlewick's level-up cards, stays typed).
 
 ## Phase 4 (proposed): one shape for each thing
 

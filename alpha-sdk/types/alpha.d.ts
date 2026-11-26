@@ -983,6 +983,17 @@ declare module "alpha" {
     /** Sets the element's content to plain text (never parsed as markup). */
     set<D extends keyof U & string>(doc: D, id: U[D], text: string | number): void;
     /**
+     * Adds (`on` true) or removes one class, so .rcss styles states:
+     * `ctx.ui.toggle("hud", "hp", "low", hp < 3)` with `.low { color: #ff4040; }`.
+     */
+    toggle<D extends keyof U & string>(doc: D, id: U[D], className: string, on: boolean): void;
+    /**
+     * Sets an attribute: text or a number (`<img src>` relative to the .rml, `<progress value>`
+     * 0..1, `<input value>`), `true` = present, `false` / `null` = removed (`disabled`).
+     * Not "id" (elements are found by it) nor inline "on..." handlers (use `on`).
+     */
+    attr<D extends keyof U & string>(doc: D, id: U[D], name: string, value: string | number | boolean | null): void;
+    /**
      * "click": the element (or anything inside it) is clicked by mouse, touch,
      * or Enter/Space/gamepad A while focused. "back": Escape or gamepad B while
      * the document is shown. Handlers run at the start of the next step.
@@ -1518,6 +1529,10 @@ declare module "alpha/test" {
     text<D extends keyof G["ui"] & string>(doc: D, id: G["ui"][D]): { equals(text: string): void };
     /** Animation of the oldest living entity with the tag at the end of the run ("" = none). */
     animation(tag: TagOf<G>): { equals(name: AnimationOf<G> | ""): void };
+    /** Whether a UI element has a class at the end of the run (ctx.ui.toggle). */
+    classed<D extends keyof G["ui"] & string>(doc: D, id: G["ui"][D], className: string): { equals(on: boolean): void };
+    /** A UI element's attribute at the end of the run (null = absent; ctx.ui.attr). */
+    attr<D extends keyof G["ui"] & string>(doc: D, id: G["ui"][D], name: string): { equals(value: string | null): void };
     /** The UI document is shown at the end of the run. */
     shown(doc: keyof G["ui"] & string): void;
     /** Live particles of every emitter at the end of the run. */

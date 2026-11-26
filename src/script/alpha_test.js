@@ -249,6 +249,14 @@ function runGame(game, opts) {
   }
 }
 
+// One UI element of the run's final view: { classes, attrs } (errors list what exists).
+function element(r, doc, id, what) {
+  const d = r.ui[doc];
+  if (!d) fail(`expect.${what}("${doc}", "${id}"): unknown document; assets.ui has: ${Object.keys(r.ui).join(", ") || "(none)"}`);
+  if (!Object.hasOwn(d.texts, id)) fail(`expect.${what}("${doc}", "${id}"): no element with that id; ids: ${Object.keys(d.texts).join(", ") || "(none)"}`);
+  return { classes: d.classes[id] ?? "", attrs: d.attrs[id] ?? {} };
+}
+
 function expectations(r) {
   const after = `after ${r.frames} frames`;
   const paused = r.error ? ` (game paused by an error: ${describe(r.error)})` : "";
@@ -260,6 +268,18 @@ function expectations(r) {
     noErrors() {
       if (r.error) fail(`expected no errors, got: ${describe(r.error)}`);
     },
+    classed: (doc, id, cls) => ({
+      equals(on) {
+        const got = ` ${element(r, doc, id, "classed").classes} `.includes(` ${cls} `);
+        if (got !== on) fail(`expected ${doc}#${id} ${on ? "to have" : "not to have"} class "${cls}" ${after}; classes: "${element(r, doc, id, "classed").classes}"${paused}`);
+      },
+    }),
+    attr: (doc, id, name) => ({
+      equals(value) {
+        const got = element(r, doc, id, "attr").attrs[name] ?? null;
+        if (got !== value) fail(`expected ${doc}#${id} attribute ${name} ${JSON.stringify(value)} ${after}, got ${JSON.stringify(got)}${paused}`);
+      },
+    }),
     text: (doc, id) => ({
       equals(text) {
         const d = r.ui[doc];

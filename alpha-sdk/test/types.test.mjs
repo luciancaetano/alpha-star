@@ -17,3 +17,8 @@ test("systems, events and timers: tag systems, when, emit/on payloads and timer 
   const problems = typecheck(path.join(HERE, "fixtures", "systems", "game.ts"));
   assert.deepEqual(problems.map((p) => `${p.line}: ${p.message}`), []);
 });
+
+test("ui: toggle needs on, ids are checked, attr values are text/number/boolean/null", () => {
+  const problems = typecheck(path.join(HERE, "fixtures", "ui_calls", "game.ts"));
+  assert.deepEqual(problems.map((p) => `${p.line}: ${p.message}`), []);
+});

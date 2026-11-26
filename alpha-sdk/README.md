@@ -200,6 +200,8 @@ export default scene("play", {
 ctx.on("died", ({ enemy }) => ctx.spawn(gem([enemy.pos.x, enemy.pos.y])));   // GameTypes.events: { died: { enemy: ... } }
 ctx.emit("died", { enemy: e });                              // delivered at the end of the step
 ctx.every(0.2, blink, { owner: e }).cancel();                // timers return handles; owner ends them
+ctx.ui.toggle("hud", "hp", "low", hp < 3);                    // a class on/off: style the state in .rcss
+ctx.ui.attr("hud", "xp", "value", xp / next);                 // <progress value>, <img src>, disabled
 ```
 
 ## Tweens, vectors, parent/child, entity data, prefabs

@@ -1,6 +1,6 @@
 # UI (RmlUi)
 
-> summary: Game UI with RmlUi .rml/.rcss documents: declaring docs and element ids, show/hide/set/on, full-screen layout and class="safe", focus and gamepad navigation, pixel-art UI images (config.uiFilter), accessibility hooks and UI tests; read when building HUDs, menus or buttons.
+> summary: Game UI with RmlUi .rml/.rcss documents: declaring docs and element ids, show/hide/set/toggle/attr/on (text, classes, images, bars), full-screen layout and class="safe", focus and gamepad navigation, pixel-art UI images (config.uiFilter), accessibility hooks and UI tests; read when building HUDs, menus or buttons.
 
 ## API
 
@@ -12,6 +12,9 @@ ui: { hud: "assets/ui/hud.rml", solved: "assets/ui/solved.rml" },
 
 ctx.ui.show(doc); ctx.ui.hide(doc);
 ctx.ui.set(doc, id, text | number);           // plain text, never parsed as markup
+ctx.ui.toggle(doc, id, className, on);       // one class on/off (style states in .rcss); `on` required
+ctx.ui.attr(doc, id, name, value);           // text | number | true (present) | false / null (removed):
+                                             // <img src> (relative to the .rml), <progress value> 0..1, disabled
 ctx.ui.on(doc, id, "click" | "back", fn);     // handlers run at the start of the next step
 ```
 
