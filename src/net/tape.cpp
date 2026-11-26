@@ -11,7 +11,10 @@ namespace {
 std::string hex(std::string_view bytes) {
   static constexpr char kDigits[] = "0123456789abcdef";
   std::string out = "x";  // never empty, so every field is one token
-  for (unsigned char c : bytes) out += {kDigits[c >> 4], kDigits[c & 15]};
+  for (const char ch : bytes) {
+    const auto c = static_cast<unsigned char>(ch);
+    out += {kDigits[c >> 4], kDigits[c & 15]};
+  }
   return out;
 }
 

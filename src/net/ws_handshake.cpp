@@ -14,7 +14,7 @@ namespace {
 std::string lower(std::string_view s) {
   std::string out;
   out.reserve(s.size());
-  for (const unsigned char c : s) out.push_back(static_cast<char>(std::tolower(c)));
+  for (const char c : s) out.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
   return out;
 }
 
