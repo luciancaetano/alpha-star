@@ -119,6 +119,24 @@ which Google Play requires for apps targeting Android 15+.
 `examples/flappy/package.json` wires these as npm scripts: `android:project`, `android:run`,
 `android:debug`, `android:release`, `android:bundle`, and `start:mobile` (desktop preview below).
 
+## Fullscreen and the safe area
+
+Every exported game runs fullscreen on the phone: the engine opens its window fullscreen on
+Android whatever `config.window.fullscreen` says, so SDL hides the status and navigation bars
+(sticky immersive: a swipe from the edge shows them for a moment, then they hide again, also after
+the app comes back from the background). The game draws edge to edge, into the display cutout
+(`windowLayoutInDisplayCutoutMode` = `shortEdges` in the template's theme from Android 9, SDL sets
+`always` from Android 11), so the frame and every postfx or shader pass cover the whole screen.
+With `letterbox` or `integer` scaling the bars of a different aspect stay; use `expand` (shows more
+world, as `examples/shaders` does) or `crop` to fill every screen.
+
+`ctx.safeArea` is `[x, y, width, height]` in screen (game) pixels: the part of the view no cutout
+or rounded corner hides. Keep HUD text and touch buttons inside it:
+
+```ts
+const [x, y, w, h] = ctx.safeArea;   // the whole view on desktop
+```
+
 ## Dev tools on the phone
 
 The debug variant carries the engine dev tools (Dear ImGui). Open and close them the way React
@@ -126,7 +144,7 @@ Native opens its dev menu: **shake the phone**, or send the Menu key from the co
 `adb shell input keyevent 82` (Ctrl+M in the emulator). A gamepad's Back+Start works too. Release
 APKs and AABs have no dev tools at all. The debug APK has no MCP channel (`alpha mcp` drives desktop
 engines); its panels scale with the screen (the larger of the OS content scale and the shorter side / 1080) and
-open tiled inside the safe area, below the status bar.
+open tiled inside the safe area (clear of the display cutout).
 
 ## Hints per platform
 

@@ -1,5 +1,7 @@
 #include "core/window.hpp"
 
+#include <algorithm>
+
 namespace alpha::core {
 
 std::optional<Scaling> parse_scaling(std::string_view name) {
@@ -19,5 +21,16 @@ Vec2 expanded_size(Vec2 game, Vec2 output) {
 }
 
 Vec2 initial_window_size(Vec2 game, Scaling scaling) { return game * (scaling == Scaling::Integer ? 2.0f : 1.5f); }
+
+bool starts_fullscreen(const WindowConfig& config, Os os) { return config.fullscreen || is_mobile(os); }
+
+Insets safe_insets(const PixelGrid& grid, Vec2 view, Vec2 safe_min, Vec2 safe_max) {
+  const auto logical = [&grid](Vec2 p) {
+    return Vec2{(p.x - grid.offset.x) / grid.scale.x, (p.y - grid.offset.y) / grid.scale.y};
+  };
+  const Vec2 lo = logical(safe_min);
+  const Vec2 hi = logical(safe_max);
+  return {std::max(0.0f, lo.x), std::max(0.0f, lo.y), std::max(0.0f, view.x - hi.x), std::max(0.0f, view.y - hi.y)};
+}
 
 }  // namespace alpha::core

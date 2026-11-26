@@ -77,7 +77,8 @@ ctx.spawn({ tags: ["popup"], pos, shape: { text: "+1", font: "pixel", size: 8, c
 `config.layers: { far: { z: -100, parallax: 0.2 }, fx: { z: 100 } }` + `layer: "far"` on specs
 (and `spawnMap(name, { layer, layers })` for tile layers). `config.window: { fullscreen?, scaling:
 "letterbox" | "integer" | "stretch" | "expand", resizable?, altEnter? }`; `ctx.window.fullscreen`,
-`ctx.window.size`. Particles run on the fixed step with the game's seeded random, so
+`ctx.window.size`; `ctx.safeArea` ([x, y, w, h] the display cutout and rounded corners leave
+visible; phones always run fullscreen, immersive). Particles run on the fixed step with the game's seeded random, so
 `simulate(...).expect.particles().equals(n)` is exact. MCP `game_state` entities carry `layer`,
 `alpha`, `text` and `particles`.
 

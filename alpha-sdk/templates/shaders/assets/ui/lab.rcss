@@ -1,6 +1,6 @@
 /* No assets.fonts: the engine's built-in 8x8 font (sizes in multiples of 8). */
 body { width: 100%; height: 100%; font-size: 8dp; color: #e0e6ff; }
-/* Bottom-left: phones can cover the top edge with the status bar. */
+/* Bottom-left info, bottom-right touch pad: clear of the title in the middle. */
 .info { position: absolute; bottom: 4dp; left: 6dp; }
 p { display: block; margin: 2dp 0dp; }
 #name { color: #ffd166; }

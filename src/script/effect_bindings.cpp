@@ -121,7 +121,16 @@ JSValue window_fullscreen(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 10> kNatives{{
+// safeArea() -> [x, y, width, height]: the part of the game view no cutout or rounded corner hides.
+JSValue safe_area(JSContext* ctx, ScriptState& s, JSValueConst*) {
+  const core::Insets& in = s.window.safe;
+  const double xywh[4] = {in.left, in.top, s.view_size.x - in.left - in.right, s.view_size.y - in.top - in.bottom};
+  JSValue out = JS_NewArray(ctx);
+  for (uint32_t i = 0; i < 4; ++i) JS_SetPropertyUint32(ctx, out, i, JS_NewFloat64(ctx, xywh[i]));
+  return out;
+}
+
+constexpr std::array<Native, 11> kNatives{{
     {"look", guarded<look>, 1},
     {"setLook", guarded<set_look>, 4},
     {"text", guarded<text>, 2},
@@ -132,6 +141,7 @@ constexpr std::array<Native, 10> kNatives{{
     {"particles", guarded<particles>, 1},
     {"windowGet", guarded<window_get>, 0},
     {"windowFullscreen", guarded<window_fullscreen>, 1},
+    {"safeArea", guarded<safe_area>, 0},
 }};
 
 }  // namespace

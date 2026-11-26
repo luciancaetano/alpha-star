@@ -203,6 +203,17 @@ TEST_CASE("ctx.window: fullscreen requests and size; config.window is parsed and
   CHECK(error_of(box, ", window: { scaling: 'fit' }", "").find("config.window.scaling must be \"letterbox\"") != std::string::npos);
 }
 
+TEST_CASE("ctx.safeArea: the whole view, minus what cutouts and rounded corners hide") {
+  Sandbox box;
+  Host host(box.save());
+  host.load(box.write("g.js", game("", "check(ctx.safeArea.join() === '0,0,100,100', 'headless ' + ctx.safeArea);",
+                                   "check(ctx.safeArea.join() === '12,0,80,96', 'phone ' + ctx.safeArea);")));
+  REQUIRE_MESSAGE(!host.paused(), host.error());
+  host.window().safe = {12, 0, 8, 4};
+  steps(host, 1);
+  CHECK_MESSAGE(!host.paused(), host.error());
+}
+
 TEST_CASE("expand: the scene camera follows the logical size") {
   Sandbox box;
   Host host(box.save());

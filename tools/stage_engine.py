@@ -31,6 +31,23 @@ SHADER_TOOLS = ["glslang.exe"] if os.name == "nt" else ["glslang"]
 FLAVORS = {"release": "", "shipping": "shipping"}  # preset -> subdir of engine/<target>
 
 
+def owned_files(preset, exe_name):
+    """The exact file set of a staged flavor dir: the engine, plus the shader compiler next to
+    the release engine (alpha run / alpha export; never shipped)."""
+    return {exe_name, *SHADER_TOOLS} if preset == "release" else {exe_name}
+
+
+def prune(dest, keep):
+    """Deletes everything in `dest` except the names in `keep` and the flavor subdirs; returns
+    the deleted names (sorted)."""
+    keep = set(keep) | {d for d in FLAVORS.values() if d}
+    stale = sorted(p.name for p in dest.iterdir() if p.name not in keep)
+    for name in stale:
+        path = dest / name
+        shutil.rmtree(path) if path.is_dir() else path.unlink()
+    return stale
+
+
 def build(preset):
     for cmd in (["cmake", "--preset", preset], ["cmake", "--build", "--preset", preset]):
         if subprocess.run(cmd, cwd=cfg.ROOT).returncode != 0:

@@ -33,13 +33,28 @@ SDL_Renderer* gpu_renderer(SDL_Window* window) {
   return SDL_CreateRenderer(window, nullptr);
 }
 
+// ctx.safeArea: SDL's safe area (window points) as output pixels, measured
+// against the game view of the logical presentation.
+core::Insets safe_insets(SDL_Window* window) {
+  SDL_Renderer* renderer = SDL_GetRenderer(window);
+  SDL_Rect safe{};
+  int w = 0;
+  int h = 0;
+  if (!renderer || !SDL_GetWindowSafeArea(window, &safe)) return {};
+  if (!SDL_GetRenderLogicalPresentation(renderer, &w, &h, nullptr) || w <= 0 || h <= 0) return {};
+  const float d = SDL_GetWindowPixelDensity(window);
+  const core::Vec2 lo{static_cast<float>(safe.x) * d, static_cast<float>(safe.y) * d};
+  const core::Vec2 hi{static_cast<float>(safe.x + safe.w) * d, static_cast<float>(safe.y + safe.h) * d};
+  return core::safe_insets(output_grid(renderer), {static_cast<float>(w), static_cast<float>(h)}, lo, hi);
+}
+
 }  // namespace
 
 bool open_window(const WindowSetup& setup, SDL_Window** window, SDL_Renderer** renderer) {
   const core::WindowConfig& c = setup.config;
   SDL_WindowFlags flags = 0;
   if (c.resizable) flags |= SDL_WINDOW_RESIZABLE;
-  if (c.fullscreen) flags |= SDL_WINDOW_FULLSCREEN;
+  if (core::starts_fullscreen(c, core::os_from_sdl(SDL_GetPlatform()))) flags |= SDL_WINDOW_FULLSCREEN;  // phones: immersive
   if (c.borderless) flags |= SDL_WINDOW_BORDERLESS;
   if (c.always_on_top) flags |= SDL_WINDOW_ALWAYS_ON_TOP;
   if (c.maximized) flags |= SDL_WINDOW_MAXIMIZED;
@@ -73,6 +88,7 @@ void sync_window(SDL_Window* window, core::WindowState& state) {
   int h = 0;
   SDL_GetWindowSizeInPixels(window, &w, &h);
   state.size = {static_cast<float>(w), static_cast<float>(h)};
+  state.safe = safe_insets(window);
 }
 
 }  // namespace alpha::platform

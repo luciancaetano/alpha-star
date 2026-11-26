@@ -834,6 +834,12 @@ declare module "alpha" {
     /** Full-screen effects of the current scene (bloom, crt, pixelate, tint, vignette, assets.shaders). */
     readonly postfx: PostFx<ShadersOf<G>>;
     readonly window: GameWindow;
+    /**
+     * [x, y, width, height] in screen (game) pixels: the part of the view no display cutout,
+     * rounded corner or system bar hides. The whole view on desktop and in headless runs; on
+     * phones (always fullscreen, drawing into the cutout) keep HUD and buttons inside it.
+     */
+    readonly safeArea: readonly [x: number, y: number, width: number, height: number];
 
     spawn(spec: EntitySpec<G["tags"], G["images"], SheetsOf<G>, LayerOf<G>, FontOf<G>, CategoryOf<G>>): Entity<G["tags"], AnimationOf<G>>;
     /** Removed at the end of the step. Destroying twice is a no-op. */

@@ -3,6 +3,8 @@
 #include <optional>
 #include <string_view>
 
+#include "core/os.hpp"
+#include "core/pixel_grid.hpp"
 #include "core/vec2.hpp"
 
 // Window presentation (pure): how the game's logical size maps to the window.
@@ -30,13 +32,30 @@ struct WindowConfig {
   bool vsync = true;           // wait for the display refresh (false: as fast as possible)
 };
 
+// How far system UI (display cutouts, rounded corners) reaches into the game
+// view on each side, in logical pixels (ctx.safeArea). Zero on desktop.
+struct Insets {
+  float left = 0;
+  float top = 0;
+  float right = 0;
+  float bottom = 0;
+};
+
 // What scripts see and ask for (ctx.window). The engine writes `fullscreen`
 // and `size` (window pixels) every frame and applies `request` once.
 struct WindowState {
   bool fullscreen = false;
   Vec2 size;
   std::optional<bool> request;
+  Insets safe;  // written every frame with size
 };
+
+// Phones always open fullscreen (immersive: no status or navigation bar);
+// desktop follows config.window.fullscreen.
+bool starts_fullscreen(const WindowConfig& config, Os os);
+// The insets of a game `view` drawn through `grid` (output pixels) when only
+// the output rect [safe_min, safe_max) is safe; never negative.
+Insets safe_insets(const PixelGrid& grid, Vec2 view, Vec2 safe_min, Vec2 safe_max);
 
 // Logical size for `expand`: the game size grown along one axis so its
 // aspect matches the output's (never smaller than `game`).

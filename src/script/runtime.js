@@ -505,6 +505,7 @@ function makeCtx(s) {
       },
       get size() { const w = N.windowGet(); return [w[1], w[2]]; },
     },
+    get safeArea() { return N.safeArea(); },
     spawn: (spec) => spawnWith(s, spec),
     ...physicsCtx((id) => s.entities.entity(id)),
     tween: (target, opts) => s.tweens.add(target, opts, aliveOf(target)),

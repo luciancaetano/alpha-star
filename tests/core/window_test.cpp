@@ -25,3 +25,22 @@ TEST_CASE("the first window is 1.5x, or a whole 2x for integer scaling") {
   CHECK(alpha::core::initial_window_size({320, 180}, Scaling::Letterbox) == Vec2{480, 270});
   CHECK(alpha::core::initial_window_size({320, 180}, Scaling::Integer) == Vec2{640, 360});
 }
+
+TEST_CASE("phones always start fullscreen; desktop follows config.window.fullscreen") {
+  alpha::core::WindowConfig c;
+  CHECK(alpha::core::starts_fullscreen(c, alpha::core::Os::android));
+  CHECK(alpha::core::starts_fullscreen(c, alpha::core::Os::ios));
+  CHECK_FALSE(alpha::core::starts_fullscreen(c, alpha::core::Os::windows));
+  c.fullscreen = true;
+  CHECK(alpha::core::starts_fullscreen(c, alpha::core::Os::linux_os));
+}
+
+TEST_CASE("safe insets are the unsafe output edges in logical pixels, never negative") {
+  // 320x180 shown at 3x with 60 px letterbox bars left and right (output 1080 wide, 540 tall).
+  const alpha::core::PixelGrid grid{{3.0f, 3.0f}, {60.0f, 0.0f}};
+  const auto in = alpha::core::safe_insets(grid, {320, 180}, {90, 0}, {1080, 510});
+  CHECK(in.left == doctest::Approx(10));    // cutout reaches 30 px past the bar
+  CHECK(in.top == doctest::Approx(0));
+  CHECK(in.right == doctest::Approx(0));    // safe edge lies in the bar: nothing hidden
+  CHECK(in.bottom == doctest::Approx(10));  // 30 px of rounded corners / gesture area
+}

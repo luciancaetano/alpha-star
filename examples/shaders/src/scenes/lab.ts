@@ -2,7 +2,7 @@ import type { Context } from "alpha";
 import { scene } from "../alpha";
 import { adjust, cycle, label, level } from "../cycle";
 import { floor, orb, orbitAt, title } from "../prefabs/scene";
-import { INTENSITY, ORBS, SHADERS } from "../tuning";
+import { INTENSITY, ORBS, SHADERS, VIEW } from "../tuning";
 import type { ShaderLab } from "../types";
 
 type State = { index: number; intensity: number };
@@ -36,6 +36,8 @@ function touchButtons(ctx: Lab) {
 export default scene("lab", {
   state: (): State => ({ index: 0, intensity: INTENSITY.start }),
   enter(ctx) {
+    ctx.camera.pos.x = VIEW.width / 2;  // centered: expand adds world evenly around
+    ctx.camera.pos.y = VIEW.height / 2;
     floor().forEach((tile) => ctx.spawn(tile));
     ctx.spawn(title());
     for (let i = 0; i < ORBS.count; i++) ctx.spawn(orb(i));

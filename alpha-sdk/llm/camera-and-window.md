@@ -1,6 +1,6 @@
 # Camera and Window
 
-> summary: ctx.camera (follow, bounds, zoom, shake, toWorld), draw layers with parallax, config.window scaling/flags and ctx.window fullscreen; read when the view must move or the window must look a certain way.
+> summary: ctx.camera (follow, bounds, zoom, shake, toWorld), draw layers with parallax, config.window scaling/flags, ctx.window fullscreen and ctx.safeArea (phones: immersive fullscreen, cutouts); read when the view must move or the window must look a certain way.
 
 ## Camera API
 
@@ -38,7 +38,10 @@ config: {
 }
 ctx.window.fullscreen = true;   // switches at end of frame; persisted in settings
 ctx.window.size                 // real window pixels (read-only)
+ctx.safeArea                    // [x, y, w, h] in screen pixels no cutout/rounded corner hides (read-only)
 ```
+
+- Phones always run fullscreen (immersive: no status or navigation bar; the game draws into the display cutout). Keep HUD and touch buttons inside `ctx.safeArea` (the whole view on desktop). A shader or postfx pass covers whatever the scaling mode covers: pick `expand` (or `crop`/`stretch`) when the frame must fill every screen with no bars.
 
 - `letterbox`: largest fit, bars. `integer`: whole multiples only, crisp pixel art, bars. `stretch`: fills, aspect lost. `expand`: fills with square pixels by showing more world (`ctx.window.size` grows the view). `crop`: fills keeping aspect, edges cut.
 - `vsync: false` draws as fast as possible (more CPU/GPU).

@@ -7,6 +7,7 @@ type Spec = EntitySpec<ShaderLab["tags"], never>;
 
 const COLORS: Color[] = ["#ff5d73", "#ffd166", "#06d6a0", "#4cc9f0", "#b388ff"];
 const TILE = 20;
+const MARGIN = { x: 4, y: 2 };  // up to a 2.6:1 screen (ultrawide, tall phones) without bare edges
 
 /** Where orb `i` is at `time`: evenly spaced on an ellipse that turns. */
 export function orbitAt(i: number, time: number): Vec2 {
@@ -27,12 +28,13 @@ export function orb(i: number): Spec {
   };
 }
 
-// A checkerboard floor: sharp edges make every distortion easy to see.
+// A checkerboard floor: sharp edges make every distortion easy to see. It reaches MARGIN tiles
+// past each edge: `expand` scaling shows more world on wide (or tall) screens.
 export function floor(): Spec[] {
   const tiles: Spec[] = [];
-  for (let y = 0; y < VIEW.height / TILE; y++) {
-    for (let x = 0; x < VIEW.width / TILE; x++) {
-      const color = (x + y) % 2 ? "#3a3f73" : "#262a52";
+  for (let y = -MARGIN.y; y < VIEW.height / TILE + MARGIN.y; y++) {
+    for (let x = -MARGIN.x; x < VIEW.width / TILE + MARGIN.x; x++) {
+      const color = Math.abs(x + y) % 2 ? "#3a3f73" : "#262a52";
       tiles.push({ tags: ["floor"], pos: [x * TILE + TILE / 2, y * TILE + TILE / 2], shape: { rect: [TILE, TILE], color } });
     }
   }
