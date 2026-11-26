@@ -4,6 +4,7 @@ Each raw image is a row (or grid) of sprites on flat magenta. Sprites are found 
 at the widest empty gaps (the expected count is known), keyed out, scaled to a fixed height
 and packed into fixed-size sheet cells. Icons also become two BMFont fonts (16 px HUD, 32 px cards).
 """
+import colorsys
 import os
 import sys
 from PIL import Image
@@ -126,11 +127,37 @@ def bar(color, size):
     return g
 
 
+def variant(im, hue=0, sat=1.0, val=1.0):
+    """Recolors a sprite: hue rotated by `hue` degrees, saturation and brightness scaled."""
+    out = im.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if not a:
+                continue
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            r, g, b = colorsys.hsv_to_rgb((h + hue / 360) % 1, min(1, s * sat), min(1, v * val))
+            px[x, y] = (round(r * 255), round(g * 255), round(b * 255), a)
+    return out
+
+
+# Extra heroes: recolored copies of the drawn ones (sheet name, source, hue, saturation, brightness).
+HERO_VARIANTS = [("ash", "wick", 0, 0.25, 0.8), ("vesper", "taper", 225, 1.1, 1.0), ("tallow", "lumen", 120, 1.0, 1.05)]
+
+
+def tinted_glyphs(bases):
+    """Glyph g (0-9 weapons A-J, 10-16 passives a-g) in hue step h (1-7, 45 degrees each) is
+    chr(0x100 + g * 8 + h): src/data/glyphs.ts computes the same code."""
+    return [(chr(0x100 + g * 8 + h), variant(im, h * 45, 1.15)) for g, im in enumerate(bases) for h in range(1, 8)]
+
+
 def icons(heroes, items):
     weapons = sprites("icons_weapons.png", 5, 2)
     passives = sprites("icons_passives.png", 7)
     pairs = list(zip("ABCDEFGHIJ", weapons)) + list(zip("abcdefg", passives))
-    pairs += [("$", items[3]), ("%", items[4]), ("1", heroes[0]), ("2", heroes[1]), ("3", heroes[2])]
+    pairs += [("$", items[3]), ("%", items[4])] + list(zip("123456", heroes))
+    pairs += tinted_glyphs(weapons + passives)
     for size in (16, 32):
         glyphs = [(c, fitted(p, size)) for c, p in pairs]
         slot = Image.new("RGBA", (size, size), (0, 0, 0, 0))
@@ -165,6 +192,10 @@ def main():
         frames = sprites(f"hero_{name}.png", 4)
         sheet(name, frames, (32, 32), 29)
         heroes.append(frames[0])
+        for name2, src, hue, sat, val in HERO_VARIANTS:
+            if src == name:
+                sheet(name2, [variant(f, hue, sat, val) for f in frames], (32, 32), 29)
+    heroes += [variant(heroes[("wick", "taper", "lumen").index(src)], hue, sat, val) for _, src, hue, sat, val in HERO_VARIANTS]
     for name, raw, cell, h in [("moth", "moth.png", 24, 18), ("shade", "shade.png", 24, 20), ("wisp", "wisp.png", 24, 20),
                                ("ghoul", "ghoul.png", 32, 26), ("gargoyle", "gargoyle.png", 48, 34), ("queen", "moth_queen.png", 96, 70),
                                ("snuffer", "snuffer.png", 72, 66)]:

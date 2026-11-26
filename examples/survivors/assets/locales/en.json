@@ -54,6 +54,166 @@
    "l4": "+1 strike.",
    "l5": "Bigger blast.",
    "l6": "+2 strikes, +10 dmg."
+  },
+  "flare": {
+   "name": "Wick's Flare",
+   "evo": "Solar Flare",
+   "desc": "Bolts that burst on hit."
+  },
+  "lash": {
+   "name": "Penitent Lash",
+   "evo": "Saint's Scourge",
+   "desc": "Lashes both sides, heals."
+  },
+  "vigil": {
+   "name": "Vigil Lanterns",
+   "evo": "Eternal Vigil",
+   "desc": "Two lanterns that slow."
+  },
+  "cinder": {
+   "name": "Cinder Rain",
+   "evo": "Ash Storm",
+   "desc": "Burning cinders fall."
+  },
+  "chime": {
+   "name": "Winter Chime",
+   "evo": "Frozen Carillon",
+   "desc": "Freezing ring of sound."
+  },
+  "wheel": {
+   "name": "Molten Wheel",
+   "evo": "Forge Wheel",
+   "desc": "Returns, pulls foes in."
+  },
+  "dart": {
+   "name": "Wax Dart",
+   "evo": "Needle Storm",
+   "desc": "Fast darts, often crit."
+  },
+  "rime": {
+   "name": "Rime Bolt",
+   "evo": "Glacier Spear",
+   "desc": "Bolt that slows."
+  },
+  "reaper": {
+   "name": "Reaper Pin",
+   "evo": "Grim Harvest",
+   "desc": "Finishes weakened foes."
+  },
+  "comet": {
+   "name": "Comet",
+   "evo": "Meteor",
+   "desc": "Slow, huge exploding shot."
+  },
+  "ring": {
+   "name": "Ember Ring",
+   "evo": "Sun Crown",
+   "desc": "Fire in every direction."
+  },
+  "sickle": {
+   "name": "Moon Sickle",
+   "evo": "Eclipse Blade",
+   "desc": "Returns; often crits."
+  },
+  "briar": {
+   "name": "Briar Lash",
+   "evo": "Thorn Tempest",
+   "desc": "Lash that slows."
+  },
+  "gilded": {
+   "name": "Gilded Lash",
+   "evo": "Midas Lash",
+   "desc": "Kills may drop gold."
+  },
+  "sunray": {
+   "name": "Sun Ray",
+   "evo": "Dawn Beam",
+   "desc": "Burning beam."
+  },
+  "frostray": {
+   "name": "Frost Ray",
+   "evo": "Polar Beam",
+   "desc": "Freezing beam."
+  },
+  "soulray": {
+   "name": "Soul Ray",
+   "evo": "Soul Siphon",
+   "desc": "Beam that heals you."
+  },
+  "halo": {
+   "name": "Moth Halo",
+   "evo": "Swarm Halo",
+   "desc": "Lanterns knock foes away."
+  },
+  "ghosts": {
+   "name": "Ghost Lamps",
+   "evo": "Wraith Lamps",
+   "desc": "Wide orbit, crits."
+  },
+  "wreath": {
+   "name": "Fire Wreath",
+   "evo": "Pyre Wreath",
+   "desc": "Burning ring of lamps."
+  },
+  "hearth": {
+   "name": "Hearth Aura",
+   "evo": "Bonfire Aura",
+   "desc": "Burns foes near you."
+  },
+  "chill": {
+   "name": "Chill Aura",
+   "evo": "Blizzard Aura",
+   "desc": "Slows foes near you."
+  },
+  "tar": {
+   "name": "Tar Pit",
+   "evo": "Black Bog",
+   "desc": "Sticky pool that slows."
+  },
+  "puddle": {
+   "name": "Frost Puddle",
+   "evo": "Frozen Lake",
+   "desc": "Pool that freezes."
+  },
+  "goldwax": {
+   "name": "Golden Wax",
+   "evo": "Gilded Flood",
+   "desc": "Pool; kills may drop gold."
+  },
+  "hail": {
+   "name": "Ember Hail",
+   "evo": "Firestorm",
+   "desc": "Exploding hail around you."
+  },
+  "starfall": {
+   "name": "Starfall",
+   "evo": "Sky Rend",
+   "desc": "Falling stars, crits."
+  },
+  "bloodspark": {
+   "name": "Blood Spark",
+   "evo": "Crimson Storm",
+   "desc": "Lightning that heals you."
+  },
+  "arc": {
+   "name": "Arc Chain",
+   "evo": "Thunder Chain",
+   "desc": "Jumps foe to foe."
+  },
+  "frostarc": {
+   "name": "Frost Arc",
+   "evo": "Ice Chain",
+   "desc": "Jumping bolt that slows."
+  },
+  "burst": {
+   "name": "Wick Burst",
+   "evo": "Supernova",
+   "desc": "Shockwave pushes foes."
+  },
+  "doom": {
+   "name": "Doom Toll",
+   "evo": "Last Rites",
+   "desc": "Wave that executes."
   }
  },
  "passive": {
@@ -84,20 +244,104 @@
   "lode": {
    "name": "Lodestone",
    "desc": "+30% pickup range."
+  },
+  "ember": {
+   "name": "Ember Heart",
+   "desc": "+8% burn chance."
+  },
+  "frost": {
+   "name": "Frost Glass",
+   "desc": "+8% slow chance."
+  },
+  "fang": {
+   "name": "Moth Fang",
+   "desc": "+5% crit chance."
+  },
+  "eye": {
+   "name": "Hawk Eye",
+   "desc": "+30% crit damage."
+  },
+  "vial": {
+   "name": "Blood Vial",
+   "desc": "Heal 0.1 HP per hit."
+  },
+  "shell": {
+   "name": "Wax Shell",
+   "desc": "+1 armor."
+  },
+  "hourglass": {
+   "name": "Hourglass",
+   "desc": "+15% duration."
+  },
+  "quill": {
+   "name": "Swift Quill",
+   "desc": "+15% shot speed."
+  },
+  "clover": {
+   "name": "Clover",
+   "desc": "+20% drop luck."
+  },
+  "crown": {
+   "name": "Wax Crown",
+   "desc": "+8% XP."
+  },
+  "purse": {
+   "name": "Old Purse",
+   "desc": "+15% gold."
+  },
+  "anvil": {
+   "name": "Anvil",
+   "desc": "+25% knockback."
+  },
+  "thorn": {
+   "name": "Thorn Mail",
+   "desc": "Touching foes take 8."
+  },
+  "salve": {
+   "name": "Salve",
+   "desc": "+0.5 HP/s."
+  },
+  "echo": {
+   "name": "Echo Bell",
+   "desc": "8% chance to fire again."
+  },
+  "skull": {
+   "name": "Skull",
+   "desc": "Executes foes under 4%."
+  },
+  "beacon": {
+   "name": "Beacon",
+   "desc": "+10% magnet, +8% XP."
+  },
+  "omen": {
+   "name": "Omen",
+   "desc": "+10% foes, XP, gold."
   }
  },
  "hero": {
   "wick": {
    "name": "Sir Wick",
-   "desc": "Ember Bolt. +10% speed."
+   "desc": "Wick's Flare. +10% speed."
   },
   "taper": {
    "name": "Sister Taper",
-   "desc": "Flame Whip. +20% might."
+   "desc": "Penitent Lash. +20% might."
   },
   "lumen": {
    "name": "Old Lumen",
-   "desc": "Halo Lanterns. +25% area."
+   "desc": "Vigil Lanterns. +25% area."
+  },
+  "ash": {
+   "name": "Brother Ash",
+   "desc": "Cinder Rain. Faster, burns."
+  },
+  "vesper": {
+   "name": "Sister Vesper",
+   "desc": "Winter Chime. Armor, duration."
+  },
+  "tallow": {
+   "name": "Big Tallow",
+   "desc": "Molten Wheel. +40 HP, slow."
   }
  },
  "upgrade": {
@@ -188,5 +432,13 @@
   "heal": "+30 HP",
   "magnet": "MAGNET!",
   "bell": "HOLY BELL!"
+ },
+ "grow": {
+  "l2": "+1 more.",
+  "l3": "+1 more, +50% damage.",
+  "l4": "+1 more.",
+  "l5": "+1 more, faster, +20% area.",
+  "l6": "+1 more, +30% damage.",
+  "evo": "Evolved: faster, double damage, +2."
  }
 }

@@ -7,6 +7,7 @@ import { ENEMIES, HERO, RUN } from "../tuning";
 import type { EnemyKind, Ent } from "../types";
 import { at, pan } from "./combat";
 import type { Play, Stats } from "./run";
+import { pace, statusTint, strike, tickStatuses } from "./strike";
 
 /** A point just outside the visible world, `extra` px beyond its edge, at `angle` degrees from the hero. */
 function offscreen(ctx: Play, hero: Ent, angle: number, extra = 24): Vec2 {
@@ -21,9 +22,9 @@ function spawnKind(ctx: Play, kind: EnemyKind, pos: Vec2) {
 }
 
 /** One foe at a time: `spawnCd` accumulates the wave's rate (foes per second) until one is due. */
-function waveSpawns(ctx: Play, hero: Ent) {
+function waveSpawns(ctx: Play, hero: Ent, st: Stats) {
   const wave = waveAt(ctx.state.time);
-  ctx.state.spawnCd += wave.rate * ctx.dt;
+  ctx.state.spawnCd += wave.rate * st.omen * ctx.dt;
   const alive = ctx.findAll("enemy").length;
   while (ctx.state.spawnCd >= 1) {
     ctx.state.spawnCd -= 1;
@@ -60,7 +61,7 @@ function chase(ctx: Play, hero: Ent) {
   const far = Math.hypot(vw, vh) / 2 + RUN.despawn;   // beyond the corners of any screen
   for (const e of ctx.findAll("enemy")) {
     e.data.flash = Math.max(0, (e.data.flash as number) - ctx.dt);
-    if (e.data.flash === 0) e.tint = "#ffffff";
+    if (e.data.flash === 0) e.tint = statusTint(ctx, e);
     e.data.kb = Math.max(0, (e.data.kb as number) - ctx.dt);
     const to = vec.sub(h, at(e));
     if (vec.len(to) > far && !e.tags.includes("boss")) {
@@ -70,7 +71,7 @@ function chase(ctx: Play, hero: Ent) {
       continue;
     }
     e.flipX = to[0] < 0;
-    if (e.data.kb === 0) e.body.velocity = vec.scale(vec.norm(to), ENEMIES[e.data.kind as EnemyKind].speed);
+    if (e.data.kb === 0) e.body.velocity = vec.scale(vec.norm(to), ENEMIES[e.data.kind as EnemyKind].speed * pace(ctx, e));
   }
 }
 
@@ -81,6 +82,7 @@ function contact(ctx: Play, hero: Ent, st: Stats) {
   if (ctx.state.iframes > 0) return;
   const touching = ctx.queryCircle(at(hero), HERO.radius + 4, { tags: ["enemy"] }).filter((e) => e.alive);
   if (!touching.length) return;
+  if (st.thorns > 0) for (const e of touching) strike(ctx, e, { dmg: st.thorns, mod: "none", weapon: "thorn" }, at(hero), 1, st);
   // Every foe pressing in hurts (the five strongest): standing in a crowd is deadly.
   const hits = touching.map((e) => ENEMIES[e.data.kind as EnemyKind].dmg).sort((a, b) => b - a).slice(0, HERO.crowd);
   const raw = hits.reduce((sum, d) => sum + d, 0) * dmgScale(ctx.state.time);
@@ -92,7 +94,8 @@ function contact(ctx: Play, hero: Ent, st: Stats) {
 }
 
 export function updateEnemies(ctx: Play, hero: Ent, st: Stats) {
-  if (ctx.state.time < RUN.seconds) waveSpawns(ctx, hero);
+  if (ctx.state.time < RUN.seconds) waveSpawns(ctx, hero, st);
+  tickStatuses(ctx);
   events(ctx, hero);
   chase(ctx, hero);
   contact(ctx, hero, st);

@@ -5,7 +5,7 @@ import { burst, label } from "../prefabs/effects";
 import { gem, gemLook, item } from "../prefabs/pickups";
 import { ENEMIES, RUN } from "../tuning";
 import type { Color, EnemyKind, Ent } from "../types";
-import type { Play } from "./run";
+import { type Play, stats } from "./run";
 
 export const at = (e: Ent): Vec2 => [e.pos.x, e.pos.y];
 
@@ -29,7 +29,7 @@ function dropGem(ctx: Play, pos: Vec2, value: number) {
 function drops(ctx: Play, kind: EnemyKind, pos: Vec2) {
   if (ENEMIES[kind].xp > 0) dropGem(ctx, pos, ENEMIES[kind].xp);
   if (kind === "gargoyle" || kind === "queen") ctx.spawn(item(vec.add(pos, [0, 6]), "chest"));
-  const roll = ctx.random.range(0, 1);
+  const roll = ctx.random.range(0, 1) / stats(ctx.state).luck;
   if (roll < 0.03) ctx.spawn(item(vec.add(pos, [5, 0]), "coin"));
   else if (roll < 0.036) ctx.spawn(item(vec.add(pos, [5, 0]), "cake"));
 }

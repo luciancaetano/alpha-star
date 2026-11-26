@@ -20,6 +20,8 @@ export function hpBar(index: number): Spec {
     : { tags: ["hpbar"], pos: [-11 + index * 2, 13], z: 7, shape: { rect: [2, 2], color: "#ff4d5e" }, data: { seg: index } };
 }
 
+const full = (hp: number) => ({ hp, max: hp });
+
 export function enemy(kind: EnemyKind, at: Vec2, hpMul: number): Spec {
   const d = ENEMIES[kind];
   const big = kind === "queen" || kind === "snuffer";
@@ -30,6 +32,6 @@ export function enemy(kind: EnemyKind, at: Vec2, hpMul: number): Spec {
     body: { type: "dynamic", fixedRotation: true, category: "enemy", collidesWith: ["enemy", "shot", "hero"], collider: { circle: d.radius, density: big ? 20 : 1 } },
     ...(kind === "wisp" ? { light: { radius: 40, color: "#5fd8ff", intensity: 0.8 } } : {}),
     ...(big ? { light: { radius: 90, color: kind === "queen" ? "#c58bff" : "#ff3b3b", intensity: 1.2 } } : {}),
-    data: { kind, hp: Math.round(d.hp * (kind === "snuffer" ? 1 : hpMul)), kb: 0, flash: 0, hit: {} },
+    data: { kind, ...full(Math.round(d.hp * (kind === "snuffer" ? 1 : hpMul))), kb: 0, flash: 0, hit: {}, burn: 0, burnDps: 0, slow: 0, frozen: 0 },
   };
 }

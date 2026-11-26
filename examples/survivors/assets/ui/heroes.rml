@@ -1,11 +1,14 @@
 <rml><head><link type="text/rcss" href="candle.rcss"/>
 <style>
-  .panel { width: 240dp; margin-top: 12dp; }
-  .hero { display: block; height: 34dp; margin-top: 4dp; padding: 1dp 4dp; text-align: left; background-color: #2b1d3a; border: 1dp #5a4470; tab-index: auto; }
+  .panel { width: 300dp; margin-top: 6dp; padding-top: 4dp; }
+  h1 { margin-bottom: 2dp; }
+  .hero { display: inline-block; width: 136dp; height: 44dp; margin: 2dp; padding: 1dp 3dp; box-sizing: border-box; text-align: left; vertical-align: top;
+    background-color: #2b1d3a; border: 1dp #5a4470; tab-index: auto; }
   .hero:hover, .hero:focus { background-color: #4a2f3a; border-color: #ffcf6b; }
   .hero .big { float: left; width: 34dp; height: 32dp; }
-  .name { display: block; color: #ffcf6b; margin-top: 3dp; }
-  .cost { float: right; color: #ffd36b; margin-top: 3dp; }
+  .name { display: block; color: #ffcf6b; margin-top: 1dp; }
+  .cost { float: right; color: #ffd36b; margin-top: 1dp; }
+  .dim { display: block; }
 </style></head>
 <body class="safe veil">
   <div class="panel">
@@ -13,6 +16,9 @@
     <div class="hero" id="h1" autofocus><span class="big">1</span><span class="cost" id="h1cost"></span><span class="name" id="h1name"></span><span class="dim" id="h1desc"></span></div>
     <div class="hero" id="h2"><span class="big">2</span><span class="cost" id="h2cost"></span><span class="name" id="h2name"></span><span class="dim" id="h2desc"></span></div>
     <div class="hero" id="h3"><span class="big">3</span><span class="cost" id="h3cost"></span><span class="name" id="h3name"></span><span class="dim" id="h3desc"></span></div>
+    <div class="hero" id="h4"><span class="big">4</span><span class="cost" id="h4cost"></span><span class="name" id="h4name"></span><span class="dim" id="h4desc"></span></div>
+    <div class="hero" id="h5"><span class="big">5</span><span class="cost" id="h5cost"></span><span class="name" id="h5name"></span><span class="dim" id="h5desc"></span></div>
+    <div class="hero" id="h6"><span class="big">6</span><span class="cost" id="h6cost"></span><span class="name" id="h6name"></span><span class="dim" id="h6desc"></span></div>
     <button id="back" data-t="heroes.back">BACK</button>
   </div>
 </body></rml>

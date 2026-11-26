@@ -10,6 +10,7 @@ const owned = (s: RunState, id: WeaponId) => s.weapons.find((w) => w.id === id);
 function candidates(s: RunState): Offer[] {
   const out: Offer[] = [];
   for (const id of WEAPON_IDS) {
+    if (WEAPONS[id].hero && WEAPONS[id].hero !== s.hero) continue;   // another hero's signature
     const w = owned(s, id);
     if (w ? !w.evo && w.level < SLOTS.weaponMax : s.weapons.length < SLOTS.weapons) out.push({ kind: "weapon", id });
   }
@@ -62,7 +63,13 @@ export function describe(s: RunState, o: Offer, t: T): Card {
   }
   const w = owned(s, o.id);
   const tag = w ? t("levelup.lv", { n: w.level + 1 }) : t("levelup.new");
-  return { icon: WEAPONS[o.id].icon, name: t(`weapon.${o.id}.name`), tag, desc: t(`weapon.${o.id}.l${w ? w.level + 1 : 1}`) };
+  return { icon: WEAPONS[o.id].icon, name: t(`weapon.${o.id}.name`), tag, desc: levelText(o.id, w ? w.level + 1 : 1, t) };
+}
+
+/** Hand-tuned weapons have a text per level; the rest share the growth texts (grow.l2..l6). */
+function levelText(id: WeaponId, n: number, t: T): string {
+  if (WEAPONS[id].custom) return t(`weapon.${id}.l${n}`);
+  return n === 1 ? t(`weapon.${id}.desc`) : t(`grow.l${n}`);
 }
 
 /** A weapon ready to evolve: max level, its passive held, not evolved yet. */
@@ -75,7 +82,7 @@ export function openChest(s: RunState, random: Random, t: T): Card {
   if (evo) {
     evo.evo = true;
     evo.cd = 0;
-    return { icon: WEAPONS[evo.id].evoIcon, name: t(`weapon.${evo.id}.evo`), tag: t("chest.evolution"), desc: t(`weapon.${evo.id}.evoDesc`) };
+    return { icon: WEAPONS[evo.id].evoIcon, name: t(`weapon.${evo.id}.evo`), tag: t("chest.evolution"), desc: WEAPONS[evo.id].custom ? t(`weapon.${evo.id}.evoDesc`) : t("grow.evo") };
   }
   const upgrades = candidates(s).filter((o) => isOwned(s, o));
   if (!upgrades.length) {

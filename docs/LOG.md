@@ -152,3 +152,4 @@ Condensed summary of the project's history. The full per-action log (326 entries
 - 2026-11-26: Release 0.5.0 (minor: touch controls, uiFilter, teleports, window fit): versions bumped in CMakeLists.txt + alpha-sdk/package.json/lock, CHANGELOG entry, docs site regenerated; committed and pushed to main (release.yml publishes, pages.yml updates GitHub Pages).
 - 2026-11-26: untracked examples/survivors/android build output (.gradle/.cxx/local.properties) committed by mistake with 0.5.0; added its .gitignore.
 - 2026-11-26: 0.5.0 publish failed (npm E422: provenance needs repository.url matching the GitHub repo). Added repository to alpha-sdk/package.json and the engine manifests in tools/pack_release.py; nothing had been staged, so release reruns for 0.5.0.
+- 2026-11-26: release 0.5.0 run 45845535006 green: 4 packages staged on npm, tag v0.5.0 + GitHub release created; awaiting stage approval on npmjs.com.

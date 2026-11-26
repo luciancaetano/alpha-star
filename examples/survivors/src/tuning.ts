@@ -1,5 +1,5 @@
 // Gameplay numbers. Change the feel here, not in the systems.
-import type { EnemyKind, HeroId } from "./types";
+import type { EnemyKind, HeroId, WeaponId } from "./types";
 
 // DESIGN resolution (the virtual canvas the art and UI are drawn for), NOT the window size: the engine
 // scales it to any window, monitor or phone (config.window). Changing it shrinks/grows everything.
@@ -26,9 +26,15 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
   snuffer: { hp: 999999, speed: 130, dmg: 999, xp: 0, radius: 14, size: 48 },
 };
 
-export interface HeroDef { cost: number; weapon: "bolt" | "whip" | "lanterns"; tint: string }
+/** Hero bonuses add to the stats (game/run.ts): speed is a fraction (+0.1 = 10% faster). */
+export interface HeroBonus { might?: number; area?: number; speed?: number; cooldown?: number; armor?: number; maxHp?: number; burn?: number; duration?: number; knock?: number }
+/** `weapon`: the hero's signature, only they get it (src/data/powers.ts). */
+export interface HeroDef { cost: number; weapon: WeaponId; tint: string; bonus: HeroBonus }
 export const HEROES: Record<HeroId, HeroDef> = {
-  wick: { cost: 0, weapon: "bolt", tint: "#ffd9a0" },
-  taper: { cost: 400, weapon: "whip", tint: "#e9b8ff" },
-  lumen: { cost: 900, weapon: "lanterns", tint: "#9be7ff" },
+  wick: { cost: 0, weapon: "flare", tint: "#ffd9a0", bonus: { speed: 0.1 } },
+  taper: { cost: 400, weapon: "lash", tint: "#e9b8ff", bonus: { might: 0.2 } },
+  lumen: { cost: 900, weapon: "vigil", tint: "#9be7ff", bonus: { area: 0.25 } },
+  ash: { cost: 1300, weapon: "cinder", tint: "#d0c8c0", bonus: { cooldown: 0.1, burn: 0.1 } },
+  vesper: { cost: 1700, weapon: "chime", tint: "#8fb0ff", bonus: { armor: 1, duration: 0.2 } },
+  tallow: { cost: 2200, weapon: "wheel", tint: "#b6ff7a", bonus: { maxHp: 40, knock: 0.5, speed: -0.1 } },
 };

@@ -3,7 +3,7 @@ import type { Context } from "alpha";
 import { scene } from "../alpha";
 import { clock } from "../game/run";
 import { HEROES } from "../tuning";
-import type { Candle, HeroId, ShopId } from "../types";
+import type { Candle, HeroId, HeroSlot, ShopId } from "../types";
 
 type Title = Context<Candle, { hero: HeroId }>;
 type Shop = Partial<Record<ShopId, number>>;
@@ -31,7 +31,7 @@ function refreshShop(ctx: Title, gold: number) {
 function refreshHeroes(ctx: Title, gold: number) {
   const owned = ctx.save.get<HeroId[]>("heroes", ["wick"]);
   HERO_IDS.forEach((id, i) => {
-    const n = (i + 1) as 1 | 2 | 3;
+    const n = (i + 1) as HeroSlot;
     ctx.ui.set("heroes", `h${n}name`, ctx.t(`hero.${id}.name`));
     ctx.ui.set("heroes", `h${n}desc`, ctx.t(`hero.${id}.desc`));
     const cost = ctx.state.hero === id ? ctx.t("heroes.picked") : owned.includes(id) ? "" : ctx.t("heroes.cost", { n: HEROES[id].cost });
@@ -98,7 +98,7 @@ export default scene("title", {
       ctx.ui.on(doc, "back", "click", () => open(ctx, "title"));
       ctx.ui.on(doc, "back", "back", () => open(ctx, "title"));
     }
-    HERO_IDS.forEach((id, i) => ctx.ui.on("heroes", `h${(i + 1) as 1 | 2 | 3}`, "click", () => pickHero(ctx, id)));
+    HERO_IDS.forEach((id, i) => ctx.ui.on("heroes", `h${(i + 1) as HeroSlot}`, "click", () => pickHero(ctx, id)));
     for (const id of SHOP_IDS) ctx.ui.on("shop", id, "click", () => buy(ctx, id));
     refresh(ctx);
     open(ctx, "title");

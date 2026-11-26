@@ -23,3 +23,11 @@ export function nova(at: Vec2, color: Color): Spec {
 export function label(at: Vec2, text: string, color: Color, size = 8): Spec {
   return { tags: ["label"], pos: at, z: 10, layer: "fx", shape: { text, font: "pixel", size, color } };
 }
+
+/** A shockwave reaching `radius` px: nova weapons. */
+export function shock(at: Vec2, color: Color, radius: number): Spec {
+  return {
+    tags: ["fx"], pos: at, z: 9, layer: "fx",
+    emitter: { burst: 48, oneShot: true, lifetime: [0.25, 0.3], speed: [radius * 3, radius * 3.4], size: [3, 0], color: [`${color}ff` as Color, `${color}00` as Color], blend: "add", max: 48 },
+  };
+}

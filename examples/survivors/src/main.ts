@@ -68,6 +68,7 @@ export default game({
     images: { ground: "assets/img/ground.png", logo: "assets/ui/logo.png" },
     sheets: {
       wick: hero("wick"), taper: hero("taper"), lumen: hero("lumen"),
+      ash: hero("ash"), vesper: hero("vesper"), tallow: hero("tallow"),
       moth: sheet("moth", 24), shade: sheet("shade", 24), wisp: sheet("wisp", 24), ghoul: sheet("ghoul", 32),
       gargoyle: sheet("gargoyle", 48), queen: sheet("queen", 96), snuffer: sheet("snuffer", 72),
       items: { image: "assets/img/items.png", frame: [14, 14], animations: strip(["xp1", "xp2", "xp3", "coin", "cake", "magnet", "bell", "wax"]) },

@@ -54,6 +54,166 @@
    "l4": "+1 raio.",
    "l5": "Explosão maior.",
    "l6": "+2 raios, +10 dano."
+  },
+  "flare": {
+   "name": "Chama do Pavio",
+   "evo": "Erupção Solar",
+   "desc": "Brasas que explodem ao acertar."
+  },
+  "lash": {
+   "name": "Açoite Penitente",
+   "evo": "Flagelo da Santa",
+   "desc": "Chicoteia os dois lados e cura."
+  },
+  "vigil": {
+   "name": "Lanternas da Vigília",
+   "evo": "Vigília Eterna",
+   "desc": "Duas lanternas que lentificam."
+  },
+  "cinder": {
+   "name": "Chuva de Cinzas",
+   "evo": "Tempestade de Cinza",
+   "desc": "Cinzas que incendeiam."
+  },
+  "chime": {
+   "name": "Sino do Inverno",
+   "evo": "Carrilhão Gélido",
+   "desc": "Onda de som que congela."
+  },
+  "wheel": {
+   "name": "Roda Derretida",
+   "evo": "Roda da Forja",
+   "desc": "Vai, volta e puxa inimigos."
+  },
+  "dart": {
+   "name": "Dardo de Cera",
+   "evo": "Tempestade de Agulhas",
+   "desc": "Dardos rápidos, críticos."
+  },
+  "rime": {
+   "name": "Seta Gélida",
+   "evo": "Lança Glacial",
+   "desc": "Seta que lentifica."
+  },
+  "reaper": {
+   "name": "Alfinete Ceifador",
+   "evo": "Colheita Sombria",
+   "desc": "Executa inimigos fracos."
+  },
+  "comet": {
+   "name": "Cometa",
+   "evo": "Meteoro",
+   "desc": "Tiro lento que explode."
+  },
+  "ring": {
+   "name": "Anel de Brasas",
+   "evo": "Coroa Solar",
+   "desc": "Fogo para todos os lados."
+  },
+  "sickle": {
+   "name": "Foice Lunar",
+   "evo": "Lâmina do Eclipse",
+   "desc": "Vai e volta; críticos."
+  },
+  "briar": {
+   "name": "Chicote de Espinhos",
+   "evo": "Tormenta de Espinhos",
+   "desc": "Chicote que lentifica."
+  },
+  "gilded": {
+   "name": "Chicote Dourado",
+   "evo": "Chicote de Midas",
+   "desc": "Abates podem dar ouro."
+  },
+  "sunray": {
+   "name": "Raio Solar",
+   "evo": "Feixe da Aurora",
+   "desc": "Feixe que incendeia."
+  },
+  "frostray": {
+   "name": "Raio de Gelo",
+   "evo": "Feixe Polar",
+   "desc": "Feixe que congela."
+  },
+  "soulray": {
+   "name": "Raio da Alma",
+   "evo": "Sifão da Alma",
+   "desc": "Feixe que te cura."
+  },
+  "halo": {
+   "name": "Halo de Mariposas",
+   "evo": "Halo do Enxame",
+   "desc": "Lanternas que empurram."
+  },
+  "ghosts": {
+   "name": "Lamparinas Fantasmas",
+   "evo": "Lamparinas Espectrais",
+   "desc": "Órbita larga, críticos."
+  },
+  "wreath": {
+   "name": "Guirlanda de Fogo",
+   "evo": "Guirlanda da Pira",
+   "desc": "Anel de lamparinas que queima."
+  },
+  "hearth": {
+   "name": "Aura da Lareira",
+   "evo": "Aura da Fogueira",
+   "desc": "Queima quem chega perto."
+  },
+  "chill": {
+   "name": "Aura Fria",
+   "evo": "Aura da Nevasca",
+   "desc": "Lentifica quem chega perto."
+  },
+  "tar": {
+   "name": "Poço de Piche",
+   "evo": "Brejo Negro",
+   "desc": "Poça que lentifica."
+  },
+  "puddle": {
+   "name": "Poça Gelada",
+   "evo": "Lago Congelado",
+   "desc": "Poça que congela."
+  },
+  "goldwax": {
+   "name": "Cera Dourada",
+   "evo": "Enchente Dourada",
+   "desc": "Poça; abates dão ouro."
+  },
+  "hail": {
+   "name": "Granizo de Brasas",
+   "evo": "Tempestade de Fogo",
+   "desc": "Granizo que explode."
+  },
+  "starfall": {
+   "name": "Chuva de Estrelas",
+   "evo": "Céu Rasgado",
+   "desc": "Estrelas que caem, críticos."
+  },
+  "bloodspark": {
+   "name": "Faísca de Sangue",
+   "evo": "Tempestade Rubra",
+   "desc": "Raio que te cura."
+  },
+  "arc": {
+   "name": "Corrente Elétrica",
+   "evo": "Corrente do Trovão",
+   "desc": "Salta de inimigo em inimigo."
+  },
+  "frostarc": {
+   "name": "Arco Gélido",
+   "evo": "Corrente de Gelo",
+   "desc": "Salta e lentifica."
+  },
+  "burst": {
+   "name": "Explosão do Pavio",
+   "evo": "Supernova",
+   "desc": "Onda que empurra."
+  },
+  "doom": {
+   "name": "Dobre Fúnebre",
+   "evo": "Extrema-Unção",
+   "desc": "Onda que executa."
   }
  },
  "passive": {
@@ -84,20 +244,104 @@
   "lode": {
    "name": "Magnetita",
    "desc": "+30% de alcance de coleta."
+  },
+  "ember": {
+   "name": "Coração de Brasa",
+   "desc": "+8% de chance de queimar."
+  },
+  "frost": {
+   "name": "Vidro Gelado",
+   "desc": "+8% de chance de lentificar."
+  },
+  "fang": {
+   "name": "Presa de Mariposa",
+   "desc": "+5% de chance de crítico."
+  },
+  "eye": {
+   "name": "Olho de Falcão",
+   "desc": "+30% de dano crítico."
+  },
+  "vial": {
+   "name": "Frasco de Sangue",
+   "desc": "Cura 0,1 de vida por acerto."
+  },
+  "shell": {
+   "name": "Casca de Cera",
+   "desc": "+1 de armadura."
+  },
+  "hourglass": {
+   "name": "Ampulheta",
+   "desc": "+15% de duração."
+  },
+  "quill": {
+   "name": "Pena Veloz",
+   "desc": "+15% de velocidade dos tiros."
+  },
+  "clover": {
+   "name": "Trevo",
+   "desc": "+20% de sorte nos itens."
+  },
+  "crown": {
+   "name": "Coroa de Cera",
+   "desc": "+8% de XP."
+  },
+  "purse": {
+   "name": "Bolsa Velha",
+   "desc": "+15% de ouro."
+  },
+  "anvil": {
+   "name": "Bigorna",
+   "desc": "+25% de empurrão."
+  },
+  "thorn": {
+   "name": "Cota de Espinhos",
+   "desc": "Quem te toca leva 8."
+  },
+  "salve": {
+   "name": "Unguento",
+   "desc": "+0,5 vida/s."
+  },
+  "echo": {
+   "name": "Sino do Eco",
+   "desc": "8% de chance de atirar de novo."
+  },
+  "skull": {
+   "name": "Caveira",
+   "desc": "Executa inimigos abaixo de 4%."
+  },
+  "beacon": {
+   "name": "Farol",
+   "desc": "+10% de ímã, +8% de XP."
+  },
+  "omen": {
+   "name": "Presságio",
+   "desc": "+10% inimigos, XP e ouro."
   }
  },
  "hero": {
   "wick": {
    "name": "Sir Pavio",
-   "desc": "Brasa Ardente. +10% velocidade."
+   "desc": "Chama do Pavio. +10% veloc."
   },
   "taper": {
    "name": "Irmã Círia",
-   "desc": "Chicote de Chama. +20% de força."
+   "desc": "Açoite Penitente. +20% força."
   },
   "lumen": {
    "name": "Velho Lúmen",
-   "desc": "Lanternas Halo. +25% de área."
+   "desc": "Lanternas da Vigília. +25% área."
+  },
+  "ash": {
+   "name": "Irmão Cinza",
+   "desc": "Chuva de Cinzas. Recarga, fogo."
+  },
+  "vesper": {
+   "name": "Irmã Véspera",
+   "desc": "Sino do Inverno. Armadura."
+  },
+  "tallow": {
+   "name": "Grande Sebo",
+   "desc": "Roda Derretida. +40 vida, lento."
   }
  },
  "upgrade": {
@@ -188,5 +432,13 @@
   "heal": "+30 vida",
   "magnet": "ÍMÃ!",
   "bell": "SINO SAGRADO!"
+ },
+ "grow": {
+  "l2": "+1 a mais.",
+  "l3": "+1 a mais, +50% de dano.",
+  "l4": "+1 a mais.",
+  "l5": "+1, mais rápido, +20% área.",
+  "l6": "+1 a mais, +30% de dano.",
+  "evo": "Evoluída: mais rápida, dano dobrado, +2."
  }
 }

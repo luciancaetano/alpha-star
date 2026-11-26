@@ -3,7 +3,10 @@ import { simulate } from "alpha/test";
 import { waveAt } from "../src/data/waves";
 import { applyOffer, openChest, rollOffers } from "../src/game/offers";
 import { gainXp, newRun, type RunState } from "../src/game/run";
+import { PASSIVE_IDS, PASSIVES, WEAPON_IDS, WEAPONS, weaponLevel } from "../src/data/items";
 import game from "../src/main";
+import { HEROES } from "../src/tuning";
+import type { HeroId } from "../src/types";
 
 const state = (run: { state: unknown }) => run.state as RunState;
 const PLAY = { scene: "play" as const };
@@ -71,15 +74,59 @@ export function offersAreDistinctAndFillSlots() {
   if (offers.length !== 3) fail(`three offers, got ${offers.length}`);
   if (new Set(offers.map((o) => JSON.stringify(o))).size !== 3) fail("offers are distinct");
   applyOffer(s, offers[0], 100);
-  if (s.weapons[0].level !== 2) fail("the owned bolt levels first (weighted double)");
+  if (s.weapons.length !== 2 || s.weapons[1].level !== 1) fail("a new weapon joins at level 1");
+  applyOffer(s, { kind: "weapon", id: s.weapons[0].id }, 100);
+  if (s.weapons[0].level !== 2) fail("an owned weapon levels up");
 }
 
 export function chestEvolvesAMaxedWeaponWithItsPassive() {
-  const s: RunState = { ...newRun("wick", {}), passives: { tome: 1 } };
+  const s: RunState = { ...newRun("wick", {}), passives: { ember: 1 } };
   s.weapons[0].level = 6;
   const rng = { range: () => 0, int: (a: number) => a, pick: <T>(xs: readonly T[]) => xs[0] };
   const card = openChest(s, rng, (k) => k);
-  if (!s.weapons[0].evo || card.name !== "weapon.bolt.evo") fail(`expected Sunfire Lance, got ${card.name}`);
+  if (!s.weapons[0].evo || card.name !== "weapon.flare.evo") fail(`expected Solar Flare, got ${card.name}`);
+}
+
+export function fiftyNewPowersEachWithAUniqueIcon() {
+  if (WEAPON_IDS.length + PASSIVE_IDS.length !== 5 + 7 + 50) fail(`expected 50 new powers, ${WEAPON_IDS.length} weapons ${PASSIVE_IDS.length} passives`);
+  const icons = [...WEAPON_IDS.flatMap((id) => [WEAPONS[id].icon, WEAPONS[id].evoIcon]), ...PASSIVE_IDS.map((id) => PASSIVES[id].icon)];
+  if (new Set(icons).size !== icons.length) fail("every power has its own icon");
+}
+
+export function eachHeroStartsWithASignatureNoOneElseIsOffered() {
+  const always = { range: () => 0.5, int: (a: number) => a, pick: <T>(xs: readonly T[]) => xs[0] };
+  for (const hero of Object.keys(HEROES) as HeroId[]) {
+    const s = newRun(hero, {});
+    const sig = HEROES[hero].weapon;
+    if (s.weapons[0].id !== sig || WEAPONS[sig].hero !== hero) fail(`${hero} starts with its signature ${sig}`);
+    s.weapons = [];
+    for (let i = 0; i < 40; i++) {
+      const offered = rollOffers(s, { ...always, pick: <T>(xs: readonly T[]) => xs[i % xs.length] });
+      const foreign = offered.find((o) => o.kind === "weapon" && WEAPONS[o.id].hero && WEAPONS[o.id].hero !== hero);
+      if (foreign) fail(`${hero} was offered another hero's signature ${JSON.stringify(foreign)}`);
+    }
+  }
+}
+
+export function signaturesStartStrongerThanTheBasicWeapon() {
+  const lash = weaponLevel("lash", 1, false), whip = weaponLevel("whip", 1, false);
+  if (lash.dmg <= whip.dmg || lash.count < 2) fail("Sister Taper's lash starts stronger and on both sides");
+}
+
+export function everyHeroAndManyPowersSurviveAMinuteWithoutErrors() {
+  // Every hero, taking every card: all weapon kinds and status effects get exercised.
+  const picks = Array.from({ length: 60 }, (_, i) => 10 + i * 40);
+  for (const hero of Object.keys(HEROES) as HeroId[]) {
+    const run = simulate(game, {
+      seconds: 60, saves: { main: { hero, heroes: Object.keys(HEROES) } }, clicks: { "title#play": [30] },
+      inputs: { pick1: picks, pick2: picks.map((f) => f + 20) },
+    });
+    run.expect.noErrors();
+    if (!run.state) fail(`${hero} died within a minute: ${JSON.stringify(run.saves.main)}`);
+    if (state(run).hero !== hero) fail(`expected to play ${hero}, got ${state(run).hero}`);
+    run.expect.noErrors();
+    if (state(run).kills < 3) fail(`${hero} should kill with its signature, kills ${state(run).kills}`);
+  }
 }
 
 export function xpCarriesOverLevels() {
