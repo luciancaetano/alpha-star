@@ -99,6 +99,8 @@ build/
 local.properties
 app/.cxx/
 app/src/main/assets/
+app/src/debug/jniLibs/
+app/src/release/jniLibs/
 ```
 
 Exporting again writes the SDK template over the project (your edits to template files are

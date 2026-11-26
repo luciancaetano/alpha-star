@@ -41,7 +41,9 @@ gradlew.bat assembleRelease</code></pre>
 build/
 local.properties
 app/.cxx/
-app/src/main/assets/</code></pre>
+app/src/main/assets/
+app/src/debug/jniLibs/
+app/src/release/jniLibs/</code></pre>
 <p>Exporting again writes the SDK template over the project (your edits to template files are replaced; Gradle's <code>build/</code> and <code>.cxx/</code> caches stay, so the engine is not rebuilt from scratch) and replaces the game pack in <code>app/src/main/assets</code> whole.</p>
 <h2 id="variants-debug-release-store">Variants: debug, release, store</h2>
 <pre><code>alpha export --target android-arm64 --out android --variant debug     # APK with dev tools, for your phone

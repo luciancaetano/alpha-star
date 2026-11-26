@@ -4,3 +4,6 @@ build/
 local.properties
 app/.cxx/
 app/src/main/assets/
+# Prebuilt engine libraries copied by alpha export (from @alpha-star/engine-android-arm64)
+app/src/debug/jniLibs/
+app/src/release/jniLibs/

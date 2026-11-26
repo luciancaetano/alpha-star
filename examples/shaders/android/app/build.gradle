@@ -2,7 +2,11 @@ plugins {
     id 'com.android.application'
 }
 
-// The engine is built from source, arm64-v8a only. debug: the release flavor (dev tools: F12,
+// Path to the alpha-star CMakeLists.txt (alpha export --engine-src), or empty: prebuilt engine.
+def engineCmake = ""
+
+// arm64-v8a only. The engine is prebuilt (app/src/<debug|release>/jniLibs, from
+// @alpha-star/engine-android-arm64) when ENGINE_CMAKE is empty, else built from source by CMake. debug: the release flavor (dev tools: F12,
 // gamepad Back+Start, shake or Menu key; debug tools and logs). release (APK and AAB):
 // the shipping flavor (no dev tools, MCP or debug features). The game pack is in src/main/assets.
 android {
@@ -19,7 +23,7 @@ android {
         ndk {
             abiFilters 'arm64-v8a'
         }
-        externalNativeBuild {
+        if (engineCmake) externalNativeBuild {
             cmake {
                 // 16 KB-aligned ELF segments: Google Play requires them (Android 15+ 16 KB page devices).
                 arguments "-DANDROID_PLATFORM=android-21", "-DANDROID_STL=c++_static", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
@@ -48,17 +52,17 @@ android {
         debug {
             // The release preset's flavor without MCP (its agent channel is for desktops; NDK libc++
             // has no floating-point from_chars). CMake defaults leave the dev tools off.
-            externalNativeBuild { cmake { arguments "-DALPHA_SHIPPING=OFF", "-DALPHA_DEVTOOLS=ON", "-DALPHA_MCP=OFF", "-DALPHA_DEBUG_TOOLS=ON" } }
+            if (engineCmake) externalNativeBuild { cmake { arguments "-DALPHA_SHIPPING=OFF", "-DALPHA_DEVTOOLS=ON", "-DALPHA_MCP=OFF", "-DALPHA_DEBUG_TOOLS=ON" } }
         }
         release {
             minifyEnabled false
             signingConfig keystore ? signingConfigs.release : signingConfigs.debug
-            externalNativeBuild { cmake { arguments "-DALPHA_SHIPPING=ON" } }
+            if (engineCmake) externalNativeBuild { cmake { arguments "-DALPHA_SHIPPING=ON" } }
         }
     }
-    externalNativeBuild {
+    if (engineCmake) externalNativeBuild {
         cmake {
-            path file("../../../../CMakeLists.txt")
+            path file(engineCmake)
             version "3.31.6"
         }
     }
