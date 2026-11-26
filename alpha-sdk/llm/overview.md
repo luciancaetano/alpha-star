@@ -12,7 +12,7 @@ The API is `node_modules/@alpha-star/sdk/types/alpha.d.ts` (modules `"alpha"` an
 | `src/alpha.ts` | `export const { scene, game } = define<MyGame>();` |
 | `src/tuning.ts` | Numbers that set the feel. |
 | `src/prefabs/*.ts` | Functions returning `EntitySpec` (plain data). |
-| `src/scenes/*.ts` | `export default scene("play", { state, enter, update, exit })` |
+| `src/scenes/*.ts` | `export default scene("play", { state, enter, update, systems, exit })` |
 | `src/main.ts` | `export default game({ config, start, scenes, assets })` (entry point) |
 | `test/main.test.ts` | Exported functions using `simulate` (see testing.md). |
 | `AGENTS.md` | What an agent reads first: commands, layout, game-specific rules. |
@@ -67,16 +67,29 @@ type Play = Context<Platformer, State>;   // for helper functions
 export default scene("play", {
   state: () => ({ coins: 0 }),         // (params) => S, fresh on every enter
   enter(ctx, params) { ctx.ui.show("hud"); },
-  update(ctx) {                        // once per fixed step (1/60 s)
+  update(ctx) {                        // once per fixed step (1/60 s), also while frozen
     if (ctx.input.pressed("restart")) ctx.go("play");
   },
+  systems: [                           // after update, in this order, every step
+    { tag: "coin", each(ctx, c) { c.rotation += 90 * ctx.dt; } },   // per living coin, c typed
+    { name: "hud", run(ctx) { ctx.ui.set("hud", "coins", `${ctx.state.coins}`); } },
+    { name: "menu", when: "frozen", run(ctx) { /* only while ctx.frozen */ } },
+  ],
   exit(ctx) {},
 });
 ```
 
+Systems: `(ctx) => void`, `{ name?, when?, run(ctx) }` or `{ name?, when?, tag, each(ctx, e) }` (oldest first;
+entities killed earlier in the pass are skipped). `when`: "running" (default, not while `ctx.frozen`), "frozen",
+"always". An error inside names the system. In its own module: `const chase: System<MyGame, State> = {...}`.
+
+Events (`GameTypes.events: { died: { enemy: Entity<MyGame, "enemy"> }; dawn: undefined }`): `ctx.emit("died", {...})`,
+`ctx.on("died", (p) => ...)`; delivered at the end of the step after contact handlers, in order (handlers may
+emit more, at most 1000 per step), also while frozen.
+
 `ctx` (scene-scoped: entities, handlers, tweens, timers, camera, postfx cleared on scene change):
 `config, dt, time, state, input, random, save, settings, locale, t, ui, audio, camera, postfx, window, app`,
-`spawn, destroy, find, findAll, positions, spawnLevel, world, onHit, onHitEnd, onEnter, onExit, onPause, onResume, onLowMemory, raycast, raycastAll, queryCircle, queryRect, joint, tween, every, after, go`.
+`frozen, spawn, destroy, find, findAll, positions, spawnLevel, world, onHit, onHitEnd, onEnter, onExit, onPause, onResume, onLowMemory, raycast, raycastAll, queryCircle, queryRect, joint, tween, every, after, emit, on, go`.
 
 - `ctx.go(scene, params?)` switches at the end of the step.
 - `ctx.dt` is the constant fixed step; `ctx.time` = seconds since enter.

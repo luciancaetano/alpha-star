@@ -187,6 +187,21 @@ ctx.frozen = ctx.state.menu !== null;   // level-up/pause menu: physics, timers,
 Spawning a tag without its data, reading a field another tag has, or passing a gem where an enemy
 is expected are compile errors. Queries and `findAll` return only living entities.
 
+## Systems, events, timers
+
+```ts
+export default scene("play", {
+  update(ctx) { if (ctx.input.pressed("pause")) ctx.frozen = !ctx.frozen; },   // every step
+  systems: [                                                  // then these, in order
+    { tag: "enemy", each(ctx, e) { e.pos.y += 40 * ctx.dt; } },   // per living enemy, typed
+    { name: "menu", when: "frozen", run(ctx) { /* only while frozen */ } },
+  ],
+});
+ctx.on("died", ({ enemy }) => ctx.spawn(gem([enemy.pos.x, enemy.pos.y])));   // GameTypes.events: { died: { enemy: ... } }
+ctx.emit("died", { enemy: e });                              // delivered at the end of the step
+ctx.every(0.2, blink, { owner: e }).cancel();                // timers return handles; owner ends them
+```
+
 ## Tweens, vectors, parent/child, entity data, prefabs
 
 ```ts

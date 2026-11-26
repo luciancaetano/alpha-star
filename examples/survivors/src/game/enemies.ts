@@ -6,7 +6,7 @@ import { enemy } from "../prefabs/actors";
 import { ENEMIES, HERO, RUN } from "../tuning";
 import type { EnemyKind, Ent } from "../types";
 import { at, pan } from "./combat";
-import type { Play, Stats } from "./run";
+import type { Play, PlaySystem, Stats } from "./run";
 import { pace, statusTint, strike, tickStatuses } from "./strike";
 
 /** A point just outside the visible world, `extra` px beyond its edge, at `angle` degrees from the hero. */
@@ -35,16 +35,11 @@ function waveSpawns(ctx: Play, hero: Ent<"hero">, st: Stats) {
 
 function runEvent(ctx: Play, hero: Ent<"hero">, ev: (typeof EVENTS)[number]) {
   ctx.state.events.push(`${ev.at}`);
-  ctx.ui.set("hud", "banner", ctx.t(`event.${ev.at}`));
-  ctx.after(3.5, () => ctx.ui.set("hud", "banner", ""));
+  ctx.emit("nightEvent", { at: ev.at, boss: ev.kind === "boss" || ev.kind === "snuffer" });
   const side = ctx.random.range(0, 360);
   for (let i = 0; i < ev.count; i++) {
     const angle = ev.kind === "ring" ? (i * 360) / ev.count : ev.kind === "swarm" ? side + ctx.random.range(-20, 20) : side + i * 90;
     spawnKind(ctx, ev.enemy, offscreen(ctx, hero, angle, ev.kind === "swarm" ? ctx.random.range(10, 60) : 30));
-  }
-  if (ev.kind === "boss" || ev.kind === "snuffer") {
-    ctx.audio.play("boss");
-    ctx.camera.shake(3, 0.6);
   }
 }
 
@@ -55,28 +50,35 @@ function events(ctx: Play, hero: Ent<"hero">) {
 }
 
 /** Foes left far behind come back from the side the hero walks toward. */
-function chase(ctx: Play, hero: Ent<"hero">) {
+function chaseOne(ctx: Play, hero: Ent<"hero">, e: Ent<"enemy">) {
   const h = at(hero);
   const [, , vw, vh] = ctx.camera.view;
   const far = Math.hypot(vw, vh) / 2 + RUN.despawn;   // beyond the corners of any screen
-  for (const e of ctx.findAll("enemy")) {
-    e.data.flash = Math.max(0, e.data.flash - ctx.dt);
-    if (e.data.flash === 0) e.tint = statusTint(ctx, e);
-    e.data.kb = Math.max(0, e.data.kb - ctx.dt);
-    const to = vec.sub(h, at(e));
-    if (vec.len(to) > far && !e.has("boss")) {
-      // Well past the edge: placed right at it, they seemed to pop in next to a walking hero.
-      const p = offscreen(ctx, hero, vec.angle(vec.scale(to, -1)) + 180 + ctx.random.range(-40, 40), ctx.random.range(60, 120));
-      [e.pos.x, e.pos.y] = p;   // a far jump: the engine draws it there at once
-      continue;
-    }
-    e.flipX = to[0] < 0;
-    if (e.data.kb === 0) e.body.velocity = vec.scale(vec.norm(to), ENEMIES[e.data.kind].speed * pace(ctx, e));
+  e.data.flash = Math.max(0, e.data.flash - ctx.dt);
+  if (e.data.flash === 0) e.tint = statusTint(ctx, e);
+  e.data.kb = Math.max(0, e.data.kb - ctx.dt);
+  const to = vec.sub(h, at(e));
+  if (vec.len(to) > far && !e.has("boss")) {
+    // Well past the edge: placed right at it, they seemed to pop in next to a walking hero.
+    const p = offscreen(ctx, hero, vec.angle(vec.scale(to, -1)) + 180 + ctx.random.range(-40, 40), ctx.random.range(60, 120));
+    [e.pos.x, e.pos.y] = p;   // a far jump: the engine draws it there at once
+    return;
   }
+  e.flipX = to[0] < 0;
+  if (e.data.kb === 0) e.body.velocity = vec.scale(vec.norm(to), ENEMIES[e.data.kind].speed * pace(ctx, e));
 }
 
+/** Every foe, oldest first: cools its flash and knockback, then walks at the hero. */
+export const chase: PlaySystem = {
+  name: "chase", tag: "enemy",
+  each(ctx, e) {
+    const hero = ctx.findAll("hero")[0];
+    if (hero) chaseOne(ctx, hero, e);
+  },
+};
+
 /** Touching foes hurt; a short invulnerability follows each hit. */
-function contact(ctx: Play, hero: Ent<"hero">, st: Stats) {
+export function contact(ctx: Play, hero: Ent<"hero">, st: Stats) {
   ctx.state.iframes = Math.max(0, ctx.state.iframes - ctx.dt);
   hero.tint = ctx.state.iframes > 0 && Math.floor(ctx.state.iframes * 20) % 2 === 0 ? "#ff6060" : "#ffffff";
   if (ctx.state.iframes > 0) return;
@@ -93,10 +95,9 @@ function contact(ctx: Play, hero: Ent<"hero">, st: Stats) {
   ctx.input.rumble(0.4, 0.15);
 }
 
-export function updateEnemies(ctx: Play, hero: Ent<"hero">, st: Stats) {
+/** New foes (the wave and timed events) and burning statuses; `chase` and `contact` follow as systems. */
+export function spawnHorde(ctx: Play, hero: Ent<"hero">, st: Stats) {
   if (ctx.state.time < RUN.seconds) waveSpawns(ctx, hero, st);
   tickStatuses(ctx);
   events(ctx, hero);
-  chase(ctx, hero);
-  contact(ctx, hero, st);
 }

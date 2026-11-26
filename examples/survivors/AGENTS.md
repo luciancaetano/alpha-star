@@ -46,7 +46,7 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 | `src/game/enemies.ts`, `combat.ts` | Horde spawns/chase/contact; damage, death, drops. |
 | `src/game/pickups.ts`, `world.ts` | Gems/items/braziers; endless ground and scenery. |
 | `src/game/menus.ts` | HUD and the level-up / chest / pause menus. |
-| `src/scenes/` | `title` (heroes, shop), `play`, `over`. |
+| `src/scenes/` | `title` (heroes, shop), `play` (its `SYSTEMS` list is the per-step order), `over`. |
 | `assets/ui/` | RmlUi docs; icons are glyphs of `assets/fonts/icons.fnt` / `bigicons.fnt`. |
 | `art/raw/` | Source art generated with Codex (magenta background); never edit `assets/img` by hand. |
 
@@ -58,7 +58,16 @@ A change is done only when `npm run export` prints `exported dist (...)` and `np
 - **New weapon:** add its id to `WeaponId`, a row in `powers.ts` (kind + mod pick its behavior; no code)
   and `weapon.<id>.name/evo/desc` in both locales. Non-custom weapons share the growth texts `grow.*`.
 - **Extra heroes are recolors** of the drawn ones (`HERO_VARIANTS` in `tools/process-art.py`).
-- **Menus pause the world:** `state.mode` != "play" skips the systems and sets `ctx.frozen` (scenes/play.ts).
+- **Menus pause the world:** play's `update` sets `ctx.frozen = state.mode !== "play"` first; systems with the
+  default `when: "running"` then skip while a menu is up, `menuKeys` is `when: "frozen"`, and the `"always"` ones
+  (frozen re-sync, world, hud) run every step.
+- **Systems:** `scenes/play.ts` `SYSTEMS` runs in order after `update`: tick (time, regen, walk) -> weapons ->
+  projectiles -> horde (spawns, statuses, night events) -> chase (`tag: "enemy"`) -> contact -> pickups -> life
+  (death) -> menus -> menuKeys -> frozen -> view -> world -> hud. Type one in its own module as `PlaySystem`
+  (`game/run.ts`); give object systems a `name` (errors name it). Keep the order: tests compare numbers.
+- **Events (`Candle.events`):** `nightEvent { at, boss }` from `game/enemies.ts` -> banner, boss sound and shake
+  (`wireBanners` in `game/menus.ts`). Events arrive at the end of the step, so never move anything that draws
+  `ctx.random` (kills, drops, offers) behind an event: the RNG order and every tested number would change.
 - **Typed tags:** `Candle.tags` maps each tag to its `data` shape (`types.ts`); prefabs return `Spec<"enemy">`,
   functions take `Ent<"enemy">`, so `e.data.*` needs no casts. Use `e.has("boss")`, not `tags.includes`.
 - **Queries and `findAll` only return living entities;** a list held while your own code kills can go stale:

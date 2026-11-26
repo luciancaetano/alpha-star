@@ -1,6 +1,7 @@
 // The run's JSON state (survives hot reload) and the hero's derived stats: pure functions.
+import type { System } from "alpha";
 import { HERO, HEROES, PICKUP, xpFor } from "../tuning";
-import type { Ctx, HeroId, PassiveId, ShopId, WeaponId } from "../types";
+import type { Candle, Ctx, HeroId, PassiveId, ShopId, WeaponId } from "../types";
 
 export interface OwnedWeapon { id: WeaponId; level: number; evo: boolean; cd: number }
 export type Offer = { kind: "weapon"; id: WeaponId } | { kind: "passive"; id: PassiveId } | { kind: "gold" } | { kind: "cake" };
@@ -19,6 +20,8 @@ export interface RunState {
   view: number[];
 }
 export type Play = Ctx<RunState>;
+/** One piece of the play scene's per-step logic (scenes/play.ts `systems`). */
+export type PlaySystem = System<Candle, RunState>;
 
 export function newRun(hero: HeroId, shop: Partial<Record<ShopId, number>>): RunState {
   return {

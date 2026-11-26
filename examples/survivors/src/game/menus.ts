@@ -98,3 +98,14 @@ export function wireMenus(ctx: Play, quit: () => void) {
   ctx.ui.on("paused", "resume", "back", () => closeMenus(ctx));
   ctx.ui.on("paused", "quit", "click", quit);
 }
+
+/** Night events (game/enemies.ts) announce themselves: a banner for 3.5 s; bosses roar and shake. */
+export function wireBanners(ctx: Play) {
+  ctx.on("nightEvent", ({ at: when, boss }) => {
+    ctx.ui.set("hud", "banner", ctx.t(`event.${when}`));
+    ctx.after(3.5, () => ctx.ui.set("hud", "banner", ""));
+    if (!boss) return;
+    ctx.audio.play("boss");
+    ctx.camera.shake(3, 0.6);
+  });
+}

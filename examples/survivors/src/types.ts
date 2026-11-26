@@ -41,7 +41,7 @@ export interface Candle {
   actions: "pick1" | "pick2" | "pick3" | "pause" | "restart" | "showcase";
   axes: "moveX" | "moveY";
   sounds: "bolt" | "whip" | "zap" | "pool" | "hit" | "kill" | "gem" | "coin" | "levelup" | "chest" | "evolve"
-    | "hurt" | "heal" | "bell" | "boss" | "select" | "death" | "theme";
+    | "hurt" | "heal" | "bell" | "boss" | "select" | "death" | "theme" | "themeBass";
   images: "ground" | "logo";
   /** Each tag and the `data` its entities keep (`{}`: none). */
   tags: {
@@ -78,6 +78,11 @@ export interface Candle {
     chest: "icon" | "title" | "name" | "desc" | "ok";
     paused: "resume" | "quit" | "build";
     over: "title" | "time" | "level" | "kills" | "gold" | "best" | "again" | "menu";
+  };
+  /** Game events (ctx.emit -> ctx.on, delivered at the end of the step). */
+  events: {
+    /** A timed night event began (data/waves.ts EVENTS `at`); `boss`: a boss or the Snuffer. */
+    nightEvent: { at: number; boss: boolean };
   };
   scenes: { title: undefined; play: { hero: HeroId; demo?: boolean }; over: RunResult };
 }

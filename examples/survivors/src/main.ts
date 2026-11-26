@@ -1,6 +1,6 @@
 // Entry point: `alpha export` bundles this and everything it imports into dist/main.js.
-import type { Note } from "alpha";
 import { game } from "./alpha";
+import { themeBass, themeMelody } from "./data/music";
 import over from "./scenes/over";
 import play from "./scenes/play";
 import title from "./scenes/title";
@@ -13,10 +13,6 @@ const hero = (name: string) => ({
   animations: { idle: { frames: [0] }, walk: { frames: [1, 2, 3, 0], fps: 9 } },
 });
 const strip = <N extends string>(names: N[]) => Object.fromEntries(names.map((n, i) => [n, { frames: [i] }])) as Record<N, { frames: number[] }>;
-
-// A slow minor lullaby (A minor arpeggios), looped quietly under the night.
-const ARP = [220, 262, 330, 262, 175, 220, 262, 220, 196, 247, 294, 247, 165, 208, 247, 330];
-const theme: Note[] = ARP.flatMap((f) => [{ wave: "triangle", freq: f, duration: 0.42, volume: 0.22, release: 0.2 }]);
 
 export default game({
   config: {
@@ -63,7 +59,8 @@ export default game({
       boss: [{ wave: "saw", freq: [110, 55], duration: 1.2, volume: 0.45, release: 0.4 }],
       select: { wave: "triangle", freq: [660, 990], duration: 0.08, volume: 0.3 },
       death: [{ wave: "triangle", freq: [440, 110], duration: 0.8, volume: 0.45 }],
-      theme,
+      theme: themeMelody,
+      themeBass,
     },
     locales: { pt: "assets/locales/pt.json", en: "assets/locales/en.json" },
     images: { ground: "assets/img/ground.png", logo: "assets/ui/logo.png" },

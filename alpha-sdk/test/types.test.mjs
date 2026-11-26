@@ -12,3 +12,8 @@ test("tag data: spawn, queries, handlers, has() and variance are typed", () => {
   const problems = typecheck(path.join(HERE, "fixtures", "typed_tags", "game.ts"));
   assert.deepEqual(problems.map((p) => `${p.line}: ${p.message}`), []);
 });
+
+test("systems, events and timers: tag systems, when, emit/on payloads and timer handles are typed", () => {
+  const problems = typecheck(path.join(HERE, "fixtures", "systems", "game.ts"));
+  assert.deepEqual(problems.map((p) => `${p.line}: ${p.message}`), []);
+});

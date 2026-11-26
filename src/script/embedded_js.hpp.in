@@ -13,6 +13,7 @@ inline constexpr std::string_view kLdtk = @ALPHA_JS_ldtk@;
 inline constexpr std::string_view kLevels = @ALPHA_JS_levels@;
 inline constexpr std::string_view kRuntime = @ALPHA_JS_runtime@;
 inline constexpr std::string_view kTween = @ALPHA_JS_tween@;
+inline constexpr std::string_view kFlow = @ALPHA_JS_flow@;
 inline constexpr std::string_view kPhysics = @ALPHA_JS_physics@;
 inline constexpr std::string_view kAudio = @ALPHA_JS_audio@;
 inline constexpr std::string_view kPrefs = @ALPHA_JS_prefs@;

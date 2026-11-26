@@ -12,8 +12,10 @@ interface Tween { readonly done: boolean; readonly active: boolean; cancel(): vo
 type Ease = "linear" | `${"quad"|"cubic"|"quart"|"quint"|"sine"|"expo"|"circ"|"back"|"elastic"|"bounce"}${"In"|"Out"|"InOut"}`;
 // defaults: ease "linear", repeat 0 (integer >= 0 or Infinity); delay: values read when it starts
 
-ctx.every(seconds, fn)   // repeats every `seconds` (>= 0.001) of game time; first call after `seconds`
-ctx.after(seconds, fn)   // once, after `seconds` (>= 0.001)
+ctx.every(seconds, fn, { owner? }): Timer   // repeats every `seconds` (>= 0.001) of game time; first call after `seconds`
+ctx.after(seconds, fn, { owner? }): Timer   // once, after `seconds` (>= 0.001)
+interface Timer { readonly active: boolean; cancel(): void }   // owner: the timer ends when that entity dies
+// timers and tweens stop while ctx.frozen
 
 import { vec } from "alpha";
 vec.add(a, b) vec.sub(a, b) vec.scale(a, s) vec.len(a) vec.norm(a) vec.dot(a, b)

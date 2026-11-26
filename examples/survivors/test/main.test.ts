@@ -1,5 +1,6 @@
 // Headless agent tests: same seed + same inputs => same result, every run.
 import { simulate } from "alpha/test";
+import { themeBass, themeMelody } from "../src/data/music";
 import { waveAt } from "../src/data/waves";
 import { applyOffer, openChest, rollOffers } from "../src/game/offers";
 import { gainXp, newRun, type RunState } from "../src/game/run";
@@ -219,4 +220,11 @@ export function theShowcaseRunFillsTheScreenAndNeverStops() {
   if (state(run).kills < 150) fail(`showcase should melt the horde, kills ${state(run).kills}`);
   console.log(`showcase: ${state(run).kills} kills, ${run.entities("enemy").length} foes, ${run.entities("shot").length} shots`);
   run.expect.count("enemy").atLeast(40);
+}
+
+export function theMusicLayersLoopTogether() {
+  // Melody and bass start in the same step: equal lengths keep them in time on every loop.
+  const length = (notes: { duration: number }[]) => notes.reduce((t, n) => t + n.duration, 0);
+  if (Math.abs(length(themeMelody) - length(themeBass)) > 1e-9) fail(`melody ${length(themeMelody)} s vs bass ${length(themeBass)} s`);
+  if (themeMelody.some((n) => !(n.freq as number > 0))) fail("every melody note has a pitch");
 }

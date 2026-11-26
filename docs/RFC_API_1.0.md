@@ -1,6 +1,6 @@
 # RFC: script API 1.0 (breaking)
 
-Status: phase 1 implemented (0.6.0); phases 2-4 proposed.
+Status: phases 1 and 2 implemented; phases 3-4 proposed.
 Evidence: `examples/survivors` (Candlewick), the largest alpha-star game, and the "lessons" in its AGENTS.md.
 
 ## Why
@@ -71,23 +71,28 @@ events. `update`, UI handlers, input and audio keep running, so a level-up or pa
 (it is the scene's simulated time). Reset to false on every scene enter. Different from `ctx.app.paused`
 (the OS paused the app: nothing runs at all).
 
-## Phase 2 (proposed): systems, states, typed events
+## Phase 2 (done): systems, typed events, timer handles
 
 ```ts
 export default scene("play", {
   state: () => ({ ... }),
   systems: [
-    system("chase", { each: "enemy" }, (ctx, e) => { ... }),          // e: Entity<G, "enemy">
-    system("menu", { when: "frozen" }, (ctx) => { ... }),
+    { name: "chase", tag: "enemy", each(ctx, e) { ... } },           // e: Entity<G, "enemy">
+    { name: "menu", when: "frozen", run(ctx) { ... } },
+    (ctx) => { ... },
   ],
 });
 ```
 
-- `system(name, { each?, when?, after? }, fn)`: ordered, declared, testable one by one; `each` runs
-  per living entity with the tag (typed); `when: "running" | "frozen" | "always"` (default running).
-- Typed game events in `GameTypes.events` (`{ died: { by: TagOf } }`): `ctx.emit("died", {...})`,
-  `ctx.on("died", fn)`; delivered after the step like contacts (Defold messages, Godot signals).
-- Timers and tweens owned by an entity (`ctx.after(1, fn, { owner: e })`) die with it.
+- Plain objects, no builder: `{ name?, when?, run(ctx) }` or `{ name?, when?, tag, each(ctx, e) }`.
+  The keys differ (`run` vs `each`) on purpose: TypeScript cannot type a parameter from a union
+  discriminated by a missing property, so one shape per key keeps `ctx` and `e` inferred.
+  Run in array order after `update` (no `after:` graph: order is the array). `tag` systems skip
+  entities destroyed earlier in the same pass. `when: "running" | "frozen" | "always"`.
+- Typed game events in `GameTypes.events` (`{ died: { enemy: Entity<G, "enemy"> } }`): `ctx.emit("died", {...})`,
+  `ctx.on("died", fn)`; delivered at the end of the step after contacts, in order, at most 1000 per step.
+- `ctx.every`/`ctx.after` return `Timer { active, cancel() }`; `{ owner: e }` ends one with its entity
+  (tweens on an entity already ended with it).
 
 ## Phase 3 (proposed): UI beyond text
 

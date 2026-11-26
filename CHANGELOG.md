@@ -23,6 +23,10 @@ Script API 1.0, phase 1 (breaking; see `docs/RFC_API_1.0.md`).
 - `ctx.frozen`: freezes the scene's world (physics with velocities kept, contacts, timers, tweens, animations,
   particles, animated tiles, `ctx.time`) while `update`, UI, input, camera and audio run. For menus.
 - `TagOf`, `DataOf`, `EntityOf`, `AnySpec` helper types.
+- Phase 2: `scene.systems` (`(ctx) => void`, `{ name?, when?, run(ctx) }`, `{ name?, when?, tag, each(ctx, e) }`; run in
+  order after `update`, `when` "running" | "frozen" | "always", errors name the system), typed game events
+  (`GameTypes.events`, `ctx.emit` / `ctx.on`, delivered at the end of the step), `System`/`When`/`EventsOf` types.
+- `ctx.every` / `ctx.after` return a `Timer` (`active`, `cancel()`) and take `{ owner }` (the timer ends with that entity).
 
 ## [0.5.0] - 2026-11-26
 

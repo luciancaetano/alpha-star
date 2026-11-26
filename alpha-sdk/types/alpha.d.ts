@@ -73,6 +73,12 @@ declare module "alpha" {
      * e.g. `{ wave: "amount" | "time" }` (`never` for a shader without uniforms). Optional.
      */
     shaders?: { [shader: string]: string };
+    /**
+     * Game event name -> its payload (`undefined` = none), e.g.
+     * `{ died: { enemy: Entity<MyGame, "enemy"> }; levelUp: { level: number }; dawn: undefined }`.
+     * `ctx.emit` / `ctx.on` check names and payloads. Optional.
+     */
+    events?: { [event: string]: unknown };
   }
 
   /** The game's music names (`never` without `music`). */
@@ -94,6 +100,13 @@ declare module "alpha" {
   export type AnimationOf<G extends GameTypes> = SheetsOf<G>[keyof SheetsOf<G>] & string;
   /** The game's LDtk world names (`never` without `worlds`). */
   export type WorldOf<G extends GameTypes> = G extends { worlds: infer W extends string } ? W : never;
+
+  /** The game's events (`{}` without `events`). */
+  export type EventsOf<G extends GameTypes> = G extends { events: infer E extends { [k: string]: unknown } } ? E : {};
+  /** The game's event names. */
+  export type EventOf<G extends GameTypes> = keyof EventsOf<G> & string;
+  /** emit's payload argument: none for `undefined` events. */
+  export type PayloadArgs<P> = [P] extends [undefined] ? [] : [payload: P];
 
   /** The game's tag names. */
   export type TagOf<G extends GameTypes> = keyof G["tags"] & string;
@@ -444,6 +457,20 @@ declare module "alpha" {
     /** Extra cycles: an integer >= 0, or Infinity. Default 0. */
     repeat?: number;
     onDone?: () => void;
+  }
+
+  /** A ctx.every / ctx.after timer. */
+  export interface Timer {
+    /** False once it fired (after), was cancelled, its owner died or the scene changed. */
+    readonly active: boolean;
+    /** Stops it; cancelling twice is a no-op. */
+    cancel(): void;
+  }
+
+  /** ctx.every / ctx.after options. */
+  export interface TimerOptions<G extends GameTypes> {
+    /** The timer goes away with this entity (never fires after it is destroyed). */
+    owner?: Entity<G>;
   }
 
   export interface Tween {
@@ -1173,10 +1200,19 @@ declare module "alpha" {
     tween(target: Entity<G>, opts: TweenOptions<EntityTweenKeys>): Tween;
     tween<O extends object>(target: O, opts: TweenOptions<{ [K in keyof O]: O[K] extends number ? K : never }[keyof O] & string>): Tween;
 
-    /** Repeats every `seconds` (>= 0.001) of game time, first call after `seconds`. */
-    every(seconds: number, fn: () => void): void;
-    /** Runs once after `seconds` (>= 0.001) of game time. */
-    after(seconds: number, fn: () => void): void;
+    /** Repeats every `seconds` (>= 0.001) of game time, first call after `seconds`. Stops while frozen. */
+    every(seconds: number, fn: () => void, opts?: TimerOptions<G>): Timer;
+    /** Runs once after `seconds` (>= 0.001) of game time. Stops while frozen. */
+    after(seconds: number, fn: () => void, opts?: TimerOptions<G>): Timer;
+
+    /**
+     * Sends a game event (GameTypes.events). Delivered to every `ctx.on` handler at the end of
+     * the step, after contact handlers, in the order sent (events sent by handlers too, at
+     * most 1000 per step); also while frozen. Scene-scoped like every handler.
+     */
+    emit<K extends EventOf<G>>(name: K, ...payload: PayloadArgs<EventsOf<G>[K]>): void;
+    /** Handles a game event; handlers run in the order added. */
+    on<K extends EventOf<G>>(name: K, fn: (payload: EventsOf<G>[K]) => void): void;
 
     /** Switches scene at the end of this step. */
     go<K extends keyof G["scenes"] & string>(scene: K, ...params: ParamArgs<G["scenes"][K]>): void;
@@ -1184,11 +1220,32 @@ declare module "alpha" {
 
   // ---- scenes and game --------------------------------------------------------
 
+  /**
+   * When a system runs: "running" (default: not while ctx.frozen), "frozen" (only while
+   * frozen: menus) or "always".
+   */
+  export type When = "running" | "frozen" | "always";
+
+  /**
+   * One piece of a scene's logic, run every step in the order of `systems`, after `update`:
+   * - `(ctx) => void`, or `{ name?, when?, run(ctx) }`;
+   * - `{ name?, when?, tag: "enemy", each(ctx, e) }`: once per living entity with the tag
+   *   (oldest first; one destroyed earlier in the same pass is skipped), `e` typed by it.
+   * A script error inside names the system (`name`, else its tag or position).
+   */
+  export type System<G extends GameTypes, S> =
+    | ((ctx: Context<G, S>) => void)
+    | { name?: string; when?: When; run(ctx: Context<G, S>): void }
+    | { [T in TagOf<G>]: { name?: string; when?: When; tag: T; each(ctx: Context<G, S>, e: Entity<G, T>): void } }[TagOf<G>];
+
   export interface SceneDef<G extends GameTypes, P, S> {
     /** Builds fresh scene state on every enter. Omit for stateless scenes. */
     state?: (params: P) => S;
     enter?(ctx: Context<G, S>, params: P): void;
+    /** Runs every step, also while frozen; then `systems`. */
     update?(ctx: Context<G, S>): void;
+    /** The scene's systems, run in this order after `update` (see System). */
+    systems?: System<G, S>[];
     exit?(ctx: Context<G, S>): void;
   }
 

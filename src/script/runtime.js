@@ -11,6 +11,7 @@ import { joinPath, loadWorld } from "alpha:ldtk";
 import { levelOf, spawnLevel, stepLevels, worldView } from "alpha:levels";
 import { aliveOf, bodyOf, contactOf, physicsCtx, tweenAccess } from "alpha:physics";
 import { makeTweens } from "alpha:tween";
+import { addTimer, makeEvents, runSystems, systemsOf } from "alpha:flow";
 import { defineBuses, loadAudio, makeAudio } from "alpha:audio";
 import { makeI18n } from "alpha:i18n";
 import { SETTINGS_DEFAULTS, fileStore, jsonSafe, makeSave, readSettings, saveConfig, writeSettings } from "alpha:prefs";
@@ -488,10 +489,6 @@ function makeSettings(s) {
 
 // The ctx object a game's scenes see. `s` is the instance's mutable state.
 function makeCtx(s) {
-  const addTimer = (id, fn) => {
-    if (typeof fn !== "function") fail("timer callback must be a function");
-    s.timers.set(id, fn);
-  };
   return {
     get config() { return s.game.config; },
     get dt() { return s.stepDt; },
@@ -571,14 +568,10 @@ function makeCtx(s) {
     onResume: appHook(s, "resume", "onResume"),
     onLowMemory: appHook(s, "lowMemory", "onLowMemory"),
     app: { get paused() { return s.appPaused; } },
-    every: (seconds, fn) => addTimer(N.timerEvery(seconds), fn),
-    after(seconds, fn) {
-      const id = N.timerAfter(seconds);
-      addTimer(id, () => {
-        s.timers.delete(id);
-        fn();
-      });
-    },
+    every: (seconds, fn, opts) => addTimer(s.timers, N.timerEvery(seconds), fn, opts, false, `every(${seconds}, fn, opts?)`),
+    after: (seconds, fn, opts) => addTimer(s.timers, N.timerAfter(seconds), fn, opts, true, `after(${seconds}, fn, opts?)`),
+    emit: (name, payload) => s.events.emit(name, payload),
+    on: (name, fn) => s.events.on(name, fn),
     go(name, params) {
       s.pending = { name: checkScene(s.game, name, "go"), params };
     },
@@ -622,6 +615,7 @@ function enter(s, ctx, name, params, kept) {
   s.timers.clear();
   s.entities.clear();
   s.handlers = [];
+  s.events.clear();
   s.tweens.clear();
   s.levels = [];
   N.uiReset();
@@ -633,6 +627,7 @@ function enter(s, ctx, name, params, kept) {
   s.currentName = name;
   s.currentParams = params;
   const def = s.current.def;
+  s.systems = systemsOf(name, def.systems);
   if (!def.state) ctx.state = undefined;
   else ctx.state = kept && Object.hasOwn(kept, "state") ? kept.state : def.state(params);
   s.current.def.enter?.(ctx, params);
@@ -730,6 +725,7 @@ function stepGame(s, ctx, dt) {
   s.stepDt = dt;
   for (const id of N.uiEvents()) s.uiHandlers.get(id)?.();  // clicks since the last step
   s.current.def.update?.(ctx);
+  runSystems(s.systems, ctx, s.frozen, s.entities.entity);
   // ctx.frozen: the world steps by 0 (frees destroyed entities, nothing moves or ages).
   const worldDt = s.frozen ? 0 : dt;
   const t0 = N.perfNow();
@@ -746,6 +742,7 @@ function stepGame(s, ctx, dt) {
   dispatch(s, events.enters, "enters");
   dispatch(s, events.hitEnds, "hitEnds");
   dispatch(s, events.exits, "exits");
+  s.events.flush();
   syncData(s.entities.data);
   if (s.pending) {
     const { name, params } = s.pending;
@@ -785,7 +782,7 @@ export function createInstance(id, store, platform, screen) {
   const s = {
     platform: Object.freeze({ os, mobile: os === "android" || os === "ios" }),
     game: null, current: null, currentName: null, currentParams: undefined, pending: null, handlers: [], uiHandlers: new Map(),
-    store, screen, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60, appPaused: false, frozen: false,
+    store, screen, save: null, settings: null, i18n: makeI18n(), defaultLocale: null, sceneTime: 0, stepDt: 1 / 60, appPaused: false, frozen: false, events: makeEvents(), systems: [],
     timers: new Map(), entities: makeEntities(), worlds: new Map(), levels: [], tweens: makeTweens(tweenAccess),
   };
   const ctx = makeCtx(s);

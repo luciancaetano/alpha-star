@@ -62,6 +62,11 @@ JSValue perf_add(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
+JSValue timer_cancel(JSContext* ctx, ScriptState& s, JSValueConst* argv) {
+  s.timers.cancel(static_cast<core::TimerId>(number_arg(ctx, argv[0], "timer id")));
+  return JS_UNDEFINED;
+}
+
 JSValue clear_timers(JSContext*, ScriptState& s, JSValueConst*) {
   s.timers.clear();
   return JS_UNDEFINED;
@@ -96,13 +101,13 @@ JSValue dev_warn(JSContext* ctx, ScriptState&, JSValueConst* argv) {
   return JS_UNDEFINED;
 }
 
-constexpr std::array<Native, 10> kNatives{{
+constexpr std::array<Native, 11> kNatives{{
     {"configure", guarded<configure>, 5},     {"random", guarded<random>, 3},
     {"timerEvery", guarded<timer_every>, 1},
     {"timerAfter", guarded<timer_after>, 1},  {"clearTimers", guarded<clear_timers>, 0},
     {"advanceTimers", guarded<advance_timers>, 1}, {"log", guarded<log>, 2},
     {"devWarn", guarded<dev_warn>, 1},        {"perfNow", guarded<perf_now>, 0},
-    {"perfAdd", guarded<perf_add>, 2},
+    {"perfAdd", guarded<perf_add>, 2},        {"timerCancel", guarded<timer_cancel>, 1},
 }};
 
 }  // namespace

@@ -73,6 +73,7 @@ if(ALPHA_WITH_RUNTIME_DEPS)
     script/shader_script_test.cpp
     script/entity_links_test.cpp
     script/world_freeze_test.cpp
+    script/flow_test.cpp
     script/physics_script_test.cpp
     script/pixel_mode_test.cpp
     script/prefs_script_test.cpp

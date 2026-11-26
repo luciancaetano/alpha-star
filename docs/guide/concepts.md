@@ -149,6 +149,47 @@ Expected: `ctx.go` switches at the end of the step. The new scene starts empty: 
 handlers, timers, tweens, camera and post effects of the old scene are gone. A scene declared
 `undefined` in `scenes` takes no params (`ctx.go("title")`); `start` must be one of those.
 
+### Systems: the scene's logic as a list
+
+A small scene fits in `update`. A bigger one reads better as `systems`: named pieces that run
+every step, in order, after `update`:
+
+```ts
+const play = scene("play", {
+  state: () => ({ score: 0 }),
+  update(ctx) {                                                       // every step, also while frozen
+    if (ctx.input.pressed("pause")) ctx.frozen = !ctx.frozen;
+  },
+  systems: [
+    { tag: "enemy", each(ctx, e) { e.pos.y += 40 * ctx.dt; } },      // once per living enemy, e typed
+    { tag: "bullet", each: ageBullet },                               // a function (ctx, b) elsewhere
+    { name: "score", run(ctx) { ctx.find("label").text = String(ctx.state.score); } },
+    { name: "pause menu", when: "frozen", run(ctx) { /* only while frozen */ } },
+  ],
+});
+```
+
+- `{ tag, each(ctx, e) }` visits every living entity with the tag, oldest first; one destroyed
+  earlier in the same pass is skipped, so a system that kills never sees a dead entity.
+- `when`: `"running"` (default: skipped while `ctx.frozen`), `"frozen"` (menus), `"always"`.
+- A script error inside a system names it: `system "score": ...`.
+- A system can live in its own file: `export const chase: System<MyGame, State> = { tag: "enemy", each(ctx, e) { ... } }`.
+
+### Events: one part tells the others
+
+Declare events with their payloads, send them anywhere, handle them anywhere in the scene:
+
+```ts
+// types.ts: events: { died: { enemy: Entity<MyGame, "enemy"> }; dawn: undefined }
+ctx.on("died", ({ enemy }) => { ctx.state.score += 10; ctx.spawn(gem([enemy.pos.x, enemy.pos.y])); });
+ctx.on("dawn", () => ctx.go("won"));
+ctx.emit("died", { enemy: e });      // payload checked against GameTypes.events
+ctx.emit("dawn");                    // no payload
+```
+
+Events are delivered at the end of the step (after contact handlers), in the order sent, also
+while frozen; an event sent by a handler is delivered in the same step (at most 1000 per step).
+
 ### ctx: time, random, timers
 
 ```ts
@@ -159,9 +200,12 @@ ctx.random.int(1, 6);                        // integer in [1, 6]
 ctx.random.pick(["red", "green", "blue"]);
 ctx.after(2, () => ctx.go("over", { score: ctx.state.score }));   // once, in 2 s of game time
 ctx.every(0.5, () => { ctx.state.score += 1; });                   // every 0.5 s, first at 0.5 s
+const blink = ctx.every(0.2, () => { e.alpha = 1 - e.alpha; }, { owner: e });  // ends when e dies
+blink.cancel();                                                    // or stop it yourself
 ```
 
-Timers run on game time, so they stop while the app is paused and are dropped on scene change.
+Timers run on game time, so they stop while the app is paused (and while `ctx.frozen`) and are
+dropped on scene change. `every` and `after` return a `Timer` (`active`, `cancel()`).
 `Math.random` is disabled: `ctx.random` is seeded by `config.seed`, so every run is the same.
 
 ### Entities

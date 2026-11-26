@@ -34,6 +34,7 @@ Vm::Vm(SavePathFor save_path_for, core::LogRing& log)
   engine->add_builtin("alpha:ldtk", embedded::kLdtk);
   engine->add_builtin("alpha:levels", embedded::kLevels);
   engine->add_builtin("alpha:tween", embedded::kTween);
+  engine->add_builtin("alpha:flow", embedded::kFlow);
   engine->add_builtin("alpha:physics", embedded::kPhysics);
   engine->add_builtin("alpha:audio", embedded::kAudio);
   engine->add_builtin("alpha:prefs", embedded::kPrefs);

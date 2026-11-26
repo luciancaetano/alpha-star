@@ -85,19 +85,17 @@ function steer(ctx: Play, h: Hero) {
   if (input.pressed("bomb") && h.data.bombs > 0) bomb(ctx, h);
 }
 
-// Enemies walk toward the nearest hero.
-function chase(ctx: Play, heroes: Hero[]) {
-  for (const e of ctx.findAll("enemy")) {
-    const target = heroes.reduce((a, b) => (vec.dist(at(a), at(e)) <= vec.dist(at(b), at(e)) ? a : b));
-    e.body.velocity = vec.scale(vec.norm(vec.sub(at(target), at(e))), ENEMY.speed);
-  }
+// An enemy walks toward the nearest hero.
+function chase(ctx: Play, e: Entity<Arena, "enemy">) {
+  const heroes = ctx.findAll("hero");
+  if (!heroes.length) return;
+  const target = heroes.reduce((a, b) => (vec.dist(at(a), at(e)) <= vec.dist(at(b), at(e)) ? a : b));
+  e.body.velocity = vec.scale(vec.norm(vec.sub(at(target), at(e))), ENEMY.speed);
 }
 
-function ageBullets(ctx: Play) {
-  for (const b of ctx.findAll("bullet")) {
-    b.data.life -= ctx.dt;
-    if (b.data.life <= 0) ctx.destroy(b);
-  }
+function age(ctx: Play, b: Entity<Arena, "bullet">) {
+  b.data.life -= ctx.dt;
+  if (b.data.life <= 0) ctx.destroy(b);
 }
 
 // Several contacts can arrive in one step: an enemy already used up hurts no one.
@@ -131,12 +129,15 @@ export default scene("play", {
 
   update(ctx) {
     joinPlayers(ctx);
-    const heroes = ctx.findAll("hero");
-    if (!heroes.length) return ctx.go("over", { score: ctx.state.score });
-    for (const h of heroes) steer(ctx, h);
-    chase(ctx, heroes);
-    ageBullets(ctx);
-    hud(ctx);
+    if (!ctx.findAll("hero").length) ctx.go("over", { score: ctx.state.score });
     if (ctx.input.pressed("restart")) ctx.go("play");
   },
+
+  // Run in this order after update, every step; a tag system runs once per living entity.
+  systems: [
+    { tag: "hero", each: steer },
+    { tag: "enemy", each: chase },
+    { tag: "bullet", each: age },
+    { name: "hud", run: hud },
+  ],
 });

@@ -112,6 +112,29 @@ const title = scene("title", {
   },
 });</code></pre>
 <p>Expected: <code>ctx.go</code> switches at the end of the step. The new scene starts empty: entities, handlers, timers, tweens, camera and post effects of the old scene are gone. A scene declared <code>undefined</code> in <code>scenes</code> takes no params (<code>ctx.go("title")</code>); <code>start</code> must be one of those.</p>
+<h3 id="systems-the-scene-s-logic-as-a-list">Systems: the scene's logic as a list</h3>
+<p>A small scene fits in <code>update</code>. A bigger one reads better as <code>systems</code>: named pieces that run every step, in order, after <code>update</code>:</p>
+<pre><code>const play = scene("play", {
+  state: () =&gt; ({ score: 0 }),
+  update(ctx) {                                                       // every step, also while frozen
+    if (ctx.input.pressed("pause")) ctx.frozen = !ctx.frozen;
+  },
+  systems: [
+    { tag: "enemy", each(ctx, e) { e.pos.y += 40 * ctx.dt; } },      // once per living enemy, e typed
+    { tag: "bullet", each: ageBullet },                               // a function (ctx, b) elsewhere
+    { name: "score", run(ctx) { ctx.find("label").text = String(ctx.state.score); } },
+    { name: "pause menu", when: "frozen", run(ctx) { /* only while frozen */ } },
+  ],
+});</code></pre>
+<ul><li><code>{ tag, each(ctx, e) }</code> visits every living entity with the tag, oldest first; one destroyed earlier in the same pass is skipped, so a system that kills never sees a dead entity.</li><li><code>when</code>: <code>"running"</code> (default: skipped while <code>ctx.frozen</code>), <code>"frozen"</code> (menus), <code>"always"</code>.</li><li>A script error inside a system names it: <code>system "score": ...</code>.</li><li>A system can live in its own file: <code>export const chase: System&lt;MyGame, State&gt; = { tag: "enemy", each(ctx, e) { ... } }</code>.</li></ul>
+<h3 id="events-one-part-tells-the-others">Events: one part tells the others</h3>
+<p>Declare events with their payloads, send them anywhere, handle them anywhere in the scene:</p>
+<pre><code>// types.ts: events: { died: { enemy: Entity&lt;MyGame, "enemy"&gt; }; dawn: undefined }
+ctx.on("died", ({ enemy }) =&gt; { ctx.state.score += 10; ctx.spawn(gem([enemy.pos.x, enemy.pos.y])); });
+ctx.on("dawn", () =&gt; ctx.go("won"));
+ctx.emit("died", { enemy: e });      // payload checked against GameTypes.events
+ctx.emit("dawn");                    // no payload</code></pre>
+<p>Events are delivered at the end of the step (after contact handlers), in the order sent, also while frozen; an event sent by a handler is delivered in the same step (at most 1000 per step).</p>
 <h3 id="ctx-time-random-timers">ctx: time, random, timers</h3>
 <pre><code>ctx.dt;                                      // the fixed step in seconds (1/60)
 ctx.time;                                    // seconds since this scene's enter
@@ -119,8 +142,10 @@ ctx.random.range(0, 320);                    // float in [0, 320)
 ctx.random.int(1, 6);                        // integer in [1, 6]
 ctx.random.pick(["red", "green", "blue"]);
 ctx.after(2, () =&gt; ctx.go("over", { score: ctx.state.score }));   // once, in 2 s of game time
-ctx.every(0.5, () =&gt; { ctx.state.score += 1; });                   // every 0.5 s, first at 0.5 s</code></pre>
-<p>Timers run on game time, so they stop while the app is paused and are dropped on scene change. <code>Math.random</code> is disabled: <code>ctx.random</code> is seeded by <code>config.seed</code>, so every run is the same.</p>
+ctx.every(0.5, () =&gt; { ctx.state.score += 1; });                   // every 0.5 s, first at 0.5 s
+const blink = ctx.every(0.2, () =&gt; { e.alpha = 1 - e.alpha; }, { owner: e });  // ends when e dies
+blink.cancel();                                                    // or stop it yourself</code></pre>
+<p>Timers run on game time, so they stop while the app is paused (and while <code>ctx.frozen</code>) and are dropped on scene change. <code>every</code> and <code>after</code> return a <code>Timer</code> (<code>active</code>, <code>cancel()</code>). <code>Math.random</code> is disabled: <code>ctx.random</code> is seeded by <code>config.seed</code>, so every run is the same.</p>
 <h3 id="entities">Entities</h3>
 <pre><code>const e = ctx.spawn({
   tags: ["enemy"],
