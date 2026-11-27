@@ -140,7 +140,6 @@ Socket Socket::connect(int port) {
   if (::connect(s, reinterpret_cast<const sockaddr*>(&addr), static_cast<Length>(sizeof addr)) != 0 || !set_non_blocking(s)) {
     fail(s, "cannot connect to 127.0.0.1:" + std::to_string(port));
   }
-  no_delay(s);
   return Socket(static_cast<std::intptr_t>(s));
 }
 
