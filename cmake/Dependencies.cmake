@@ -79,6 +79,14 @@ FetchContent_Declare(SDL3_image
 
 FetchContent_MakeAvailable(SDL3 box2d quickjs EnTT SDL3_image)
 
+# The engine links only QuickJS's `qjs` library. Its CLI, compiler and test programs were built for
+# nothing on every build, and linking qjs.exe's PDB failed intermittently on the Windows CI runner (LNK1201).
+foreach(tool qjs_exe qjsc run-test262 api-test function_source)
+  if(TARGET ${tool})
+    set_target_properties(${tool} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  endif()
+endforeach()
+
 # Box2D hardcodes -Werror for GCC; GCC 13 at -O2 reports a false-positive
 # -Wmaybe-uninitialized inside Box2D's own distance.c (Release only). Third-party
 # warnings are not ours to fix: keep them visible but not fatal for that target.
