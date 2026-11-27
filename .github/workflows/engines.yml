@@ -28,11 +28,11 @@ jobs:
   windows-debug:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: build/dev/_deps
           key: deps-windows-dev-${{ hashFiles('cmake/**', 'CMakeLists.txt', 'CMakePresets.json') }}
@@ -45,7 +45,7 @@ jobs:
           exe=$(python -c "import sys; sys.path.insert(0, 'tools'); import toolchain; print(toolchain.built_exe('dev'))")
           cp "$exe" out/
           cp "${exe%.exe}.pdb" out/ 2>/dev/null || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: engine-win32-x64-debug
           path: out/
@@ -55,19 +55,19 @@ jobs:
   windows-release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install -r tools/requirements.txt
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             build/release/_deps
             build/shipping/_deps
           key: deps-windows-release-${{ hashFiles('cmake/**', 'CMakeLists.txt', 'CMakePresets.json') }}
       - run: python tools/stage_engine.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: engine-win32-x64
           path: alpha-sdk/engine/win32-x64/
@@ -76,21 +76,21 @@ jobs:
   linux-release:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/linux-deps
       - name: Install harness tools
         run: |
           python3 -m venv "$RUNNER_TEMP/harness"
           "$RUNNER_TEMP/harness/bin/pip" install -r tools/requirements.txt
           echo "$RUNNER_TEMP/harness/bin" >> "$GITHUB_PATH"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             build/release/_deps
             build/shipping/_deps
           key: deps-linux-release-${{ hashFiles('cmake/**', 'CMakeLists.txt', 'CMakePresets.json') }}
       - run: python3 tools/stage_engine.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: engine-linux-x64
           path: alpha-sdk/engine/linux-x64/
@@ -99,8 +99,8 @@ jobs:
   android:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install -r tools/requirements.txt
@@ -111,14 +111,14 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$ndk" "cmake;$cmake" >/dev/null
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk" >> "$GITHUB_ENV"
           echo "$ANDROID_HOME/cmake/$cmake/bin" >> "$GITHUB_PATH"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             build/android-debug/_deps
             build/android-shipping/_deps
           key: deps-android-${{ hashFiles('cmake/**', 'CMakeLists.txt') }}
       - run: python3 tools/stage_android.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: engine-android-arm64
           path: alpha-sdk/engine/android-arm64/
@@ -128,22 +128,22 @@ jobs:
     needs: [windows-release, linux-release, android]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/linux-deps
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: alpha-sdk/package-lock.json
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: engine-win32-x64
           path: alpha-sdk/engine/win32-x64
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: engine-linux-x64
           path: alpha-sdk/engine/linux-x64
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: engine-android-arm64
           path: alpha-sdk/engine/android-arm64
@@ -159,7 +159,7 @@ jobs:
         run: npm run templates
       - name: Pack (local tarballs + offline install test, not published)
         run: xvfb-run -a python3 tools/pack_release.py --install-test --require win32-x64 --require linux-x64 --require android-arm64
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sdk-release
           path: dist/release/
